@@ -1,0 +1,357 @@
+---
+output:
+  html_document:
+    fig_caption: yes
+    jquery: null
+    mathjax: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+# library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+Soil Data Access (SDA2) Tutorial
+================================
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>Dylan Beaudette
+
+## Introduction
+This is a short tutorial on how to interact with the [Soil Data Access (SDA) web-service](http://sdmdataaccess.nrcs.usda.gov/) using R. Queries are written using [a dialect of SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). On first glance SQL appears similar to the language used to write NASIS queries and reports, however, these are two distinct languages. Soil Data Access is a "window" into the spatial and tabular data associated with the current SSURGO snapshot. Queries can contain spatial and tabular filters. If you are new to SDA or SQL, have a look at [this page](http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx).
+
+Spatial queries can be included in SQL statements submitted to SDA as long as the geometry has first been transformed to [WGS84 geographic](http://spatialreference.org/ref/epsg/wgs-84/) (or [psuedo-Web Mercator](http://spatialreference.org/ref/sr-org/7483/)) coordinates and formatted as "[well known text](https://en.wikipedia.org/wiki/Well-known_text)" (WKT). The `sp` and `rgdal` packages provide functionality for converting between coordinate systems via `spTransform()`. Coordinate reference system definitions (a "CRS") are typically provided using [proj4](https://en.wikipedia.org/wiki/PROJ.4) notation. You can search for various CRS definitions in a variety of formats using [spatialreference.org/](http://spatialreference.org/). 
+
+The `soilDB` library for R provides a helper function (`SDA_query()`) for submitting queries to SDA, processing the result, and reformatting the results into a rectangular table (a `data.frame`). Most of the work required to use the `SDA_query()` function will be writing SQL to describe the columns you would like returned and how the data should be filtered and possibly grouped. 
+
+Follow along with the blocks of code below by copying / pasting into a new R "script" document. Each block of command can be run by pasting into the R console, or by "stepping through" lines of code by moving the cursor to the top of a block (in the R script panel) and repeatedly pressing ctrl + enter.
+
+If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial-2.html?root=aqp). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
+
+### Install Required R Packages
+You only need to do this once. If you haven't installed these packages, then copy the code below and paste into the RStudio "console" pane.
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+# stable version from CRAN + dependencies
+install.packages("httr", dep=TRUE)
+install.packages("soilDB", dep=TRUE)
+install.packages("rgdal", dep = TRUE)
+install.packages("raster", dep = TRUE)
+install.packages("rgeos", dep = TRUE)
+# latest versions from r-forge
+install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
+```
+
+
+### Simple Queries 
+
+Now that you have the required packages, load them into the current R session.
+```{r load-libs}
+library(soilDB)
+library(sp)
+library(rgdal)
+library(plyr)
+library(raster)
+library(rgeos)
+```
+
+
+When was the CA653 survey area last exported to SSURGO?
+```{r SDA-one-liner-1}
+SDA_query("SELECT areasymbol, saverest FROM sacatalog WHERE areasymbol = 'CA653'")
+```
+
+Are there any survey areas that haven't been updated since Jan 1, 2010?
+```{r SDA-one-liner-2}
+SDA_query("SELECT areasymbol, saverest FROM sacatalog WHERE saverest < '01/01/2010'")
+```
+
+What is the most recently updates survey in CA?
+```{r SDA-one-liner-3}
+SDA_query("SELECT areasymbol, saverest FROM sacatalog WHERE areasymbol LIKE 'CA%' ORDER BY saverest DESC")[1, ]
+```
+
+A simple query from the component table, for a single map unit: `mukey = '461958'`.
+```{r basic-SDA-1}
+q <- "SELECT 
+mukey, cokey, comppct_r, compname, taxclname
+FROM component
+WHERE mukey = '461958'"
+
+# run the query
+res <- SDA_query(q)
+
+# check
+head(res)
+```
+
+Get a list of map units that contain "Amador" as minor component.
+```{r basic-SDA-2}
+q <- "SELECT 
+muname, mapunit.mukey, cokey, compname, comppct_r
+FROM mapunit INNER JOIN component on mapunit.mukey = component.mukey
+WHERE compname LIKE '%amador%'
+AND majcompflag = 'No'"
+
+# run the query
+res <- SDA_query(q)
+
+# check
+head(res)
+
+# optionally save the results to CSV file
+# write.csv(res, file='path-to-file.csv', row.names=FALSE)
+```
+
+Get basic map unit and component data for a single survey area, Yolo County (ca113).
+```{r basic-SDA-3}
+q <- "SELECT 
+component.mukey, cokey, comppct_r, compname, taxclname, 
+taxorder, taxsuborder, taxgrtgroup, taxsubgrp
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+WHERE legend.areasymbol = 'ca113'"
+
+# run the query
+res <- SDA_query(q)
+
+# check
+head(res)
+```
+
+Cross tabulate the occurrence of components named "Auburn" and "Dunstone" with survey areasymbol.
+```{r basic-SDA-4}
+q <- "SELECT areasymbol, component.mukey, cokey, comppct_r, compname, compkind, taxclname
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+WHERE compname IN ('Auburn', 'Dunstone')
+AND areasymbol != 'US'
+ORDER BY areasymbol, compname"
+
+res <- SDA_query(q)
+
+xtabs(~ areasymbol + compname, data=res)
+```
+
+### Queries Using Simple Spatial Filters
+
+Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402).
+```{r sda-spatial-query-basics-1}
+q <- "SELECT mukey, muname
+FROM mapunit
+WHERE mukey IN (
+SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('point(-121.77100 37.368402)')
+)"
+
+SDA_query(q)
+```
+
+Get the map names and mukey values for a 1000m buffer around a manually-defined point (-121.77100 37.368402). A 1000m buffer applied to geographic coordinates will require several spatial transformations. First, the query point needs to be initialized in a geographic coordinate system with WGS84 datum. Next, the point is transformed to a planar coordinate system with units in meters; the [NLCD](http://www.mrlc.gov/index.php) [coordinate reference system](http://spatialreference.org/ref/sr-org/6630/) works well for points within the continental US. After computing a buffer in planar coordinates, the resulting polygon is converted back to geographic coordinates--this is what SDA is expecting.
+
+```{r sda-spatial-query-basics-1.1}
+# the query point is in geographic coordinates with WGS84 datum
+p <- SpatialPoints(cbind(-121.77100, 37.368402), proj4string = CRS('+proj=longlat +datum=WGS84'))
+# transform to planar coordinate system for buffering
+p.aea <- spTransform(p, CRS('+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs '))
+# create 1000 meter buffer
+p.aea <- gBuffer(p.aea, width = 1000)
+# transform back to WGS84 GCS
+p.buff <- spTransform(p.aea, CRS('+proj=longlat +datum=WGS84'))
+# convert to WKT
+p.wkt <- writeWKT(p.buff)
+
+q <- paste0("SELECT mukey, muname
+FROM mapunit
+WHERE mukey IN (
+SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('", p.wkt, "')
+)")
+
+res <- SDA_query(q)
+head(res)
+```
+
+
+It is possible to download small collections of SSURGO map unit polygons from SDA using a bounding-box in WGS84 geographic coordinates. SDA will return polygons and their map unit keys that **overlap** with the BBOX query.
+```{r sda-spatial-query-basics-1.2, results='hide'}
+# extract bounding-box from out last point
+# coordinates are in WGS84 GCS
+b <- as.vector(bbox(p.buff))
+# download map unit polygons that overlap with bbox
+p.mu.polys <- mapunit_geom_by_ll_bbox(b)
+```
+
+Graphical description of the previous steps: query point, 1000m buffer, buffer bounding box (BBOX), intersecting map unit polygons, and overlapping polygons.
+```{r sda-spatial-query-basics-1.3, results='hide', fig.width=5, fig.height=5}
+# plot
+par(mar=c(0,0,0,0))
+plot(p.mu.polys)
+plot(p.mu.polys[which(p.mu.polys$mukey %in% setdiff(p.mu.polys$mukey, res$mukey)), ], add=TRUE, col='grey')
+lines(p.buff, col='red', lwd=2)
+plot(extent(bbox(p.buff)), add=TRUE, col='RoyalBlue')
+points(p, col='orange', pch=15)
+legend('bottomleft', legend=c('query point', '1000m buffer', 'buffer BBOX', 'intersected polygons', 'overlapping polygons'), col=c('orange', 'red', 'royalblue', 'black', 'grey'), lwd=c(NA, 2, 2, 2, 2), pch=c(15, NA, NA, NA, NA))
+box()
+```
+
+
+Get some component data for a manually-defined bounding box, defined in WGS84 geographic coordinates.
+```{r sda-spatial-query-basics-2}
+# define a bounding box: xmin, xmax, ymin, ymax
+#
+#         +-------------------(ymax, xmax)
+#         |                        |
+#         |                        |
+#     (ymin, xmin) ----------------+
+
+b <- c(-120.9, -120.8, 37.7, 37.8)
+# convert bounding box to WKT
+p <- writeWKT(as(extent(b), 'SpatialPolygons'))
+# compose query, using WKT BBOX as filtering criteria
+q <- paste0("SELECT mukey, cokey, compname, comppct_r
+            FROM component 
+            WHERE mukey IN (SELECT DISTINCT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('", p, "') )
+            ORDER BY mukey, cokey, comppct_r DESC")
+
+res <- SDA_query(q)
+
+# check
+head(res)
+```
+
+
+### Queries Using Complex Spatial Filters
+The examples above illustrate how to perform SDA queries using a single spatial filter. Typically we need to perform these queries over a collection of points, lines or polygons. The `soilDB` package provides some helper functions for iterating over a collection of features (usually points). Note that spatial queries for more than 1000 features should probably be done using a local copy of the map unit polygons.
+
+The first function `SDA_make_spatial_query()` will convert a single `Spatial*` (Points, Lines, Polygons) object to WKT and submit a spatial query to SDA, returning intersecting map unit keys and names. Let's try it using a `SpatialPoints` object with 1 feature.
+```{r sda-spatial-query-helper-functions-examples-1, results='hide'}
+# the query point is in geographic coordinates with WGS84 datum
+p <- SpatialPoints(cbind(-121.77100, 37.368402), proj4string = CRS('+proj=longlat +datum=WGS84'))
+SDA_make_spatial_query(p)
+```
+
+The second function `SDA_query_features()` will iterate over the features of a `Spatial*` (Points, Lines, Polygons) object, send a query to SDA, and return a set of the results as a `data.frame` object. This time, our example set of 2 points will also have some fake pedons IDs.
+```{r sda-spatial-query-helper-functions-examples-2, results='hide'}
+# the query points are in geographic coordinates with WGS84 datum
+p <- SpatialPointsDataFrame(cbind(c(-121, -122), c(37, 37)), data=data.frame(pedon_id=1:2), proj4string = CRS('+proj=longlat +datum=WGS84'))
+SDA_query_features(p, id='pedon_id')
+```
+
+
+Let's apply the `SDA_query_features()` function to some real data; KSSL pedons correlated to "Auburn". Not all of these pedons have coordinates, so we will have to do some filtering first. See the in-line comments for details on each line of code.
+```{r sda-spatial-kssl, results='hide'}
+# get KSSL pedons with taxonname = Auburn
+# coordinates will be NAD83 GCS
+auburn <- fetchKSSL('auburn')
+# keep only those pedons with valid coordinates
+auburn <- subsetProfiles(auburn, s='!is.na(x) & !is.na(y)')
+# init spatial information
+coordinates(auburn) <- ~ x + y
+# define projection
+proj4string(auburn) <- '+proj=longlat +datum=NAD83'
+
+# extract "site data"
+auburn.sp <- as(auburn, 'SpatialPointsDataFrame')
+# perform SDA query on each "site", result is a data.frame
+mu.data <- SDA_query_features(auburn.sp, id='pedlabsampnum')
+
+# join results to original SoilProfileCollection using 'pedlabsampnum'
+site(auburn) <- mu.data
+```
+
+
+Check the results and plot the "Auburn" KSSL pedons, grouped by intersecting map unit key and coloring horizons according to clay content.
+```{r sda-spatial-kssl-plot, fig.width=12, fig.height=5}
+# check results
+print(mu.data)
+
+# plot profiles, grouped by mukey
+# color horizons with clay content
+par(mar=c(0,0,4,0))
+groupedProfilePlot(auburn, groups='mukey', group.name.cex=0.65, color='clay', name='hzn_desgn', id.style='side', label='pedon_id', max.depth=100)
+# describe IDs
+mtext('user pedon ID', side=2, line=-1.5)
+mtext('mukey', side=3, line=-1, at = c(0,0), adj = 0)
+```
+
+
+More examples pending...
+
+
+
+```{r sda-spatial-query-basics-3, eval=FALSE, echo=FALSE}
+## Get the map unit name and mukey that intersect from several points randomly located within MLRA 17. These points could also come from a SHP file of point locations.
+
+# MLRA boundaries, GCS NAD83
+mlra <- readOGR('L:/Geodata/Boundaries', layer='mlra_v42', stringsAsFactors = FALSE)
+
+# subset to MLRA 17
+mlra <- mlra[which(mlra$MLRARSYM == '17'), ]
+# generate 10 randomly located sample points
+s <- spsample(mlra, n = 10, type = 'stratified')
+
+# check
+plot(mlra)
+points(s, col='red')
+
+
+
+# check
+head(d)
+
+# optionally combine with sample point geometry
+# s.new <- SpatialPointsDataFrame(s, data=d)
+
+# optionally save to SHP
+# writeOGR(s.new, dsn='.', layer='sample-points', driver='ESRI Shapefile', overwrite_layer = TRUE)
+```
+
+```{r sda-spatial-query-via-raster, eval=FALSE, echo=FALSE}
+##
+## this is getting rather convoluted... 
+##
+
+
+# mean frost-free-days: NAD83 GCS
+r <- raster('E:/gis_data/prism/ffd_mean_800m.tif')
+# MLRA boundaries, NAD83 GCS 
+mlra <- readOGR('L:/Geodata/Boundaries', layer='mlra_v42', stringsAsFactors = FALSE)
+# subset to MLRA 15
+mlra <- mlra[which(mlra$MLRARSYM == '15'), ]
+# crop FFD to mlra 15 extent
+r <- crop(r, mlra)
+# extract 250 FFD contour
+# ffd.250 <- rasterToPolygons(r, fun=function(i) {i > 250}, dissolve=TRUE)
+
+# check: ok
+plot(r)
+plot(mlra, add=TRUE)
+plot(ffd.250, add=TRUE, col='red')
+
+# ... now what?
+
+# rasterize MLRA 15 using same grid as FFD
+mlra.r <- rasterize(mlra, r)
+# convert all non-NA values to 1
+mlra.r[!is.na(mlra.r)] <- 1
+
+# overlay FFD > 200 and MLRA 15 rasters
+x <- r + mlra.r
+# check: OK
+plot(x)
+
+# convert to points
+s <- rasterToPoints(x, spatial = TRUE)
+
+# query ?
+
+
+
+```
+
+----------------------------
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

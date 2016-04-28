@@ -1,0 +1,249 @@
+---
+output:
+  html_document:
+    fig_caption: yes
+    jquery: null
+    mathjax: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Tips on getting component data from NASIS into R
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>D.E. Beaudette, J.M. Skovlin, S. Roecker
+
+> This tutorial is based on essential background material described in the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) and related [NASIS ODBC connection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp) tutorials. If you have not reviewed those tutorials, please do so before proceeding.
+
+> The functions and documentation described in this tutorial are still a work in progress.
+
+
+## Introduction
+The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
+
+## Pedon Data
+Please see the [related tutorial on loading NASIS pedon data into R](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp).
+
+
+## Component Data
+
+Load up your local database and selected set with some components. NASIS queries should "target" the tables:
+
+ * Component
+ * Data Mapunit
+ * Correlation
+ * Mapunit
+ * Legend Mapunit
+ * Legend
+ * Area
+
+The most commonly used data from the data map unit, component, component horizon tables can be quickly loaded using the `fetchNASIS_component_data()` function.
+```{r, results='hide'}
+# load required libraries
+library(soilDB)
+library(plyr)
+
+# get component + component horizon data as a SoilProfileCollection, using defaults
+nc <- fetchNASIS_component_data()
+```
+
+The result is a [SoilProfileCollection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) object and can be subset or visualized as such. Lets try extracting just the components with names that match the pattern "Amador".
+```{r, fig.width=9, fig.height=4}
+# filter out just those components named "Amador"
+idx <- grep('Amador', nc$compname, ignore.case = TRUE)
+nc.sub <- nc[idx, ]
+
+# plot
+par(mar=c(2,0,3,0))
+plot(nc.sub, color='claytotal_r', label='dmudesc')
+title(sub='Components named "Amador"', line=0)
+```
+
+
+There appear to be many duplicate components. This isn't surprising as a single component template is commonly shared among many map units. Lets filter out a unique subset of components based on horizon depth, horizon designation, and clay content.
+```{r, fig.width=9, fig.height=4}
+# generate an index to unique components and subset
+idx <- unique(nc.sub, vars=c('hzdept_r', 'hzdepb_r', 'claytotal_r', 'hzname'))
+nc.sub.unique <- nc.sub[idx, ]
+
+# plot the subset
+par(mar=c(2,0,3,0))
+plot(nc.sub.unique, color='claytotal_r', print.id=FALSE, n=length(nc.sub))
+title(sub='Unique components named "Amador"', line=0)
+```
+
+## Accessing Additional Types of "Component" Data
+
+### Linked Pedons
+
+Sometimes it is convenient to know which pedons are linked to components. The following function returns a `data.frame` (table) of data containing component record IDs, pedon record IDs, and pedon IDs. This can be used to link the results of `fetchNASIS_component_data()` to the results of `fetchNASIS()` (pedon data). Lets assemble a list of all pedons linked to a component named "Amador", using the subset from above.
+```{r}
+# get the full set of linked pedon data from the selected set
+nc.linked.pedons <- get_copedon_from_NASIS_db()
+# check format
+head(nc.linked.pedons)
+
+# list just those pedons that are linked to our subset of components
+# note that we are using the component record ID (coiid) to connect the two data sources
+idx <- which(nc.linked.pedons$coiid %in% site(nc.sub)$coiid)
+nc.linked.pedons[idx, ]
+```
+
+
+### Map Unit, Correlation, Legend, Area Tables
+
+The NASIS data elements that exist at levels higher than the data map unit table must be loaded with a different function because there isn't always a 1:1 mapping between data map unit objects and map unit / legend objects.
+```{r}
+nc.correlation <- get_component_correlation_data_from_NASIS_db()
+head(nc.correlation, 1)
+```
+
+Lets tabulate the occurrence of components named "Amador" by soil survey area and component kind, using data loaded in the above examples.
+```{r}
+# combine basic site data + correlation / legend data
+# note that there is a 1:many relationship
+nc.combined <- join(site(nc.sub), nc.correlation, by='dmuiid')
+
+# cross-tabulate
+xtabs( ~ areasymbol + compkind, data=nc.combined)
+```
+
+
+### Component Ecological Site Data
+Details pending.
+```{r}
+nc.esd <- get_component_esd_data_from_NASIS_db
+```
+
+
+Additional tutorials are available at the [AQP project website](http://aqp.r-forge.r-project.org/).
+
+
+## Example Applications
+These examples are still a work in progress. Detailed descriptions pending...
+
+
+### Check for DMU Linked to Multiple Map Units
+
+There are some cases where a single DMU may be linked to multiple map units (*such as...*). 
+```{r, fig.width=9, fig.height=9}
+library(igraph)
+
+# re-load relevant data from NASIS: 
+# just MU/DMU objects with components named "Amador"
+nc <- get_component_data_from_NASIS_db()
+idx <- grep('Amador', nc$compname, ignore.case = TRUE)
+nc.sub <- nc[idx, ]
+nc.correlation <- get_component_correlation_data_from_NASIS_db()
+nc.combined <- join(nc.sub, nc.correlation, by='dmuiid')
+
+# extract edges of graph linking DMU --> MU
+e <- na.omit(nc.combined[, c('dmuiid', 'nationalmusym')])
+
+# create vertex attributes
+v <- rbind(cbind(name=e[, 1], color='RoyalBlue', label.cex=0.75), cbind(name=e[, 2], color='Orange', label.cex=0.85))
+v <- as.data.frame(v, stringsAsFactors = FALSE)
+v$label.font <- 2
+v$label.cex <- as.numeric(v$label.cex)
+
+# optionally flag DMUs that connect to multiple MU
+if(exists('multiple.mu.per.dmu', envir=soilDB.env)) {
+  dupe.dmu <- get('multiple.mu.per.dmu', envir=soilDB.env)
+  v$color[which(v$name %in% dupe.dmu)] <- 'Yellow' 
+}
+
+# create graph
+g <- graph.data.frame(e, directed=TRUE, vertices = unique(v))
+V(g)$size <- 5
+
+# check
+par(mar=c(0,0,0,0))
+set.seed(10101)
+plot(g, vertex.label.color='black', vertex.label.family='sans',  edge.arrow.size=0.5)
+legend('bottomleft', legend = c('MU (national musym)', 'DMU (dmu description)', 'flagged DMU (dmu description)'), pt.bg=c('Orange', 'RoyalBlue', 'Yellow'), pch=21, pt.cex=2, cex=0.85, bty='n')
+```
+
+
+### Rank Component Records Based on Horizon Data Population
+Rank data map units that contain a major component named "Amador" based on the degree to which component horizon data has been populated.
+
+```{r, fig.width=8, fig.height=4}
+library(lattice)
+# re-load relevant data from NASIS:
+# get the component data
+nc <- get_component_data_from_NASIS_db()
+# subset columns to those we are using
+nc <- nc[, c('dmuiid', 'dmudesc', 'coiid', 'compname', 'comppct_r', 'majcompflag')]
+# just MU/DMU objects with components named "Amador"
+idx <- grep('Amador', nc$compname, ignore.case = TRUE)
+nc <- nc[idx, ]
+# look only at major components for now
+nc <- nc[which(nc$majcompflag == 1), ]
+
+# get component horizon data
+nc.hz <- fetchNASIS_component_data()
+# subset the unique set of component IDs that have horizon data
+nc.hz.coiids <- site(nc.hz)$coiid
+
+# make a new column and fill with '0' when no horizon data present, '1' when horizon data present
+nc$hz.data.present <- 0
+nc$hz.data.present[which(nc$coiid %in% nc.hz.coiids)] <- 1
+
+# get correlation data and join to component data
+nc.correlation <- get_component_correlation_data_from_NASIS_db()
+nc.combined <- join(nc, nc.correlation, by='dmuiid', type='inner')
+
+# tabulate components w/o hz data, w/ hz data, and total components
+addmargins(table(nc.combined$hz.data.present))
+
+# compute weighted fraction of hz data populated using component pct
+p <- ddply(nc.combined, 'dmudesc', function(i) {
+  with(i, sum((comppct_r / 100) * hz.data.present), na.rm=TRUE)
+})
+names(p) <- c('dmudesc', 'frac.populated')
+
+# re-order musym labels in increasing order of hz data populated
+p$dmudesc <- factor(p$dmudesc, levels=p$dmudesc[order(p$frac.populated)])
+
+dotplot(dmudesc ~ frac.populated, data=p, cex=1.25, ylab='DMU Description', xlab='Fraction Component Hz Data Populated', main='Major Components Named "Amador"', scales=list(x=list(alternating=TRUE, tick.number=10)), subset=dmudesc != 'NOTCOM National DMU', panel=function(...){
+  panel.abline(v=seq(0, 1, by=0.1), col='grey')
+  panel.dotplot(...)
+})
+```
+
+
+## Boring Details ##
+Just kidding, this stuff matters.
+
+### Status and QC Messages ###
+As part of the quality control process, a number of possible messages are printed to the console when running `fetchNASIS_component_data()`. These messages and their meaning are described below:
+
+* `-> QC: horizon errors detected ...`
+Horizon depths are checked for gaps, overlap, or bottom depths than are shallower than top depths. In most cases pedons flagged as having errors suggests a quality control issue. However, combination horizons (e.g. B/C) that have been entered as two distinct horizons sharing the same horizon depths will trigger this warning.
+
+* `-> QC: DMUs assigned to multiple MU ...`
+This message means that some data map units in the selected set have been used within several different map units.
+
+* `-> QC: duplicate muiids: multiple 'representative' DMU / MU ...`
+This message means that there may be several "representative" DMU assigned to a single map unit.
+
+
+### Adjusting the Defaults ###
+Some of the assumptions made by `fetchNASIS_component_data()` can be adjusted using arguments to the function:
+
+* `rmHzErrors = TRUE`
+Setting this value to `TRUE` (the default) will enable checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons. Note that any records flagged as having horizon depths errors (`rmHzErrors = TRUE`) will be omitted from the data returned by `fetchNASIS_component_data()`.
+
+
+
+An increased level of verbosity in the quality control messages can be enabled by setting the option: `options(soilDB.verbose=TRUE)`. This is not generally suggested, but may be useful if you are having difficulty loading data from NASIS.
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

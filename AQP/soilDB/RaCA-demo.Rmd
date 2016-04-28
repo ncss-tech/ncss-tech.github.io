@@ -1,0 +1,258 @@
+```{r setup, echo=FALSE, results='hide'}
+# setup
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+Getting Data from the Rapid Carbon Assessment Project
+=====================================================
+`r format(Sys.time(), "%Y-%m-%d")`
+Dylan Beaudette
+
+## Introduction
+This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to download [RaCA](http://soils.usda.gov/survey/raca/index.html) via SoilWeb. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) from the [aqp](http://aqp.r-forge.r-project.org/) package.
+
+
+### The SoilWeb RaCA Query API
+
+RaCA data are queried via HTTP request to the SoilWeb server, with query parameters encoded as [URL parameters](http://en.wikipedia.org/wiki/Query_string). For example, by appending several parameters to the base URL it is possible to query "site-level" data associated with soils correlated to the Auburn series like this:
+
+```
+http://casoilresource.lawr.ucdavis.edu/soil_web/rca/rca_query.php?what=site&series=auburn
+```
+
+There are 5 URL parameters that can be used to refine RaCA data queries:
+
+  * what=**site** ------*query only the site-level data*
+  
+  * series=**auburn** ------*return only those data correlated to the Auburn series*
+  
+  * bbox=**-120,37,-122,38** ------*return only those data within the specified bounding box, constrained to a 5-degree block*
+  
+  * state=**ca** ------*return only those data within California*
+  
+  * plaintext=**1** ------*return data as plain text instead of [gzipped](http://en.wikipedia.org/wiki/Gzip) text*
+
+
+The **what** parameter determines which chunk of data will be returned:
+  * **site**: site and pedon level data
+  * **horizon**: horizon level data
+  * **veg**: vegetation information recorded at each site (relative abundence of 6 most common species)
+  * **trees**: tree height(feet) and [DBH](http://en.wikipedia.org/wiki/Diameter_at_breast_height)(inches) measured on the first for trees [in](ftp://ftp-fc.sc.egov.usda.gov/NSSC/raca/RaCA_Field_Collection_Protocols.pdf) using RaCA procdures
+  * **stock**: cumulative soil organic carbon stocks (Mg per ha) to standardized depths
+  * **sample**: measured/modeled bulk density and carbon concentration at the sample-level
+  * **vnir**: VNIR spectra [queries by soil series or BBOX only]
+
+
+## Getting RaCA Data in R
+The [soilDB](http://cran.at.r-project.org/package=soilDB) package abstracts URL-based queries for RaCA data into a single function, `fetchRaCA()`. Calling this function with user-defined query paramters, e.g. `fetchRaCA(series='auburn')`, will download all data (site, horizon, veg, trees, stock) associated with the Auburn series and return the results as a `list`. VNIR spectra can be very large and are therefore not downloaded by default.
+
+
+### Installation
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
+```
+
+### Example Usage
+Data can be queried by two-letter state code, fuzzy-matching of series name, or using a geographic bounding-box in WGS84 referenced coordinates. See `?fetchRaCA()` for details.
+```{r get-data, fig.width=6, fig.height=6, results='hide', eval=TRUE}
+# load libraries
+library(soilDB)
+library(plyr)
+library(maps)
+library(lattice)
+library(reshape2)
+library(cluster)
+
+# define a geographic bounding box
+bbox <- c(-120, 37, -122, 38)
+
+# fetch data by soil series name
+r.series <- fetchRaCA(series='auburn')
+
+# fetch data by bounding box
+r.bbox <- fetchRaCA(bbox=bbox)
+
+# fetch data by state
+r.state <- fetchRaCA(state='ca')
+
+# map each set of fetched data
+par(mar=c(0,0,0,0))
+map('county', 'california')
+points(y ~ x, data=site(r.state$pedons), col='RoyalBlue', cex=0.5, pch=1)
+points(y ~ x, data=site(r.bbox$pedons), col='DarkGreen', cex=0.8, pch=15)
+points(y ~ x, data=site(r.series$pedons), col='DarkRed', cex=0.8, pch=16)
+# add bounding box
+rect(bbox[1], bbox[2], bbox[3], bbox[4])
+# add long/lat axes
+map.axes()
+# add a simple legend
+legend('topright', pch=c(1, 15, 16), col=c('RoyalBlue', 'DarkGreen', 'DarkRed'), legend=c('state', 'bbox', 'series'), bty='n', title='query by:')
+```
+
+
+### Exploring the Results
+A list of objects and tables (`data.frame` objects) is returned by `fetchRaCA()`. Elements can be accessed using the `$` operator.
+```{r explore-results}
+# check structure
+str(r.bbox, 2)
+```
+
+
+### Site/Pedon Data
+Site and pedon data are returned as a [SoilProfileCollection object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) within the `pedons` list element.
+```{r site-pedon, fig.width=8, fig.height=4, results='hide', eval=TRUE}
+# extract site/pedon data
+s <- r.series$pedons
+
+# how many pedons in the collection?
+length(s)
+
+# how many pedons / RCA site?
+table(s$rcasiteid)
+
+# generate soil colors from moist RGB
+s$soil_color <- rep(NA, times=nrow(horizons(s)))
+idx <- complete.cases(s$m_r)
+s$soil_color[idx] <- with(horizons(s)[idx, ], rgb(m_r, m_g, m_b)) # moist colors
+
+# plot first 20 pedons
+par(mar=c(0,0,0,0))
+plot(s[1:20, ], name='hzname', max.depth=100)
+```
+
+
+### Vegetation Data
+```{r veg-trees}
+# tabulate vegetation data across the entire collection of RaCA data queried by BBOX
+sort(table(r.bbox$veg$plantnatvernm), decreasing=TRUE)
+
+# aggregate tree information, by RaCA site
+ddply(r.bbox$trees, 'siteiid', summarize, mean.dbh=mean(dbh), mean.height=mean(height), n=length(siteiid))
+```
+
+
+### Soil Organic Carbon Concentrations
+```{r carbon-conc-raw-data, fig.width=8, fig.height=5, eval=TRUE}
+# extract sample data horizon-level carbon and bulk density
+s <- r.series$sample
+
+# init SoilProfileCollection
+depths(s) <- rcapid ~ sample_top + sample_bottom
+
+# slice-wise aggregation over entire collection
+a <- slab(s, ~ soc)
+
+# plot
+xyplot(
+  top ~ p.q50, data=a, main='Auburn', ylab='Depth (cm)', xlab='Soil Organic Carbon Concentration (%)',
+  lower=a$p.q5, upper=a$p.q95, sync.colors=TRUE, alpha=0.3,
+  ylim=c(60,-5), asp=1.5,
+  par.settings=list(superpose.line=list(lwd=2, col=c('RoyalBlue'))),
+  panel=panel.depth_function, 
+  prepanel=prepanel.depth_function,
+  auto.key=list(columns=2, lines=TRUE, points=FALSE)
+)
+```
+
+
+### Soil Organic Carbon Stock Data
+```{r carbon-stock, fig.width=8, fig.height=5, eval=TRUE}
+# join carbon stock estimates to SPC object
+# these are site-level data
+s <- r.bbox$pedons
+site(s) <- r.bbox$stock
+
+# compute mean SOC stock to 100cm by RCA site:
+round(tapply(s$value_100cm, s$rcasiteid, mean))
+
+# compute mean SOC stock to 100cm by series:
+round(tapply(s$value_100cm, s$taxonname, mean))
+
+# convert taxonname to a factor
+s$taxonname <- factor(s$taxonname)
+
+# re-level based on median C stock
+stock.asc.order <- order(tapply(s$value_100cm, s$taxonname, median))
+new.levels <- levels(s$taxonname)[stock.asc.order]
+s$taxonname <- factor(s$taxonname, levels=new.levels)
+
+# visualize
+bwplot(taxonname ~ value_100cm, data=site(s), xlab='Carbon Stock to 100cm (Mg per ha)')
+```
+
+
+### Depth-Wise Aggregation of Carbon Stock Data
+```{r stock-depth-aggregation, fig.width=7, fig.height=6, eval=TRUE}
+m <- melt(r.series$stock, id.vars='rcapid', measure.vars=c(2,4,6,8,10,12))
+
+# fix c stock variable name
+names(m)[3] <- 'c.stock'
+
+# generate depths from variable names
+m$top <- NA
+m$bottom <- NA
+
+# sequence of possible top/bottom boundaries
+m.top <- c(0,5,10,20,30,50)
+m.bottom <- c(5,10,20,30,50,100)
+
+# generate an index to real depths
+# this only works because the factor levels are in the correct order
+mm <- as.numeric(m$variable)
+
+# assign real depths
+m$top <- m.top[mm]
+m$bottom <- m.bottom[mm]
+
+# promote to SPC
+depths(m) <- rcapid ~ top + bottom
+
+# simple aggregation of the entire collection: note that this doesn't take into account error estimates...
+a <- slab(m, ~ c.stock)
+
+# plot aggregate data
+xyplot(
+  top ~ p.q50, data=a, main='Auburn', ylab='Depth (cm)', xlab='Cumulative Carbon Stock (Mg per ha)',
+  lower=a$p.q5, upper=a$p.q95, sync.colors=TRUE, alpha=0.3,
+  ylim=c(105,-5), asp=1.5,
+  par.settings=list(superpose.line=list(lwd=2, col=c('RoyalBlue'))),
+  panel=panel.depth_function, 
+  prepanel=prepanel.depth_function,
+  auto.key=list(columns=2, lines=TRUE, points=FALSE)
+)
+```
+
+
+
+### VNIR Spectra
+VNIR spectra are large, and therefore not downloaded by default. The `get.vnir=TRUE` argument to `fetchRaCA()` will download VNIR spectra associated with the query results.
+```{r vnir, fig.width=8, fig.height=4, results='hide', eval=TRUE}
+s <- fetchRaCA(series='auburn', get.vnir=TRUE)
+
+# plot the spectra
+par(mar=c(0,0,0,0))
+matplot(t(s$spectra), type='l', lty=1, col=rgb(0, 0, 0, alpha=0.25), ylab='', xlab='', axes=FALSE)
+box()
+
+# Q-mode PCA of spectra
+pca <- prcomp(s$spectra, center=TRUE, scale=TRUE)
+summary(pca)
+
+# cluster on first 3 principal components into 3 hard groupings via PAM
+spectra.pam <- pam(predict(pca)[, 1:3], 3)
+
+# re-plot spectra, colored by 3-class clustering
+cols <- rgb(t(col2rgb(spectra.pam$clustering)), maxColorValue=255, alpha=100)
+matplot(t(s$spectra), type='l', lty=1, col=cols, ylab='', xlab='', axes=FALSE)
+box()
+```
+
+  
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

@@ -1,0 +1,108 @@
+---
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+Export Pedon Spatial Data from NASIS
+===============================
+`r format(Sys.time(), "%Y-%m-%d")`
+Dylan Beaudette
+
+This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to export pedon locations from the local NASIS database to shapefile.
+
+### Setup Local NASIS DB
+ 1. load selected set with pedons and sites of interest
+ 2. determine spatial subset layer and adjust path accordingly
+ 3. adjust buffer accordingly
+ 4. adjust site-level attributes of interest
+ 5. adjust output directory accordingly
+
+
+### Install R Packages
+With a recent version of R, it should be possible to get all of the packages that this tutorial depends on with the following commands. Note that you only have to do this once.
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('rgdal', dep=TRUE)
+install.packages('rgeos', dep=TRUE)
+# latest version from r-forge
+install.packages("aqp", repos = "http://R-Forge.R-project.org", type = "source")
+install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
+```
+
+### Get Pedons and Save to SHP
+Copy and paste the following code into a new R script document. Step through the lines of code (e.g. run each line starting from the top) by moving the cursor to the top line and then press ctrl + enter repeatedly.
+```{r example, eval=FALSE}
+require(soilDB)
+require(rgdal)
+require(rgeos)
+
+# Load a suitable boundary for spatial subset of NASIS pedons
+# CRS: UTM z10 NAD83
+b <-  readOGR(dsn='L:/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_b', encoding='encoding', stringsAsFactors=FALSE)
+
+# just in case, check that the "boundary" coordinate system is projected
+proj4string(b)
+if(! is.projected(b))
+  stop('boundary geometry must be in a projected coordinate system with units of meters', call. = FALSE)
+
+# extend boundary with 10km buffer
+# the coordinate reference system MUST have units of meters
+b <- gBuffer(b, byid=FALSE, width=10000)
+
+# load entire contents of local database (pedon data)
+# CRS: GCS WGS84
+f <- fetchNASIS()
+
+# some pedons are missing coordinates in NASIS
+# keep only those pedons with real coordinates
+good.idx <- which(!is.na(f$x_std) & !is.na(f$y_std))
+f <- f[good.idx, ]
+
+# init coordinates from WGS84 decimal degrees
+coordinates(f) <- ~ x_std + y_std
+proj4string(f) <- '+proj=longlat +datum=WGS84'
+
+# extract only site data
+s <- as(f, 'SpatialPointsDataFrame')
+
+# project boundary to CRS of points
+b <- spTransform(b, CRS(proj4string(s)))
+
+# graphical check
+par(mar=c(1,1,1,1))
+plot(b)
+
+# add points to plot
+points(s, col='black', cex=0.5)
+
+# perform subset
+idx <- gIntersects(s, b, byid = TRUE)
+ids <- which(apply(idx, 2, any))
+s <- s[ids,]
+
+# check subset
+points(s, col='red', cex=1, pch=0)
+
+# subsetting the columns useful for analysis
+s <- s[, c("pedlabsampnum", "pedon_id","taxonname", "hillslope_pos", "elev_field", "slope_field", "aspect_field", "plantassocnm", "bedrckdepth", "bedrock_kind", 'pmkind', 'pmorigin')]
+
+# write to SHP
+# output CRS is CGS NAD83
+writeOGR(s, dsn='.', layer='NASIS-pedons', driver='ESRI Shapefile', overwrite_layer=TRUE)
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+

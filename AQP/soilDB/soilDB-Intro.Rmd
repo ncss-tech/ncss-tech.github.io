@@ -1,0 +1,368 @@
+---
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+# library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+Soil Database Interface: the <tt>soilDB</tt> package
+===============================================================
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>Dylan Beaudette
+
+
+## Introduction
+This package provides methods for extracting soils information from local PedonPC and AK Site databases (MS Access format), local NASIS databases (MS SQL Server), and the SDA web-service. Currently USDA-NCSS data sources are supported, however, there are plans to develop interfaces to outside systems such as the Global Soil Mapping project.
+
+
+### Installation
+You only need to do this once. With a recent version of R, it should be possible to get all of the packages that `soilDB` depends on via:
+```{r install packages, eval=FALSE}
+# run these commands in the R console
+# stable version from CRAN + dependencies
+install.packages("RODBC", dep=TRUE)
+install.packages("aqp", dep = TRUE)
+install.packages("soilDB", dep=TRUE)
+# latest versions from r-forge
+install.packages("aqp", repos = "http://R-Forge.R-project.org", type = "source")
+install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
+```
+
+### ODBC Connection to the Local NASIS database
+Setting up this connection is simple, and outlined in this [guide](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp). Queries submitted to the national database will load pedons or DMU data into your local database. Functions in `soilDB` can only access data in your local database, defined by the "selected set". While it is possible to filter pedon or DMU records within **R**, it is sometimes simpler to modify the "selected set" in NASIS. In other words:
+
+  1. load up your local database with pedons associated with your office, project, or MLRA
+  2. build your selected set (pedon, site, DMU, etc.)
+  3. load data into **R** for further filtering/processing
+  
+
+### R Notes
+A basic understanding of R syntax, object structure, package management system, and programming style will greatly help with integration of the `soilDB` and `aqp` packages into standard workflows. Lines that start with a `#` are treated as comments and ignored by R. Recall that online help documents can be accessed via:
+
+```{r manual-pages, eval=FALSE}
+# get the manual page for a known function
+help(mean)
+# get the manual page for a package
+help(soilDB)
+help(aqp)
+# package demo
+demo(aqp)
+# use fuzzy matching to search for a topic or keyword
+help.search(boxplot)
+# shortcut:
+?plot
+```
+
+**Mini R Tutorial**
+```{r R-notes, eval=FALSE}
+# 1. objects: creation, structure, etc.
+x <- 1:10       # 'x' is now a vector of integers 1 to 10 
+y <- rnorm(10, mean=0, sd=1)  # 'y' is now a vector of 10 random numbers {mean=0, sd=1}
+d <- data.frame(x, y) # d is a rectangular table with columns 'x' and 'y'
+
+str(d) # check structure
+class(d) # inspect object class
+head(d) # view first 6 rows
+rm(d, x, y) # clean-up by deleting these objects
+
+# 2. most function are vectorized: i.e. automatic iteration
+x <- 1:10
+x + 1 # the '+' function knows about vectors, and recycles scalars accordingly
+
+# 3. missing data can cause problems unless accounted for
+x <- c(x, NA) # 'c()' is the concatonate function
+# print the value by typing it into the R console followed by enter
+x
+
+mean(x) # result is NA, as most functions return NA in the presence of missing data
+mean(x, na.rm=TRUE) # mean computed after removal of missing data
+```
+
+
+## Design
+
+The `soilDB` package provides two layers of functionality for extracting data from file-based databases (PedonPC), relational databases (local NASIS), and online data sources (Soil Data Access, OSD information, KSSL data). High-level functions `fetchPedonPC()` and `fetchNASIS()` query, combine, verify horizon logic, and return `SoilProfileCollection` class objects containing the most commonly used site/pedon/horizon data. Low-level functions such as `get_site_data_from_pedon_db()` and `get_hz_data_from_pedon_db()` extract specific data from a designated source, and return the results as a `data.frame` class object.
+
+### High-Level Functions
+When loading pedons with the `fetchNASIS()` or `fetchPedonPC()` functions, checks are performed for:
+ * multiple map datums: results reported to the user, data are not modified
+ * inconsistent horizon boundaries: pedons with inconsistent horizon boundaries are not loaded
+ * missing lower horizon depths: offending horizons are **fixed** by replacing the missing bottom depth with the top depth + 2cm
+ * sites missing pedon records: these data are not loaded
+
+
+**Fetch Pedons or DMU data from Local NASIS**
+
+The `fetchNASIS()` function will load pedons from the "selected set" in your local NASIS database. An ODBC connection named 'nasis_local' must **first** be [established](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp). Details on the `fetchNASIS()` function can be found [in this related tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp).
+
+```{r local-nasis-demo, eval=FALSE}
+library(soilDB)
+# fetch pedons from the selected set, replace NULL rock fragment fractions with 0
+f <- fetchNASIS(nullFragsAreZero=TRUE)
+# fetch pedons from the selected set, do not replace NULL rock fragment fractions with 0
+f <- fetchNASIS(nullFragsAreZero=FALSE)
+
+# DMU data
+fc <- fetchNASIS_component_data()
+```
+
+**Fetch Pedons from PedonPC 5.x Database**
+
+The `fetchPedonPC(dsn)` function will load all pedon records into the current R session, based on the value of `dsn`-- a path to a PedonPC version 5.x database. Note that it is not currently possible to use 64bit R to connect with 32bit Acccess. Therefore, if you plan on using this function, please remember to use the 32bit R executable.
+
+```{r pedonPC-demo, eval=FALSE}
+library(soilDB)
+# this will only work if you have a PedonPC Database and Windows :(
+dsn <- "S:/Service_Center/NRCS/pedon/pedon.accdb"
+f <- fetchPedonPC(dsn)
+```
+
+
+**Fetch data from Soil Data Access (SDA) Web-Service**
+
+A more [recent tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp) on this topic is available
+
+The `SDA_query()` function submits a query ([T-SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx)) to the [SDA web-service](http://sdmdataaccess.nrcs.usda.gov/), parses the result, and returns a `data.frame` (rectangular table) object. [This page](http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx) contains links to SSURGO metadata and many example SQL queries. 
+```{r sda-example-1, eval=FALSE}
+# get component-level data for a specific soil survey area (Yolo county, CA)
+q <- "SELECT 
+component.mukey, cokey, comppct_r, compname, taxclname, 
+taxorder, taxsuborder, taxgrtgroup, taxsubgrp
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+WHERE legend.areasymbol = 'CA113'"
+
+# run the query
+res <- SDA_query(q)
+```
+
+
+
+**Get map unit geometry for a geographic area** (updates pending for new SDA2 spatial query features)
+
+The `mapunit_geom_by_ll_bbox()` function accepts a bounding box defined in GCS (longitude, latitude) NAD83 coordinates, and returns a `SpatialPolygonsDataFrame` class object of map unit polygons. Note that map unit polygons that *overlap* with the bounding box are returned, rather than the *intersection* of bounding box and polygons.
+```{r sda-example-3, eval=FALSE}
+# define bounding box
+b <- c(-120.54,38.61,-120.41,38.70)
+
+# fetch the results, may take about 10 seconds
+x <- mapunit_geom_by_ll_bbox(b)
+```
+
+
+
+**Get basic horizon morphology and taxonomic data from Official Series Descriptions**
+
+The `fetchOSD()` function accepts a character vector of soil series names, and returns a `SpatialPolygonsDataFrame` class object of basic data from those series. Note that this service is provided by the [CA Soil Resource Lab](http://casoilresource.lawr.ucdavis.edu) as an experimental prototype. The **official** [series descriptions](https://soilseries.sc.egov.usda.gov/osdname.asp) should still be used to verify series information.
+```{r OSD-example, eval=FALSE}
+# soils of interest
+s.list <- c('musick', 'cecil', 'drummer', 'amador', 'pentz', 'reiff')
+
+# fetch and convert data into an SPC
+s <- fetchOSD(s.list)
+
+# plot profiles
+par(mar=c(0,0,0,0))
+plot(s, name='hzname', cex.names=0.85, axis.line.offset=-4)
+```
+
+
+**Get the most commonly used data from the Kellog Soil Science Lab database** (formerly NSSL database)
+
+The `fetchKSSL()` function accepts either a soil series name or bounding box in WGS84 geographic coordinates, and returns a `SpatialPolygonsDataFrame` class object containing the matching records. Note that this service is provided by the [CA Soil Resource Lab](http://casoilresource.lawr.ucdavis.edu) as an experimental prototype, based on the June 2015 KSSL snapshot. If newer data are needed, it is best to consult the **official** [KSSL data](http://ncsslabdatamart.sc.egov.usda.gov/).
+```{r KSSL-example, eval=FALSE}
+# fetch and convert data into an SPC
+s <- fetchKSSL(series='Pardee')
+
+# plot profiles
+par(mar=c(0,0,0,0))
+plot(s, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay')
+```
+
+
+### Low-Level Functions
+
+**Fetch Data from a PedonPC 5.x Database**
+These functions can be used to extract only subsets of the data available in a PedonPC database, but are generally only useful for advanced users.
+
+```{r pedonPC-low-level-functions, eval=FALSE}
+dsn <- 'path-to-pedon-database.accdb'
+# fetch only site data
+site_data <- get_site_data_from_pedon_db(dsn)
+# fetch only horizon data
+hz_data <- get_hz_data_from_pedon_db(dsn)
+# fetch only color data
+color_data <- get_colors_from_pedon_db(dsn)
+# fetch extended data:
+# diagnostic horizons, fragment summary, texture modifiers, geomorphology, taxonomic history
+extended_data <- get_extended_data_from_pedon_db(dsn)
+```
+
+**Fetch Data from a Local NASIS Database**
+These functions can be used to extract only subsets of the data available in the local NASIS database (selected set), but are generally only useful for advanced users.
+
+```{r local-nasis-low-level-functions, eval=FALSE}
+# fetch only site data
+site_data <- get_site_data_from_NASIS_db()
+# fetch only horizon data
+hz_data <- get_hz_data_from_NASIS_db()
+# fetch only color data
+color_data <- get_colors_from_NASIS_db()
+# fetch extended data:
+# diagnostic horizons, fragment summary, texture modifiers, geomorphology, taxonomic history
+extended_data <- get_extended_data_from_NASIS_db()
+```
+
+
+## Examples
+
+### Getting SSURGO data from SDA
+A quick example of how to use the USDA-NRCS [soil data access query facility](http://sdmdataaccess.nrcs.usda.gov/) (SDA). The following code describes how to get component-level soils data for Yolo County (survey area CA113) and compute representative sub-order level classification for each map unit. This example requires an understanding of [SQL](http://en.wikipedia.org/wiki/SQL), [US Soil Taxonomy](http://en.wikipedia.org/wiki/USDA_soil_taxonomy) and the [SSURGO](http://soils.usda.gov/survey/geography/ssurgo/) database. While not the most efficient approach to the task described below, the code does illustrate several strategies for working with SSURGO data in R.
+
+First, we need to setup some functions that will help summarize component data, within each map unit. These functions will be applied *chunk-wise* to blocks of data, using the [split-apply-combine](http://www.jstatsoft.org/v40/i01/paper) strategy.
+```{r sda-ssurgo-query-example-1}
+# compute total component percentages for the current block of components
+f.sum <- function(i) {
+   n <- nrow(i) # number of rows
+   s <- sum(i$comppct_r) # total component percent
+   return(data.frame(pct=s, n=n)) # return the results
+}
+
+# pick the largest suborder from within each map unit
+f.largest <- function(i) {
+   i.sorted <- i[order(i$pct, decreasing=TRUE), ] # sort largest -> smallest
+   top.suborder <- i.sorted$taxsuborder[1] # get the largest suborder
+   top.suborder.pct <- i.sorted$pct[1] # get the the corresponding component percent
+   return(data.frame(suborder=top.suborder, pct=top.suborder.pct)) # return results
+}
+```
+
+Load required libraries, setup a query, submit to SDA, and process the results.
+```{r sda-ssurgo-query-example-2, results='hide'}
+# load libraries
+library(soilDB)
+library(plyr)
+
+# get map unit-level data
+q.1 <- "SELECT mukey, muacres
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+WHERE legend.areasymbol = 'CA113'"
+
+# get component-level data
+q.2 <- "SELECT 
+component.mukey, cokey, comppct_r, compname, taxclname, taxorder, taxsuborder, taxgrtgroup, taxsubgrp
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+WHERE legend.areasymbol = 'CA113'"
+
+# submit queries
+mu <- SDA_query(q.1)
+co <- SDA_query(q.2)
+
+# tabulate percentage of suborder-level taxa within each map unit (mukey)
+comp.suborder.sums <- ddply(co, .(mukey, taxsuborder), f.sum, .progress='text')
+
+# keep the largest suborder, and its associated total percentage
+comp.suborder <- ddply(comp.suborder.sums, .(mukey), f.largest, .progress='text')
+
+# join the largest suborder (by map unit) to mu
+x <- join(mu, comp.suborder, by='mukey')
+
+# get an effective map unit area via: muacres * pct/100
+x$effective.area <- with(x, muacres * pct / 100)
+```
+
+Compute the acreage of each suborder within Yolo county, round to the nearest integer, and sort. A spatially-explicit approach would be required for multi-survey area scenarios or an irregular chunk of a single survey.
+```{r sda-ssurgo-query-example-3}
+sort(round(tapply(x$effective.area, x$suborder, sum)))
+```
+
+
+### Fetch SSURGO Polygons from SDA
+Map unit polygons can also be queried from SDA, using a similar bounding box query, with the `mapunit_geom_by_ll_bbox()` function. This function returns a `SpatialPolygonsDataFrame` class object, containing all map unit delineations that *overlap* with the supplied bounding box. Post-processing with functions from the `rgeos` package can be used to extract the spatial intersection between map unit polygons and a region of interest.
+
+```{r ssurgo-polygons-demo-1, fig.width=5, fig.height=5, results='hide'}
+# define bounding box
+b <- c(-120.54,38.61,-120.41,38.70)
+# query geometry
+x <- mapunit_geom_by_ll_bbox(b) # about 20 seconds
+
+# reset margins, and plot the results
+par(mar=c(0,0,0,0))
+plot(x)
+# add our original bounding box in red
+rect(b[1], b[2], b[3], b[4], border='red', lwd=2)
+# add a title at the bottom of the figure
+title(sub='SSURGO Map Unit Delineations', line=-2, font=2)
+
+# follow-up by retrieving corresponding map unit data from SDA
+in.statement <- format_SQL_in_statement(unique(x$mukey))
+q <- paste("SELECT mukey, muname FROM mapunit WHERE mukey IN ", in.statement, sep="")
+res <- SDA_query(q)
+```
+
+
+### The `Gopheridge` Sample Dataset
+The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()` or `fetchPedonPC()`. The following demonstration is geared towards intermediate users of R and who are familiar with the classes and methods defined by the `aqp` package. Before proceeding it may be helpful to review the `aqp` manual pages: `library(aqp) ; help(aqp)`, or the [SoilProfileCollection object introduction](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
+
+Open R, and setup the environment by loading packages and the sample dataset.
+```{r gopheridge-demo-1, eval=TRUE}
+library(soilDB)
+library(Hmisc) # lots of helper functions in here
+
+# load example dataset
+data(gopheridge)
+
+# what kind of object is this?
+class(gopheridge)
+```
+
+
+Define a simple function for extracting the top depth of a diagnostic feature, and use to compute the top depth of Cr contact for each pedon. Note that the arguments to this function are `x` (a 1-item `SoilProfileCollection`, i.e. a single soil profile), and `d.hz` (the name of the diagnostic feature or horizon that we are querying). If the queried diagnostic feature/horizon is not present for any given pedon, `NA` is returned. This function is used in conjunction with `profileApply()`, such that it is evaluated for each pedon within a collection. The result is a vector of the same length as the number of pedons in the collection.
+```{r gopheridge-demo-2, eval=TRUE}
+# conditional eval of top hz depth of diagnostic feature or horizon
+f.diag.top <- function(x, d.hz) {
+	# extract diagnostic horizon data
+	d <- diagnostic_hz(x)
+	# subset to the requested diagnostic hz
+	d <- subset(d, diag_kind == d.hz)
+  
+	# if missing return NA
+	if(nrow(d) == 0)
+		return(NA)
+	
+	# return top depth
+	return(d$featdept)
+}
+
+# compute depth to paralithic contact, save the results as site-level data
+gopheridge$paralithic.contact.depth <- profileApply(gopheridge, f.diag.top, d.hz='paralithic contact')
+```
+
+
+
+Re-order the `gopheridge` profiles by presence/absence of paralithic contact, plot, and then annotate depth of Cr contact.
+```{r basic_plotting, fig.width=12, fig.height=5}
+# order by presence of paralithic contact and its depth
+new.order <- order(gopheridge$paralithic.contact, gopheridge$paralithic.contact.depth)
+# setup margins:
+par(mar=c(0,0,0,0))
+plot(gopheridge, name='hzname', plot.order=new.order)
+# annotate paralithic contact with lines
+x.pos <- 1:length(gopheridge)
+lines(x.pos, gopheridge$paralithic.contact.depth[new.order], lty=2, lwd=2, col='black')
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`. [`r format(Sys.time(), "%Y-%m-%d")`]

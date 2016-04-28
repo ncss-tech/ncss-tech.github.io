@@ -1,0 +1,111 @@
+---
+output:
+  html_document:
+    fig_caption: yes
+    jquery: null
+    mathjax: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+# library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+Getting, Plotting, and Saving Soil Series Extent Data from SoilWeb
+===============================================================
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>Dylan Beaudette
+
+### Introduction
+This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is purged when SoilWeb is periodically synced to the official data.
+
+### Installation
+With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('soilDB', repos="http://R-Forge.R-project.org", type="source") # most recent copy from r-forge
+install.packages('dismo', dep=TRUE)
+install.packages('RColorBrewer', dep=TRUE)
+install.packages('maps', dep=TRUE)
+```
+
+### Examples 
+**Illustrate the extent of SSURGO map units associated with the Amador series.**
+```{r libraries, results='hide'}
+# load required libraries
+library(soilDB)
+library(rgdal)
+library(dismo)
+library(maps)
+library(RColorBrewer)
+```
+
+```{r example-1, eval=FALSE}
+# plot map
+seriesExtentAsGmap('amador')
+```
+
+**Illustrate the extent of SSURGO map units associated with several soil series from MLRA 17 and 18.**
+```{r example-2, results='hide'}
+# define some nice colors
+cols <- brewer.pal('Set1', n=3)
+
+# get the spatial extent of select series
+amador <- seriesExtent('amador')
+pardee <- seriesExtent('pardee')
+san.joaquin <- seriesExtent('san joaquin', timeout=120)
+
+# plot the results:
+# set figure margins to 0
+par(mar=c(0,0,0,0))
+
+# plot select counties from California
+map(database='county', regions='california,calaveras|tuolumne|amador|san joaquin|stanislaus|merced|mariposa|sacramento')
+
+# add each soil series extent object
+plot(amador, col=cols[1], add=TRUE)
+plot(pardee, col=cols[2], add=TRUE)
+plot(san.joaquin, col=cols[3], add=TRUE)
+
+# add a neatline around the map
+box()
+
+# make a simple legend
+legend('topright', col=cols, pch=15, legend=c('Amador','Pardee','San Joaquin'))
+```
+
+
+**Investigate the structure of soil series extent data.**
+```{r example-3}
+# internal structure / class
+str(amador, 2)
+
+# coordinate reference system in PROJ4 notation
+proj4string(amador)
+
+# extract acreage, details: http://casoilresource.lawr.ucdavis.edu/see/
+amador$acres
+pardee$acres
+san.joaquin$acres
+```
+
+**Save soil series extent data in multiple formats.**
+```{r example-4, eval=FALSE}
+# save using the coordinate reference system associated with this object (GCS WGS84)
+writeOGR(amador, dsn='.', layer='amador-extent', driver='ESRI Shapefile')
+
+# save as KML for use in Google Earth
+writeOGR(amador, dsn='amador-extent.kml', layer='amador', driver='KML')
+
+# project to UTM zone 10 NAD83 and save
+amador.utm <- spTransform(amador, CRS('+proj=utm +zone=10 +datum=NAD83'))
+writeOGR(amador.utm, dsn='.', layer='amador-extent-utm', driver='ESRI Shapefile')
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

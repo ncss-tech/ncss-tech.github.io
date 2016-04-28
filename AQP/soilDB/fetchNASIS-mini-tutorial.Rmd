@@ -1,0 +1,175 @@
+---
+output:
+  html_document:
+    fig_caption: yes
+    jquery: null
+    mathjax: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Tips on getting pedon data from NASIS into R
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>D.E. Beaudette, J.M. Skovlin, S. Roecker
+
+> This tutorial is based on essential background material described in the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) and related [NASIS ODBC connection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp) tutorials. If you have not reviewed those tutorials, please do so before proceeding.
+
+## Introduction
+The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
+
+
+## Component Data
+Please see the [related tutorial on loading NASIS component data into R](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/NASIS-component-data.html?root=aqp).
+
+
+## Pedon Data
+Pedon data are extracted from the selected set using the `fetchNASIS()` convenience function. The resulting object is a distillation of the complex NASIS representation of a pedon into "site-level", "horizon-level", and "diagnostic" attributes. In the process of creating this simplified representation of pedon data we've tried to include the most often used data related to soil pedons.  The SPC is not comprehensive and does not include all the attributes that may related data in NASIS. [elaborate as needed]
+
+Load up your local database and selected set with some pedon data and follow along with the code blocks.  Any NASIS queries used to load data into your selected set should always "target" the following tables:
+
+ * Site
+ * Pedon
+
+```{r get-pedon-data, results='hide'}
+# load required libraries
+library(soilDB)
+
+# get data, using defaults
+p <- fetchNASIS()
+```
+
+### Filtering / Extracting Data
+There are several approaches to filtering pedon data that have been loaded via `fetchNASIS()`. Filtering by pattern matching ([regular expression](https://en.wikipedia.org/wiki/Regular_expression)) is the most common. The `grep()` function in R performs pattern matching using regular expression. These examples assume that you have been following along with code examples from the top of this document. Note that each of these examples ignore letter case.
+
+1. Extract those pedons with a taxonname containing the pattern "amador":
+```{r, fig.width=8.5, fig.height=3.5}
+# generate a numerical index to matching pedons
+idx <- grep('amador', p$taxonname, ignore.case = TRUE)
+# extract using the index
+amador <- p[idx, ]
+# try plotting, hide IDs
+par(mar=c(0,0,2,0))
+plot(amador, print.id=FALSE)
+title("Pedons with taxonname matching regular expression 'amador'", cex.main=0.85)
+```
+
+2. Extract those pedons with a landform string containing the pattern "glacial":
+```{r, fig.width=8.5, fig.height=3.5}
+# generate a numerical index to matching pedons
+idx <- grep('glacial', p$landform.string, ignore.case = TRUE)
+# extract using the index
+g <- p[idx, ]
+# try plotting, hide horizon designation and IDs
+par(mar=c(0,0,2,0))
+plot(g, print.id=FALSE, name='')
+title("Pedons with landform.string matching regular expression 'glacial'", cex.main=0.85)
+```
+
+3. Extract those pedons with a parent material kind containing the pattern "till", but not those pedons with "unspecified" till:
+```{r, fig.width=8.5, fig.height=3.5}
+# locate pedons with "till" in the parent material kind field
+idx <- grep('till', p$pmkind, ignore.case = TRUE)
+till <- p[idx, ]
+# apply an additional filter and remove those pedons from this group that have "unspecified" in the parent material kind field
+# note the use of invert=TRUE within grep()
+idx <- grep('unspecified', till$pmkind, ignore.case = TRUE, invert = TRUE)
+till <- till[idx, ]
+
+# try plotting, hide horizon designation and IDs
+par(mar=c(0,0,2,0))
+plot(till, print.id=FALSE)
+title("Pedons with pmkind matching regular expression 'till'\nand not matching 'unspecified'", cex.main=0.85)
+```
+
+Please see the [SoilProfileCollection tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) for additional ideas on how to manipulate the data returned by `fetchNASIS()`.
+
+Additional tutorials are available at the [AQP project website](http://aqp.r-forge.r-project.org/).
+
+
+
+## Status and QC Messages
+As part of the quality control process, a number of possible messages are printed to the console when running `fetchNASIS()`. These messages and their meaning are described below:
+
+* `NOTICE: multiple labsampnum values / horizons; see pedon IDs: 94CA039005`
+This notice describes a rare situation where there are >1 lab samples per genetic horizon. Horizons with more than one `labsampnum` will be replicated in the returned object, but only if the argument `rmHzErrors` is set to FALSE. See below for details.
+
+* `mixing dry colors ... [17 of 2250 horizons]`
+In this case, 17 of the 2250 horizons loaded into the selected set have more than 1 dry color described. Multiple colors are mixed via weighted average in order to simplify analysis.
+
+* `mixing moist colors ... [51 of 2642 horizons]`
+In this case, 51 of the 2642 horizons loaded into the selected set have more than 1 moist color described. Multiple colors are mixed via weighted average in order to simplify analysis.
+
+* `replacing missing lower horizon depths with top depth + 1cm ... [68 horizons]`
+In this case, 68 horizons have no lower depth defined. A missing lower horizon depth can create problems so a *surrogate* value is created by adding 1cm to the associated top depth.
+
+* `-> QC: sites without pedons ...`
+As the message suggests, there are sites with no associated pedons. While this isn't necessarily a quality control issue, it should be investigated. The associated user site ID values can be extracted interactively with `get('sites.missing.pedons', envir=soilDB.env)`.
+
+* `-> QC: duplicate pedons ...`
+As this messages suggests, there are multiple pedons that share the same user pedon ID. This may indicate data entry errors, or pedons that have been copied from the "KSSL" group for local modification. The associated user pedon IDs can be extracted interactively with `get('dup.pedon.ids', envir=soilDB.env)`.
+
+* `-> QC: horizon errors detected ...`
+Horizon depths are checked for gaps, overlap, or bottom depths than are shallower than top depths. In most cases pedons flagged as having errors suggests a quality control issue. However, combination horizons (e.g. B/C) that have been entered as two distinct horizons sharing the same horizon depths will trigger this warning.
+
+## Adjusting the Defaults
+Some of the assumptions made by `fetchNASIS()` can be adjusted using arguments to the function:
+
+* `rmHzErrors = TRUE`
+Setting this value to `TRUE` (the default) will enable checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons. Note that any pedons flagged as having horizon depths errors (`rmHzErrors = TRUE`) will be omitted from the data returned by `fetchNASIS()`.
+
+* `soilColorState='moist'`
+By default, **moist** soil colors are used to generate R-compatible colors and stored in the horizon-level attribute "soil_color". Possible values for this argument are 'moist' and 'dry'.
+
+* `nullFragsAreZero = TRUE`
+Setting this value to `TRUE` (the default) will convert NULL rock fragment volumes to 0s. This is typically the right assumption as rock fragment data are typically populated *only* when observed. If you know that your data contain a combination of *ommited* information (e.g. there are no rock fragment volumes populated) then consider setting this argument to `FALSE`. Note that this argument will have significant effects on the rock fragment data returned by `fetchNASIS()` as illustrated below:
+
+```{r null-frags-demo}
+# load required libraries
+library(soilDB)
+library(plyr)
+library(reshape2)
+
+# default setting, NULL fragment volume is interpreted as 0
+f.1 <- fetchNASIS(nullFragsAreZero = FALSE)
+
+# assume NULL fragment volume is NULL
+f.2 <- fetchNASIS(nullFragsAreZero = TRUE)
+
+# fragment classes to investigate
+vars <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
+
+# get those horizon-level attributes from each set
+s.1 <- (horizons(f.1)[, vars])
+s.2 <- (horizons(f.2)[, vars])
+
+# assign fragment interpretation style
+s.1$null.frags <- 'NULL'
+s.2$null.frags <- 'Zero'
+
+# stack and convert to long format
+s <- rbind(s.1, s.2)
+s.long <- melt(s, id.vars='null.frags')
+
+# tabular comparison, using 5th, 50th, and 95th percentiles as low-rv-high
+res <- ddply(s.long, c('variable', 'null.frags'), function(i) {
+  q <- quantile(i$value, na.rm=TRUE, probs=c(0.05, 0.5, 0.95))
+  n <- length(na.omit(i$value))
+  data.frame(stats=paste0(round(q), collapse='-'), horizons.with.data=n)
+})
+
+# re-cast to "wide" format to compare:
+dcast(res, variable ~ null.frags, value.var = 'stats')
+```
+
+An increased level of verbosity in the quality control messages can be enabled by setting the option: `options(soilDB.verbose=TRUE)`. This is not generally suggested, but may be useful if you are having difficulty loading data from NASIS.
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

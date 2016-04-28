@@ -1,0 +1,173 @@
+---
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+Getting and Comparing KSSL Data
+===============================
+`r format(Sys.time(), "%Y-%m-%d")`
+Dylan Beaudette
+
+## Introduction
+This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to download [KSSL](http://ncsslabdatamart.sc.egov.usda.gov/) data from SoilWeb. These data are from the June 2015 snapshot, and will be updated as future snapshots are released. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) from the [aqp](http://aqp.r-forge.r-project.org/) package.
+
+### Installation
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+install.packages('maps', dep=TRUE)
+install.packages('reshape2', dep=TRUE)
+install.packages('soilDB', dep=TRUE)
+
+# get the latest version of soilDB from GitHub
+# you may have to install the 'devtools' package
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+## Getting KSSL Data
+Data can be queried by "taxonname"" (typically a soil series), using a geographic bounding-box in WGS84 referenced coordinates, or by MLRA. Taxonname matching is case-insensitive and based on the most current taxonname in NASIS. See `?fetchKSSL()` or [this GitHub repository](https://github.com/dylanbeaudette/process-kssl-snapshot) for details.
+
+In this example, we are downloading KSSL data for the [musick](https://soilseriessc.egov.usda.gov/OSD_Docs/M/MUSIC.html), [chaix](https://soilseries.sc.egov.usda.gov/OSD_Docs/C/CHAIX.html), and [holland](https://soilseries.sc.egov.usda.gov/OSD_Docs/H/HOLLAND.html) soils; commonly found on granitic rocks of the Sierra Nevada Mountain region of California.
+```{r get-data, fig.width=6, fig.height=7}
+# load libraries
+library(soilDB)
+library(plyr)
+library(lattice)
+library(maps)
+
+# define plotting style
+tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+
+# fetch KSSL data by fuzzy-matching of series name
+musick <- fetchKSSL('musick')
+holland <- fetchKSSL('holland')
+chaix <- fetchKSSL('chaix')
+
+# generate a basemap of northern California, with county boundaries
+map('county', 'California', xlim=c(-123.25, -118.75), ylim=c(36.5, 41))
+# add long/lat axes
+map.axes()
+# add locations of musick
+points(y ~ x, data=site(musick), pch=21, bg='RoyalBlue')
+# add locations of holland
+points(y ~ x, data=site(holland), pch=21, bg='DarkRed')
+# add locations of chaix
+points(y ~ x, data=site(chaix), pch=21, bg='DarkGreen')
+# add a simple legend
+legend('topright', pch=21, pt.bg=c('RoyalBlue', 'DarkRed', 'DarkGreen'), legend=c('musick', 'holland', 'chaix'), bty='n')
+```
+
+
+
+
+### Profile Plots
+Generate "thematic" profile sketches by coloring horizons according to clay content.
+```{r plot-pedons, fig.width=10, fig.height=6}
+par(mar=c(0,1,5,1))
+plot(musick, name='hzn_desgn', color='clay')
+plot(holland, name='hzn_desgn', color='clay')
+plot(chaix, name='hzn_desgn', color='clay')
+```
+
+
+### Combining Data
+Since the results from `fetchKSSL()` function always returns data in the same format, it is possible to stack the results of several KSSL queries using `rbind()`.
+```{r combine-data, fig.width=10, fig.height=6}
+# check "correlated as" names from each object
+table(musick$taxonname)
+table(holland$taxonname)
+table(chaix$taxonname)
+
+# since there are multiple permuations of each, normalize soil series name by replacement
+musick$taxonname <- 'musick'
+holland$taxonname <- 'holland'
+chaix$taxonname <- 'chaix'
+
+# stack datasets into a new SoilProfileCollection
+g <- rbind(chaix, musick, holland)
+
+# compute weighted-mean particle diameter
+g$wmpd <- with(horizons(g), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
+
+# tabulate number of pedons by normalized series name
+table(g$taxonname)
+
+# plot the grouped object, with profiles arranged by taxonname
+par(mar=c(0,1,5,1))
+groupedProfilePlot(g, groups = 'taxonname', color='clay', group.name.offset = -10)
+
+# estimate soil depth based on horizon designations
+sdc <- getSoilDepthClass(g, name='hzn_desgn', top='hzn_top', bottom='hzn_bot')
+
+# splice-into site data
+site(g) <- sdc
+
+# summarize soil depth by taxonname
+tapply(g$depth, g$taxonname, summary)
+```
+
+
+### Aggregation
+The `slab()` function is used to aggregate selected variables within collections of soil profiles along depth-slices. In this case, we aggregate clay, pH (1:1 H2O, estimated from saturated paste pH when missing), and base saturation at pH 8.2 along 1-cm thick slices and within groups defined by the variable 'taxonname'. See `?slab()` for details on how this function can be used.
+```{r aggregate}
+g.slab <- slab(g, taxonname ~ clay + estimated_ph_h2o + bs82 + wmpd)
+
+# inspect stacked data structure
+str(g.slab)
+```
+
+
+### Refine Labels
+It is convenient to know how many pedons there are within each collection--therefore, we append this value to the series name. Using the same approach, we can rename the soil properties with more useful descriptions and units of measure.
+```{r rename}
+# re-name soils with series name + number of pedons-- order is critical !
+new.levels <- c('musick', 'holland', 'chaix')
+new.labels <- paste(new.levels, ' [', c(length(musick), length(holland), length(chaix)), ' pedons]', sep='')
+g.slab$taxonname <- factor(g.slab$taxonname, levels=new.levels, labels=new.labels)
+
+# new names should match the order in:
+levels(g.slab$variable)
+
+# re-name soil property labels-- order is critical !
+levels(g.slab$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'Base Saturation at pH 8.2 (%)', 'WMPD (mm)')
+```
+
+
+### Graphically Compare
+The slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread. "Contributing fraction" values (% of pedons with data at a given depth) are printed along the right-hand side of each panel. These values provide both an indication of how deep the soils are, and, how much confidence can be placed in the aggregate data at any given depth.
+```{r plot, fig.width=10, fig.height=6}
+# plot grouped, aggregate data
+xyplot(top ~ p.q50 | variable, groups=taxonname, data=g.slab, ylab='Depth',
+			 xlab='median bounded by 25th and 75th percentiles',
+			 lower=g.slab$p.q25, upper=g.slab$p.q75, ylim=c(155,-5),
+			 panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+			 prepanel=prepanel.depth_function,
+			 cf=g.slab$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+			 strip=strip.custom(bg=grey(0.85)),
+			 layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+			 par.settings=tps,
+			 auto.key=list(columns=3, lines=TRUE, points=FALSE)
+)
+```
+
+
+
+## 
+```{r plot, fig.width=10, fig.height=6}
+
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
