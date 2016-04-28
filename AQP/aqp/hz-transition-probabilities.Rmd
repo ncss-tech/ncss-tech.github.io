@@ -1,0 +1,198 @@
+---
+output:
+  html_vignette:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly = TRUE)
+library(printr, quietly = TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=TRUE)
+options(width=100, stringsAsFactors=FALSE)
+
+knit_hooks$set(htmlcap = function(before, options, envir) {
+  if(!before) {
+    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
+    }
+    })
+```
+
+
+Horizon Sequence Transition Probability
+=======================================
+D.E. Beaudette
+<br>
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
+
+# Introduction
+
+
+
+# Setup R Envionment
+If you have never used the [aqp](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) or [soildb](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) packages before, you will likely need to install them. This only needs to be done once. 
+```{r install-packages, eval=FALSE}
+# stable version from CRAN + dependencies
+install.packages('aqp', dep=TRUE) 
+install.packages('soilDB', dep=TRUE)
+install.packages('sharpshootR', dep=TRUE)
+install.packages('markovchain', dep=TRUE)
+# latest versions from R-Forge:
+install.packages('aqp', repos="http://R-Forge.R-project.org", type='source')
+install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
+install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source')
+```
+
+Once you have all of the R packages on which  this document depends, it is a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g., after an upgrade) and **loaded** anytime you want to access functions from within those packages.
+
+```{r load-packages}
+library(markovchain)
+library(aqp)
+library(sharpshootR)
+library(soilDB)
+library(igraph)
+```
+
+# Sample Data
+While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
+
+```{r load-data, fig.width=9, fig.height=4, htmlcap='Pedons correlated to the Loafercreek soil series.'}
+# load sample data from the soilDB package
+data(loafercreek, package = 'soilDB')
+pedons <- loafercreek
+# plot profile sketches
+par(mar=c(0,0,0,0))
+plot(pedons, name='', print.id=FALSE, cex.names=0.75, axis.line.offset=-4)
+```
+
+
+## Optional: Follow Along with Your Data
+The following code block demonstrates how to pull data in using the [`fetchNASIS()` function from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp).
+
+```{r use-nasis-data, eval=FALSE}
+# first load the desired data set within NASIS into your NASIS selected set
+# then load data from the NASIS selected set into R
+# note that the `nullFragsAreZero` argument converts NULL rock fragment class data into 0s
+pedons <- fetchNASIS(nullFragsAreZero=TRUE)
+# optionally subset the data by taxon name - enter your taxon name
+pedons <- pedons[grep(pattern='ENTER_YOUR_TAXON_NAME', pedons$taxonname, ignore.case=TRUE), ]
+```
+
+# Methods
+
+```{r}
+sort(table(pedons$hzname), decreasing=TRUE)
+```
+
+Constructing a graph of transitions from one horizon to the next ("transition probabilities") can highlight those horizon designations that are most commonly used together. A follow-up tutorial on transition probability matrix interpretation is planned.
+
+```{r transition-probabilities, fig.width=10, fig.height=6, htmlcap='Graph constructed from transition probabilities. Thicker lines denote more likely transitions.'}
+# sample data
+data(sp4)
+depths(sp4) <- id ~ top + bottom
+
+# horizon transition probabilities: row -> col transitions
+(tp <- hzTransitionProbabilities(sp4, 'name'))
+
+# abuse sharpshootR code to display as graph
+par(mar=c(0,0,0,0), mfcol=c(1,2))
+plot(sp4)
+plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.5, edge.scaling.factor=2, vertex.label.cex=0.75, vertex.label.family='sans')
+```
+
+More examples.
+```{r, fig.width=10, fig.height=6}
+# try some other examples, seems logical
+tp <- hzTransitionProbabilities(pedons, 'hzname')
+# tp <- hzTransitionProbabilities(pedons, 'genhz')
+
+# abuse sharpshootR code
+# sometimes default layout doesn't look so good
+par(mar=c(0,0,0,0), mfcol=c(1,2))
+plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.5)
+plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.5, g.layout = layout_with_lgl)
+```
+
+Convert contingency table of generalized horizon labels to an adjacency (similar to transition probability) matrix.
+```{r, fig.width=10, fig.height=6}
+tab <- table(pedons$hzname, pedons$genhz)
+m <- genhzTableToAdjMat(tab)
+
+par(mar=c(0,0,0,0), mfcol=c(1,1))
+plotSoilRelationGraph(m, graph.mode = 'directed', edge.arrow.size=0.5)
+```
+
+
+Tinker with the [markovchain](https://cran.rstudio.com/web/packages/markovchain/index.html) package. Details [here](https://cran.rstudio.com/web/packages/markovchain/vignettes/an_introduction_to_markovchain_package.pdf).
+```{r, fig.width=10, fig.height=6}
+## init a markovchain object from TP
+# this trquires "looping" terminal states
+# e.g. an absorbing MC: https://en.wikipedia.org/wiki/Absorbing_Markov_chain
+tp.loops <- hzTransitionProbabilities(sp4, 'name', loopTerminalStates = TRUE)
+
+mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
+
+# simple plot
+plot(mc, edge.arrow.size=0.5)
+
+# check absorbing states
+absorbingStates(mc)
+
+# steady-state:
+steadyStates(mc)
+```
+
+```{r, fig.width=10, fig.height=6}
+# try some more complex TP matrices
+tp <- hzTransitionProbabilities(pedons, 'hzname', loopTerminalStates = TRUE)
+mc <- new("markovchain", states=dimnames(tp)[[1]], transitionMatrix = tp)
+
+# better plotting
+par(mar=c(0,0,0,0), mfcol=c(1,2))
+plot(mc, vertex.size=10, edge.arrow.size=0.5, edge.label.cex=0.75, layout=layout_with_lgl)
+plot(mc, vertex.size=10, edge.arrow.size=0.5, edge.label.cex=0.75, layout=layout_as_tree)
+
+# another 
+tp <- hzTransitionProbabilities(pedons, 'genhz', loopTerminalStates = TRUE)
+mc <- new("markovchain", states=dimnames(tp)[[1]], transitionMatrix = tp)
+
+# better plotting
+par(mar=c(0,0,0,0), mfcol=c(1,2))
+plot(mc, vertex.size=10, edge.arrow.size=0.5, edge.label.cex=0.75, layout=layout_as_tree)
+plot(mc, vertex.size=10, edge.arrow.size=0.5, edge.label.cex=0.75, layout=layout_with_lgl)
+```
+
+
+Simulation from a markovchain object.
+```{r, fig.width=10, fig.height=6}
+# simulate
+rmarkovchain(10, mc, include.t0=TRUE, t0='A')
+
+# multiple simulations, as column vectors
+replicate(10, rmarkovchain(10, mc, include.t0=TRUE, t0='A'))
+
+# what comes after a state?
+conditionalDistribution(mc, 'A')
+
+# this is now in AQP, but requires markovchain package
+mostLikelyHzSequence(mc, 'A')
+```
+
+
+Try with some KSSL data.
+```{r, fig.width=10, fig.height=10}
+# some series to query
+s <- c('amador', 'auburn', 'musick', 'holland')
+s.data <- lapply(s, fetchKSSL)
+
+par(mar=c(0,0,2,0), mfcol=c(2,2))
+for(i in 1:length(s)) {
+  tp <- hzTransitionProbabilities(s.data[[i]], 'hzn_desgn')
+  plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.3, edge.scaling.factor=2, main=s[i], vertex.label.cex=0.75, vertex.label.family='sans')
+}
+```
+

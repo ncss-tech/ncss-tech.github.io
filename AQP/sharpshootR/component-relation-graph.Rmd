@@ -1,0 +1,169 @@
+```{r setup, echo=FALSE, results='hide'}
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Generating Soil Component Relation Diagrams
+
+
+Details pending. [A recent discussion on the topic](http://casoilresource.lawr.ucdavis.edu/wiki/SoilSeriesRelationGraph#Recent_Dialog).
+
+## Simple Example
+```{r libraries-and-sample, fig.width=14, fig.height=7}
+# load libraries
+library(soilDB)
+library(sharpshootR)
+library(plyr)
+library(igraph)
+library(RColorBrewer)
+
+# load sample data associated with the amador soil series
+data(amador)
+
+# map unit keys, component names, component percentages
+head(amador)
+
+# convert into adjacency matrix, based on no. times component co-occur
+m.1 <- component.adj.matrix(amador, method='occurrence')
+print(m.1)
+
+# convert into adjacency matrix, weighted by component percent
+m.2 <- component.adj.matrix(amador)
+print(round(m.2, 2))
+
+# compare two methods
+par(mfcol=c(1,2), mar=c(0,0,1,0))
+plotSoilRelationGraph(m.1, s='amador')
+title('Occurence')
+plotSoilRelationGraph(m.2, s='amador')
+title('Community Matrix')
+```
+
+```{r layout-examples, fig.width=14, fig.height=7}
+# compute adjacency matrix via community matrix method
+m <- component.adj.matrix(amador)
+# try a bunch of layouts
+par(mfrow=c(2,3), mar=c(0,0,1,0))
+plotSoilRelationGraph(m, s='amador', main='fruchterman.reingold (default)')
+plotSoilRelationGraph(m, s='amador', g.layout=layout.grid, main='grid')
+plotSoilRelationGraph(m, s='amador', g.layout=layout.circle, main='circle')
+plotSoilRelationGraph(m, s='amador', g.layout=layout.mds, main='MDS')
+plotSoilRelationGraph(m, s='amador', g.layout=layout.spring, main='spring')
+plotSoilRelationGraph(m, s='amador', g.layout=layout.star, main='star')
+```
+
+
+```{r dendrogram-representation, fig.width=14, fig.height=7}
+# setup page
+par(mfcol=c(1,2), mar=c(0,0,0,0))
+# plot as network diagram, with Amador soil highlighted
+plotSoilRelationGraph(m, s='amador')
+# plot as dendrogram, with Amador soil highlighted
+plotSoilRelationGraph(m, s='amador', plot.style='dendrogram')
+```
+
+```{r mst, fig.width=14, fig.height=7}
+# tighten margins
+par(mfcol=c(1,2), mar=c(0,0,1,0))
+# plot as network diagram, with Amador soil highlighted
+plotSoilRelationGraph(m, s='amador', main='Full Graph')
+plotSoilRelationGraph(m, s='amador', spanning.tree='max', main='Maximum Spanning Tree')
+```
+
+```{r prune-edges, fig.width=15, fig.height=3}
+par(mar=c(1,1,1,1), mfcol=c(1,5))
+for(i in seq(0, 1, length.out = 5)) {
+  plotSoilRelationGraph(m, vertex.scaling.factor=3, del.edges=i)
+  title(paste0('Edge weight < ', i, '-tile pruned'), cex.main=0.9, line=-1)
+  box()
+}
+```
+
+```{r prune-edges-mst, fig.width=15, fig.height=3}
+par(mar=c(1,1,1,1), mfcol=c(1,5))
+for(i in seq(0, 1, length.out = 5)) {
+  plotSoilRelationGraph(m, vertex.scaling.factor=3, del.edges=i, spanning.tree='max')
+  title(main=paste0('Edge weight < ', i, '-tile pruned'), sub='Max Spanning Tree', cex.main=0.9, line=-1)
+  box()
+}
+```
+
+
+## NASIS via local database
+```{r get-format-nasis-data}
+# get legend/DMU/component data from NASIS
+# in this case, CA630 data
+d <- get_component_data_from_NASIS_db()
+
+# normalize component names
+d$compname <- tolower(d$compname)
+
+# remove misc. areas components
+d <- subset(d, compkind != 'miscellaneous area')
+
+# remove some higher-taxa and non-soil components
+d <- subset(d, ! compname %in% c('lithic haploxeralfs', 'rock outcrop', 'aquic haploxeralfs', 'ultic haploxeralfs', 'riparian'))
+
+# select only those columns that we really need
+d <- d[, c('dmudesc', 'compname', 'comppct_r', 'majcompflag')]
+
+# how frequently is any given component a "major" component?
+maj.comp.freq <- ddply(d, 'compname', summarize, 1 - prop.table(table(majcompflag))[1])
+names(maj.comp.freq) <- c('compname', 'freq')
+
+# extract map unit symbols from DMU description labels
+d$musym <- gsub('CA630', '', d$dmudesc)
+
+# check top couple of rows
+head(d)
+
+# convert into adjacency matrix, weighted by component percentage
+m <- component.adj.matrix(d, mu='musym', co='compname', wt='comppct_r')
+```
+
+
+```{r plot-network-graph, fig.width=15, fig.height=15}
+# tighten margins
+par(mar=c(0,0,2,0))
+plotSoilRelationGraph(m, vertex.scaling.factor=1, main='CA630 Components')
+
+plotSoilRelationGraph(m, spanning.tree='max', vertex.scaling.factor=1, edge.scaling.factor=8, s='amador', main='CA630 Components\n(max spanning tree)')
+
+plotSoilRelationGraph(m, spanning.tree=0.75, vertex.scaling.factor=1, edge.scaling.factor=8, s='amador', main='CA630 Components\n(max spanning tree + edges with weights > 75th percentile)')
+
+plotSoilRelationGraph(m, vertex.scaling.factor=1, edge.scaling.factor=8, s='loafercreek', del.edges=0.25, main='CA630 Components\n(edge weights < 25th percentile pruned)')
+
+plotSoilRelationGraph(m, spanning.tree='max', vertex.scaling.factor=1, edge.scaling.factor=8, s='amador', main='CA630 Components\n(max spanning tree and maj. component flag label adjustment)', vertex.label.cex=sqrt(maj.comp.freq$freq+0.5))
+```
+
+
+## SSURGO via SDA
+```{r get-format-SSURGO-data, results='hide'}
+# select by survey area(s)
+q <- "SELECT 
+component.mukey, comppct_r, lower(compname) as compname
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+WHERE legend.areasymbol IN ('CA654')
+AND compkind IN ('Series', 'Taxadjunct')"
+
+# run query, process results, and return as data.frame object
+res <- SDA_query(q)
+
+# convert into adj. matrix using component percentage weights
+m <- component.adj.matrix(res)
+```
+
+```{r plot-SSURGO-network-graph, fig.width=15, fig.height=15}
+# tighten margins
+par(mar=c(0,0,2,0))
+plotSoilRelationGraph(m, vertex.scaling.factor=1, edge.scaling.factor=8, main='CA654 Components\nFull Graph')
+
+plotSoilRelationGraph(m, vertex.scaling.factor=1, edge.scaling.factor=8, spanning.tree='max', main='CA654 Components\nMaximum Spanning Tree')
+
+plotSoilRelationGraph(m, vertex.scaling.factor=1, edge.scaling.factor=8, spanning.tree=0.75, main='CA654 Components\nMaximum Spanning Tree + edges with weight > 75th percentile')
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.

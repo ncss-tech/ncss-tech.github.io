@@ -1,0 +1,96 @@
+---
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
+```
+
+A Novel Display of Categorical Pedon Data
+==============================================
+D.E. Beaudette
+<br>
+`r format(Sys.time(), "%Y-%m-%d")`
+
+
+## Introduction
+This tutorial describes a simple process for visualizing patterns in categorical data associated with pedon data.
+
+### Adapting Content to Your Data
+Copy and paste blocks of code in this tutorial into a new R Studio script file (*ctrl + shift + n* makes a new file), edit, and then run. Running lines or blocks of code in an RStudio script file is as simple as moving the cursor to the line (or selecting a block) of code and press *ctrl + enter*.
+
+## Setup R Environment
+This step is only required the **first time** you open R. These packages will be available via `library()` in later sessions.
+
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r install-deps, eval=FALSE}
+# run these commands in the R console, only once
+install.packages('aqp', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('aqp', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
+install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
+install.packages('sharpshootR', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
+```
+
+
+
+```{r, fig.width=8, fig.height=7}
+library(aqp)
+library(sharpshootR)
+
+# load some example NASIS data
+data(loafercreek, package='soilDB')
+
+# cut-down to a subset
+loafercreek <- loafercreek[1:20, ]
+
+# get depth class
+sdc <- getSoilDepthClass(loafercreek)
+site(loafercreek) <- sdc
+
+# diagnostic properties to consider, no need to convert to factors
+v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
+       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
+       'shallow', 'mod.deep', 'deep', 'very.deep')
+
+
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='pedon_id', dend.label = 'taxonname')
+
+x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='pedon_id')
+x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='taxonname')
+
+
+## binary + multinominal categories
+
+# new versions of fetchNASIS do this automatically
+loafercreek$hillslope_pos <- factor(loafercreek$hillslope_pos, levels=c('Toeslope', 'Footslope', 'Backslope', 'Shoulder', 'Summit'))
+
+# work-around: new function in sharpshootR
+hp <- multinominal2logical(loafercreek, 'hillslope_pos')
+site(loafercreek) <- hp
+
+# init variable names
+v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
+       'ochric.epipedon', 'mollic.epipedon', 'mod.deep', 'deep', 'very.deep', levels(loafercreek$hillslope_pos))
+
+# should work as before
+# use the 'sort.vars = FALSE' option to set the order of the variable names to the order they are listed in 'v'
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname', sort.vars = FALSE)
+x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='bedrock_kind', sort.vars = FALSE)
+```
+
+
+----------------------------
+This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`, `aqp` version `r utils::packageDescription("aqp", field="Version")`, and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+

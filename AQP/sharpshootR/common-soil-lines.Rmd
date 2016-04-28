@@ -1,0 +1,50 @@
+```{r setup, echo=FALSE, results='hide'}
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Linework Evaluation
+
+```{r get-data}
+library(spdep)
+library(rgdal)
+library(igraph)
+library(sharpshootR)
+library(lattice)
+library(Cairo)
+
+# load active survey
+# x <- readOGR(dsn='l:/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', stringsAsFactors=FALSE)
+x <- readOGR(dsn='l:/CA792/ca792_spatial/FG_CA792_OFFICIAL.gdb', layer='ca792_a', stringsAsFactors=FALSE)
+
+# remove NOTCOM, DA, and empty (non-NA) symbols
+x <- x[which(! x$MUSYM %in% c('NOTCOM', 'DA', ' ', '', 'WATER')), ]
+
+# create polygon adjacency matrix
+res <- polygonAdjacency(x, v='MUSYM')
+
+# # graphical check: slow for large number of features
+# plot(x)
+# plot(x[res$commonLines, ], col='red', add=TRUE)
+
+# save to SHP
+# writeOGR(x[res$commonLines, ], dsn='l:/CA630/MapUnits', layer='common-soil-lines', driver='ESRI Shapefile', overwrite_layer=TRUE)
+```
+
+
+
+```{r ex-1, fig.width=10, fig.height=10}
+# plot spatial adjacency information
+par(mar=c(0,0,0,0))
+plotSoilRelationGraph(res$adjMat, vertex.scaling.factor = 1)
+plotSoilRelationGraph(res$adjMat, spanning.tree=0.9, edge.scaling.factor=0.1)
+plotSoilRelationGraph(res$adjMat, spanning.tree='max', edge.scaling.factor=0.1, vertex.scaling.factor=1.5)
+```
+
+
+```{r node-diversity, fig.width=8, fig.height=12}
+# compute diversity by map unit symbol
+g <- plotSoilRelationGraph(res$adjMat, vertex.scaling.factor = 1, plot.style = 'none')
+dotplot(sort(graph.diversity(g)))
+```
+

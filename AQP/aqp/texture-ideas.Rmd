@@ -1,0 +1,86 @@
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly = TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+```{r get-data}
+library(aqp)
+library(soilDB)
+library(compositions)
+library(reshape2)
+library(latticeExtra)
+library(plyr)
+
+# get sand, silt, clay data from the named series
+# return weighted mean of top 10cm
+get.data <- function(series) {
+  x <- fetchKSSL(series)
+  s <- slab(x, pedon_key ~ clay + sand + silt, slab.structure=c(0,10), strict = FALSE, slab.fun = mean, na.rm=TRUE)
+  s <- dcast(s, pedon_key ~ variable, value.var = 'value')
+  ssc <- na.omit(horizons(x)[, c('sand', 'silt', 'clay')])
+  return(ssc)
+}
+
+# combine original texture + simulated textures from normal composition
+sim.data <- function(ssc, n.sim=1000) {
+  # convert to compositional class, note range is now [0,1]
+  ssc.acomp <- acomp(ssc)
+  # simulate normally-distributed composition based on data
+  ssc.sim <- rnorm.acomp(n=n.sim, mean=meanCol(ssc.acomp), var=cov(ssc.acomp))
+  # convert to data.frame and original range of [0,100]
+  ssc.sim <- as.data.frame(unclass(ssc.sim) * 100)
+  # return stacked original + simulated data
+  return(make.groups(original=ssc, simulated=ssc.sim))
+}
+
+
+# get data for named series
+s.list <- c('clarksville', 'vista', 'auburn', 'cecil', 'drummer', 'capay')
+d <- lapply(s.list, get.data)
+names(d) <- s.list
+d <- ldply(d)
+
+# simulate from a normal composition, using mean and var-cov matrix from original data
+d.sim <- ddply(d, '.id', function(i) sim.data(i[, -1]))
+m <- melt(d.sim, id.vars=c('.id', 'which'))
+```
+
+```{r univariate-summaries, fig.height=11, fig.width=8.5}
+# plotting style
+cols <- brewer.pal(n=3, 'Set1')
+tps <- list(superpose.line=list(col=cols), superpose.symbol=list(col=cols, cex=0.5, pch='|'))
+
+# plot: panel according to original | simulated 
+p.1 <- densityplot(~ value | which + .id, groups=variable, data=m, xlab='Sand, Silt, Clay (%)', auto.key=list(columns=3), par.settings=tps, scales=list(alternating=3), panel=function(...) {
+  panel.grid(-1, -1)
+  panel.densityplot(...)
+})
+p.1 <- useOuterStrips(p.1)
+
+# plot: panel according to texture component
+p.2 <- densityplot(~ value | variable + .id, groups=which, data=m, xlab='Sand, Silt, Clay (%)', auto.key=list(columns=2), par.settings=tps, scales=list(alternating=3), panel=function(...) {
+  panel.grid(-1, -1)
+  panel.densityplot(...)
+})
+p.2 <- useOuterStrips(p.2)
+
+# display plots
+print(p.1)
+print(p.2)
+```
+
+```{r texture-triangle, fig.height=7, fig.width=7}
+## viz on texture triangle
+texture.triangle.low.rv.high(d[d$.id == 'clarksville', -1], sim=TRUE, cex=0.5); title('Clarksville')
+texture.triangle.low.rv.high(d[d$.id == 'drummer', -1], sim=TRUE, cex=0.5); title('Drummer')
+texture.triangle.low.rv.high(d[d$.id == 'auburn', -1], sim=TRUE, cex=0.5); title('Auburn')
+texture.triangle.low.rv.high(d[d$.id == 'cecil', -1], sim=TRUE, cex=0.5); title('Cecil')
+texture.triangle.low.rv.high(d[d$.id == 'vista', -1], sim=TRUE, cex=0.5); title('Vista')
+texture.triangle.low.rv.high(d[d$.id == 'capay', -1], sim=TRUE, cex=0.5); title('Capay')
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
+

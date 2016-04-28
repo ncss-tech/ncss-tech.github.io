@@ -1,0 +1,86 @@
+---
+output:
+  html_document:
+    theme: journal
+    mathjax: null
+    jquery: null
+    smart: false
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=TRUE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+
+knit_hooks$set(htmlcap = function(before, options, envir) {
+  if(!before) {
+    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
+    }
+    })
+```
+
+
+
+Plotting multiple SoilProfileCollection objects
+===============================
+D.E. Beaudette
+<br>
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
+```{r load-packages-get-data}
+library(aqp)
+library(soilDB)
+library(scales)
+library(RColorBrewer)
+
+# get OSD data for select series
+osd <- fetchOSD(c('sobrante', 'auburn'))
+
+# get KSSL data for these series
+kssl.1 <- fetchKSSL('sobrante')
+kssl.2 <- fetchKSSL('auburn')
+
+# color ramp function
+cr <- colorRamp(rev(brewer.pal(10, 'Spectral')))
+
+# get the full range of clay
+combined.data <- c(kssl.1$clay, kssl.2$clay)
+combined.range <- range(combined.data, na.rm = TRUE)
+
+# NA-padded value -> color mapping for full range of some horizon attribute
+mapColor <- function(x, r, col.ramp) {
+  c.rgb <- cr(scales::rescale(x, from=r))
+  cc <- which(complete.cases(c.rgb))
+  cols <- rep(NA, times=nrow(c.rgb))
+  cols[cc] <- rgb(c.rgb[cc, ], maxColorValue=255)
+  return(cols)
+}
+
+# convert non-NA values into colors
+kssl.1$.color <- mapColor(kssl.1$clay, combined.range, cr)
+kssl.2$.color <- mapColor(kssl.2$clay, combined.range, cr)
+
+# generate combined range / colors for legend
+pretty.vals <- pretty(combined.data, n = 8)
+legend.data <- list(legend=pretty.vals, col=rgb(cr(scales::rescale(pretty.vals)), maxColorValue=255))
+
+# assemble into list
+spc.list <- list(osd, kssl.1, kssl.2)
+```
+
+```{r plot-color, fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
+# note the use of .color for pre-computed value->color 
+par(mar=c(1,1,3,3))
+plotMultipleSPC(spc.list, group.labels=c('OSD', 'Sobrante', 'Auburn'), args=list(list(name='hzname', color='soil_color', id.style='side'), list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side'), list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side')))
+
+# legend is the combined legend
+mtext(side=3, text='Clay Content (%)', font=2, line=1.6)
+legend('bottom', legend=legend.data$legend, col=legend.data$col, bty='n', pch=15, horiz=TRUE, xpd=TRUE, inset=c(0, 0.99))
+```
+
+
+

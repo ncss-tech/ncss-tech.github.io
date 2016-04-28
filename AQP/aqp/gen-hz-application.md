@@ -1,0 +1,196 @@
+---
+title: "Assigning Generalized Horizon Labels"
+author: "D.E. Beaudette"
+date: "Wednesday, September 24, 2014"
+output: html_document
+---
+
+
+
+
+Using Generalized Horizon Labels
+================================
+D.E. Beaudette, J.M. Skovlin
+<br>
+2015-03-26
+<br>
+This document is based on `aqp` version 1.8-3 and `soilDB` version 1.5-3.
+
+
+# Introduction
+
+## An Example
+Consider the situation: you have a collection of pedons that have been correlated to a named soil series (or component) and would like to *objectively* compute a range in characteristics ("low-rv-high" values) and horizon depths. As with most collections of pedon data there may be considerable variation in description style and horizons used, horizon depths, and number of horizons described:
+
+![alt text](genhz-sketch.png)
+
+In this contrived example, there are several obvious "micro-correlation" decisions that need to be made before horizons can be grouped for aggregation. For example, what horizonation prototype scheme will be used (e.g. A-Bt1-Bt2-Bt3-Cr-R) and best conveys the concept of this soil series or soil component? Does it make sense to group {Bt3, Bt4, BCt, CBt} horizons for aggregation? Along those lines, what about grouping {Bt3, 2Bt3} horizons? Do {BA, AB} horizons occur frequently enough to be included in the horizonation prototype?
+
+Based on your knowledge of the area pedon 2 might be a good "typical" pedon from which a horizonation prototype can be developed. After careful review of the data and consultation with your crew, a new set of labels are assigned to each horizon (<span style="color: red;">red labels in figure above</span>) that define groups over which soil properties will be aggregated. These new labels define *functionally-similar* groups that may span multiple genetic horizons.
+
+
+
+
+# Setup R Envionment
+If you have never used the [aqp](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) or [soildb](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) packages before, you will likely need to install them. This only needs to be done once. 
+
+```r
+# stable version from CRAN + dependencies
+install.packages('ape', dep=TRUE) 
+install.packages('latticeExtra', dep=TRUE)
+install.packages('plyr', dep=TRUE) 
+install.packages('aqp', dep=TRUE) 
+install.packages('soilDB', dep=TRUE)
+# latest versions from R-Forge:
+install.packages('aqp', repos="http://R-Forge.R-project.org", type='source')
+install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
+```
+
+Now that you have all of the R packages that this document depends on, it would be a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g. after an upgrade), and **loaded** anytime you want to access functions from within those packages.
+
+
+```r
+library(aqp)
+library(soilDB)
+library(ape)
+library(latticeExtra)
+library(plyr)
+library(lattice)
+library(cluster)
+library(MASS)
+```
+
+# Sample Data
+While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on 30 soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
+
+
+```r
+# load sample data from the soilDB package
+data(loafercreek, package = 'soilDB')
+# keep only the first 30 pedons
+pedons <- loafercreek[1:30, ]
+# plot profile sketches
+par(mar=c(0,0,0,0))
+plot(pedons, name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
+```
+
+<img src="figure/load-data-1.png" title="plot of chunk load-data" alt="plot of chunk load-data" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">15 pedons correlated to the Loafercreek soil series.</p><hr>
+
+
+## Optional: Follow Along with Your Data
+The following code block demonstrates how to pull data in using the [`fetchNASIS()` function from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp).
+
+
+```r
+# first load the desired data set within NASIS into your NASIS selected set
+# then load data from the NASIS selected set into R
+pedons <- fetchNASIS()
+# optionally subset the data by taxon name - enter your taxon name
+pedons <- pedons[grep(pattern='ENTER_YOUR_TAXON_NAME', f$taxonname, ignore.case=TRUE), ]
+```
+
+## A Quick Note on Quantiles and Box-Whisker Plots
+[Quantiles (also called percentiles)](http://en.wikipedia.org/wiki/Quantile) are a convenient way to express where a number lies within a distribution. For example, the 5th-percentile of a set of numbers is the value that splits the lowest 5% of the data from the rest. The 50th-percentile, commonly referred to as the median, splits the data exactly in half and is a good alternative to the mean for summarizing central tendency. The 25th and 75th percentiles or 5th and 95th percentiles form useful brackets around the spread around the median. A [box and whisker plot](http://en.wikipedia.org/wiki/Box_plot) uses quantiles to display the central tendency, spread, and balance of a distribution. Unlike the mean and standard deviation, quantiles offer a relatively robust (outliers, distribution shape, skewness, etc.) definition of central tendency (RV) and spread (LOW, HIGH).
+
+
+The following R code demonstrates the relationship between frequency distribution, quantiles, and box-whisker plot for a set of 500 normally-distributed values with a mean of 10 and standard deviation of 2.
+
+
+
+```r
+# simulate 500 values from the normal distribution: with mean = 10, sd= 2
+set.seed(1010101)
+x <- rnorm(n=500, mean=10, sd=2)
+
+# compute the 5th, 25th, 50th, 75th, and 95th percentiles of x
+q <- quantile(x, probs=c(0.05, 0.25, 0.5, 0.75, 0.95))
+
+# plot a smoothed frequency distribution
+plot(density(x), main='Quantile Demonstration', ylim=c(0, 0.3), ylab='', xlab='', axes=FALSE)
+
+# mark quantiles we computed above
+abline(v=q, lty=3, col='red')
+text(x=q, y=0.1, labels=c('5th', '25th', '50th', '75th', '95th'))
+
+# overlay a box-whisker plot
+boxplot(x, at=0.25, add=TRUE, horizontal=TRUE, boxwex=0.1, border='DarkBlue', axes=FALSE)
+
+# overlay lines at the original values
+rug(x, side=3, col='DarkBlue')
+
+# add x-axis
+axis(side=1, at=pretty(x))
+```
+
+<img src="figure/quantiles-1.png" title="plot of chunk quantiles" alt="plot of chunk quantiles" style="display: block; margin: auto;" />
+
+# Methods
+
+## Assignment of Generalized Horizon Labels
+
+Once a set of generalized horizon labels have been determined a corresponding set of [regular expression](http://en.wikipedia.org/wiki/Regular_expression) (REGEX) rules were developed to convert field-described designations into GHL. Pattern matching with REGEX will typically assign useful GHL, however, there will always be cases where manual intervention is required. More on that later.
+
+From the above analysis and the [OSD](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html), it seems like the following sequence of GHL are appropriate: (A, Bt1, Bt2, Bt3, Cr, R)-- an A horizon, followed by 3 Bt horizons, then Cr and finally R. For each GHL we need a corresponding REGEX rule. For example, `'^A$|Ad|Ap'` will match 'A', 'Ad', and 'Ap'.
+
+
+```r
+# save our GHL
+n <- c('A','Bt1','Bt2','Bt3','Cr','R')
+# REGEX rules
+p <- c('^A$|Ad|Ap',
+       'Bt1$',
+       '^Bt2$',
+       '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$',
+       'Cr',
+       'R')
+```
+
+
+Apply GHL pattern-matching rules and save to a new column called `genhz` and cross-tabulate the occurrence of GHL and original designations.
+
+```r
+pedons$genhz <- generalize.hz(pedons$hzname, n, p)
+# cross-tabulate original horizon designations and GHL
+addmargins(table(pedons$genhz, pedons$hzname))
+```
+
+```
+##           
+##            2BCt 2Bt2 2Bt3 2Bt4 2CB 2Cr  2R   A  AB  Ad  BA BCt  Bt Bt1 Bt2 Bt3 Bt4  Bw   C CBt  Cr
+##   A           0    0    0    0   0   0   0  30   0   1   0   0   0   0   0   0   0   0   0   0   0
+##   Bt1         0    0    0    0   0   0   0   0   0   0   0   0   0  29   0   0   0   0   0   0   0
+##   Bt2         0    0    0    0   0   0   0   0   0   0   0   0   0   0  28   0   0   0   0   0   0
+##   Bt3         1    1    3    1   1   0   0   0   0   0   0   3   0   0   0  15   2   0   2   2   0
+##   Cr          0    0    0    0   0   2   0   0   0   0   0   0   0   0   0   0   0   0   0   0  17
+##   R           0    0    0    0   0   0   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+##   not-used    0    0    0    0   0   0   0   0   1   0   5   0   1   0   0   0   0   2   0   0   0
+##   Sum         1    1    3    1   1   2   1  30   1   1   5   3   1  29  28  15   2   2   2   2  17
+##           
+##            Crt  Oi   R Sum
+##   A          0   0   0  31
+##   Bt1        0   0   0  29
+##   Bt2        0   0   0  28
+##   Bt3        0   0   0  31
+##   Cr         9   0   0  28
+##   R          0   0  11  12
+##   not-used   0  14   0  23
+##   Sum        9  14  11 182
+```
+
+From the above cross-tabulation, we can see that a couple of original designations were not matched (`not-used` in the table) by our REGEX rules: BA, Bw, and Oi horizons. In this example, we are going to make the assumption that those horizons aren't common enough for inclusion in our set of GHL.
+
+
+## Range in Characteristics by Generalized Horizon Label
+
+
+
+## Aggregate Representation of Horizon Depths
+
+
+## From Typical Pedon to Prototype Pedon
+
+
+
+# Concluding Remarks
+
+

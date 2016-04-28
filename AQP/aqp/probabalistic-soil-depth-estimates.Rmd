@@ -1,0 +1,71 @@
+# load required libaries
+library(soilDB)
+library(lattice)
+library(reshape2)
+library(plyr)
+
+# get all pedons from the selected set
+x <- fetchNASIS(rmHzErrors = FALSE, nullFragsAreZero = FALSE)
+
+# init vector of taxonnames to keep
+soils <- c("Sogn")
+
+# convert vector of taxonnames into REGEX pattern for matching
+pat <- paste0(soils, collapse = "|")
+
+# subset pedons that match our REGEX pattern
+idx <- grep(pat, x$taxonname, ignore.case = TRUE)
+x <- x[idx, ]
+
+# normalize taxonname via REGEX matching
+for (i in soils) x$taxonname[grep(i, x$taxonname, ignore.case = TRUE)] <- i
+
+# aggregate data by normalized taxonname, via slice-wise mean
+a.colors <- slab(x, taxonname ~ m_r + m_g + m_b + clay + phfield + total_frags_pct, slab.fun = mean, 
+                 na.rm = TRUE)
+
+# throw out aggregate data that are deeper than 150cm
+a.colors <- subset(a.colors, subset = bottom < 150)
+
+# convert long -> wide format
+x.colors <- dcast(a.colors, taxonname + top + bottom ~ variable, value.var = "value")
+
+# check
+head(a.colors)
+
+# composite RGB triplets into an R-compatible color note that missing colors must be padded with NA
+x.colors$soil_color <- NA
+not.na <- which(complete.cases(x.colors[, c("m_r", "m_g", "m_b")]))
+x.colors$soil_color[not.na] <- with(x.colors[not.na, ], rgb(m_r, m_g, m_b, maxColorValue = 1))
+
+# aggregate bedrock depth probabilty by taxonname at 90% level of confidence
+dp <- aggregateSoilDepth(x, "taxonname", crit.prob = 0.9)
+
+# init a new SoilProfileCollection from aggregate data
+depths(x.colors) <- taxonname ~ top + bottom
+# join-in our depth to contact data
+site(x.colors) <- dp
+
+
+par(mar = c(1, 0, 3, 0))
+plot(x.colors, divide.hz = FALSE, name = "", col.label = "Soil Color", lwd = 1.25, 
+     axis.line.offset = -6, cex.depth.axis = 1, cex.id = 1, max.depth=55)
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col = "black", label = "P(soil >= 90%)", label.cex = 0.85)
+title("Aggregate Soil Properties (mean)")
+
+
+
+d <- diagnostic_hz(x)
+d <- d[which(d$diag_kind == 'mollic epipedon'), ]
+m <- na.omit(with(d, featdepb - featdept))
+q <- round(quantile(m, probs=c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)))
+
+plot(density(m, bw = 2), axes=FALSE, ylab='Frequency', main='Mollic Epipedon Thickness\nNASIS Pedons Correlated to Sogn')
+axis(1, at=q, labels=paste(q, c('min', '5th', '25th', 'median', '75th', '95th', 'max'), sep = ' cm\n'), cex.axis=0.75, padj = 0)
+abline(v=q, col='red')
+box()
+
+
+
+
+

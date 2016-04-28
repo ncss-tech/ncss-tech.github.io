@@ -1,0 +1,165 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en   ">
+
+  <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>AQP</title>
+  </head>
+
+<body>
+
+
+
+<p>Algorithms for Quantitative Pedology (AQP) is a collection of code, ideas, documentation, and examples wrapped-up into several <b>R</b> packages. The theory behind much of the code can be found in <a href="http://dx.doi.org/10.1016/j.cageo.2012.10.020">this Computers & Geosciences paper</a>. Links to project member contacts, code, and other information hosted by R-Forge can be found <a href="http://<?php echo $domain; ?>/projects/<?php echo $group_name; ?>/">here</a>. Worked examples along with discussion and application to soil survey work can be found on the <a href="http://casoilresource.lawr.ucdavis.edu/drupal/taxonomy/term/56">CA Soil Resource Lab website</a>. AQP is very much a work in progress! If you are interested in contributing code, documentation, bug reports, or even scathing criticism, feel free to contact Dylan at debeaudette [at] ucdavis [dot] edu.</p> AQP is a collaborative effort, funded in part by the Kearney Foundation of Soil Science (2009-2011) and USDA-NRCS (2011-current).
+
+<p><b>Presentations</b>:
+<ol>
+<li><a href="http://soilmap2-1.lawr.ucdavis.edu/dylan/presentations/2015-morphometrics-ghl/presentation.html">2015 Digital Soil Morphometrics - Aggregate representation of genetic soil horizons via proportional-odds logistic regression</a></li>
+<li><a href="http://soilmap2-1.lawr.ucdavis.edu/dylan/presentations/2015-morphometrics-aqp/presentation.html">2015 Digital Soil Morphometrics - Algorithms for Quantitative Pedology: a toolkit for digital soil morphometrics</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/ghl-aggregation.html">Soil Data Aggregation</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/aqp-esd-dsm.html">AQP, DSM, and ESD</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf">Numerical Classification with AQP</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-soilDB-beaudette.pdf">AQP and SoilDB Demo</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/aqp_UseR-2011.pdf">2011 UseR AQP Talk</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/poster-aqp-pedometrics-2011.pdf">2011 Pedometrics</a></li>
+</ol>
+</p>
+
+<p><b>Tutorials</b>:
+<ol>
+<li><a href="http://ncss-tech.github.io/AQP/aqp/aqp-intro.html">SoilProfileCollection object introduction</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html">dealing with bad data</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/aqp/profile-summary.html">aggregate properties by taxon name</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/properties-by-bedrock.html">aggregate properties by bedrock kind</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html">soil profile dissimilarity</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/aqp/vertical_vs_perpendicular.html">vertical vs. perpendicular horizon measurements</a></li>
+
+<!-- <li><a href="http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html">getting RaCA data</a></li> -->
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/series-extent.html">getting, plotting, saving detailed soil series extent data (US-only)</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/component-relation-graph.html">Component Relation Graphs</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html">A Novel Display of Categorical Data</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html">OSD Dendrogram</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/aqp/hz-transition-probabilities.html">Horizon Transition Probabilities</a></li>
+
+<li>USDA-NRCS Data Sources<ol>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html">getting soils data from USDA-NCSS databases</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html">Querying the Soil Data Access web service</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html">Component interpretation comparison via SDA</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html">getting/comparing KSSL data</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html">Loading NASIS pedon data</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html">Loading NASIS component data</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html">Export NASIS pedon data to SHP file</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html">Export NASIS pedon data to Google Earth</a></li>
+
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/gSSURGO-SDA.html">gridded SSURRGO (gSSURGO) and SDA</a></li>
+</ol></li>
+
+<li>Pedon Data Aggregation<ol>
+<li><a href="http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html">Assignment of generalized horizon labels</a></li>
+<li>Computing range in characteristics by generalized horizon label</li>
+<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/aggregate-soil-color.html">Soil color aggregation ideas</a></li>
+<li>Estimation of most-likely horizonation</li>
+<li>Sample Reports<ul>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/dunstone.html">Dunstone Pedon Summary</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/loafercreek.html">Loafercreek Pedon Summary</a></li>
+<li><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/example-reports/amador.html">Amador Pedon Summary</a></li>
+</ol></li>
+
+<li>Spatial Data Aggregation<ol>
+<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/GIS-summary-by-MU.html">Sampling Raster Data Sources</a></li>
+</ol></li>
+
+
+</ol></li>
+
+</ol>
+</p>
+
+
+<!-- 
+<p><b>Manual Pages</b> c/o <a href="http://yihui.name/knitr/">knitr</a>:
+<ol>
+<li><a href="aqp-html-manual/index.html">aqp manual pages with figures</a></li>
+<li><a href="soilDB-html-manual/index.html">soilDB manual pages with figures</a></li>
+<li><a href="sharpshootR-html-manual/index.html">sharpshootR manual pages with figures</a></li>
+</ol>
+</p>
+ -->
+
+<p><b>Sample Figures</b></p>
+
+<img src="AQP-example-figures/soils-by-pigments.png" border="0">
+
+<img src="AQP-example-figures/soil-color-transition-probabilities.png" border="0">
+
+<img src="AQP-example-figures/tp-example.png" border="0">
+
+<img src="AQP-example-figures/MO-soils-aqp-demo.png" border="0">
+
+<img src="AQP-example-figures/soil-series-color-signature.png" border="0">
+
+<img src="AQP-example-figures/aggregate-summary-as-profiles.jpg" border="0">
+
+<img src="AQP-example-figures/mineralking-set1-elevation.png" border="0">
+
+<img src="AQP-example-figures/miami-and-related.png" border="0">
+
+<img src="AQP-example-figures/OSD-dend.png" border="0">
+
+<img src="AQP-example-figures/diagnosticFeatures.png" border="0">
+
+<img src="AQP-example-figures/brackets.png" border="0">
+
+<img src="AQP-example-figures/properties_by_mlra.png" border="0">
+
+<img src="AQP-example-figures/profile_compare-explanation.png" border="0">
+
+<img src="AQP-example-figures/hz_distinctness_demo.png" border="0">
+
+<img src="AQP-example-figures/hz_vs_site-and-hz_dend.png" border="0">
+
+<img src="AQP-example-figures/sanguinetti-pedons.png" border="0">
+
+<img src="AQP-example-figures/708x-report-demo.jpg" border="0">
+
+<img src="AQP-example-figures/munsell-soil_colors-LAB.png" border="0">
+
+<img src="AQP-example-figures/aqp_profile_plot_example_sjer.png" border="0">
+
+<img src="AQP-example-figures/aqp_profile_plot_example_sfrec.png" border="0">
+
+<img src="AQP-example-figures/MVO_morph_vs_depth_by_bedrock_kind-paired.jpg" border="0">
+
+<img src="AQP-example-figures/MVO_morph_vs_depth_by_bedrock_kind.png" border="0">
+
+<img src="AQP-example-figures/weighted_depth_func_aggregation.png" border="0">
+
+<img src="AQP-example-figures/categorical_depth_function.png" border="0">
+
+<img src="AQP-example-figures/classification_comparison.png" border="0">
+
+<img src="AQP-example-figures/dend_with_profiles-SJER.png" border="0">
+
+<img src="AQP-example-figures/dend_with_profiles.png" border="0">
+
+
+</body>
+</html>
