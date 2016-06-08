@@ -49,10 +49,11 @@ install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "sourc
 ### Simple Queries 
 
 Now that you have the required packages, load them into the current R session.
-```{r load-libs}
+```{r}
 library(soilDB)
 library(rgeos)
 library(sp)
+library(raster)
 library(maps)
 
 
