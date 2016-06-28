@@ -84,6 +84,44 @@ par(mar=c(0,0,3,0))
 plot(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
 ```
 
+## Fetch Data Associated with a Set of IDs
+```{r}
+# get data associated with a single ID
+# no records -> NULL returned
+getPedons <- function(x) {
+  suppressMessages(fetchKSSL(pedlabsampnum=x, returnMorphologicData = TRUE))
+}
+
+# extract a morphologic table from each record set
+# NULL data are filtered out
+# converted to data.frame
+extractMorphTable <- function(x, table='phcolor') {
+  m <- lapply(x, function(i) i[['morph']][[table]])
+  # index pedons with data
+  idx <- which(sapply(m, length) > 0) 
+  if(length(idx) < 1)
+    return(NULL)
+  # filter non-NULL and convert to DF
+  m <- ldply(m[idx])
+  return(m)
+}
+
+
+# pedons indexed by "pedlabsampnum" ID
+pls <- c("04N0610", "04N0611", "04N0612", "04N0613")
+# iterate over IDs and get data
+res <- lapply(pls, getPedons)
+
+# check: OK
+str(res, 2)
+
+# extract phcolor data from list of records
+# result is a data.frame with all non-NULL rows
+phcolor <- extractMorphTable(res, table='phcolor')
+
+# check: OK
+head(phcolor)
+```
 
 ## Example Application
 Data can be queried by "taxonname"" (typically a soil series), using a geographic bounding-box in WGS84 referenced coordinates, or by MLRA. Taxonname matching is case-insensitive and based on the most current taxonname in NASIS. See `?fetchKSSL()` or [this GitHub repository](https://github.com/dylanbeaudette/process-kssl-snapshot) for details.

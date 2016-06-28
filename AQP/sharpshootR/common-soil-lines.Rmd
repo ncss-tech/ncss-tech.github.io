@@ -1,4 +1,5 @@
-```{r setup, echo=FALSE, results='hide'}
+```{r setup, warning=FALSE, messages=FALSE, echo=FALSE, results='hide'}
+library(knitr)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -18,7 +19,7 @@ library(Cairo)
 x <- readOGR(dsn='l:/CA792/ca792_spatial/FG_CA792_OFFICIAL.gdb', layer='ca792_a', stringsAsFactors=FALSE)
 
 # remove NOTCOM, DA, and empty (non-NA) symbols
-x <- x[which(! x$MUSYM %in% c('NOTCOM', 'DA', ' ', '', 'WATER')), ]
+x <- x[which(! x$MUSYM %in% c('NOTCOM', 'DA', ' ', '', 'WATER', 'W')), ]
 
 # create polygon adjacency matrix
 res <- polygonAdjacency(x, v='MUSYM')
