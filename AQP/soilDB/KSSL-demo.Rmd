@@ -27,6 +27,7 @@ With a recent version of R (>= 2.15), it is possible to get all of the packages 
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
 install.packages('maps', dep=TRUE)
+install.packages('plyr', dep=TRUE)
 install.packages('reshape2', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 
@@ -84,7 +85,11 @@ par(mar=c(0,0,3,0))
 plot(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
 ```
 
+
 ## Fetch Data Associated with a Set of IDs
+Fetching KSSL data for a set of IDs requires some additional "helper" functions. The following example fetches data according to a vector of "pedlabsampnum" IDs, extracts the horizon color data, filters missing data, and combines the results into a single table.
+
+First, paste the following code into your script or console to initialize our helper functions.
 ```{r}
 # get data associated with a single ID
 # no records -> NULL returned
@@ -105,8 +110,10 @@ extractMorphTable <- function(x, table='phcolor') {
   m <- ldply(m[idx])
   return(m)
 }
+```
 
-
+Next, use the `getPedons()` helper function to fetch lab and morphologic data according to a vector of `pedlabsampnum` IDs. Note that the results are a list of lists. Select morphologic data are extracted and combined with the `extractMorphTable()` function.
+```{r}
 # pedons indexed by "pedlabsampnum" ID
 pls <- c("04N0610", "04N0611", "04N0612", "04N0613")
 # iterate over IDs and get data
@@ -122,6 +129,29 @@ phcolor <- extractMorphTable(res, table='phcolor')
 # check: OK
 head(phcolor)
 ```
+
+Finally, extract the `SoilProfileCollection` objects from `res` and combine into a single object. We can now join our combined color data with the combined pedon data.
+```{r fig.width=8, fig.height=5}
+# extract pedons from list
+pedons <- lapply(res, function(i) i$SPC)
+# combine into a single SPC object
+pedons <- do.call('rbind', pedons)
+
+# check: looks good
+plot(pedons, color='estimated_ph_h2o', name='hzn_desgn')
+
+# simplify combined color data
+colors <- simplifyColorData(phcolor, id.var = 'labsampnum')
+
+# join combined color data to SPC
+h <- horizons(pedons)
+h <- join(h, colors, by='labsampnum', type='left', match='first')
+horizons(pedons) <- h
+
+# check: looks good
+plot(pedons, color='moist_soil_color', name='hzn_desgn')
+```
+
 
 ## Example Application
 Data can be queried by "taxonname"" (typically a soil series), using a geographic bounding-box in WGS84 referenced coordinates, or by MLRA. Taxonname matching is case-insensitive and based on the most current taxonname in NASIS. See `?fetchKSSL()` or [this GitHub repository](https://github.com/dylanbeaudette/process-kssl-snapshot) for details.
