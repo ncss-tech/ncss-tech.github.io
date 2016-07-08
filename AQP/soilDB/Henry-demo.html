@@ -113,7 +113,7 @@ $(document).ready(function () {
 
 <div id="henry-mount-soil-climate-database-tutorial" class="section level1">
 <h1>Henry Mount Soil Climate Database Tutorial</h1>
-<p>D.E. Beaudette <br> 2016-03-11</p>
+<p>D.E. Beaudette <br> 2016-07-08</p>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>This document demonstrates how to use the <a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp">soilDB</a> package to download data from the Henry Mount soil climate database. Soil climate data are routinely collected by SSO staff via buried sensor/data-logger devices (&quot;hobos&quot;) and now above ground weather stations. The Henry Mount Soil Climate database was established to assist with the management and analysis of these data.</p>
@@ -126,8 +126,7 @@ install.packages('RColorBrewer', dep=TRUE)
 install.packages('reshape', dep=TRUE)
 install.packages('dismo', dep=TRUE)
 install.packages('rgdal', dep=TRUE)
-install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('soilDB', repos=&quot;http://R-Forge.R-project.org&quot;, type='source') # most recent copy from r-forge</code></pre>
+install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies</code></pre>
 </div>
 <div id="getting-and-viewing-data" class="section level2">
 <h2>Getting and Viewing Data</h2>
@@ -187,7 +186,7 @@ str(x)</code></pre>
 <td align="left">cryic*</td>
 <td align="right">7</td>
 <td align="right">7</td>
-<td align="right">229</td>
+<td align="right">348</td>
 </tr>
 <tr class="even">
 <td align="left">2012CA7921062</td>
@@ -199,7 +198,7 @@ str(x)</code></pre>
 <td align="left">frigid*</td>
 <td align="right">1</td>
 <td align="right">0</td>
-<td align="right">885</td>
+<td align="right">1004</td>
 </tr>
 <tr class="odd">
 <td align="left">S2012CA019001</td>
@@ -211,7 +210,7 @@ str(x)</code></pre>
 <td align="left">frigid*</td>
 <td align="right">2</td>
 <td align="right">2</td>
-<td align="right">232</td>
+<td align="right">351</td>
 </tr>
 <tr class="even">
 <td align="left">S2012CA019002</td>
@@ -223,7 +222,7 @@ str(x)</code></pre>
 <td align="left">frigid*</td>
 <td align="right">2</td>
 <td align="right">2</td>
-<td align="right">232</td>
+<td align="right">351</td>
 </tr>
 <tr class="odd">
 <td align="left">S2012CA019003</td>
@@ -235,7 +234,7 @@ str(x)</code></pre>
 <td align="left">frigid*</td>
 <td align="right">2</td>
 <td align="right">2</td>
-<td align="right">230</td>
+<td align="right">349</td>
 </tr>
 <tr class="even">
 <td align="left">S2012CA019004</td>
@@ -247,7 +246,7 @@ str(x)</code></pre>
 <td align="left">frigid*</td>
 <td align="right">2</td>
 <td align="right">2</td>
-<td align="right">230</td>
+<td align="right">349</td>
 </tr>
 </tbody>
 </table>
@@ -412,7 +411,7 @@ g &lt;- gmap(x$sensors)
 plot(g, interpolate=TRUE)
 points(Mercator(x$sensors), col='red')</code></pre>
 <hr />
-<p>This document is based on <code>aqp</code> version 1.9.9 and <code>soilDB</code> version 1.7.2.</p>
+<p>This document is based on <code>aqp</code> version 1.9.10 and <code>soilDB</code> version 1.8-1.</p>
 </div>
 </div>
 </div>
