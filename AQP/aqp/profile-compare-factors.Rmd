@@ -1,30 +1,78 @@
-## you will need the bleeding-edge version of aqp and sharpshootR
-## get like this
-#
-## stable versions + deps
-# install.packages('aqp', dep=TRUE)
-# install.packages('sharpshootR', dep=TRUE)
-# 
-## latest versions
-# devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
-# devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
-#
+---
+output:
+  html_vignette:
+    mathjax: null
+    jquery: null
+    smart: no
+---
 
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly = TRUE)
+library(printr, quietly = TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=TRUE)
+options(width=100, stringsAsFactors=FALSE)
+
+knit_hooks$set(htmlcap = function(before, options, envir) {
+  if(!before) {
+    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
+    }
+    })
+```
+
+
+Pair-Wise Distance Between Profiles<br>Mixed Variable Types
+=======================================
+D.E. Beaudette
+<br>
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
+
+# Introduction
+
+
+
+
+# Setup R Envionment
+If you have never used the [aqp](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) or [soildb](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) packages before, you will likely need to install them. This only needs to be done once. 
+```{r install-packages, eval=FALSE}
+# stable versions + deps
+install.packages('aqp', dep=TRUE)
+install.packages('soilDB', dep=TRUE)
+install.packages('sharpshootR', dep=TRUE)
+
+# latest versions
+devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+Once you have all of the R packages on which  this document depends, it is a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g., after an upgrade) and **loaded** anytime you want to access functions from within those packages.
+
+```{r load-packages}
 library(aqp)
 library(soilDB)
 library(sharpshootR)
 library(cluster)
 library(RColorBrewer)
+```
 
-# sample data
-data("loafercreek")
+# Sample Data
+While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
+
+```{r load-data, fig.width=9, fig.height=4, htmlcap='Pedons correlated to the Loafercreek soil series.'}
+# load sample data from the soilDB package
+data(loafercreek, package = 'soilDB')
 
 # get a subset of profiles to work with
 x <- loafercreek[20:30, ]
+```
 
-# check rock fragment data
-hist(x$total_frags_pct)
 
+# Methods
+
+## Check Data
+```{r fig.width=10, fig.height=6, htmlcap=''}
 # check existing texture
 table(x$texture_class)
 
@@ -41,26 +89,27 @@ addVolumeFraction(x, 'total_frags_pct')
 x$fake.name <- ifelse(!is.na(x$texture_class), paste0(x$texture_class, ' - ', x$total_frags_pct),  '')
 plot(x, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.65, col.palette=brewer.pal(10, 'Spectral'))
 addVolumeFraction(x, 'total_frags_pct')
+```
 
-
+## Horizon Level Attributes
+```{r fig.width=10, fig.height=6, htmlcap=''}
 # make an index to soil horizons (anything other than O|Cr|R)
 idx <- grep('O|Cr|R', x$hzname, invert = TRUE)
 
 # compute pair-wise distances using texture class (ordered factor) and rock frag volume
-d <- profile_compare(x, vars=c('texture_class', 'total_frags_pct'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
+d.hz <- profile_compare(x, vars=c('texture_class', 'total_frags_pct'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
 # divisive hierarchical clustering
-dd <- diana(d)
+dd.hz <- diana(d.hz)
 
 # plot dendrogram + profiles
 par(mar=c(2,1,3,1))
-plotProfileDendrogram(x, dd, scaling.factor = 0.75, y.offset = 5, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
+plotProfileDendrogram(x, dd.hz, scaling.factor = 0.75, y.offset = 5, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
 addVolumeFraction(x, 'total_frags_pct')
+```
 
 
-##
-## do it again, this time using hz + site attributes (field slope + elevation)
-##
-
+## Site and Horizon Level Attributes
+```{r fig.width=10, fig.height=6, htmlcap=''}
 # fix some missing data
 x$elev_field[x$elev_field == 0] <- 380
 
@@ -77,18 +126,18 @@ plot(x, color='texture_class', label='pedon_id', col.palette=brewer.pal(10, 'Spe
 addVolumeFraction(x, 'total_frags_pct')
 axis(side=1, at=1:length(x), labels=x$elev_field[order(x$elev_field)], line=-3)
 mtext(text='Field Described Slope (m)', side=1, line=-4)
+```
 
-
-
+```{r fig.width=10, fig.height=6, htmlcap=''}
 # compute pair-wise distances using:
 # hz attributes: texture class (ordered factor) and rock frag volume
 # site attributes: surface slope and elevation
-d <- profile_compare(x, vars=c('texture_class', 'total_frags_pct', 'slope_field', 'elev_field'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
+d.hz.site <- profile_compare(x, vars=c('texture_class', 'total_frags_pct', 'slope_field', 'elev_field'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
 # divisive hierarchical clustering
-dd <- diana(d)
+dd.hz.site <- diana(d.hz.site)
 
 # plot dendrogram + profiles
 par(mar=c(2,1,3,1))
-plotProfileDendrogram(x, dd, scaling.factor = 0.008, y.offset = 0.05, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
+plotProfileDendrogram(x, dd.hz.site, scaling.factor = 0.008, y.offset = 0.1, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
 addVolumeFraction(x, 'total_frags_pct')
-
+```

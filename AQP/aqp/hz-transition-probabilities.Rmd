@@ -34,7 +34,7 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 
 
 # Setup R Envionment
-If you have never used the [aqp](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) or [soildb](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) packages before, you will likely need to install them. This only needs to be done once. 
+If you have never used the [aqp](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) or [soildb](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) packages before, you will likely need to install them. This only needs to be done once. 
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN + dependencies
 install.packages('aqp', dep=TRUE) 
