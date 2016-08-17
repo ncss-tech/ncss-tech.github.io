@@ -41,10 +41,6 @@ install.packages('aqp', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 install.packages('sharpshootR', dep=TRUE)
 install.packages('markovchain', dep=TRUE)
-# latest versions from R-Forge:
-install.packages('aqp', repos="http://R-Forge.R-project.org", type='source')
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
-install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source')
 ```
 
 Once you have all of the R packages on which  this document depends, it is a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g., after an upgrade) and **loaded** anytime you want to access functions from within those packages.
@@ -58,7 +54,7 @@ library(igraph)
 ```
 
 # Sample Data
-While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
+While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
 
 ```{r load-data, fig.width=9, fig.height=4, htmlcap='Pedons correlated to the Loafercreek soil series.'}
 # load sample data from the soilDB package
@@ -71,7 +67,7 @@ plot(pedons, name='', print.id=FALSE, cex.names=0.75, axis.line.offset=-4)
 
 
 ## Optional: Follow Along with Your Data
-The following code block demonstrates how to pull data in using the [`fetchNASIS()` function from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp).
+The following code block demonstrates how to pull data in using the [`fetchNASIS()` function from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html).
 
 ```{r use-nasis-data, eval=FALSE}
 # first load the desired data set within NASIS into your NASIS selected set

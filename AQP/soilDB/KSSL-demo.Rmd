@@ -30,10 +30,6 @@ install.packages('maps', dep=TRUE)
 install.packages('plyr', dep=TRUE)
 install.packages('reshape2', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
-
-# get the latest version of soilDB from GitHub
-# you may have to install the 'devtools' package
-devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 

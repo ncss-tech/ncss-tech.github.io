@@ -27,11 +27,10 @@ With a recent version of R, it should be possible to get all of the packages tha
 install.packages('aqp', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('RODBC', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
-install.packages("soilDB", repos="http://R-Forge.R-project.org") # most recent copy from r-forge
 ```
 
 ### ODBC Connection to the Local NASIS database
-Setting up this connection is simple, and outlined in this [guide](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp). Queries submitted to the national database will load pedons or DMU data into your local database. Functions in `soilDB` can only access data in your local database, defined by the "selected set". While it is possible to filter pedon or DMU records within **R**, it is sometimes simpler to modify the "selected set" in NASIS. In other words:
+Setting up this connection is simple, and outlined in this [guide](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html). Queries submitted to the national database will load pedons or DMU data into your local database. Functions in `soilDB` can only access data in your local database, defined by the "selected set". While it is possible to filter pedon or DMU records within **R**, it is sometimes simpler to modify the "selected set" in NASIS. In other words:
 
   1. load up your local database with pedons associated with your office, project, or MLRA
   2. build your selected set (pedon, site, DMU, etc.)

@@ -21,6 +21,9 @@ D.E. Beaudette
 <br>
 `r format(Sys.time(), "%Y-%m-%d")`
 
+## Updates 2016-08-17
+A report that performs map unit comparisons is available [here](https://github.com/ncss-tech/soilReports).
+
 
 ## Introduction
 This tutorial describes one approach to summarizing raster data (e.g. slope, aspect, PRISM data, etc.) according to delineations of a specific map unit. The examples outlined below are a good starting point for a more rigorous examination of map unit variability for the purposes of SDJR, quality control, MLRA update work, or DSM project. You will need to adjust file paths to raster and vector data sources below, in order to follow along with your own data.
@@ -40,13 +43,11 @@ install.packages('reshape2', dep=TRUE)
 install.packages('rgdal', dep=TRUE)
 install.packages('raster', dep=TRUE)
 install.packages('sharpshootR', dep=TRUE) # stable version from CRAN + dependencies
-# most recent copy from r-forge
-install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source') 
 ```
 
 
 ## Map Unit Data
-Map unit polygons can be loaded from shapefile, "file" geodatabase, [SDA](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp), or any other [OGR-compatible](http://www.gdal.org/) data source. When working with a large number of polygons it can be advantageous to work with a subset generated using an external GIS application. In this example, the subsetting operations is performed in R. Be sure to adjust the path below to point to a file containing map unit polygons.
+Map unit polygons can be loaded from shapefile, "file" geodatabase, [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html), or any other [OGR-compatible](http://www.gdal.org/) data source. When working with a large number of polygons it can be advantageous to work with a subset generated using an external GIS application. In this example, the subsetting operations is performed in R. Be sure to adjust the path below to point to a file containing map unit polygons.
 
 Specifying paths in R must be done with either a single forward slash (/) or two backslashes (\\\\) between directories. Specifying the path to a shapefile or other data source also requires specialized syntax:
 
@@ -60,7 +61,7 @@ Specifying paths in R must be done with either a single forward slash (/) or two
     + example: `readOGR(dsn='E:/gis_data', layer='ca630_a', stringsAsFactors = FALSE)`
  * **SDA** (polygons loaded from the live SSURGO data via Soil Data Access)
     + geometry must be specified using SQL
-    + [examples here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial-2.html?root=aqp)
+    + [examples here](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html)
 
 After loading and optionally filtering-out a single map unit, a unique ID is assigned to each polygon. This ID can later be used to reference polygons that are associated with raster values outside of some ideal range.
 
@@ -78,7 +79,7 @@ library(lattice)
 # mu <-  readOGR(dsn='E:/gis_data/ca630', layer='ca630_a', stringsAsFactors = FALSE)
 
 # File Geodatabase Example
-mu <-  readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', encoding='OpenFileGDB', stringsAsFactors = FALSE)
+mu <-  readOGR(dsn='L:/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', encoding='OpenFileGDB', stringsAsFactors = FALSE)
 
 # extract polygons for a single map unit ("MUSYM" attribute = "7089")
 # note that column names in your data may be different
@@ -103,9 +104,9 @@ Several raster data sources are used in this example:
 
 When using your own data, adjust the names (e.g. "maat") and paths (e.g. "E:/gis_data/prism/tavg_1981_2010.tif") accordingly. The use of a single forward slash (/) to separate directories is suggested.
 ```{r load-raster-data-1}
-raster.list <- list(maat=raster('E:/gis_data/prism/tavg_1981_2010.tif'), 
-                    ppt=raster('E:/gis_data/prism/ppt_mm_1981_2010.tif'),
-                    wb=raster('E:/gis_data/prism/annual_waterbudget800.tif'),
+raster.list <- list(maat=raster('E:/gis_data/prism/final_MAAT_800m.tif'), 
+                    ppt=raster('E:/gis_data/prism/final_MAP_mm_800m.tif'),
+                    wb=raster('E:/gis_data/prism/effective_precipitation_800m.tif'),
                     elev=raster('E:/gis_data/ca630/ca630_elev/hdr.adf'),
                     slope=raster('E:/gis_data/ca630/ca630_slope/hdr.adf'),
                     aspect=raster('E:/gis_data/ca630/aspect_ca630/hdr.adf')
@@ -366,12 +367,6 @@ plot(mu, col=mu$cluster, border=mu$cluster)
 box()
 title('Polygons Grouped According to Similarity of Raster Values')
 ```
-
-
-## Next Time...
-1. scoring polygon bases on deviation from slope class limits
-2. use gdalUtils to extract specific map unit polygons from large geodatabases (requires working GDAL installation)
-3. generalized approach for comparing map units
 
 ----------------------------
 This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.

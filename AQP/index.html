@@ -14,16 +14,16 @@
 
 <p>Algorithms for Quantitative Pedology (AQP) is a collection of code, ideas, documentation, and examples wrapped-up into several <b>R</b> packages. The theory behind much of the code can be found in <a href="http://dx.doi.org/10.1016/j.cageo.2012.10.020">this Computers & Geosciences paper</a>. AQP is very much a work in progress! If you are interested in contributing code, documentation, bug reports, or even scathing criticism, feel free to contact Dylan at dylan [dot] beaudette [at] ca.usda [dot] gov. AQP is a collaborative effort, funded in part by the Kearney Foundation of Soil Science (2009-2011) and USDA-NRCS (2011-current).</p>
 
-<p>Packages:
+<h2>Packages</h2>
 <ul>
 <li>aqp <a href="https://github.com/ncss-tech/aqp">[development]</a> <a href="http://cran.r-project.org/web/packages/aqp">[stable]</a></li>
 <li>soilDB <a href="https://github.com/ncss-tech/soilDB">[development]</a> <a href="http://cran.r-project.org/web/packages/soilDB">[stable]</a></li>
 <li>sharpshootR <a href="https://github.com/ncss-tech/sharpshootR">[development]</a> <a href="http://cran.r-project.org/web/packages/sharpshootR">[stable]</a></li>
 </ul>
-</p>
 
 
-<p><b>Presentations</b>:
+
+<h2>Presentations</h2>
 <ol>
 <li><a href="http://soilmap2-1.lawr.ucdavis.edu/dylan/presentations/2015-morphometrics-ghl/presentation.html">2015 Digital Soil Morphometrics - Aggregate representation of genetic soil horizons via proportional-odds logistic regression</a></li>
 <li><a href="http://soilmap2-1.lawr.ucdavis.edu/dylan/presentations/2015-morphometrics-aqp/presentation.html">2015 Digital Soil Morphometrics - Algorithms for Quantitative Pedology: a toolkit for digital soil morphometrics</a></li>
@@ -34,73 +34,77 @@
 <li><a href="presentations/aqp_UseR-2011.pdf">2011 UseR AQP Talk</a></li>
 <li><a href="presentations/poster-aqp-pedometrics-2011.pdf">2011 Pedometrics</a></li>
 </ol>
-</p>
 
-<p><b>Tutorials</b>:
-<ol>
-<li><a href="http://ncss-tech.github.io/AQP/aqp/aqp-intro.html">SoilProfileCollection object introduction</a></li>
 
-<li><a href="http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html">dealing with bad data</a></li>
+<h2>Tutorials</h2>
+<ul>
 
-<li><a href="http://ncss-tech.github.io/AQP/aqp/profile-summary.html">aggregate properties by taxon name</a></li>
+<li>New / experimental<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/component-relation-graph.html">Component Relation Graphs</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/hz-transition-probabilities.html">Horizon Transition Probabilities</a></li>
+</ul></li>
 
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/properties-by-bedrock.html">aggregate properties by bedrock kind</a></li>
+<li>SoilProfileCollection creation, manipulation, and visualization<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/aqp-intro.html">SoilProfileCollection object introduction</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html">dealing with bad data</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/merged-legend-plot.html">Plotting multiple <tt>SPC</tt> objects with a merged color legend</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/vertical_vs_perpendicular.html">vertical vs. perpendicular horizon measurements</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html">OSD Dendrogram</a></li>
+</ul></li>
 
-<li><a href="http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html">soil profile dissimilarity</a></li>
+<li>Generalized dissimilarity calculation for SoilProfileCollection objects<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html">An introduction to <tt>profile_compare()</tt></a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/profile-compare-factors.html">dissimilarity computed from mixed variable types</a></li>
+</ul></li>	
 
-<li><a href="http://ncss-tech.github.io/AQP/aqp/vertical_vs_perpendicular.html">vertical vs. perpendicular horizon measurements</a></li>
+<li>Soil climate related<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html">Querying the Henry Mount Soil Climate database</tt></a></li>
+</ul></li>	
 
-<!-- <li><a href="http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html">getting RaCA data</a></li> -->
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/series-extent.html">getting, plotting, saving detailed soil series extent data (US-only)</a></li>
+<li>USDA-NRCS data and related<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html">getting soils data from USDA-NCSS databases</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html">setup NASIS local database connection</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html">Querying the Soil Data Access (SDA) web service</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html">SDA: queries that return spatial data</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html">Component interpretation comparison via SDA</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html">getting/comparing KSSL data</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html">summary of pedon diagnostic features</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html">Loading NASIS pedon data</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html">Loading NASIS component data</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html">Export NASIS pedon data to SHP file</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html">Export NASIS pedon data to Google Earth</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/gSSURGO-SDA.html">gridded SSURRGO (gSSURGO) and SDA</a></li>
+	<!-- <li><a href="http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html">getting RaCA data</a></li> -->
+</ul></li>
 
-<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/component-relation-graph.html">Component Relation Graphs</a></li>
+<li>Aggregation / summary of pedon data<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html">Assignment of generalized horizon labels</a></li>
+	<li>Computing range in characteristics by generalized horizon label</li>
+	<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/aggregate-soil-color.html">Soil color aggregation ideas</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/profile-summary.html">aggregate properties by taxon name</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/properties-by-bedrock.html">aggregate properties by bedrock kind</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/texture-ideas.html">aggregate representation of soil texture class</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/aqp/estimate-ML-horizonation.html">Estimation of most-likely horizonation</a></li>	
+</ul></li>
 
-<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html">A Novel Display of Categorical Data</a></li>
+<li>Aggregation / summary of spatial data<ul>
+	<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/GIS-summary-by-MU.html">Sampling Raster Data Sources</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/common-soil-lines.html">map unit spatial adjacency analysis</a></li>
+	<li><a href="http://ncss-tech.github.io/AQP/soilDB/series-extent.html">getting, plotting, saving detailed soil series extent data (US-only)</a></li>
+</ul></li>
 
-<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html">OSD Dendrogram</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/aqp/hz-transition-probabilities.html">Horizon Transition Probabilities</a></li>
-
-<li>USDA-NRCS Data Sources<ol>
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html">getting soils data from USDA-NCSS databases</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html">Querying the Soil Data Access web service</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html">Component interpretation comparison via SDA</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html">getting/comparing KSSL data</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html">Loading NASIS pedon data</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html">Loading NASIS component data</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html">Export NASIS pedon data to SHP file</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html">Export NASIS pedon data to Google Earth</a></li>
-
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/gSSURGO-SDA.html">gridded SSURRGO (gSSURGO) and SDA</a></li>
-</ol></li>
-
-<li>Pedon Data Aggregation<ol>
-<li><a href="http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html">Assignment of generalized horizon labels</a></li>
-<li>Computing range in characteristics by generalized horizon label</li>
-<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/aggregate-soil-color.html">Soil color aggregation ideas</a></li>
-<li>Estimation of most-likely horizonation</li>
-<li>Sample Reports<ul>
+<li>Sample reports<ul>
 <li><a href="example-reports/dunstone.html">Dunstone Pedon Summary</a></li>
 <li><a href="example-reports/loafercreek.html">Loafercreek Pedon Summary</a></li>
 <li><a href="example-reports/amador.html">Amador Pedon Summary</a></li>
-</ol></li>
-
-<li>Spatial Data Aggregation<ol>
-<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/GIS-summary-by-MU.html">Sampling Raster Data Sources</a></li>
-</ol></li>
+</ul></li>
 
 
-</ol></li>
 
-</ol>
-</p>
+</ul></li>
+
+</ul>
+
 
 
 <!-- 
@@ -113,7 +117,7 @@
 </p>
  -->
 
-<p><b>Sample Figures</b></p>
+<h2>Sample Figures</h2>
 
 <img src="AQP-example-figures/soils-by-pigments.png" border="0">
 

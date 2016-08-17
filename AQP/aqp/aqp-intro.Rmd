@@ -511,7 +511,7 @@ plot(d.gsm.pedons.2, name='', color='p1', col.label='Contributing Fraction', col
 
 
 ## Pair-Wise Dissimilarity
-Calculation of between-profile dissimilarity is performed using the `profile_compare()` function. Dissimilarity values depend on attributes selection (e.g. clay, CEC, pH , etc.), optional depth-weighting parameter (`k`), and a maximum depth of evaluation (`max_d`). This topic is further documented in a [related tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-profile-dissimilarity.html?root=aqp), the function manual page (type `help(profile_compare)` in the **R** console), and [this paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
+Calculation of between-profile dissimilarity is performed using the `profile_compare()` function. Dissimilarity values depend on attributes selection (e.g. clay, CEC, pH , etc.), optional depth-weighting parameter (`k`), and a maximum depth of evaluation (`max_d`). This topic is further documented in a [related tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html), the function manual page (type `help(profile_compare)` in the **R** console), and [this paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
 ```{r dissimilarity, fig.height=4.5, fig.width=7}
 # eval dissimilarity:
 # using Ex-Ca:Mg and CEC at pH 7

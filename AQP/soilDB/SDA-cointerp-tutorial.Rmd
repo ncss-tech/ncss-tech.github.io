@@ -29,11 +29,11 @@ D.E. Beaudette
 <br>
 This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
-You probably need to install some packages before this will work. Have a look at [this tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp) to get setup.
+You probably need to install some packages before this will work. Have a look at [this tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) to get setup.
 
 Lets get some interpretations that are relevant to MLRA 18 (Sierra Nevada Foothills) soils so that we can compare all components named [**Auburn**](https://soilseries.sc.egov.usda.gov/OSD_Docs/A/AUBURN.html) and [**Dunstone**](https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DUNSTONE.html). Just for fun lets throw in a very different soil from MLRA 17 (San Joaquin Valley); [**Hanford**](https://soilseries.sc.egov.usda.gov/OSD_Docs/H/HANFORD.html).
 
-Note that SDA has a 10,000 row limit, so we have to be a little clever when writing the queries. In this case, letting the database filter out NULL fuzzy ratings and the reasons for ratings.
+Note that SDA has a 100,000 row limit, so we have to be a little clever when writing the queries. In this case, letting the database filter out NULL fuzzy ratings and the reasons for ratings.
 ```{r}
 library(soilDB)
 library(plyr)

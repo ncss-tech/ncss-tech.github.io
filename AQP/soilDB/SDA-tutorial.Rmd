@@ -29,7 +29,7 @@ The `soilDB` library for R provides a helper function (`SDA_query()`) for submit
 
 Follow along with the blocks of code below by copying / pasting into a new R "script" document. Each block of command can be run by pasting into the R console, or by "stepping through" lines of code by moving the cursor to the top of a block (in the R script panel) and repeatedly pressing ctrl + enter.
 
-If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial-2.html?root=aqp). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
+If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
 
 ### Install Required R Packages
 You only need to do this once. If you haven't installed these packages, then copy the code below and paste into the RStudio "console" pane.

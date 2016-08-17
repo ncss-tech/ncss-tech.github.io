@@ -18,14 +18,14 @@ options(width=100, stringsAsFactors=FALSE)
 `r format(Sys.time(), "%Y-%m-%d")`
 <br>D.E. Beaudette, J.M. Skovlin, S. Roecker
 
-> This tutorial is based on essential background material described in the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) and related [NASIS ODBC connection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp) tutorials. If you have not reviewed those tutorials, please do so before proceeding.
+> This tutorial is based on essential background material described in the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) and related [NASIS ODBC connection](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html) tutorials. If you have not reviewed those tutorials, please do so before proceeding.
 
 ## Introduction
-The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
+The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
 
 
 ## Component Data
-Please see the [related tutorial on loading NASIS component data into R](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/NASIS-component-data.html?root=aqp).
+Please see the [related tutorial on loading NASIS component data into R](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html).
 
 
 ## Pedon Data
@@ -87,9 +87,9 @@ plot(till, print.id=FALSE)
 title("Pedons with pmkind matching regular expression 'till'\nand not matching 'unspecified'", cex.main=0.85)
 ```
 
-Please see the [SoilProfileCollection tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) for additional ideas on how to manipulate the data returned by `fetchNASIS()`.
+Please see the [SoilProfileCollection tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) for additional ideas on how to manipulate the data returned by `fetchNASIS()`.
 
-Additional tutorials are available at the [AQP project website](http://aqp.r-forge.r-project.org/).
+Additional tutorials are available at the [AQP project website](http://ncss-tech.github.io/AQP/).
 
 
 

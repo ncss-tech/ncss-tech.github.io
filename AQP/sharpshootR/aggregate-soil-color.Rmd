@@ -59,16 +59,12 @@ aggregateColorPlot(aggregateColor(sp1, 'genhz'), label.cex = 1, print.n.hz = TRU
 
 
 ## Setup R Envionment
-If you have never used the [aqp](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) or sharpshootR packages before, you will likely need to install them. This only needs to be done once.
+If you have never used the [aqp](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) or sharpshootR packages before, you will likely need to install them. This only needs to be done once.
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN and all dependencies
 install.packages('aqp', dep=TRUE) 
 install.packages('soilDB', dep=TRUE)
 install.packages('sharpshootR', dep=TRUE)
-# latest versions from R-Forge:
-install.packages('aqp', repos="http://R-Forge.R-project.org", type='source')
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
-install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source')
 ```
 
 
@@ -82,7 +78,7 @@ library(sharpshootR)
 
 
 ## Sample Data
-While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on 30 soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
+While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on 30 soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
 
 ```{r load-data, fig.width=12, fig.height=5, htmlcap='Sample data, pedons correlated to the Loafercreek soil series. Original data were loaded from NASIS.'}
 # load sample data from the soilDB package
@@ -97,7 +93,7 @@ plot(loafercreek, name='', print.id=FALSE, cex.names=0.8, axis.line.offset=-4, m
 
 These examples can be readily adapted to your own data. Note that you may need to adjust object (change *loafercreek* to the name of your `SoilProfileCollection` object) and column (*genhz*, etc.) names. Data loaded from NASIS via `fetchNASIS` can be used without modification (except for object name) in these examples.
 
-Typically color summaries are grouped by some kind of "horizon-level" attribute: depth slice, horizon designation, [generalized horizon label](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp), or within a diagnostic feature. However, it is possible to group colors by a "site-level" attribute such as bedrock kind, taxonname, or hillslope position. Note that grouping colors by a site-level attribute will pool colors from all depths.
+Typically color summaries are grouped by some kind of "horizon-level" attribute: depth slice, horizon designation, [generalized horizon label](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html), or within a diagnostic feature. However, it is possible to group colors by a "site-level" attribute such as bedrock kind, taxonname, or hillslope position. Note that grouping colors by a site-level attribute will pool colors from all depths.
 
 ### Depth Slices
 ```{r agg-color-data-1, fig.width=10, fig.height=6, htmlcap=''}

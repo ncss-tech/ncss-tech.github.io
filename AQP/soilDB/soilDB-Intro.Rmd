@@ -31,13 +31,10 @@ You only need to do this once. With a recent version of R, it should be possible
 install.packages("RODBC", dep=TRUE)
 install.packages("aqp", dep = TRUE)
 install.packages("soilDB", dep=TRUE)
-# latest versions from r-forge
-install.packages("aqp", repos = "http://R-Forge.R-project.org", type = "source")
-install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
 ```
 
 ### ODBC Connection to the Local NASIS database
-Setting up this connection is simple, and outlined in this [guide](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp). Queries submitted to the national database will load pedons or DMU data into your local database. Functions in `soilDB` can only access data in your local database, defined by the "selected set". While it is possible to filter pedon or DMU records within **R**, it is sometimes simpler to modify the "selected set" in NASIS. In other words:
+Setting up this connection is simple, and outlined in this [guide](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html). Queries submitted to the national database will load pedons or DMU data into your local database. Functions in `soilDB` can only access data in your local database, defined by the "selected set". While it is possible to filter pedon or DMU records within **R**, it is sometimes simpler to modify the "selected set" in NASIS. In other words:
 
   1. load up your local database with pedons associated with your office, project, or MLRA
   2. build your selected set (pedon, site, DMU, etc.)
@@ -101,7 +98,7 @@ When loading pedons with the `fetchNASIS()` or `fetchPedonPC()` functions, check
 
 **Fetch Pedons or DMU data from Local NASIS**
 
-The `fetchNASIS()` function will load pedons from the "selected set" in your local NASIS database. An ODBC connection named 'nasis_local' must **first** be [established](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp). Details on the `fetchNASIS()` function can be found [in this related tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp).
+The `fetchNASIS()` function will load pedons from the "selected set" in your local NASIS database. An ODBC connection named 'nasis_local' must **first** be [established](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp). Details on the `fetchNASIS()` function can be found [in this related tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
 
 ```{r local-nasis-demo, eval=FALSE}
 library(soilDB)
@@ -128,7 +125,7 @@ f <- fetchPedonPC(dsn)
 
 **Fetch data from Soil Data Access (SDA) Web-Service**
 
-A more [recent tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp) on this topic is available
+A more [recent tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) on this topic is available
 
 The `SDA_query()` function submits a query ([T-SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx)) to the [SDA web-service](http://sdmdataaccess.nrcs.usda.gov/), parses the result, and returns a `data.frame` (rectangular table) object. [This page](http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx) contains links to SSURGO metadata and many example SQL queries. 
 ```{r sda-example-1, eval=FALSE}
@@ -314,7 +311,7 @@ res <- SDA_query(q)
 
 
 ### The `Gopheridge` Sample Dataset
-The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()` or `fetchPedonPC()`. The following demonstration is geared towards intermediate users of R and who are familiar with the classes and methods defined by the `aqp` package. Before proceeding it may be helpful to review the `aqp` manual pages: `library(aqp) ; help(aqp)`, or the [SoilProfileCollection object introduction](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
+The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()` or `fetchPedonPC()`. The following demonstration is geared towards intermediate users of R and who are familiar with the classes and methods defined by the `aqp` package. Before proceeding it may be helpful to review the `aqp` manual pages: `library(aqp) ; help(aqp)`, or the [SoilProfileCollection object introduction](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
 
 Open R, and setup the environment by loading packages and the sample dataset.
 ```{r gopheridge-demo-1, eval=TRUE}

@@ -54,15 +54,15 @@ Here is a basic outline of the process:
   
   4. Keep track of final GHL assignments in NASIS or text file. 
   
-  5. [Estimate a most likely horizonation](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/estimate-ML-horizonation.html?root=aqp) e.g., top and bottom depths for each generalized horizon label.
+  5. [Estimate a most likely horizonation](http://ncss-tech.github.io/AQP/aqp/estimate-ML-horizonation.html) e.g., top and bottom depths for each generalized horizon label.
   
-  6. [Compute range in characteristics](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-application.html?root=aqp), aka [low-rv-high values](http://casoilresource.lawr.ucdavis.edu/wiki/Low-rv-high), for clay, sand, pH, etc. over GHL. (next document in this series)
+  6. [Compute range in characteristics](http://ncss-tech.github.io/AQP/aqp/gen-hz-application.html), aka [low-rv-high values](http://casoilresource.lawr.ucdavis.edu/wiki/Low-rv-high), for clay, sand, pH, etc. over GHL. (next document in this series)
   
 
 
 
 # Setup R Envionment
-If you have never used the [aqp](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) or [soildb](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) packages before, you will likely need to install them. This only needs to be done once. 
+If you have never used the [aqp](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) or [soildb](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) packages before, you will likely need to install them. This only needs to be done once. 
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN + dependencies
 install.packages('ape', dep=TRUE) 
@@ -71,10 +71,6 @@ install.packages('plyr', dep=TRUE)
 install.packages('aqp', dep=TRUE) 
 install.packages('soilDB', dep=TRUE)
 install.packages('sharpshootR', dep=TRUE)
-# latest versions from R-Forge:
-install.packages('aqp', repos="http://R-Forge.R-project.org", type='source')
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source')
-install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source')
 ```
 
 Once you have all of the R packages on which  this document depends, it is a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g., after an upgrade) and **loaded** anytime you want to access functions from within those packages.
@@ -107,7 +103,7 @@ plot(pedons, name='hzname', print.id=FALSE, cex.names=0.75, axis.line.offset=-4)
 
 
 ## Optional: Follow Along with Your Data
-The following code block demonstrates how to pull data in using the [`fetchNASIS()` function from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp).
+The following code block demonstrates how to pull data in using the [`fetchNASIS()` function from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html).
 
 ```{r use-nasis-data, eval=FALSE}
 # first load the desired data set within NASIS into your NASIS selected set
@@ -248,7 +244,7 @@ legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22, bty='n', cex=1)
 ```
 
 
-A box and whisker plot of the depth-ranges for each of the generalized horizon labels helps to visualize the degree of overlap. [Slicing](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) the collection of profiles along 1-cm intervals generates a more precise figure.
+A box and whisker plot of the depth-ranges for each of the generalized horizon labels helps to visualize the degree of overlap. [Slicing](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) the collection of profiles along 1-cm intervals generates a more precise figure.
 ```{r plot-ghl-2, fig.width=6, fig.height=5, htmlcap='Range in GHL horizon depth.'}
 # slice profile collection from 0-150 cm
 s <- slice(pedons, 0:150 ~ genhz)
@@ -270,7 +266,7 @@ bwplot(hzdept ~ genhz, data=horizons(s),
 
 ### Advanced: Multivariate Soil Property Summary
 
-The evaluation of generalized horizon labels typically requires a review of more information than field-described horizon labels and depth. For example, clay content, sand content, pH, total rock fragment volume, and horizon mid-points are soil properties that can be used to differentiate horizons-- as long as the data are populated. In this document, clay content, total rock fragment volume, and horizon mid-points are used. Multivariate comparisons are commonly based on the concept of [pair-wise dissimilarity](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) and subsequent reduction of the resulting [distance matrix](http://en.wikipedia.org/wiki/Distance_matrix) into a simpler representation. [Non-metric multidimensional scaling](http://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) is one method for reducing the distance matrix into a new set of coordinates in two-dimensional space. A [related](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-profile-dissimilarity.html?root=aqp) document explores this idea further.
+The evaluation of generalized horizon labels typically requires a review of more information than field-described horizon labels and depth. For example, clay content, sand content, pH, total rock fragment volume, and horizon mid-points are soil properties that can be used to differentiate horizons-- as long as the data are populated. In this document, clay content, total rock fragment volume, and horizon mid-points are used. Multivariate comparisons are commonly based on the concept of [pair-wise dissimilarity](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) and subsequent reduction of the resulting [distance matrix](http://en.wikipedia.org/wiki/Distance_matrix) into a simpler representation. [Non-metric multidimensional scaling](http://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) is one method for reducing the distance matrix into a new set of coordinates in two-dimensional space. A [related](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html) document explores this idea further.
 
 ```{r evaluate-genhz-assignment}
 # store the column names of our variables of interest

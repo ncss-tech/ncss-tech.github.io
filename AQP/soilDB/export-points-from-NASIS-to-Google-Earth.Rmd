@@ -19,7 +19,7 @@ Viewing Pedon Data from NASIS in Google Earth
 `r format(Sys.time(), "%Y-%m-%d")`
 Jay Skovlin
 
-This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to export pedon locations from a local NASIS database and then use the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf) package to generate KML files for viewing in Google Earth.  
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to export pedon locations from a local NASIS database and then use the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf) package to generate KML files for viewing in Google Earth.  
 
 ### Setup Local NASIS DB
  1. load selected set with pedons and sites of interest
@@ -35,9 +35,6 @@ install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('rgdal', dep=TRUE)
 install.packages('sp', dep=TRUE)
 install.packages('plotKML', dep=TRUE)
-# latest version from r-forge
-install.packages("aqp", repos = "http://R-Forge.R-project.org", type = "source")
-install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
 ```
 
 ### Load Pedons and Generate KML files

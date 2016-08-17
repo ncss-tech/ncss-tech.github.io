@@ -21,14 +21,13 @@ Getting, Plotting, and Saving Soil Series Extent Data from SoilWeb
 <br>Dylan Beaudette
 
 ### Introduction
-This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is purged when SoilWeb is periodically synced to the official data.
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is purged when SoilWeb is periodically synced to the official data.
 
 ### Installation
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
 install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type="source") # most recent copy from r-forge
 install.packages('dismo', dep=TRUE)
 install.packages('RColorBrewer', dep=TRUE)
 install.packages('maps', dep=TRUE)

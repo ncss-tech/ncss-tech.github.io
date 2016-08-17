@@ -35,11 +35,8 @@ With a recent version of R (>= 2.15), it is possible to get all of the packages 
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console, only once
 install.packages('aqp', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('aqp', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
 install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
 install.packages('sharpshootR', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('sharpshootR', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
 ```
 
 

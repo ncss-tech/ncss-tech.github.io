@@ -23,7 +23,7 @@ Writing SDA Queries that Return Geometry
 ## Introduction
 This is a short tutorial on how to interact with the [Soil Data Access (SDA) web-service](http://sdmdataaccess.nrcs.usda.gov/) using R. Queries are written using [a dialect of SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). On first glance SQL appears similar to the language used to write NASIS queries and reports, however, these are two distinct languages. Soil Data Access is a "window" into the spatial and tabular data associated with the current SSURGO snapshot. Queries can contain spatial and tabular filters. If you are new to SDA or SQL, have a look at [this page](http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx).
 
-If this is your first time using SDA, please see a related [tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp) to get started.
+If this is your first time using SDA, please see a related [tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) to get started.
 
 Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
 
@@ -41,8 +41,6 @@ install.packages("soilDB", dep=TRUE)
 install.packages("rgdal", dep = TRUE)
 install.packages("raster", dep = TRUE)
 install.packages("rgeos", dep = TRUE)
-# latest versions from r-forge
-install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
 ```
 
 

@@ -22,7 +22,7 @@ D.E. Beaudette
 
 
 ## Introduction
-This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to download data from the Henry Mount soil climate database. Soil climate data are routinely collected by SSO staff via buried sensor/data-logger devices ("hobos") and now above ground weather stations. The Henry Mount Soil Climate database was established to assist with the management and analysis of these data.
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download data from the Henry Mount soil climate database. Soil climate data are routinely collected by SSO staff via buried sensor/data-logger devices ("hobos") and now above ground weather stations. The Henry Mount Soil Climate database was established to assist with the management and analysis of these data.
 
 
 ## Setup R Environment
@@ -79,14 +79,14 @@ head(as.data.frame(x$sensors)[, c('user_site_id', 'name', 'serial_number', 'MAST
 ### Plot Data
 Note that there are gaps in the data: between site visits and lack of synchronization of site visits with start/end of the year.
 ```{r plot-time-series, fig.width=10, fig.height=7}
-xyplot(sensor_value ~ date_time | name, data=x$soiltemp, type=c('l', 'g'), as.table=TRUE, layout=c(1,6), xlab='Date', ylab='Deg C')
+xyplot(sensor_value ~ date_time | name, data=x$soiltemp, type=c('l', 'g'), as.table=TRUE, layout=c(1,7), xlab='Date', ylab='Deg C')
 ```
 
 
 Another approach for investigating data gaps, blue: data, grey: no data.
 ```{r plot-time-series-levelplot, fig.width=9, fig.height=9}
 levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, 
-data=x$soiltemp, layout=c(1,6), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+data=x$soiltemp, layout=c(1,7), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
@@ -98,7 +98,7 @@ This style of plotting data can be useful for making comparisons between years.
 cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
 
 levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Temperature at 50cm\nDeg. C',
-data=x$soiltemp, layout=c(1,6), col.regions=cols,
+data=x$soiltemp, layout=c(1,7), col.regions=cols,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
