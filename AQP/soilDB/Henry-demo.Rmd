@@ -78,13 +78,13 @@ head(as.data.frame(x$sensors)[, c('user_site_id', 'name', 'serial_number', 'MAST
 
 ### Plot Data
 Note that there are gaps in the data: between site visits and lack of synchronization of site visits with start/end of the year.
-```{r plot-time-series, fig.width=10, fig.height=7}
+```{r plot-time-series, fig.width=10, fig.height=9}
 xyplot(sensor_value ~ date_time | name, data=x$soiltemp, type=c('l', 'g'), as.table=TRUE, layout=c(1,7), xlab='Date', ylab='Deg C')
 ```
 
 
 Another approach for investigating data gaps, blue: data, grey: no data.
-```{r plot-time-series-levelplot, fig.width=9, fig.height=9}
+```{r plot-time-series-levelplot, fig.width=9, fig.height=11}
 levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, 
 data=x$soiltemp, layout=c(1,7), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
@@ -93,7 +93,7 @@ xlab='Julian Day', ylab='Year')
 ```
 
 This style of plotting data can be useful for making comparisons between years. 
-```{r plot-time-series-levelplot-2, fig.width=9, fig.height=9.5}
+```{r plot-time-series-levelplot-2, fig.width=9, fig.height=11.5}
 # generate some better colors
 cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
 
