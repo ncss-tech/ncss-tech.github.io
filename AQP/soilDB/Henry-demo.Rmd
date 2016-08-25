@@ -33,7 +33,10 @@ install.packages('RColorBrewer', dep=TRUE)
 install.packages('reshape', dep=TRUE)
 install.packages('dismo', dep=TRUE)
 install.packages('rgdal', dep=TRUE)
-install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('soilDB', dep=TRUE)
+# get latest version from GitHub
+install.packages('devtools', dep=TRUE)
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 
@@ -58,19 +61,20 @@ and aggregated to the following granularity:
  * "year"
 
 
-Query daily soil temperature data associated with the Sequoia / Kings Canyon soil survey.
+Query daily sensor data associated with the Sequoia / Kings Canyon soil survey.
 ```{r get-data, fig.width=6, fig.height=7, results='hide'}
 library(soilDB)
 library(lattice)
 library(RColorBrewer)
 
-x <- fetchHenry(project='CA792', gran = 'day')
+# get soil temperature, soil moisture, and air temperature data
+x <- fetchHenry(project='CA792')
 
 # check object structure:
-str(x)
+str(x, 2)
 ```
 
-Quick listing of essiential site-level data. "Functional years" is the number of years of non-missing data, after grouping data by Julian day. "Complete years" is the number of years that have 365 days of non-missing data. "dslv" is the number of days since the data-logger was last visited.
+Quick listing of essential site-level data. "Functional years" is the number of years of non-missing data, after grouping data by Julian day. "Complete years" is the number of years that have 365 days of non-missing data. "dslv" is the number of days since the data-logger was last visited.
 ```{r view-data, fig.width=6, fig.height=7}
 head(as.data.frame(x$sensors)[, c('user_site_id', 'name', 'serial_number', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')])
 ```
@@ -79,24 +83,30 @@ head(as.data.frame(x$sensors)[, c('user_site_id', 'name', 'serial_number', 'MAST
 ### Plot Data
 Note that there are gaps in the data: between site visits and lack of synchronization of site visits with start/end of the year.
 ```{r plot-time-series, fig.width=10, fig.height=9}
-xyplot(sensor_value ~ date_time | name, data=x$soiltemp, type=c('l', 'g'), as.table=TRUE, layout=c(2,5), xlab='Date', ylab='Deg C')
-xyplot(sensor_value ~ date_time | name, data=x$soilVWC, type=c('l', 'g'), as.table=TRUE, layout=c(2,5), xlab='Date', ylab='Deg C')
+xyplot(sensor_value ~ date_time | name, data=x$soiltemp, main='Daily Soil Temperature (Deg. C)', type=c('l', 'g'), as.table=TRUE, layout=c(2,9), xlab='Date', ylab='Deg C')
+xyplot(sensor_value ~ date_time | name, data=x$soilVWC, main='Daily Soil Moisture', type=c('l', 'g'), as.table=TRUE, layout=c(2,6), xlab='Date', ylab='Deg C')
 ```
 
 
 Another approach for investigating data gaps, blue: data, grey: no data.
 ```{r plot-time-series-levelplot, fig.width=9, fig.height=11}
-levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, 
-data=x$soiltemp, layout=c(2,5), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Soil Temperature (Deg. C)',
+data=x$soiltemp, layout=c(2,9), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
 
-levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, 
-data=x$soilVWC, layout=c(1,4), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Soil Moisture',
+data=x$soilVWC, layout=c(2,6), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
+
+# levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Air Temperature (Deg. C)',
+# data=x$airtemp, layout=c(1,1), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+# colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+# par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
+# xlab='Julian Day', ylab='Year')
 ```
 
 This style of plotting data can be useful for making comparisons between years. 
@@ -104,14 +114,14 @@ This style of plotting data can be useful for making comparisons between years.
 # generate some better colors
 cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
 
-levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Temperature at 50cm\nDeg. C',
-data=x$soiltemp, layout=c(2,5), col.regions=cols,
+levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Temperature (Deg. C)',
+data=x$soiltemp, layout=c(2,9), col.regions=cols,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
 
-levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Temperature at 50cm\nDeg. C',
-data=x$soilVWC, layout=c(1,4), col.regions=cols,
+levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Moisture',
+data=x$soilVWC, layout=c(2,6), col.regions=cols,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
