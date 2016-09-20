@@ -55,6 +55,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <h1>Soil Color Transition Probability</h1>
 <p>D.E. Beaudette <br> 2016-09-20 <br> This document is based on <code>aqp</code> version 1.9.12, <code>soilDB</code> version 1.8-2, and <code>sharpshootR</code> version 1.0-2.</p>
 <p>Details pending...</p>
+<p>Use pedon data associated with the Pierre soil series.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(soilDB)
 <span class="kw">library</span>(sharpshootR)
 <span class="kw">library</span>(igraph)
@@ -84,10 +85,23 @@ h &lt;-<span class="st"> </span><span class="kw">subset</span>(h, h$m_hue !=<spa
 h$color &lt;-<span class="st"> </span><span class="kw">paste0</span>(h$m_hue, <span class="st">&quot; &quot;</span>, h$m_value, <span class="st">&quot;/&quot;</span>, h$m_chroma)
 
 <span class="co"># pack horizon data back into SPC</span>
-<span class="kw">horizons</span>(s) &lt;-<span class="st"> </span>h
+<span class="kw">horizons</span>(s) &lt;-<span class="st"> </span>h</code></pre>
+<p>Alternate data source.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># load AQP sample dataset 5</span>
+<span class="kw">data</span>(sp5)
+s &lt;-<span class="st"> </span>sp5
 
+<span class="co"># convert soil color to RGB</span>
+s.rgb &lt;-<span class="st"> </span><span class="kw">t</span>(<span class="kw">col2rgb</span>(s$soil_color))
+s.rgb &lt;-<span class="st"> </span>s.rgb/<span class="dv">254</span>
 
-<span class="co"># generate TP matrix from horizon moist colors</span>
+<span class="co"># convert soil color to closest Munsell chip</span>
+s.munsell &lt;-<span class="st"> </span><span class="kw">rgb2munsell</span>(<span class="kw">horizons</span>(s)[, <span class="kw">c</span>(<span class="st">&quot;R25&quot;</span>, <span class="st">&quot;G25&quot;</span>, <span class="st">&quot;B25&quot;</span>)])
+
+s$color &lt;-<span class="st"> </span><span class="kw">paste0</span>(s.munsell$hue, <span class="st">&quot; &quot;</span>, s.munsell$value, <span class="st">&quot;/&quot;</span>, s.munsell$chroma)
+
+s$moist_soil_color &lt;-<span class="st"> </span>s$soil_color</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># generate TP matrix from horizon moist colors</span>
 tp &lt;-<span class="st"> </span><span class="kw">hzTransitionProbabilities</span>(s, <span class="st">&quot;color&quot;</span>, <span class="dt">loopTerminalStates =</span> <span class="ot">FALSE</span>)
 
 <span class="co"># greate graph object</span>
