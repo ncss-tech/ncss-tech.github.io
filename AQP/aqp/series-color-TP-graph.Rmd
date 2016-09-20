@@ -1,0 +1,96 @@
+---
+output:
+  html_vignette:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly = TRUE)
+library(printr, quietly = TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=TRUE)
+options(width=100, stringsAsFactors=FALSE)
+
+knit_hooks$set(htmlcap = function(before, options, envir) {
+  if(!before) {
+    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
+    }
+    })
+```
+
+
+Soil Color Transition Probability
+=======================================
+D.E. Beaudette
+<br>
+`r format(Sys.time(), "%Y-%m-%d")`
+<br>
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
+Details pending...
+
+
+
+```{r, fig.width=9, fig.height=9}
+library(soilDB)
+library(sharpshootR)
+library(igraph)
+library(plyr)
+library(reshape2)
+library(markovchain)
+
+# get lab / morphologic data for the Pierre soil series
+x <- fetchKSSL(series='pierre', returnMorphologicData = TRUE)
+
+# extract pedons into SoilProfileCollection
+s <- x$SPC
+
+# extract horizon data from SPC
+h <- horizons(s)
+
+# simplify color data: 1 row / horizon, from morphologic data tables
+x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum')
+
+# merge color data into SPC
+h <- join(h, x.colors, by='labsampnum', type='left', match='first')
+
+# remove horizons that are missing moist colors
+h <- subset(h, h$m_hue != '' & ! is.na(h$m_hue) & ! is.na(h$m_value) & ! is.na(h$m_chroma))
+
+# re-assemble Munsell color notation for moist color
+h$color <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
+
+# pack horizon data back into SPC
+horizons(s) <- h
+
+
+# generate TP matrix from horizon moist colors
+tp <- hzTransitionProbabilities(s, "color", loopTerminalStates = FALSE)
+
+# greate graph object
+par(mar = c(1, 1, 1, 1))
+g <- plotSoilRelationGraph(tp, graph.mode = "directed", vertex.scaling.factor=2, edge.arrow.size = 0.5, edge.scaling.factor = 2.5, vertex.label.cex = 0.75, vertex.label.family = "sans")
+
+
+# join Munsell color notation to graph nodes
+d <- data.frame(color=V(g)$name, stringsAsFactors = FALSE)
+d <- join(d, horizons(s), by = 'color', type='left', match='first')
+V(g)$color <- d$moist_soil_color
+
+# prepare labels by converting to HSV
+hsv.cols <- t(rgb2hsv(col2rgb(V(g)$color)))
+hsv.cols[, 1] <- 0
+hsv.cols[, 2] <- 0
+hsv.cols[, 3] <- ifelse(hsv.cols[, 3] > 0.5, 0, 1)
+V(g)$label.color <- hsv(hsv.cols[, 1], hsv.cols[, 2], hsv.cols[, 3])
+
+# remove loops from graph, retain duplicate paths
+g <- simplify(g, remove.loops = TRUE, remove.multiple=FALSE)
+
+# final plot
+par(mar=c(0,0,1,0), bg=grey(0.85))
+set.seed(1010101)
+plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "sans", vertex.label.font=2, edge.color='black')
+```
+
