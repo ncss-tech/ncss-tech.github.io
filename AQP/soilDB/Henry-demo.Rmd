@@ -76,7 +76,12 @@ str(x, 2)
 
 Quick listing of essential site-level data. "Functional years" is the number of years of non-missing data, after grouping data by Julian day. "Complete years" is the number of years that have 365 days of non-missing data. "dslv" is the number of days since the data-logger was last visited.
 ```{r view-data, fig.width=6, fig.height=7}
-head(as.data.frame(x$sensors)[, c('user_site_id', 'name', 'serial_number', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')])
+# convert into data.frame
+d <- as.data.frame(x$sensors)
+# keep only information on soil temperature sensors
+d <- subset(d, subset=sensor_type == 'soiltemp')
+# check top 6 rows and select columns
+head(d[, c('user_site_id', 'name', 'sensor_depth', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')])
 ```
 
 
@@ -123,6 +128,24 @@ xlab='Julian Day', ylab='Year')
 levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Moisture',
 data=x$soilVWC, layout=c(2,6), col.regions=cols,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+xlab='Julian Day', ylab='Year')
+```
+
+
+Convert data to percent saturation. (still working on this)
+```{r, fig.width=9, fig.height=11.5, eval=FALSE}
+fun <- function(i) {
+  i$pct.sat <- i$sensor_value / max(i$sensor_value, na.rm = TRUE)
+  return(i)
+}
+
+z <- ddply(x$soilVWC, c('sid', 'year'), .fun=fun)
+z$pct.sat <- factor(z$pct.sat >= 0.5, levels = c('TRUE', 'FALSE'), labels = c('Moist', 'Dry'))
+
+levelplot(pct.sat ~ doy * factor(year) | name, main='Daily Soil Moisture',
+data=z, layout=c(2,6), col.regions=c('grey', 'RoyalBlue'), cuts=1,
+colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
 ```
