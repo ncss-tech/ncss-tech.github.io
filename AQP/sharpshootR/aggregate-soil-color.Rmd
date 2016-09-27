@@ -6,7 +6,7 @@ output:
     fig_caption: yes
 ---
 
-```{r setup, echo=FALSE, results='hide'}
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 # options for knitr
 library(knitr, quietly = TRUE)
 library(printr, quietly = TRUE)
@@ -74,6 +74,7 @@ Now that you have all of the R packages that this document depends on, it would 
 library(soilDB)
 library(aqp)
 library(sharpshootR)
+library(cluster)
 ```
 
 
@@ -136,6 +137,37 @@ aggregateColorPlot(aggregateColor(loafercreek, 'bedrock_kind'), main='Loafercree
 ## Additional Examples
 
 Note that when using data from NASIS, you must first establish a selected set of site and pedon data.
+
+
+### Color Signatures by Cluster
+
+In this example, we are generating color signatures for groups of horizons defined by k-medoids clustering of clay content, CEC, and natural log transform of total carbon.
+
+```{r, fig.width=10, fig.height=6, htmlcap=''}
+# use a sample dataset from aqp
+data(sp3)
+depths(sp3) <- id ~ top + bottom
+
+# define function for repeated k-medoids fitting
+pam1 <- function(x,k) list(cluster = pam(x, k, cluster.only=TRUE, stand=TRUE))
+d <- horizons(sp3)[, c('clay', 'cec', 'ln_tc')]
+
+# emipirically determine optimal number of clusters
+g <- clusGap(d, FUN=pam1, K.max=10)
+plot(g)
+
+# cluster data
+sp3.clara <- clara(d, k=6, stand=TRUE)
+plot(silhouette(sp3.clara))
+
+# check clustering vector on profile sketches
+sp3$genhz <- sp3.clara$clustering
+plot(sp3, name='genhz')
+
+# color signatures by cluster of horizon
+aggregateColorPlot(aggregateColor(sp3, 'genhz'))
+```
+
 
 ### Soil Color Signatures
 
