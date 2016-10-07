@@ -1,0 +1,148 @@
+---
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+A Unified Interface to SCAN/SNOTEL Data 
+===============================
+`r format(Sys.time(), "%Y-%m-%d")`
+Dylan Beaudette
+
+## Introduction
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download climate data from the [SCAN/SNOTEL](http://www.wcc.nrcs.usda.gov/scan/) network. The `fetchSCAN` interface to these data is very much a work in progress. Stay tuned for updates and more detailed examples.
+
+### Installation
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r eval=FALSE}
+# run these commands in the R console
+install.packages('latticeExtra', dep=TRUE)
+install.packages('plyr', dep=TRUE)
+install.packages('rvest', dep=TRUE)
+install.packages('httr', dep=TRUE)
+install.packages('reshape2', dep=TRUE)
+install.packages('soilDB', dep=TRUE)
+```
+
+You will also need the latest version of `soilDB`:
+```{r eval=FALSE}
+install.packages('devtools', dep=TRUE)
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+
+
+## Quick Example: getting sensor metadata
+Each SCAN / SNOTEL station may have a different set of sensors.
+```{r}
+# load required packages
+library(soilDB)
+library(reshape2)
+library(plyr)
+library(latticeExtra)
+
+
+# get basic sensor metadata for several SCAN/SNOTEL sites
+m <- ddply(data.frame(site.code=c(2072,356,2148,2187)), 'site.code', SCAN_sensor_metadata)
+
+# print a list of sensor types by station
+dlply(m, 'site.code', function(i) unique(i$Ecode))
+```
+
+## Getting Data from a Single Station
+Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](http://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
+```{r, fig.width=8, fig.height=8}
+# fetchSCAN can accept multiple years
+x <- fetchSCAN(site.code=2001, year=c(2013,2014,2015,2016))
+
+# check the results
+str(x, 1)
+
+# tabulate number of soil moisture measurements per depth (cm)
+table(x$SMS$depth)
+
+# get unique set of soil moisture sensor depths
+sensor.depths <- unique(x$SMS$depth)
+
+# generate a better axis for dates
+date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 months')
+
+# plot soil moisture time series, panels are depth
+xyplot(value ~ Date | factor(depth), data=x$SMS, as.table=TRUE, type=c('l','g'), strip=strip.custom(bg=grey(0.80)), layout=c(1,length(sensor.depths)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), ylab='Volumetric Water Content', main='Soil Moisture at Several Depths')
+```
+
+
+
+## Getting Data from Multiple Stations
+That was interesting, but most of the time we want to make comparisons between stations. Note that the format of data returned makes it possible "stack" data from several stations that do not share the same collection of sensors.
+```{r fig.width=8, fig.height=8}
+# get more data
+x <- fetchSCAN(site.code=c(356, 2072), year=c(2015, 2016))
+
+# same format as before, sensor data are "stacked" within each list element
+str(x, 1)
+
+# deeper look
+str(x$SMS)
+
+# get unique set of soil moisture sensor depths
+sensor.depths <- unique(x$SMS$depth)
+
+# generate a better axis for dates
+date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 months')
+
+# plot soil moisture time series, panels are depth
+xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SMS, as.table=TRUE, type=c('l','g'), auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.80)), layout=c(1,length(sensor.depths)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), ylab='Volumetric Water Content', main='Soil Moisture at Several Depths')
+```
+
+
+## Further Examples
+
+```{r fig.width=10, fig.height=6}
+# combine sensors
+g <- make.groups('soil moisture'=x$SMS, 'soil temperature'=x$STO)
+
+# get unique set of soil moisture sensor depths
+sensor.depths <- unique(g$depth)
+
+# generate a better axis for dates
+date.axis <- seq.Date(as.Date(min(g$Date)), as.Date(max(g$Date)), by='3 months')
+
+# plot soil moisture time series, panels are depth
+p <- xyplot(value ~ Date | factor(Site) + which, groups=factor(depth), data=g, as.table=TRUE, type=c('l','g'), auto.key=list(columns=length(sensor.depths), lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.80)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y"), y=list(relation='free', rot=0)), ylab='', main='Soil Moisture and Temperature at Several Depths')
+
+useOuterStrips(p)
+
+
+# plot a single suite of sensors
+# compare sites / depths
+# no SAL sensors for these sites
+# xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SAL, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), layout=c(1,length(sensor.depths)), scales=list(alternating=3, y=list(relation='free', rot=0)))
+
+xyplot(value ~ Date, groups=factor(Site), data=x$TAVG, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Average Air Temperature by Site')
+
+xyplot(value ~ Date, groups=factor(Site), data=x$PRCP, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Precipitation by Site')
+
+xyplot(value ~ Date, groups=factor(Site), data=x$PREC, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Accumulated Precipitation by Site')
+
+xyplot(value ~ Date, groups=factor(Site), data=x$WTEQ, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Water Equivalent by Site')
+
+xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Depth (in) by Site')
+```
+
+
+## Up Next
+Saving data for use in water budgets. Combining with data from the Henry Mount Soil Climate database. Merging KSSL/NASIS data with SCAN/SNOTEL site data.
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
