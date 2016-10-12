@@ -66,6 +66,7 @@ Query daily sensor data associated with the Sequoia / Kings Canyon soil survey.
 library(soilDB)
 library(lattice)
 library(RColorBrewer)
+library(plyr)
 
 # get soil temperature, soil moisture, and air temperature data
 x <- fetchHenry(project='CA792')
@@ -96,13 +97,13 @@ xyplot(sensor_value ~ date_time | name, data=x$soilVWC, main='Daily Soil Moistur
 Another approach for investigating data gaps, blue: data, grey: no data.
 ```{r plot-time-series-levelplot, fig.width=9, fig.height=11}
 levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Soil Temperature (Deg. C)',
-data=x$soiltemp, layout=c(2,9), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+data=x$soiltemp, layout=c(2,7), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
 
 levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Soil Moisture',
-data=x$soilVWC, layout=c(2,6), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+data=x$soilVWC, layout=c(2,4), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
@@ -120,17 +121,33 @@ This style of plotting data can be useful for making comparisons between years.
 cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
 
 levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Temperature (Deg. C)',
-data=x$soiltemp, layout=c(2,9), col.regions=cols,
+data=x$soiltemp, layout=c(2,7), col.regions=cols,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
 
 levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Moisture',
-data=x$soilVWC, layout=c(2,6), col.regions=cols,
+data=x$soilVWC, layout=c(2,4), col.regions=cols,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
 ```
+
+
+Aggregate over years by sensor / Julian day.
+```{r plot-time-series-levelplot-3, fig.width=9, fig.height=6}
+
+# compute MAST by sensor
+a <- ddply(x$soiltemp, c('name', 'doy'), .fun=plyr::summarise, soiltemp=mean(sensor_value, na.rm = TRUE))
+# re-order sensor names according to MAST
+a.mast <- sort(tapply(a$soiltemp, a$name, mean, na.rm=TRUE))
+a$name <- factor(a$name, levels=names(a.mast))
+
+levelplot(soiltemp ~ doy * name, main='Daily Soil Temperature (Deg. C)',
+data=a, col.regions=cols, xlab='Julian Day', ylab='',
+colorkey=list(space='top'), scales=list(alternating=3, cex=0.75, x=list(tick.number=15)))
+```
+
 
 
 Convert data to percent saturation. (still working on this)
@@ -144,7 +161,7 @@ z <- ddply(x$soilVWC, c('sid', 'year'), .fun=fun)
 z$pct.sat <- factor(z$pct.sat >= 0.5, levels = c('TRUE', 'FALSE'), labels = c('Moist', 'Dry'))
 
 levelplot(pct.sat ~ doy * factor(year) | name, main='Daily Soil Moisture',
-data=z, layout=c(2,6), col.regions=c('grey', 'RoyalBlue'), cuts=1,
+data=z, layout=c(2,4), col.regions=c('grey', 'RoyalBlue'), cuts=1,
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
