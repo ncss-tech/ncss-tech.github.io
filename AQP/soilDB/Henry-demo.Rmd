@@ -198,6 +198,31 @@ plot(g, interpolate=TRUE)
 points(Mercator(x$sensors), col='red')
 ```
 
+3. Fit a simple model relating MAST to MAAT (PRISM) using soil temperature data from the 2-SON office.
+```{r, results='hide'}
+library(raster)
+library(rms)
+# get soil temperature, soil moisture, and air temperature data
+x <- fetchHenry(sso = '2-SON', what = 'soiltemp')
+r <- raster('E:/gis_data/prism/final_MAAT_800m.tif')
+x$sensors$maat <- extract(r, x$sensors)
+```
+
+```{r, fig.width=6, fig.height=6}
+m.sp <- subset(x$sensors, subset=sensor_depth == 50)
+m <- as.data.frame(m.sp)
+plot(MAST ~ maat, data=m)
+
+dd <- datadist(m)
+options(datadist="dd")
+
+(m.ols <- ols(MAST ~ rcs(maat), data=m))
+plot(Predict(m.ols, conf.type = 'simultaneous'), ylab='MAST', xlab='MAAT (PRISM)')
+
+m.sp$resid <- resid(m.ols)
+spplot(m.sp, 'resid')
+```
+
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
