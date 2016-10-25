@@ -72,7 +72,7 @@ x.colors <- dcast(a.colors, taxonname + top + bottom ~ variable, value.var = 'va
 head(a.colors)
 head(x.colors)
 
-# composite RGB triplets into an R-compatible color
+# composite sRGB triplets into an R-compatible color
 # note that missing colors must be padded with NA
 x.colors$soil_color <- NA
 not.na <- which(complete.cases(x.colors[, c('m_r', 'm_g', 'm_b')]))

@@ -72,9 +72,9 @@ Alternate data source.
 data(sp5)
 s <- sp5
 
-# convert soil color to RGB
+# convert soil color to sRGB
 s.rgb <- t(col2rgb(s$soil_color))
-s.rgb <- s.rgb / 254
+s.rgb <- s.rgb / 255
 
 # convert soil color to closest Munsell chip
 s.munsell <- rgb2munsell(horizons(s)[, c('R25', 'G25', 'B25')])
