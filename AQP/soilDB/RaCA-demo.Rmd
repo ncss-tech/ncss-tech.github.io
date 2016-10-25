@@ -114,7 +114,7 @@ length(s)
 # how many pedons / RCA site?
 table(s$rcasiteid)
 
-# generate soil colors from moist RGB
+# generate soil colors from moist sRGB
 s$soil_color <- rep(NA, times=nrow(horizons(s)))
 idx <- complete.cases(s$m_r)
 s$soil_color[idx] <- with(horizons(s)[idx, ], rgb(m_r, m_g, m_b)) # moist colors
