@@ -7,7 +7,6 @@ output:
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-# setup
 library(knitr, quietly=TRUE)
 library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
@@ -44,20 +43,20 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 
 ## Quick Example: getting sensor metadata
 Each SCAN / SNOTEL station may have a different set of sensors.
-```{r}
+```{r, packages, eval=TRUE}
 # load required packages
 library(soilDB)
 library(reshape2)
 library(plyr)
 library(latticeExtra)
 
-
 # get basic sensor metadata for several SCAN/SNOTEL sites
-m <- ddply(data.frame(site.code=c(2072,356,2148,2187)), 'site.code', SCAN_sensor_metadata)
+m <- SCAN_sensor_metadata(site.code=c(2072,356,2148,2187))
 
 # print a list of sensor types by station
 dlply(m, 'site.code', function(i) unique(i$Ecode))
 ```
+
 
 ## Getting Data from a Single Station
 Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](http://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
