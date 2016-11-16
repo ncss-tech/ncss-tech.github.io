@@ -15,15 +15,15 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Getting, Plotting, and Saving Soil Series Extent Data from SoilWeb
+Investigating Soil Series Extent
 ===============================================================
 `r format(Sys.time(), "%Y-%m-%d")`
 <br>Dylan Beaudette
 
-### Introduction
+## Introduction
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is purged when SoilWeb is periodically synced to the official data.
 
-### Installation
+## Installation
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -31,10 +31,13 @@ install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('dismo', dep=TRUE)
 install.packages('RColorBrewer', dep=TRUE)
 install.packages('maps', dep=TRUE)
+
+# you will need the latest version of soilDB
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
-### Examples 
-**Illustrate the extent of SSURGO map units associated with the Amador series.**
+## Examples 
+Illustrate the extent of SSURGO map units associated with the Amador series.
 ```{r libraries, results='hide'}
 # load required libraries
 library(soilDB)
@@ -44,20 +47,41 @@ library(maps)
 library(RColorBrewer)
 ```
 
+
+Get series extent for the Amador series and plot on a Google Map.
 ```{r example-1, eval=FALSE}
-# plot map
 seriesExtentAsGmap('amador')
 ```
 
-**Illustrate the extent of SSURGO map units associated with several soil series from MLRA 17 and 18.**
+Investigate the structure of soil series extent data.
+```{r example-3}
+# the result is a SpatialPolygonsDataFrame object
+amador <- seriesExtent('amador')
+
+# internal structure / class
+str(amador, 2)
+
+# coordinate reference system in PROJ4 notation
+proj4string(amador)
+
+# check attribute table, details: http://casoilresource.lawr.ucdavis.edu/see/
+slot(amador, 'data')
+```
+
+### Compare Amador, Pardee, and San Joaquin Extents
 ```{r example-2, results='hide'}
 # define some nice colors
 cols <- brewer.pal('Set1', n=3)
 
-# get the spatial extent of select series
-amador <- seriesExtent('amador')
-pardee <- seriesExtent('pardee')
-san.joaquin <- seriesExtent('san joaquin', timeout=120)
+# soil series of interest
+s <- c('amador', 'pardee', 'san joaquin')
+
+# iterate over vector of soil series names
+# and store spatial extents in a list
+s.extent <- lapply(s, seriesExtent, timeout=120)
+
+# combine into a single SpatialPolygonsDataFrame
+s.extent <- do.call('rbind', s.extent)
 
 # plot the results:
 # set figure margins to 0
@@ -67,44 +91,65 @@ par(mar=c(0,0,0,0))
 map(database='county', regions='california,calaveras|tuolumne|amador|san joaquin|stanislaus|merced|mariposa|sacramento')
 
 # add each soil series extent object
-plot(amador, col=cols[1], add=TRUE)
-plot(pardee, col=cols[2], add=TRUE)
-plot(san.joaquin, col=cols[3], add=TRUE)
+for(i in 1:nrow(s.extent)) {
+  plot(s.extent[i, ], col=cols[i], add=TRUE)
+}
 
 # add a neatline around the map
 box()
 
 # make a simple legend
-legend('topright', col=cols, pch=15, legend=c('Amador','Pardee','San Joaquin'))
+legend('topright', col=cols, pch=15, legend=s.extent$series)
 ```
 
-
-**Investigate the structure of soil series extent data.**
-```{r example-3}
-# internal structure / class
-str(amador, 2)
-
-# coordinate reference system in PROJ4 notation
-proj4string(amador)
-
-# extract acreage, details: http://casoilresource.lawr.ucdavis.edu/see/
-amador$acres
-pardee$acres
-san.joaquin$acres
-```
-
-**Save soil series extent data in multiple formats.**
+### Exporting Series Extent Data
+Save soil series extent data in multiple formats.
 ```{r example-4, eval=FALSE}
 # save using the coordinate reference system associated with this object (GCS WGS84)
-writeOGR(amador, dsn='.', layer='amador-extent', driver='ESRI Shapefile')
+writeOGR(s.extent, dsn='.', layer='amador-pardee-san-joaquin-extent', driver='ESRI Shapefile')
 
 # save as KML for use in Google Earth
-writeOGR(amador, dsn='amador-extent.kml', layer='amador', driver='KML')
+writeOGR(s.extent, dsn='amador-pardee-san-joaquin-extent.kml', layer='amador-pardee-san-joaquin', driver='KML')
 
 # project to UTM zone 10 NAD83 and save
-amador.utm <- spTransform(amador, CRS('+proj=utm +zone=10 +datum=NAD83'))
-writeOGR(amador.utm, dsn='.', layer='amador-extent-utm', driver='ESRI Shapefile')
+s.extent.utm <- spTransform(s.extent, CRS('+proj=utm +zone=10 +datum=NAD83'))
+writeOGR(s.extent.utm, dsn='.', layer='amador-pardee-san-joaquin-extent-utm', driver='ESRI Shapefile')
 ```
+
+
+## Boomer Soil Series Extent
+Lets investigate the spatial extent and MLRA overlap for the [Boomer](http://casoilresource.lawr.ucdavis.edu/sde/?series=boomer) soil series. We will use the SoilWeb SEE data for an estimate of the spatial extent and [Soil Data Access](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) for MLRA overlap information.
+
+
+Get extent and make a simple map.
+```{r}
+boomer <- seriesExtent('boomer')
+par(mar=c(1,0,1,0))
+map(database='county', regions='california')
+plot(boomer, col=cols[2], border=cols[2], add=TRUE)
+box()
+title(main='Boomer Series Extent', line=1.25)
+mtext(side=1, text=as.character(Sys.Date()), line=0)
+```
+
+Investigate MLRA overlap for the Boomer series via [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) (official SSURGO data). These results are based on the assumption that the "muaoverlap" table is correctly populated.
+```{r}
+res <- SDA_query("SELECT compname, areasymbol as mlra, areaname as mlra_name, count(compname) as n_components from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'boomer' AND areatypename = 'MLRA' GROUP BY compname, areasymbol, areaname ORDER BY count(compname) DESC")
+kable(res, row.names = FALSE)
+```
+
+That seems strange, which map units are in MLRA 31?
+```{r}
+res <- SDA_query("SELECT component.mukey, muname, compname, comppct_r from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN mapunit ON muaoverlap.mukey = mapunit.mukey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'boomer' AND areatypename = 'MLRA' AND areasymbol = '31'")
+kable(res, row.names = FALSE)
+```
+
+Save extent for Boomer series as shapefile (GCS/WGS84).
+```{r, eval=FALSE}
+writeOGR(boomer, dsn='.', layer='boomer-extent', driver='ESRI Shapefile')
+```
+
+
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
