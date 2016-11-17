@@ -266,7 +266,7 @@ levelplot(log(phi, base=10) ~ doy * factor(year) | factor(depth), main='Daily Me
           xlab='Julian Day', ylab='Year')
 
 levelplot(phi_leq_15_bar ~ doy * factor(year) | factor(depth), main='Daily Mean Water Potential <= 15 bar (1500 kPa)',
-          data=sms.phi, layout=c(1,5), col.regions=c('grey', 'RoyalBlue'), cuts=1,
+          data=sms.phi, layout=c(1,5), col.regions=c(grey(0.85), 'RoyalBlue'), cuts=1,
           colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
           par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
           xlab='Julian Day', ylab='Year')
