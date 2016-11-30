@@ -21,6 +21,10 @@ Dylan Beaudette
 ## Introduction
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download climate data from the [SCAN/SNOTEL](http://www.wcc.nrcs.usda.gov/scan/) network. The `fetchSCAN` interface to these data is very much a work in progress. Stay tuned for updates and more detailed examples.
 
+### Note
+This interface is very much a work in progress. [There are some SCAN / SNOTEL site with multiple (above-ground) sensors per sensor prefix](https://github.com/ncss-tech/soilDB/issues/14), which can lead to confusing results. For now the **first** above ground sensor is selected for each above-ground sensor prefix: ```c('TAVG', 'PRCP', 'PREC', 'SNWD', 'WTEQ', 'WDIRV', 'WSPDV', 'LRADT')```.
+
+
 ### Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r eval=FALSE}
