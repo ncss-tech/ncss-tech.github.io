@@ -1,0 +1,92 @@
+---
+title: "Evaluating Raster Sampling Density"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(tint)
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+```{r fig.width=8, fig.height=6, fig.cap='Stability of sample median (10m slope raster) for sledct map units.'}
+library(latticeExtra)
+library(plyr)
+library(rgdal)
+library(raster)
+library(sharpshootR)
+library(parallel)
+
+# load map unit polygons
+mu <-  readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', stringsAsFactors = FALSE)
+
+# best possible scenario: rasters are in memory
+r.slope <- readAll(raster('E:/gis_data/ca630/ca630_slope/hdr.adf'))
+
+# subset to just those map units we are interested in
+mu.set <- c('5012', '5201', '7011', '7088', '3058')
+mu <- mu[mu$MUSYM %in% mu.set, ]
+
+# add a unique polygon ID
+mu$pID <- seq(from=1, to=length(mu))
+
+# split select map units into a list of SPDF objs
+# will be processed in parallel
+mu.list <- split(mu, mu$MUSYM)
+
+# init cluster
+cl <- makeCluster(4)
+setDefaultCluster(cl)
+
+clusterEvalQ(NULL, {
+  library(raster)
+  library(sharpshootR)
+  })
+
+# this function is run on each core
+f.par <- function(i) {
+  # eval stability
+  s <- samplingStability(i, r.slope, n.set = c(0.1, 0.5, 1, 2), n.reps = 10)
+  # keep only stability indices
+  s <- s$stability
+  # convert fractions to percent
+  s$stability <- s$stability * 100
+  # http://stackoverflow.com/questions/12023403/using-parlapply-and-clusterexport-inside-a-function/12024448#12024448
+  gc()
+  return(s)
+}
+
+# export objects that must be shared across cores
+clusterExport(cl=cl, varlist=c("r.slope", "f.par"))
+
+# parallel version 2-3x faster ~ 5.4 minutes
+system.time(mu.stability <- parLapply(cl, mu.list, f.par))
+
+# done with multiple cores
+stopCluster(cl)
+
+# convert to DF
+mu.stability <- ldply(mu.stability)
+
+# area summary
+a <- ldply(mu.list, function(i) {
+  res <- sum(sapply(slot(i, 'polygons'), slot, 'area') * 2.47e-4)
+  return(res)
+})
+names(a) <- c('MUSYM', 'Map Unit Acreage')
+a <- a[order(a[, 2], decreasing = TRUE), ]
+
+kable(a)
+
+xyplot(stability ~ factor(sampling.density), groups=.id, data=mu.stability, type=c('b', 'g'), scales=list(alternating=1, x=list(rot=0), y=list(rot=0, tick.number=8, relation='free')), ylab='Percent of Population Median', xlab='Sampling Density (pts/ac.)', pch=16, strip=strip.custom(bg=grey(0.85)), main='90% Confidence in Stability of (Sample) Median', auto.key=list(columns=5, lines=TRUE, points=FALSE))
+```

@@ -1,0 +1,392 @@
+---
+title: "MU Summary Reports: Sampling Theory"
+subtitle: "A short justification for using some vs. all pixels"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  tint::tintHtml: 
+    self_contained: TRUE
+    smart: yes
+    keep_md: no
+link-citations: yes
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(tint)
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+```{r echo=FALSE}
+
+# stat summary function
+f.summary <- function(i, p=c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)) {
+  # remove NA
+  v <- na.omit(i$value)
+  # compute quantiles
+  q <- quantile(v, probs=p)
+  res <- data.frame(t(q))
+  
+  # assign reasonable names (quantiles)
+  if(nrow(res) > 0) {
+    names(res) <- c(paste0('Q', p * 100))
+    # compute size
+    res$n <- length(i$value)
+    return(res)
+  }
+  else
+    return(NULL)
+}
+
+
+f.sample <- function(mu, r, n) {
+  s <- constantDensitySampling(mu, n.pts.per.ac=n, min.samples=1, polygon.id='pID')
+  e <- as.vector(extract(r, s))
+  return(e)
+}
+
+f.population <- function(mu, r) {
+  # result is a list
+  e <- extract(r, mu)
+  e <- unlist(e)
+  return(e)
+}
+
+```
+
+
+```{r echo=FALSE, results='hide'}
+library(latticeExtra)
+library(viridis)
+library(plyr)
+library(rgdal)
+library(raster)
+library(gstat)
+library(sp)
+library(sharpshootR)
+library(spdep)
+
+# get example data ready
+# example population
+set.seed(1010101)
+x <- rnorm(1000, mean=15, sd=2)
+
+# make example reproduceable
+set.seed(1010101)
+s <- sample(x, size = 50, replace = FALSE)
+
+# combine
+g <- make.groups(population=x, sample=s)
+names(g) <- c('value', 'which')
+
+# compare standard distribution landmarks
+g.stats <- ddply(g, 'which', f.summary)
+
+
+
+# load map unit polygons
+# Shapefile Example
+mu <-  readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', stringsAsFactors = FALSE)
+
+# extract polygons for a single map unit ("MUSYM" attribute = "7089")
+# note that column names in your data may be different
+mu <- mu[which(mu$MUSYM == '7089'), ]
+
+# add a unique polygon ID
+mu$pID <- seq(from=1, to=length(mu))
+
+# polygon acres
+# mu must be projected with units of m^2
+mu.acres <- sapply(slot(mu, 'polygons'), slot, 'area') * 2.47e-4
+
+# best possible scenario: rasters are in memory
+r.elev <- readAll(raster('E:/gis_data/ca630/ca630_elev/hdr.adf'))
+r.slope <- readAll(raster('E:/gis_data/ca630/ca630_slope/hdr.adf'))
+r.solar <- readAll(raster('E:/gis_data/ca630/beam_rad_sum_mj_30m.tif'))
+r.maat <- readAll(raster('E:/gis_data/prism/final_MAAT_800m.tif'))
+
+
+# this takes a long time to run
+if(FALSE) {
+  # compute Moran's I within each MU polygon
+  # for a single raster
+  MI.slope <- vector(mode='numeric', length=nrow(mu))
+  for(i in 1:nrow(mu)) MI.slope[i] <- Moran_I_ByRaster(r.slope, mu[i, ])
+  
+  # list of:
+  # - quantiles at each density
+  # - stability of median, as a function of sampling density
+  stab.elev <- samplingStability(mu, r.elev, n.set = c(0.01, 0.1, 0.5, 1, 2, 5))
+  stab.slope <- samplingStability(mu, r.slope, n.set = c(0.01, 0.1, 0.5, 1, 2, 5))
+  stab.solar <- samplingStability(mu, r.solar, n.set = c(0.01, 0.1, 0.5, 1, 2, 5))
+  stab.maat <- samplingStability(mu, r.maat, n.set = c(0.01, 0.1, 0.5, 1, 2, 5))
+  
+  # cache for next time
+  save(MI.slope, stab.elev, stab.slope, stab.solar, stab.maat, file='raster-median-stability.rda')
+} else {
+  load('raster-median-stability.rda')
+}
+
+
+```
+
+
+
+```{r echo=FALSE, results='hide', fig.width=8, fig.height=6, fig.cap='Sampling a single map unit polygon (63 acres) at several target densities. Raster data are from a 10m slope (%) map; 2546 pixels within this polygon.'}
+mu.example <- mu[3, ]
+
+## mu area: ~ 63 ac.
+# sapply(slot(mu.example, 'polygons'), slot, 'area') * 2.47e-4
+
+## num pixels: ~ 2546
+# length(extract(r.slope, mu.example)[[1]])
+
+par(mfrow=c(2,2), mar=c(1,1,5,5))
+for(i in c(0.1, 0.5, 1, 2)) {
+  s.example <- constantDensitySampling(mu.example, n.pts.per.ac=i, min.samples=1, polygon.id='pID')
+  plot(crop(r.slope, mu.example), col=viridis(10), axes=FALSE, main=paste0(i, ' pts/ac.\n', nrow(s.example), ' samples'))
+  plot(mu.example, add=TRUE, lwd=2)
+  points(s.example, pch=21, cex=0.75, col='white')
+}
+```
+
+This is a short demonstration of why map unit summary reports are based on a *sampling* of overlapping pixels (from raster data sources) instead of using all overlapping pixels.
+
+
+# Introduction
+
+Nearly all statistical methods are based on the premise that meaningful descriptions of an underlying population can be derived from a [subset of the population, or  *sample*](https://en.wikipedia.org/wiki/Sampling_(statistics)). The efficiency of a sample is (mostly) dependent on three parameters: the shape of the population distribution, the size of the sample and the degree to which values in the population are related ([autocorrelation](https://en.wikipedia.org/wiki/Autocorrelation)). A population with a simple distribution, such as the [normal](https://en.wikipedia.org/wiki/Normal_distribution), can be characterized with a smaller sample than more complex distributions. The effect of sample size makes intuitive sense: more observations (e.g. *larger* sample) will give a better description of the population, regardless of distribution. Characterization of populations with a low degree of autocorrelation require relatively larger samples as compared to populations with a high degree of autocorrelation.
+
+
+# The population and the sample
+
+```{r echo=FALSE, fig.margin=TRUE, fig.width=6, fig.height=3, fig.cap='The normal distribution, with a mean of 12% and standard deviation of 2%. Vertical lines mark the mean +/- 1 standard deviation.'}
+n.x <- seq(5, 18, by=0.1)
+n.y <- dnorm(seq(5, 18, by=0.1), mean=12, sd=2)
+par(mar=c(4.5,0,0,0))
+plot(n.x, n.y, type='l', axes=FALSE, xlab='Clay Content (%)', ylab='')
+axis(side=1, labels = 5:18, at=5:18)
+abline(v=c(10, 12, 14), lty=3)
+```
+
+For the sake of demonstration, lets pretend that we know some details about the population of possible clay contents associated with all A horizons, within a given soil series: the distribution shape is approximately normal, has a mean of 12% and a standard deviation of 2%. We can simulate these conditions by drawing a large number (1,000) of samples from the normal distribution. Having "access" to the clay content population is analogous to collecting all pixels (e.g. slope values) that overlap with a collection of map unit polygons. Next, draw a small sample (5% of the observations) from the population. This is analogous to the approach used by the MU summary reports: selecting pixels at a constant sampling density of approximately 1-5 points per acre.
+
+
+```{r eval=FALSE, fig.width=8, fig.height=3, echo=FALSE}
+# table representation
+names(g.stats)[1] <- ''
+kable(g.stats, digits = 1, caption = 'Important distribution landmarks.')
+```
+
+
+```{r fig.width=8, fig.height=3, echo=FALSE, fig.cap = 'Box and whisker representation of the simulated population and associated sample. Notches represent an approximate confidence interval around the median.'}
+tps <- list(box.rectangle=list(col='black'), box.umbrella=list(col='black'), box.dot=list(col='black'), plot.symbol=list(col='black'))
+bwplot(which ~ value, data=g, notch=TRUE, par.settings=tps, xlab='Clay Content (%)')
+```
+
+```{r fig.width=8, fig.height=3, echo=FALSE, fig.cap = 'Density representation of the simulated population and associated sample.'}
+densityplot(~ value, groups=which, data=g, par.settings=list(superpose.line=list(col=viridis(2), lwd=2)), auto.key = list(columns=2, lines=TRUE, points=FALSE), pch=NA, xlab='Clay Content (%)', scales=list(x=list(tick.number=10)))
+```
+
+It is clear that a very small sample can adequately describe an underlying population. A larger sample would have been required if the distribution of the population were more complex.
+
+
+
+## Testing the limits
+
+Lets investigate the "stability" of the median as we increase the sample size from 1 to 1,000--using the same A horizon clay content example from above. We will operationally define "stability" as the interval spanning the 5th--95th percentiles of estimated median values over 100 (sampling) replications.
+```{r, echo=FALSE, fig.width=8, fig.height=5, fig.cap=''}
+
+# increase sampling size from 1 -> 1000
+# each time estimate the median 100 times
+s.seq <- c(1,2,3,4,5,6,7,8,9,10,20,50,100,250,500,1000)
+s <- sapply(s.seq, function(i) {
+  replicate(100, median(sample(x, size=i)))
+})
+
+# compute the stability of the median as width of q{0.05, 0.95} interval
+s.lower <- apply(s, 2, quantile, probs=0.05)
+s.upper <- apply(s, 2, quantile, probs=0.95)
+s.stability <- (s.upper - s.lower)
+
+par(mar=c(4.5,4.5,3,1))
+plot(s.seq, s.stability, type='n', las=1, log='x', xlab='Sample Size', ylab='Absolute Clay Content (%)', main='90% Confidence in (Sample) Median')
+abline(h=seq(0, 6, 0.5), v=s.seq, lty=3, col=gray(0.85))
+lines(s.seq, s.stability, type='b', lwd=2)
+```
+
+After about 50 samples, we are able to estimate the population median to within approximately 1% clay content (absolute), 90% of the time (e.g. within the 5th--95th percentile interval).
+
+
+# Autocorrelation
+
+The degree of autocorrelation within a population (and the effect on sampling constraints) is harder to intuit and best demonstrated by example. Consider two simulated time-series type populations generated by processes that have relatively high (0.7) and low (0.01) degrees of autocorrelation.
+
+```{r echo=FALSE, fig.width=8, fig.height=2, fig.cap='Autocorrelation: 0.7. Soil temperature measurements collected  at depth typically have high degree of autocorrelation.'}
+ts.sim <- arima.sim(list(order = c(1,1,0), ar = 0.7), n = 200)
+par(mar=c(1,1,1,1))
+plot(ts.sim, axes=FALSE)
+box()
+```
+
+```{r echo=FALSE, fig.width=8, fig.height=2, fig.cap='Autocorrelation: 0.01. Air quality measurements collected over a large city typically have a lower degree of autocorrelation.'}
+ts.sim <- arima.sim(list(order = c(1,1,0), ar = 0.01), n = 200)
+par(mar=c(1,1,1,1))
+plot(ts.sim, axes=FALSE)
+box()
+```
+
+Clearly, more observations (e.g. a larger sample size) would be required to describe patterns in the lower figure vs. the upper figure.
+
+
+## Spatial autocorrelation
+
+Spatial patterns also exhibit varying degrees of autocorrelation ([spatial autocorrelation](https://en.wikipedia.org/wiki/Spatial_analysis#Spatial_autocorrelation)). Spatial autocorrelation is closely related to scale: spatial processes that generate finer-scale phenomena such as drainage pattern or surface slope typically exhibit *lower* spatial autocorrelation than processes that generate coarse-scale phenomena such as climate. [Moran's I](https://en.wikipedia.org/wiki/Moran%27s_I) is one of the most common methods for quantifying the degree of spatial autocorrelation.
+
+Consider the following simulated spatial patterns with relatively low and high degrees of spatial autocorrelation.
+
+```{r, echo=FALSE, results='hide', fig.width=8, fig.height=4, fig.cap='Surface slope maps typically resemble the scale and degree of spatial autocorrelation of the left-hand panel. The spatial properties of the right-hand panel resembe those of a climatic parameter such as mean annual air temperature.'}
+# setup a grid
+xy <- expand.grid(1:100, 1:100)
+names(xy) <- c("x","y")
+
+var.model <- vgm(psill=1, model="Exp", range=1)
+set.seed(1)
+sim <- predict(gstat(formula=z~1, locations= ~x+y, dummy=TRUE, beta=0, model=var.model, nmax=20), newdata = xy, nsim = 1)
+
+var.model <- vgm(psill=1, model="Exp", range=30)
+set.seed(1)
+sim$sim2 <- predict(gstat(formula=z~1, locations= ~x+y, dummy=TRUE, beta=0, model=var.model, nmax=20), newdata=xy, nsim=1)$sim1
+ 
+# promote to SP class object
+gridded(sim) = ~x+y
+ 
+# crummy hack so that we can use the highly-specific Moran_I_ByRaster function
+r.low.ac <- raster(sim, layer=1)
+r.high.ac <- raster(sim, layer=2)
+proj4string(r.low.ac) <- '+proj=utm +zone=10'
+proj4string(r.high.ac) <- '+proj=utm +zone=10'
+e <- as(extent(r.low.ac), 'SpatialPolygons')
+proj4string(e) <- '+proj=utm +zone=10'
+
+r.low.MI <- round(Moran_I_ByRaster(r.low.ac, e, n = 100), 2)
+r.high.MI <- round(Moran_I_ByRaster(r.high.ac, e, n = 100), 2)
+
+# fix raster names and add Moran's I values
+new.names <- c(paste0("Moran's I: ", r.low.MI), paste0("Moran's I: ", r.high.MI))
+
+spplot(sim, names.attr=new.names, col.regions=viridis(100), as.table=TRUE, main="", colorkey=FALSE, par.strip.text=list(lines=1.5), strip=strip.custom(bg=grey(0.85)))
+```
+
+A larger sample would be required to describe spatial patterns in the left-hand panel vs. right-hand panel above.
+
+Fortunately for us, map unit concepts are (ideally) crafted to constrain variation within delineations. This means that spatial autocorrelation within map unit delineations is typically much greater than for an entire survey area or MLRA. Using a typical map unit from the CA630 survey and the surface slope raster (10m DEM), the median Moran's I within all delineations is 0.90, while the Moran's I for the entire survey area is 0.48. The high degree of spatial autocorrelation within map units makes it possible to generate meaningful summaries of raster data using only 1-2% of the overlapping pixels.
+
+
+
+# Map unit summaries
+
+The [MU Summary / Comparison reports](https://github.com/ncss-tech/soilReports/) developed for Region 2 staff draw heavily from the concepts of statistical sampling described above. Summaries are derived from samples drawn from the population of pixels that overlap collections of map unit polygons. The optimal sampling density will vary based on the following parameters of a given raster layer:
+
+ * cell size and extent: large rasters will take longer to sample, especially if the file cannot fit into available memory
+ * resources: a larger sample size requires more time and memory (RAM)
+ * autocorrelation / spatial complexity: larger autocorrelation requires relatively smaller sample sizes
+ * map unit size / scale: smaller, more detailed map units will require more samples to effectively characterize
+
+Ideally a sampling size is selected to minimize resource utilization (staff time, computer time, etc.) while maximizing the reliability (stability) of estimated percentiles and proportions.
+
+
+## An example from the CA630 initial soil survey
+Lets investigate samples derived from the following raster maps and map unit "7089". This map unit covers the thermic band of steeply sloping hills and mountains, underlain by metavolcanic rocks. Each raster was loaded into RAM and therefore time requirements represent optimal conditions. Processing times for rasters that do not fit into RAM (e.g. regional-scale elevation or slope maps) is typically 4 to 8 times longer.
+
+
+```{r echo=FALSE}
+d <- data.frame(c('Elevation', 'Slope', 'Beam Radiance', 'PRISM MAAT'), c(0.97, 0.48, 0.14, 0.97), c(10, 10, 30, 800), c(40, 40, 4.5, 0.006), c(40, 40, 10, 1), c(2,2,1,1))
+names(d) <- c('Raster', "Moran's I", 'Grid Size (m)', 'Density (pixels / acre)', 'Processing: all pixels (seconds)', 'Processing: 1 pt/ac. (seconds)')
+
+kable(d, caption = "Moran's I values were evaluated over the entire extent (bounding-box) of \"7089\" polygons.")
+```
+
+
+Note that the use of all overlapping pixels would require approximately 40 seconds of computer time to summarize each combination of (comparable) map units and 10m raster data. Therefore, a comparison between four map units, drawing from four 10m data sources would require approximately 10 minutes. The use of sampling (at the default 1 sample / ac.) would require approximately 30 seconds. Apart from spatial data processing time, the creation of data visualizations (e.g. box and whisker or density plots) would take much longer if all overlapping pixels were used.
+
+
+
+
+```{r echo=FALSE, fig.width=6, fig.height=4, fig.cap='Polygon area distribution for map unit "7089".'}
+densityplot(mu.acres, scales=list(x=list(log=10)), xscale.components=xscale.components.log10ticks, col='black', xlab='Polygon Area (ac.)')
+```
+
+The median polygon area for this map unit is approximately 64 acres--at a sampling density of 1 point per acre this would result in 64 samples collected from each raster, per polygon. The 5th and 95th percentiles for polygon area are 18 and 506 acres. These might seem like small sample sizes, however, the summaries presented in the MU reports are based on samples collected from all polygons associated with a map unit; 16,856 acres (16,856 samples at 1 point per acre) in the case of our example.
+
+
+## Results: sampling density and population
+
+Here we compare select percentiles derived from samples (at several densities) to the percentiles derived from the all pixels--the "population".
+
+```{r echo=FALSE}
+kable(stab.elev$summary.table, digits = 1, caption = '10m elevation (meters) raster summaries at several sampling intensities.')
+```
+
+```{r echo=FALSE}
+kable(stab.slope$summary.table, digits = 1, caption = '10m surface slope (percent) raster summaries at several sampling intensities.')
+```
+
+```{r echo=FALSE}
+kable(stab.solar$summary.table, digits = 0, caption = '30m annual beam radiance (mega-Joules per square meter) raster summaries at several sampling intensities.')
+```
+
+```{r echo=FALSE}
+kable(stab.maat$summary.table, digits = 1, caption = '800m PRSIM MAAT (degrees celsius) raster summaries at several sampling intensities.')
+```
+
+There is a trade-off when sampling raster data of varying resolution: an optimal sampling density at 10m (e.g. surface slope) may be excessive at 800m (e.g. PRISM data) resolution. Spatial autocorrelation will affect the selection of an optimal sampling density. For example, surface curvature will require more samples than surface slope, which in turn require more samples than elevation.
+
+
+## Stability of the estimated median
+Sampling implies stochasticity--each sampling event will result in a slightly different result. We can test the "stability" of sample-based estimates, like the median, via simulation.
+
+For each combination of raster layer and collection of map unit polygons:
+
+ 1. collect values from raster using a fixed sampling density
+ 2. estimate the median of these values
+ 3. repeat steps 1 and 2 many times (10 times in our example)
+ 4. compute with width of the 5th--95th percentile interval
+ 5. scale the resulting interval by the population median
+ 6. increase sampling density and repeat steps 1 through 5
+
+
+```{r echo=FALSE, fig.width=8, fig.height=6, fig.cap='Recall that "stability" is the width of the 5th--95th percentile interval of median estimates. Scaling this interval by the population median puts the values into practical context.'}
+r.stability <- make.groups('Elevation'=stab.elev$stability, 'Slope'=stab.slope$stability, 'Beam Radiance'=stab.solar$stability, 'PRISM MAAT'=stab.maat$stability)
+
+# nasty hack: remove sampling units
+r.stability$sampling.density <- sapply(strsplit(r.stability$sampling.density, ' '), function(i) i[[1]])
+
+# convert fractions to percent
+r.stability$stability <- r.stability$stability * 100
+
+xyplot(stability ~ factor(sampling.density) | which, data=r.stability, type=c('b', 'g'), scales=list(alternating=1, x=list(rot=0), y=list(rot=0, tick.number=8, relation='free')), ylab='Percent of Population Median', xlab='Sampling Density (pts/ac.)', col='black', pch=16, strip=strip.custom(bg=grey(0.85)), main='90% Confidence in Stability of (Sample) Median', layout=c(2,2), as.table=TRUE)
+```
+
+How do we interpret the above figure? For the collection of "7089" map unit polygons:
+
+ * Elevation: at 0.5 pts/ac. the estimated median is within 1% (4 meters) of the population median 90% of the time.
+ * Slope: at 1 pts/ac. the estimated median is within 1% (0.3 % slope) of the population median 90% of the time.
+ * Beam Radiance: at 0.1 pts/ac. the estimated median less than 1% (385 MJ/sq. meter) of the population median 90% of the time.
+ * PRSIM MAAT: at 0.01 pts/ac. the estimated median is less than 1% (0.09 deg. C) of the population median 90% of the time.
+ 
+
+In summary, a sampling density **between 1 and 2 points per acre** should be *sufficient* for most of the commonly used 10m to 30m data sources, and *excessive* for PRISM data (800m). The sampling density "sweet spot" for most combinations of map units and raster data sources is on the order of **1 point per acre**. 
+
+There are two cases that require further consideration of an "optimal" sampling density: 1) map unit polygons of limited extent, and 2) map units composed of very small delineations (less than 5 acres). In these cases it would be wise to increase the sampling density to a value between 2 and 5 points per acre.
+
+Stay tuned for a short tutorial on how to generate figures like the above, which can be useful for testing the guidelines presented in this document.
+
+
+
+
+
+
