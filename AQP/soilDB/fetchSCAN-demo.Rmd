@@ -65,7 +65,7 @@ dlply(m, 'site.code', function(i) unique(i$Ecode))
 
 
 ## Getting Data from a Single Station
-Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](http://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
+Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
 ```{r, fig.width=8, fig.height=8}
 # fetchSCAN can accept multiple years
 x <- fetchSCAN(site.code=2001, year=c(2013,2014,2015,2016))
@@ -148,7 +148,7 @@ xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l'
 
 ## Case Study: Pine Nut SCAN Site
 
-Get SCAN data from the [Pine Nut site](http://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015.
+Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015.
 ```{r, fig.width=12, fig.height=8}
 x <- fetchSCAN(site.code=c(2144), year=2008:2015)
 
@@ -185,7 +185,7 @@ levelplot(value ~ doy * factor(year) | factor(depth), main='Daily Mean VWC (%)',
 
 Get KSSL data for this site, via user pedon ID. This will include estimated parameters for the [van Genuchten](https://en.wikipedia.org/wiki/Water_retention_curve) model which can be used to derive a [water retention curve](https://en.wikipedia.org/wiki/Water_retention_curve).
 
-Previously the VG parameters had to be obtained manually from [these reports](http://ncsslabdatamart.sc.egov.usda.gov/rptExecute.aspx?p=34942&r=6&submit1=Get+Report).
+Previously the VG parameters had to be obtained manually from [these reports](https://ncsslabdatamart.sc.egov.usda.gov/rptExecute.aspx?p=34942&r=6&submit1=Get+Report).
 ```{r}
 # get KSSL data
 s <- fetchKSSL(pedon_id = 'S08NV003003')
