@@ -1,15 +1,30 @@
-```{r setup, echo=FALSE, results='hide'}
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+---
+title: "Generating Soil Component Relation Diagrams"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
-# Generating Soil Component Relation Diagrams
+
 
 
 Details pending. [A recent discussion on the topic](http://casoilresource.lawr.ucdavis.edu/wiki/SoilSeriesRelationGraph#Recent_Dialog).
 
-## Simple Example
-```{r libraries-and-sample, fig.width=14, fig.height=7}
+# Simple Example
+```{r fig.width=14, fig.height=7}
 # load libraries
 library(soilDB)
 library(sharpshootR)
@@ -39,17 +54,27 @@ plotSoilRelationGraph(m.2, s='amador')
 title('Community Matrix')
 ```
 
-```{r layout-examples, fig.width=14, fig.height=7}
+```{r  fig.width=14, fig.height=7}
+# compare vertex scaling methods
+par(mfcol=c(1,2), mar=c(0,0,1,0))
+plotSoilRelationGraph(m.2, s='amador')
+title('Degree')
+plotSoilRelationGraph(m.2, s='amador', vertex.scaling.method = 'distance')
+title('Distance from "Amador"')
+```
+
+
+```{r fig.width=14, fig.height=7}
 # compute adjacency matrix via community matrix method
 m <- component.adj.matrix(amador)
 # try a bunch of layouts
 par(mfrow=c(2,3), mar=c(0,0,1,0))
-plotSoilRelationGraph(m, s='amador', main='fruchterman.reingold (default)')
-plotSoilRelationGraph(m, s='amador', g.layout=layout.grid, main='grid')
-plotSoilRelationGraph(m, s='amador', g.layout=layout.circle, main='circle')
-plotSoilRelationGraph(m, s='amador', g.layout=layout.mds, main='MDS')
-plotSoilRelationGraph(m, s='amador', g.layout=layout.spring, main='spring')
-plotSoilRelationGraph(m, s='amador', g.layout=layout.star, main='star')
+plotSoilRelationGraph(m, s='amador', main='Fruchterman-Reingold (default)')
+plotSoilRelationGraph(m, s='amador', g.layout=layout_on_grid, main='grid')
+plotSoilRelationGraph(m, s='amador', g.layout=layout_in_circle, main='circle')
+plotSoilRelationGraph(m, s='amador', g.layout=layout_with_mds, main='MDS')
+plotSoilRelationGraph(m, s='amador', g.layout=layout_with_gem, main='GEM')
+plotSoilRelationGraph(m, s='amador', g.layout=layout_as_star, main='star')
 ```
 
 
@@ -62,7 +87,7 @@ plotSoilRelationGraph(m, s='amador')
 plotSoilRelationGraph(m, s='amador', plot.style='dendrogram')
 ```
 
-```{r mst, fig.width=14, fig.height=7}
+```{r fig.width=14, fig.height=7}
 # tighten margins
 par(mfcol=c(1,2), mar=c(0,0,1,0))
 # plot as network diagram, with Amador soil highlighted
@@ -70,10 +95,18 @@ plotSoilRelationGraph(m, s='amador', main='Full Graph')
 plotSoilRelationGraph(m, s='amador', spanning.tree='max', main='Maximum Spanning Tree')
 ```
 
+```{r fig.width=14, fig.height=7}
+# tighten margins
+par(mfcol=c(1,2), mar=c(0,0,1,0))
+# plot as network diagram, with Amador soil highlighted
+plotSoilRelationGraph(m, s='amador', main='Full Graph')
+plotSoilRelationGraph(m, s='amador', spanning.tree='min', main='Minumum Spanning Tree')
+```
+
 ```{r prune-edges, fig.width=15, fig.height=3}
 par(mar=c(1,1,1,1), mfcol=c(1,5))
 for(i in seq(0, 1, length.out = 5)) {
-  plotSoilRelationGraph(m, vertex.scaling.factor=3, del.edges=i)
+  plotSoilRelationGraph(m, s='amador', vertex.scaling.factor=3, del.edges=i)
   title(paste0('Edge weight < ', i, '-tile pruned'), cex.main=0.9, line=-1)
   box()
 }
@@ -82,14 +115,14 @@ for(i in seq(0, 1, length.out = 5)) {
 ```{r prune-edges-mst, fig.width=15, fig.height=3}
 par(mar=c(1,1,1,1), mfcol=c(1,5))
 for(i in seq(0, 1, length.out = 5)) {
-  plotSoilRelationGraph(m, vertex.scaling.factor=3, del.edges=i, spanning.tree='max')
+  plotSoilRelationGraph(m, s='amador', vertex.scaling.factor=3, del.edges=i, spanning.tree='max')
   title(main=paste0('Edge weight < ', i, '-tile pruned'), sub='Max Spanning Tree', cex.main=0.9, line=-1)
   box()
 }
 ```
 
 
-## NASIS via local database
+# NASIS via local database
 ```{r get-format-nasis-data}
 # get legend/DMU/component data from NASIS
 # in this case, CA630 data
@@ -99,7 +132,7 @@ d <- get_component_data_from_NASIS_db()
 d$compname <- tolower(d$compname)
 
 # remove misc. areas components
-d <- subset(d, compkind != 'miscellaneous area')
+d <- subset(d, compkind != 'Miscellaneous area')
 
 # remove some higher-taxa and non-soil components
 d <- subset(d, ! compname %in% c('lithic haploxeralfs', 'rock outcrop', 'aquic haploxeralfs', 'ultic haploxeralfs', 'riparian'))
@@ -137,7 +170,7 @@ plotSoilRelationGraph(m, spanning.tree='max', vertex.scaling.factor=1, edge.scal
 ```
 
 
-## SSURGO via SDA
+# SSURGO via SDA
 ```{r get-format-SSURGO-data, results='hide'}
 # select by survey area(s)
 q <- "SELECT 
@@ -167,3 +200,4 @@ plotSoilRelationGraph(m, vertex.scaling.factor=1, edge.scaling.factor=8, spannin
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
