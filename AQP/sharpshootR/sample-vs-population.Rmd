@@ -289,9 +289,9 @@ Fortunately for us, map unit concepts are (ideally) crafted to constrain variati
 
 # Map unit summaries
 
-The [MU Summary / Comparison reports](https://github.com/ncss-tech/soilReports/) developed for Region 2 staff draw heavily from the concepts of statistical sampling described above. Summaries are derived from samples drawn from the population of pixels that overlap collections of map unit polygons. The optimal sampling density will vary based on the following parameters of a given raster layer:
+The [MU Summary / Comparison reports](https://github.com/ncss-tech/soilReports/) developed for Region 2 staff draw heavily from the concepts of statistical sampling described above. Summaries are derived from samples drawn from the population of pixels that overlap collections of map unit polygons. The optimal sampling density will vary based on the following parameters:
 
- * cell size and extent: large rasters will take longer to sample, especially if the file cannot fit into available memory
+ * raster cell size and extent: large rasters will take longer to sample, especially if the file cannot fit into available memory
  * resources: a larger sample size requires more time and memory (RAM)
  * autocorrelation / spatial complexity: larger autocorrelation requires relatively smaller sample sizes
  * map unit size / scale: smaller, more detailed map units will require more samples to effectively characterize
@@ -347,7 +347,7 @@ There is a trade-off when sampling raster data of varying resolution: an optimal
 
 
 ## Stability of the estimated median
-Sampling implies stochasticity--each sampling event will result in a slightly different result. We can test the "stability" of sample-based estimates, like the median, via simulation.
+Sampling implies stochasticity--each sampling event will result in a slightly different estimate. We can test the "stability" of sample-based estimates, like the median, via simulation.
 
 For each combination of raster layer and collection of map unit polygons:
 
