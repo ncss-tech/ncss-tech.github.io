@@ -199,8 +199,7 @@ s <- fetchKSSL(pedon_id = 'S08NV003003')
 Generate water retention curve for sensor at 20cm. This requires extracting VG parameters from the KSSL data from the associated horizon.
 ```{r, fig.width=10, fig.height=6}
 # get VG parameters for sensor at 20cm depth
-idx <- profileApply(s, find_horizons_by_points, z=20)
-s.vg.hz <- horizons(s)[idx, c('theta_r', 'theta_s', 'alpha', 'npar')]
+s.vg.hz <- slice(s, 20 ~ theta_r + theta_s + alpha + npar, just.the.data = TRUE)
 
 # get VG curve and inverse function
 # this is based on several assumptions about the source data... details pending
@@ -228,7 +227,7 @@ update(p.model + p.points, main='Select Percentiles of Data Measured at 20cm', s
 
 
 ### Conversion of VWC to Matric Potential: All Depths
-This time we will iterate over all sensors, develop water retention curves, and convert VWV to water potention values.
+This time we will iterate over all sensors, develop water retention curves, and convert VWV to water potention values. Note that this approach will only work with a `SoilProfileCollection` object that contains a *single* profile.
 ```{r, fig.width=12, fig.height=8}
 # split soil moisture data by sensor depth
 sms.list <- split(sms, sms$depth)
@@ -238,8 +237,8 @@ sms.phi <- ldply(sms.list, function(i) {
   # i is a DF associated with a single sensor depth
   this.depth <- unique(i$depth)
   # get VG params for this depth
-  vg.idx <- profileApply(s, find_horizons_by_points, z=this.depth)
-  s.vg.hz <- horizons(s)[vg.idx, c('theta_r', 'theta_s', 'alpha', 'npar')]
+  fm <- as.formula(paste0(this.depth, ' ~ theta_r + theta_s + alpha + npar'))
+  s.vg.hz <- slice(s, fm, just.the.data = TRUE)
 
   # get VG curve and inverse function
   # this is based on several assumptions about the source data...
