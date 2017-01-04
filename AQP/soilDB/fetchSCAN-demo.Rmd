@@ -1,4 +1,7 @@
 ---
+title: "A Unified Interface to SCAN/SNOTEL Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
@@ -13,19 +16,15 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-A Unified Interface to SCAN/SNOTEL Data 
-===============================
-`r format(Sys.time(), "%Y-%m-%d")`
-Dylan Beaudette
 
-## Introduction
+# Introduction
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download climate data from the [SCAN/SNOTEL](http://www.wcc.nrcs.usda.gov/scan/) network. The `fetchSCAN` interface to these data is very much a work in progress. Stay tuned for updates and more detailed examples.
 
-### Note
+## Note
 This interface is very much a work in progress. [There are some SCAN / SNOTEL site with multiple (above-ground) sensors per sensor prefix](https://github.com/ncss-tech/soilDB/issues/14), which can lead to confusing results. For now the **first** above ground sensor is selected for each above-ground sensor prefix: ```c('TAVG', 'PRCP', 'PREC', 'SNWD', 'WTEQ', 'WDIRV', 'WSPDV', 'LRADT')```.
 
 
-### Installation
+## Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r eval=FALSE}
 # run these commands in the R console
@@ -46,7 +45,7 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 
 
 
-## Quick Example: getting sensor metadata
+# Quick Example: getting sensor metadata
 Each SCAN / SNOTEL station may have a different set of sensors.
 ```{r, packages, eval=TRUE}
 # load required packages
@@ -64,7 +63,7 @@ dlply(m, 'site.code', function(i) unique(i$Ecode))
 ```
 
 
-## Getting Data from a Single Station
+# Getting Data from a Single Station
 Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
 ```{r, fig.width=8, fig.height=8}
 # fetchSCAN can accept multiple years
@@ -88,7 +87,7 @@ xyplot(value ~ Date | factor(depth), data=x$SMS, as.table=TRUE, type=c('l','g'),
 
 
 
-## Getting Data from Multiple Stations
+# Getting Data from Multiple Stations
 That was interesting, but most of the time we want to make comparisons between stations. Note that the format of data returned makes it possible "stack" data from several stations that do not share the same collection of sensors.
 ```{r fig.width=8, fig.height=8}
 # get more data
@@ -111,7 +110,7 @@ xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SMS, as.table=T
 ```
 
 
-### Example Figures
+## Example Figures
 
 ```{r fig.width=10, fig.height=6}
 # combine sensors
@@ -146,7 +145,7 @@ xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l'
 ```
 
 
-## Case Study: Pine Nut SCAN Site
+# Case Study: Pine Nut SCAN Site
 
 Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015.
 ```{r, fig.width=12, fig.height=8}
@@ -181,7 +180,7 @@ levelplot(value ~ doy * factor(year) | factor(depth), main='Daily Mean VWC (%)',
 ```
 
 
-### Water Retention Curve Development
+## Water Retention Curve Development
 
 Get KSSL data for this site, via user pedon ID. This will include estimated parameters for the [van Genuchten](https://en.wikipedia.org/wiki/Water_retention_curve) model which can be used to derive a [water retention curve](https://en.wikipedia.org/wiki/Water_retention_curve).
 
@@ -196,7 +195,7 @@ s <- fetchKSSL(pedon_id = 'S08NV003003')
 
 ### Conversion of VWC to Matric Potential: Single Depth
 
-Generate water retention curve for sensor at 20cm. This requires extracting VG parameters from the KSSL data from the associated horizon.
+Generate water retention curve for sensor at 20cm. This requires extracting VG parameters from the KSSL data from the associated horizon. See `?KSSL_VG_model` for details.
 ```{r, fig.width=10, fig.height=6}
 # get VG parameters for sensor at 20cm depth
 s.vg.hz <- slice(s, 20 ~ theta_r + theta_s + alpha + npar, just.the.data = TRUE)
@@ -276,7 +275,6 @@ levelplot(phi_leq_15_bar ~ doy * factor(year) | factor(depth), main='Daily Mean 
 
 ```
 
-Details pending...
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
