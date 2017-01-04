@@ -195,7 +195,7 @@ s <- fetchKSSL(pedon_id = 'S08NV003003')
 
 ### Conversion of VWC to Matric Potential: Single Depth
 
-Generate water retention curve for sensor at 20cm. This requires extracting VG parameters from the KSSL data from the associated horizon. See `?KSSL_VG_model` for details.
+Generate water retention curve for sensor at 20cm. This requires extracting VG parameters from the KSSL data from the associated horizon. See `?KSSL_VG_model` or [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html) for details.
 ```{r, fig.width=10, fig.height=6}
 # get VG parameters for sensor at 20cm depth
 s.vg.hz <- slice(s, 20 ~ theta_r + theta_s + alpha + npar, just.the.data = TRUE)

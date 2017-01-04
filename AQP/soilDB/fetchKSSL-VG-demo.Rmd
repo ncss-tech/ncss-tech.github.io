@@ -1,4 +1,7 @@
 ---
+title: "Water Retention Curve Development from KSSL Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
@@ -13,17 +16,16 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Water Retention Curve Development from KSSL Data
-===============================
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>Dylan Beaudette
 
+# Introduction
+This is a simple demonstration of how to use (estimated) van Genuchten Model parameters from the KSSL snapshot (added 2016-11-17) as provided by [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html) to generate water retention curves. These parameters are based on a model fit using the [Rosetta software](https://www.ars.usda.gov/pacific-west-area/riverside-ca/us-salinity-laboratory/docs/rosetta-model/). 
 
-## Introduction
-This is a simple demonstration of how to use (estimated) van Genuchten Model parameters from the KSSL snapshot (added 2016-11-17) as provided by [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html) to generate water retention curves. These parameters are based on a model fit using the Rosetta software.
+A note from our KSSL staff:
+<div style="font-size: 80%; margin: 0px 10px 0px 10px; padding: 5px; border: 1px solid black;">The Rosetta computer program must have at a minimum the particle size distribution. Then it will use the following properties, if provided, bulk density, water content at 33 kPa, and water content at 1500 kPa.
 
+As a practice, the KSSL uses the Rosetta computer program for a horizon only if all of these properties are present.  For PSD, we only use the routine method, like pipette.  For bulk density, we only use the clod at 33 kPa.  For water content at 33 kPa, we only use the clod.  For water content at 1500 kPa, we only use the <2 mm sieved sample.</div>
 
-### Setup
+## Setup
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r eval=FALSE}
 # run these commands in the R console
@@ -43,7 +45,7 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 ```
 
 
-## Simple Plot of Water Retention Curves
+# Simple Plot of Water Retention Curves
 
 Plot (estimated) water retention curves for all horizons associated with the [Cecil](http://casoilresource.lawr.ucdavis.edu/sde/?series=cecil) soil series.
 ```{r fig.width=10, fig.height=6}
@@ -51,6 +53,7 @@ library(aqp)
 library(soilDB)
 library(latticeExtra)
 library(plyr)
+library(reshape2)
 
 # get KSSL data
 s <- fetchKSSL(series = 'cecil')
@@ -59,10 +62,19 @@ s <- fetchKSSL(series = 'cecil')
 s.vg.hz <- horizons(s)[, c('labsampnum', 'hzn_desgn', 'hzn_top', 'hzn_bot', 'lab_texture_class', 'theta_r', 'theta_s', 'alpha', 'npar')]
 s.vg.hz <- na.omit(s.vg.hz)
 
+# simple generalization of horizons
+s.vg.hz$hz <- generalize.hz(s.vg.hz$hzn_desgn, new=c('A', 'Bt', 'C'), pat=c('A', 'Bt', '^C'))
+
+# melt into long format, for viz. of VG parameters
+s.long <- melt(s.vg.hz, id.vars = 'hz', measure.vars = c('theta_r', 'theta_s', 'alpha', 'npar'))
+# bw plot of VG parameters by generalized horizon label
+bwplot(hz ~ value | variable, data=s.long, scales = list(x=list(relation='free', alternating=3)), strip=strip.custom(bg=grey(0.85)), as.table=TRUE, xlab='', main='van Genuchten Model Parameters fit by USDA-ARS Rosetta', sub='Pedons Correlated to the Cecil Soil Series')
+
 # iterate over horizons and generate VG model curve
 res <- lapply(1:nrow(s.vg.hz), function(i) {
   m <- KSSL_VG_model(VG_params = s.vg.hz[i, ], phi_min = 10^-3, phi_max=10^6)$VG_curve
-  m$hzn_desgn <-s.vg.hz$hzn_desgn[i]
+  # copy generalized hz label
+  m$hz <- s.vg.hz$hz[i]
   return(m)
 })
 
@@ -70,16 +82,13 @@ res <- lapply(1:nrow(s.vg.hz), function(i) {
 names(res) <- s.vg.hz$labsampnum
 res <- ldply(res)
 
-# simple generalization of horizons
-res$hz <- generalize.hz(res$hzn_desgn, new=c('A', 'Bt', 'C'), pat=c('A', 'Bt', '^C'))
-
 # plot each curve, panel by genhz
 p.model <- xyplot(phi ~ theta | hz, groups=.id, data=res, type=c('l', 'g'), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression("Suction " (kPa)), xlab=expression("Volumetric Water Content " (cm^3/cm^3)), par.settings = list(superpose.line=list(col='RoyalBlue', lwd=1)), strip=strip.custom(bg=grey(0.85)), as.table=TRUE)
 
 update(p.model, main='Estimated Water Retention Curves', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
 ```
 
-## Additional Examples
+# Additional Examples
 See the [SCAN/SNOTEL](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html) tutorial for more ideas.
 
 
