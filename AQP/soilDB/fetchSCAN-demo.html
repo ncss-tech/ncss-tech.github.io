@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="D.E. Beaudette" />
+<meta name="author" content="D.E. Beaudette and J. Skovlin" />
 
 <meta name="date" content="2017-01-04" />
 
@@ -118,7 +118,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">A Unified Interface to SCAN/SNOTEL Data</h1>
-<h4 class="author"><em>D.E. Beaudette</em></h4>
+<h4 class="author"><em>D.E. Beaudette and J. Skovlin</em></h4>
 <h4 class="date"><em>2017-01-04</em></h4>
 
 </div>
@@ -126,7 +126,7 @@ $(document).ready(function () {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This document demonstrates how to use the <a href="http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html">soilDB</a> package to download climate data from the <a href="http://www.wcc.nrcs.usda.gov/scan/">SCAN/SNOTEL</a> network. The <code>fetchSCAN</code> interface to these data is very much a work in progress. Stay tuned for updates and more detailed examples.</p>
+<p>This document demonstrates how to use the <a href="http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html">soilDB</a> package to download climate data from the <a href="http://www.wcc.nrcs.usda.gov/scan/">SCAN/SNOTEL</a> network. Stay tuned for updates and more detailed examples.</p>
 <div id="note" class="section level2">
 <h2>Note</h2>
 <p>This interface is very much a work in progress. <a href="https://github.com/ncss-tech/soilDB/issues/14">There are some SCAN / SNOTEL site with multiple (above-ground) sensors per sensor prefix</a>, which can lead to confusing results. For now the <strong>first</strong> above ground sensor is selected for each above-ground sensor prefix: <code>c('TAVG', 'PRCP', 'PREC', 'SNWD', 'WTEQ', 'WDIRV', 'WSPDV', 'LRADT')</code>.</p>
@@ -579,7 +579,7 @@ update(p.model + p.points, main='Select Percentiles of Data Measured at 20cm', s
 </div>
 <div id="conversion-of-vwc-to-matric-potential-all-depths" class="section level3">
 <h3>Conversion of VWC to Matric Potential: All Depths</h3>
-<p>This time we will iterate over all sensors, develop water retention curves, and convert VWV to water potention values. Note that this approach will only work with a <code>SoilProfileCollection</code> object that contains a <em>single</em> profile.</p>
+<p>This time we will iterate over all sensors, develop water retention curves, and convert VWV to water potential values. Note that this approach will only work with a <code>SoilProfileCollection</code> object that contains a <em>single</em> profile.</p>
 <pre class="r"><code># split soil moisture data by sensor depth
 sms.list &lt;- split(sms, sms$depth)
 
