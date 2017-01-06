@@ -203,7 +203,7 @@ plotKML(s, colour_scale=rep('royalblue', 2), points_names=paste(s$site_id, s$tax
 <pre class="r"><code># build URL to NASIS Web Pedon Description Report and add this as a column to our site data
 s$report_link &lt;- paste(']]&gt;&lt;![CDATA[&lt;a href=&quot;https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon+Description+html+(userpedid)&amp;pedon_id=', s$pedon_id, '&quot;&gt;Pedon Description Report&lt;/a&gt;]]&gt;&lt;![CDATA[', sep='')
 
-kml_file_path &lt;- 'C:/temp/R_sites_with_report_link1.kml'
+kml_file_path &lt;- 'C:/temp/R_sites_with_report_link.kml'
 kml_open(file.name=kml_file_path, folder.name='Sites_with_URL', overwrite=TRUE)
 kml_layer.SpatialPoints(s, title='Sites_with_URL', colour='royalblue', balloon=s$report_link, labels=site_id, shape=&quot;http://maps.google.com/mapfiles/kml/pal2/icon18.png&quot;)
 kml_close(kml_file_path)</code></pre>
