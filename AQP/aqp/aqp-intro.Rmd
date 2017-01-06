@@ -1,4 +1,7 @@
 ---
+title: "Introduction to SoilProfileCollection Objects"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
@@ -14,11 +17,11 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-# Introduction to SoilProfileCollection Objects
+# Introduction
 This is a very basic introduction to the `SoilProfileCollection` class object defined in the `aqp` package for **R**. The `SoilProfileCollection` class was designed to simplify the process of working with the collection of data associated with soil profiles: site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. Examples listed below are meant to be copied/pasted from this document and interactively run within **R**. Comments (green text) briefly describe what the code in each line does. This document assumes a basic level of proficiency with **R** which can be gained by reviewing some of the material in [tutorials like this](http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf). Further documentation on objects and functions from the `aqp` package can be accessed by typing `help(aqp)` (or more generally, `?function_name`) at the **R** console.
 
 
-## Object Creation
+# Object Creation
 `SoilProfileCollection` objects are typically created by "promoting" `data.frame` objects (rectangular tables of data) that contain at least three essential columns: 
  * 1) an ID column uniquely identifying groups of horizons (e.g. pedons)
  * 2) horizon top boundaries
@@ -58,7 +61,7 @@ print(sp4)
 ```
 
 
-## Accessing, Setting, and Replacing Data
+# Accessing, Setting, and Replacing Data
 "Accessor" functions are used to extract specfic components from within `SoilProfileCollection` objects.
 ```{r accessor-functions, eval=FALSE}
 # methods for object inspection
@@ -100,7 +103,7 @@ coordinates(sp4)
 ```
 
 
-## Horizon and Site Data
+# Horizon and Site Data
 Typically, horizon and site data are the most important components of `SoilProfileCollection` objects. Both are internally stored as `data.frame` objects; with one or more rows (per profile ID) in the horizon table and one row (per profile ID) in the site table. Columns from either table can be accessed with the `$` style notation of `data.frames`. New data can be assigned to either table in the same manner, as long as the length of the new data is either: 
  * 1) same length as the number of profiles in the collection (target is the site table)
  * 2) same length as the number of horizons in the collection (target is the horizon table)
@@ -149,7 +152,7 @@ sp4
 ```
 
 
-## Diagnostic Horizons
+# Diagnostic Horizons
 Diagnostic horizons typically span several genetic horizons and may or may not be present in all profiles. To accomodate the wide range of possibilities, diagnostic horizon data are stored as a `data.frame` in "long format": each row corresponds to a diagnostic horizon, identified with a column matching the ID column used to initialize the `SoilProfileCollection` object.
 ```{r diagnostic}
 # manually create some diagnostic horizon data
@@ -170,7 +173,7 @@ diagnostic_hz(sp4) <- rbind(dh, dh.new)
 ```
 
 
-## Spatial Data
+# Spatial Data
 Spatial data can be explicitly stored within a `SoilProfileCollection` object and accessed with methods imported from the [sp](http://cran.at.r-project.org/web/packages/sp/index.html) package. The use of `sp` classes (in this case `SpatialPoints` and `SpatialPointsDataFrame` objects) simplifies operations such as [plotting spatial data, coordinate system transformations, and spatial queries](http://cran.at.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
 ```{r spatial, fig.width=4, fig.height=4}
 # generate some fake coordinates as site level attributes
@@ -197,7 +200,7 @@ box()
 ```
 
 
-## Subsetting SoilProfileCollection Objects
+# Subsetting SoilProfileCollection Objects
 `SoilProfileCollection` objects can be subset using the familiar `[`-style notiation used by matrix and `data.frame` objects, such that: `spc[i, j]` will return profiles identified by the integer vector `i`, and horizons identified by the integer vector `j`. Ommitting either index will result in all profiles (`i` ommitted) or all horizons (`j` ommitted). Typically, site-level attributes will be used as the subsetting criteria. Functions that return an index to matches (such as `grep()` or `which()`) provide the link between attributes and an index to matching profiles. Some examples:
 
 ```{r subsetting-1, eval=FALSE}
@@ -232,8 +235,8 @@ subsetProfiles(sp4, h='clay < 20', s='group == "A"')
 ```
 
 
-## Concatenation of SoilProfileCollection Objects
-If the internal structures of several `SoilProfileCollection` objects are identical (e.g. same ID name, horizon, site, diagnostic horizon, and spatial attributes) they can be safely combined into a new object. Note that concatenation will re-order all input `SoilProfileCollection` objects such that the resulting IDs are in alpha-numeric order.
+# Concatenation of SoilProfileCollection Objects
+If the internal structures of several `SoilProfileCollection` objects are identical (e.g. same ID name, horizon, site, diagnostic horizon, and spatial attributes) they can be safely combined into a new object.
 ```{r concatenation, eval=FALSE}
 # subset data into chunks
 s1 <- sp4[1:2, ]
@@ -248,8 +251,9 @@ all.equal(profile_id(s), site(s)[[idname(s)]])
 ```
 
 
-## Plotting SoilProfileCollection Objects
+# Plotting SoilProfileCollection Objects
 The `plot()` method for `SoilProfileCollection` objects generates sketches of profiles within the collection based on horizon boundaries, vertically aligned to an integer sequence from 1 to the number of profiles. Horizon names are automatically extracted from a horizon-level attribute `name` (if present), or via an alternate attributed given as an argument: `name='column.name'`. Horizon colors are automatically generated from the horizon-level attribute `soil_color`, or any other attribute of **R**-compatible color description given as an argument: `color='column.name'`. This function is highly customizable, therefore, it is prudent to consult `help(plotSPC)` from time to time. Soil colors in Munsell notation can be converted to **R**-compatible colors via `munsell2rgb()`.
+
 ```{r plotting, fig.height=4, fig.width=8}
 # plot uses base graphics, so it is simple to add low-level annotation layers
 plot(sp4, name='name')
@@ -292,8 +296,18 @@ plot(sp4, name='name')
 addBracket(fake.tops, fake.bottoms, col='red') # add depth brackets
 ```
 
+It is possible to arrange profile sketches by site-level grouping variable:
+```{r, fig.height=4, fig.width=8}
+# use improvised site-level attribute 'group' 
+par(mar=c(0,0,3,0)) # tighter figure margins
+groupedProfilePlot(sp4, groups='group')
+# note that depth brackets "know which profiles to use"
+addBracket(fake.tops, fake.bottoms, col='red') # add depth brackets
+```
 
-## Iterating Over Profiles in a Collection
+
+
+# Iterating Over Profiles in a Collection
 The `profileApply()` function is an extension of the familiar *apply()* family of functions that operate on vectors (`sapply` and `tapply`), matrices (`apply`), and lists (`lapply`)-- extended to `SoilProfileCollection` objects. The function named in the `FUN` argument is evaluated once for each profile in the collection, typicially returning a single value per profile. In this case, the ordering of the results would match the ordering of values in the site level attribute table.
 ```{r profileApply-1}
 # max() returns the depth of a soil profile
@@ -346,7 +360,7 @@ mtext(1, line=2.25, text='Horizon Thickness Weighted Mean Ex. Ca:Mg', cex=0.75)
 ```
 
 
-## Slicing Soil Profile Collections
+# Slicing Soil Profile Collections
 Collections of soil profiles can be sliced (or re-sampled) into regular depth-intervals with the `slice()` function. The slicing structure and variables of interest are defined via formula notation:
 
 ```{r slice-formula, eval=FALSE}
@@ -384,7 +398,7 @@ plot(sliced[, c(10:20, 40:50)])
 ```
 
 
-## Aggregating Soil Profile Collections Along Regular "Slabs"
+# Aggregating Soil Profile Collections Along Regular "Slabs"
 Depth-wise summary of horizon-level attributes is performed with the `slab()` function. Profile grouping criterial and horizon attribute selection is parametrized via formula: either `groups ~ var1 + var2 + var3` where named variables are aggregated within `groups` OR where named variables are aggregated across the entire collection ` ~ var1 + var2 + var3`. The default summary function (`slab.fun`) computes the 5th, 25th, 50th, 75th, and 95th percentiles via Harrell-Davis quantile estimator.
 
 The depth structure ("slabs") over which summaries are computed is defined with the `slab.structure` argument using:
@@ -453,7 +467,7 @@ xyplot(top ~ p.q50 | variable, groups=which, data=g, ylab='Depth',
 ```
 
 
-### Change of Support: re-alignment of horizon depths via aggregation
+## Change of Support: re-alignment of horizon depths via aggregation
 
 Occasionally there is a need for converting data associated with soil horizons, as described in the field, to a new set of depth intervals. This kind of *change of support* operation requires some form of aggregation (mean, median, etc.) and possibly interpolation (e.g. splines). The `slab` function is the simplest way to implement a change of depth support via aggregation. The following example is based on a set of 9 randomly generated profiles, re-aligned to the Global Soil Map (GSM) standard depths.
 ```{r, fig.height=4.5, fig.width=9}
@@ -510,9 +524,12 @@ plot(d.gsm.pedons.2, name='', color='p1', col.label='Contributing Fraction', col
 
 
 
-## Pair-Wise Dissimilarity
+# Pair-Wise Dissimilarity
 Calculation of between-profile dissimilarity is performed using the `profile_compare()` function. Dissimilarity values depend on attributes selection (e.g. clay, CEC, pH , etc.), optional depth-weighting parameter (`k`), and a maximum depth of evaluation (`max_d`). This topic is further documented in a [related tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html), the function manual page (type `help(profile_compare)` in the **R** console), and [this paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
-```{r dissimilarity, fig.height=4.5, fig.width=7}
+```{r dissimilarity, fig.height=6, fig.width=8}
+library(cluster)
+library(sharpshootR)
+
 # eval dissimilarity:
 # using Ex-Ca:Mg and CEC at pH 7
 # with no depth-weighting (k=0)
@@ -522,14 +539,18 @@ d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
 # check distance matrix:
 round(d, 1)
 
-# vizualize dissimilarity matrix via hierarchical clustering
-h <- hclust(d)
-plot(as.dendrogram(h))
+# vizualize dissimilarity matrix via divisive hierarchical clustering
+d.diana <- diana(d)
+
+# this function is from the sharpshootR package
+# requires some manual adjustments
+par(mar=c(1,1,5,1))
+plotProfileDendrogram(sp4, d.diana, scaling.factor = 0.8, y.offset = 10, color='ex_Ca_to_Mg')
 ```
 
 
 
-## Object Metadata
+# Object Metadata
 ```{r metadata, eval=FALSE}
 # print metadata:
 metadata(sp4)
@@ -556,7 +577,7 @@ depth_units(sp4) <- 'cm'
 ```
 
 
-## Object Structure and Coercion
+# Object Structure and Coercion
 ```{r coercion, eval=FALSE}
 # check our work by viewing the internal structure
 str(sp4)
