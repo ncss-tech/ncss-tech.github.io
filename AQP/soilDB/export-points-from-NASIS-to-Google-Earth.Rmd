@@ -69,7 +69,7 @@ par(mar=c(1,1,1,1))
 plot(s)
 
 # subset to columns from the site data that may useful as labels
-s <- s[, c("site_id", "pedon_id", "obs_date", "pedlabsampnum", "taxonname", "hillslope_pos", "elev_field", "slope_field", "aspect_field", "plantassocnm", "bedrckdepth", "bedrock_kind", 'pmkind', 'pmorigin')]
+s <- s[, c('site_id', 'pedon_id', 'obs_date', 'pedlabsampnum', 'taxonname', 'hillslope_pos', 'elev_field', 'slope_field', 'aspect_field', 'plantassocnm', 'bedrckdepth', 'bedrock_kind', 'pmkind', 'pmorigin')]
 
 # generate a basic KML file of site locations with site_id specified as the placemark labels
 # set KML file path
@@ -84,7 +84,7 @@ plotKML(s, colour_scale=rep('royalblue', 2), points_names=paste(s$site_id, s$tax
 ```
 
 ### Screenshot from Google Earth
-![GE_image](./GE_example1.jpg)
+![](./GE_example1.jpg)
 
 
 ### Building timestamps into Pedon data KML files using site observation date information
@@ -99,16 +99,16 @@ The script below builds a URL to a web-based NASIS pedon description report for 
 
 ```{r example3, eval=FALSE}
 # build URL to NASIS Web Pedon Description Report and add this as a column to our site data
-s$report_link <- paste('<a href="https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon+Description+html+(userpedid)&pedon_id=', s$pedon_id, '">Pedon Description Report</a>', sep='')
+s$report_link <- paste(']]><![CDATA[<a href="https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon+Description+html+(userpedid)&pedon_id=', s$pedon_id, '">Pedon Description Report</a>]]><![CDATA[', sep='')
 
-kml_file_path <- 'C:/temp/R_sites_with_report_link.kml'
+kml_file_path <- 'C:/temp/R_sites_with_report_link1.kml'
 kml_open(file.name=kml_file_path, folder.name='Sites_with_URL', overwrite=TRUE)
 kml_layer.SpatialPoints(s, title='Sites_with_URL', colour='royalblue', balloon=s$report_link, labels=site_id, shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
 kml_close(kml_file_path)
 ```
 
 ### Screenshot of placemark balloon with embedded NASIS web report link
-![GE_image](./GE_example2.jpg)
+![](./GE_example2.jpg)
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
