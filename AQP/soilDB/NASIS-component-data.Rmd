@@ -1,36 +1,38 @@
 ---
+title: "Tips on getting component data from NASIS into R"
+author: "D.E. Beaudette, J.M. Skovlin, S. Roecker"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    fig_caption: yes
-    jquery: null
     mathjax: null
+    jquery: null
     smart: no
+    keep_md: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+# setup
+library(tint)
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
-# Tips on getting component data from NASIS into R
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>D.E. Beaudette, J.M. Skovlin, S. Roecker
+
 
 > This tutorial is based on essential background material described in the [soilDB](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html) and related [NASIS ODBC connection](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html) tutorials. If you have not reviewed those tutorials, please do so before proceeding.
 
 > The functions and documentation described in this tutorial are still a work in progress.
 
 
-## Introduction
+# Introduction
 The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
 
-## Pedon Data
+# Pedon Data
 Please see the [related tutorial on loading NASIS pedon data into R](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
 
 
-## Component Data
+# Component Data
 
 Load up your local database and selected set with some components. NASIS queries should "target" the tables:
 
@@ -46,6 +48,7 @@ The most commonly used data from the data map unit, component, component horizon
 ```{r, results='hide'}
 # load required libraries
 library(soilDB)
+library(ggplot2)
 library(plyr)
 
 # get component + component horizon data as a SoilProfileCollection, using defaults
@@ -77,9 +80,9 @@ plot(nc.sub.unique, color='claytotal_r', print.id=FALSE, n=length(nc.sub))
 title(sub='Unique components named "Amador"', line=0)
 ```
 
-## Accessing Additional Types of "Component" Data
+# Accessing Additional Types of "Component" Data
 
-### Linked Pedons
+## Linked Pedons
 
 Sometimes it is convenient to know which pedons are linked to components. The following function returns a `data.frame` (table) of data containing component record IDs, pedon record IDs, and pedon IDs. This can be used to link the results of `fetchNASIS_component_data()` to the results of `fetchNASIS()` (pedon data). Lets assemble a list of all pedons linked to a component named "Amador", using the subset from above.
 ```{r}
@@ -95,7 +98,7 @@ nc.linked.pedons[idx, ]
 ```
 
 
-### Map Unit, Correlation, Legend, Area Tables
+## Map Unit, Correlation, Legend, Area Tables
 
 The NASIS data elements that exist at levels higher than the data map unit table must be loaded with a different function because there isn't always a 1:1 mapping between data map unit objects and map unit / legend objects.
 ```{r}
@@ -114,21 +117,56 @@ xtabs( ~ areasymbol + compkind, data=nc.combined)
 ```
 
 
-### Component Ecological Site Data
+## Component Month Table
+
+... details pending
+
+```{r, fig.width=12, fig.height=6}
+# load comonth as-is: there will be missing records
+cm <- get_comonth_from_NASIS_db()
+nrow(cm)
+
+# load comonth after filling missing months
+cm <- get_comonth_from_NASIS_db(fill = TRUE)
+nrow(cm)
+
+# there should be the same number of "coiid" values after filling missing comonth records
+length(nc$coiid) == length(unique(cm$coiid))
+
+# join component table to "filled" comonth table
+comp <- get_component_data_from_NASIS_db()
+# make a new ID by combining DMU name + comp name
+comp$id <- paste0(comp$dmudesc, '-', comp$compname)
+
+x <- join(comp, cm, by='coiid')
+nrow(x)
+
+ggplot(subset(x, subset= dmudesc == 'CA6305015'), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+
+ggplot(subset(x, subset= coiid %in% x$coiid[x$flodfreqcl != 'None']), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+
+ggplot(subset(x, subset= coiid %in% x$coiid[x$floddurcl != 'None']), aes(month, factor(id), floddurcl)) + geom_tile(aes(fill = floddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+
+ggplot(subset(x, subset=coiid %in% x$coiid[x$pondfreqcl != 'None']), aes(month, factor(id), pondfreqcl)) + geom_tile(aes(fill = pondfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Ponding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+
+ggplot(subset(x, subset= coiid %in% x$coiid[x$ponddurcl != 'None']), aes(month, factor(id), ponddurcl)) + geom_tile(aes(fill = ponddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Ponding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+```
+
+
+## Component Ecological Site Data
 Details pending.
 ```{r}
 nc.esd <- get_component_esd_data_from_NASIS_db
 ```
 
 
-Additional tutorials are available at the [AQP project website](http://ncss-tech.github.io/AQP/).
 
 
-## Example Applications
+# Example Applications
 These examples are still a work in progress. Detailed descriptions pending...
 
 
-### Check for DMU Linked to Multiple Map Units
+## Check for DMU Linked to Multiple Map Units
 
 There are some cases where a single DMU may be linked to multiple map units (*such as...*). 
 ```{r, fig.width=9, fig.height=9}
@@ -169,7 +207,7 @@ legend('bottomleft', legend = c('MU (national musym)', 'DMU (dmu description)', 
 ```
 
 
-### Rank Component Records Based on Horizon Data Population
+## Rank Component Records Based on Horizon Data Population
 Rank data map units that contain a major component named "Amador" based on the degree to which component horizon data has been populated.
 
 ```{r, fig.width=8, fig.height=4}
@@ -217,10 +255,10 @@ dotplot(dmudesc ~ frac.populated, data=p, cex=1.25, ylab='DMU Description', xlab
 ```
 
 
-## Boring Details ##
+# Boring Details ##
 Just kidding, this stuff matters.
 
-### Status and QC Messages ###
+## Status and QC Messages
 As part of the quality control process, a number of possible messages are printed to the console when running `fetchNASIS_component_data()`. These messages and their meaning are described below:
 
 * `-> QC: horizon errors detected ...`
@@ -233,7 +271,7 @@ This message means that some data map units in the selected set have been used w
 This message means that there may be several "representative" DMU assigned to a single map unit.
 
 
-### Adjusting the Defaults ###
+## Adjusting the Defaults
 Some of the assumptions made by `fetchNASIS_component_data()` can be adjusted using arguments to the function:
 
 * `rmHzErrors = TRUE`
@@ -247,3 +285,4 @@ An increased level of verbosity in the quality control messages can be enabled b
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
