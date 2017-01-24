@@ -119,9 +119,16 @@ xtabs( ~ areasymbol + compkind, data=nc.combined)
 
 ## Component Month Table
 
-... details pending
+It can be convenient to join elements from the DMU, component, and comonth tables into a single `data.frame`. Lets start by loading the DMU/component records and creating a new ID that combines the DMU description and component name.
+```{r, fig.width=11, fig.height=6}
+# load only the component table
+comp <- get_component_data_from_NASIS_db()
+# make a new ID by combining DMU name + comp name
+comp$id <- paste0(comp$dmudesc, '-', comp$compname)
+```
 
-```{r, fig.width=12, fig.height=6}
+The comonth records are indexed by `coiid` values. In some cases there are no records populated in this table. You can "fill" missing records with `NA` by using the `fill=TRUE` argument.
+```{r, fig.width=11, fig.height=6}
 # load comonth as-is: there will be missing records
 cm <- get_comonth_from_NASIS_db()
 nrow(cm)
@@ -131,18 +138,23 @@ cm <- get_comonth_from_NASIS_db(fill = TRUE)
 nrow(cm)
 
 # there should be the same number of "coiid" values after filling missing comonth records
-length(nc$coiid) == length(unique(cm$coiid))
+length(comp$coiid) == length(unique(cm$coiid))
 
 # join component table to "filled" comonth table
-comp <- get_component_data_from_NASIS_db()
-# make a new ID by combining DMU name + comp name
-comp$id <- paste0(comp$dmudesc, '-', comp$compname)
-
 x <- join(comp, cm, by='coiid')
 nrow(x)
+```
 
-ggplot(subset(x, subset= dmudesc == 'CA6305015'), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
 
+Try plotting some of the combined data, for select DMU and components. NULL values are displayed as grey squares.
+```{r, fig.width=11, fig.height=6}
+ggplot(subset(x, subset= dmudesc == 'CA6305015'), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')  
+
+ggplot(subset(x, subset= compname == 'Gillender'), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')  
+```
+
+Try plotting those components with flooding / ponding frequency classes that are something other than "None" (or NULL).
+```{r, fig.width=11, fig.height=6}
 ggplot(subset(x, subset= coiid %in% x$coiid[x$flodfreqcl != 'None']), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
 
 ggplot(subset(x, subset= coiid %in% x$coiid[x$floddurcl != 'None']), aes(month, factor(id), floddurcl)) + geom_tile(aes(fill = floddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
@@ -155,8 +167,8 @@ ggplot(subset(x, subset= coiid %in% x$coiid[x$ponddurcl != 'None']), aes(month, 
 
 ## Component Ecological Site Data
 Details pending.
-```{r}
-nc.esd <- get_component_esd_data_from_NASIS_db
+```{r, eval=FALSE}
+nc.esd <- get_component_esd_data_from_NASIS_db()
 ```
 
 
