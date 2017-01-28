@@ -379,11 +379,12 @@ How do we interpret the above figure? For the collection of "7089" map unit poly
  * PRSIM MAAT: at 0.01 pts/ac. the estimated median is less than 1% (0.09 deg. C) of the population median 90% of the time.
  
 
-In summary, a sampling density **between 1 and 2 points per acre** should be *sufficient* for most of the commonly used 10m to 30m data sources, and *excessive* for PRISM data (800m). The sampling density "sweet spot" for most combinations of map units and raster data sources is on the order of **1 point per acre**. 
+## Summary
+A sampling density **between 1 and 2 points per acre** should be *sufficient* for most of the commonly used 10m to 30m data sources, and *excessive* for PRISM data (800m). The sampling density "sweet spot" for most combinations of map units and raster data sources is on the order of **1 point per acre**. 
 
 There are two cases that require further consideration of an "optimal" sampling density: 1) map unit polygons of limited extent, and 2) map units composed of very small delineations (less than 5 acres). In these cases it would be wise to increase the sampling density to a value between 2 and 5 points per acre.
 
-Stay tuned for a short tutorial on how to generate figures like the above, which can be useful for testing the guidelines presented in this document.
+[Test out the "stability" of different sampling density values using your own map units and raster data sources.](http://ncss-tech.github.io/AQP/sharpshootR/sampling-stability-demo.html)
 
 
 

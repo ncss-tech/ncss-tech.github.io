@@ -12,14 +12,13 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
-library(tint)
 library(knitr)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
-
-```{r fig.width=8, fig.height=6, fig.cap='Stability of sample median (10m slope raster) for sledct map units.'}
+The following can be used to evaluate the influence of sampling density on the stability of estimates derived from a raster data source. Adjust `mu` (map unit polygons), `mu.set` (select map unit symbols), and `r` (raster data source) accordingly.
+```{r}
 library(latticeExtra)
 library(plyr)
 library(rgdal)
@@ -31,10 +30,10 @@ library(parallel)
 mu <-  readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', stringsAsFactors = FALSE)
 
 # best possible scenario: rasters are in memory
-r.slope <- readAll(raster('E:/gis_data/ca630/ca630_slope/hdr.adf'))
+r <- readAll(raster('E:/gis_data/ca630/ca630_slope/hdr.adf'))
 
 # subset to just those map units we are interested in
-mu.set <- c('5012', '5201', '7011', '7088', '3058')
+mu.set <- c('5012', '5201', '7089', '3058', '6053', '6054')
 mu <- mu[mu$MUSYM %in% mu.set, ]
 
 # add a unique polygon ID
@@ -56,7 +55,7 @@ clusterEvalQ(NULL, {
 # this function is run on each core
 f.par <- function(i) {
   # eval stability
-  s <- samplingStability(i, r.slope, n.set = c(0.1, 0.5, 1, 2), n.reps = 10)
+  s <- samplingStability(i, r, n.set = c(0.5, 1, 2, 5), n.reps = 10)
   # keep only stability indices
   s <- s$stability
   # convert fractions to percent
@@ -67,7 +66,7 @@ f.par <- function(i) {
 }
 
 # export objects that must be shared across cores
-clusterExport(cl=cl, varlist=c("r.slope", "f.par"))
+clusterExport(cl=cl, varlist=c("r", "f.par"))
 
 # parallel version 2-3x faster ~ 5.4 minutes
 system.time(mu.stability <- parLapply(cl, mu.list, f.par))
@@ -78,6 +77,12 @@ stopCluster(cl)
 # convert to DF
 mu.stability <- ldply(mu.stability)
 
+# compute increase in stability from lowest to highest sampling density
+delta.stability <- ddply(mu.stability, '.id', function(i) {
+  return(-sum(diff(i$stability)))
+})
+names(delta.stability) <- c('MUSYM', 'Increase in Stability')
+
 # area summary
 a <- ldply(mu.list, function(i) {
   res <- sum(sapply(slot(i, 'polygons'), slot, 'area') * 2.47e-4)
@@ -86,7 +91,24 @@ a <- ldply(mu.list, function(i) {
 names(a) <- c('MUSYM', 'Map Unit Acreage')
 a <- a[order(a[, 2], decreasing = TRUE), ]
 
-kable(a)
+# join-in stability increase
+a <- join(a, delta.stability, by='MUSYM')
+```
 
-xyplot(stability ~ factor(sampling.density), groups=.id, data=mu.stability, type=c('b', 'g'), scales=list(alternating=1, x=list(rot=0), y=list(rot=0, tick.number=8, relation='free')), ylab='Percent of Population Median', xlab='Sampling Density (pts/ac.)', pch=16, strip=strip.custom(bg=grey(0.85)), main='90% Confidence in Stability of (Sample) Median', auto.key=list(columns=5, lines=TRUE, points=FALSE))
+The following table contains a summary of map unit acreage and total increase in stability (from lowest to highest sampling density). In general, smaller map unit polygons will require a higher sampling density.
+```{r}
+kable(a, digits = 0, row.names = FALSE)
+```
+
+The following figure demonstrates the relationship between stability and sampling density. For most map units a sampling density between 1-2 points per acre should suffice. A larger sampling density (e.g. 5 points per acre) should be used for very small delineations (e.g. less than 5-10 acres).
+```{r fig.width=8, fig.height=6, fig.cap='Stability of sample median (10m slope raster) for slect map units.'}
+# custom tick, label, and line positions
+h.lines <- c(0:4, seq(5, 30, by=2))
+# custom plot style
+tps <- list(superpose.symbol=list(pch=15, cex=1.5), superpose.line=list(lwd=2))
+
+xyplot(stability ~ factor(sampling.density), groups=.id, data=mu.stability, type=c('b'), scales=list(alternating=3, y=list(at=h.lines)), ylab='Percent of Population Median', xlab='Sampling Density (pts/ac.)', strip=strip.custom(bg=grey(0.85)), main='90% Confidence in Stability of (Sample) Median', auto.key=list(columns=3, lines=TRUE, points=FALSE), par.settings=tps, panel=function(...) {
+  panel.abline(h=h.lines, v=1:4, lty=3, col='grey')
+  panel.xyplot(...)
+})
 ```
