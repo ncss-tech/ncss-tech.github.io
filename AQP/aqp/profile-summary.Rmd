@@ -1,52 +1,48 @@
 ---
+title: "Soil Profile Summaries"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    theme: journal
     mathjax: null
     jquery: null
-    smart: false
+    smart: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-# setup
 library(knitr, quietly=TRUE)
 library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', dev.args=list(antialias='cleartype'), tidy=TRUE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
-
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
 ```
 
 
 
-Profile Summaries
-===============================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
 
 # Introduction
 
 
-```{r load-packages}
+```{r}
 # load required libaries
 library(soilDB)
+library(sharpshootR)
+library(cluster)
 library(lattice)
 library(reshape2)
 library(plyr)
+library(colorspace)
 
+# init vector of taxonnames to summarize
+soils <- c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot')
+```
+
+
+Optionally re-make cached data. Requires NASIS and relevant soils in the selected set.
+```{r, eval=FALSE}
 # get all pedons from the selected set
 x <- fetchNASIS(rmHzErrors = FALSE, nullFragsAreZero = FALSE)
-
-# init vector of taxonnames to keep
-soils <- c('Whiterock', 'Copperopolis', 'Shabarudo', 'Dunstone', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot')
 
 # convert vector of taxonnames into REGEX pattern for matching
 pat <- paste0(soils, collapse='|')
@@ -55,18 +51,44 @@ pat <- paste0(soils, collapse='|')
 idx <- grep(pat, x$taxonname, ignore.case = TRUE)
 x <- x[idx, ]
 
-# normalize taxonname via REGEX matching
+# save for later
+save(x, file='profile-summary-SPC.rda')
+```
+
+
+```{r}
+# load cached copy
+load(url('http://ncss-tech.github.io/AQP/aqp/profile-summary-SPC.rda'))
+
+# normalize taxonname via REGEX
 for(i in soils)
   x$taxonname[grep(i, x$taxonname, ignore.case = TRUE)] <- i
 
-# aggregate data by normalized taxonname, via slice-wise mean
-a.colors <- slab(x, taxonname ~ m_r + m_g + m_b + clay + phfield + total_frags_pct, slab.fun=mean, na.rm=TRUE)
+# tabulate number of profiiles
+table(x$taxonname)
+
+# convert soil colors to LAB colorspace
+# moist colors
+cols.lab <- as(sRGB(x$m_r, x$m_g, x$m_b), 'LAB')@coords
+x$m_L <- cols.lab[, 1]
+x$m_A <- cols.lab[, 2]
+x$m_B <- cols.lab[, 3]
+
+# dry colors
+cols.lab <- as(sRGB(x$d_r, x$d_g, x$d_b), 'LAB')@coords
+x$d_L <- cols.lab[, 1]
+x$d_A <- cols.lab[, 2]
+x$d_B <- cols.lab[, 3]
+
+
+# aggregate data by normalized taxonname, via slice-wise median
+a.colors <- slab(x, taxonname ~ d_r + d_g + d_b + d_L + d_A + d_B + clay + phfield + total_frags_pct)
 
 # throw out aggregate data that are deeper than 150cm
 a.colors <- subset(a.colors, subset=bottom < 150)
 
 # convert long -> wide format
-x.colors <- dcast(a.colors, taxonname + top + bottom ~ variable, value.var = 'value')
+x.colors <- dcast(a.colors, taxonname + top + bottom ~ variable, value.var = 'p.q50')
 
 # check
 head(a.colors)
@@ -75,8 +97,10 @@ head(x.colors)
 # composite sRGB triplets into an R-compatible color
 # note that missing colors must be padded with NA
 x.colors$soil_color <- NA
-not.na <- which(complete.cases(x.colors[, c('m_r', 'm_g', 'm_b')]))
-x.colors$soil_color[not.na] <- with(x.colors[not.na, ], rgb(m_r, m_g, m_b, maxColorValue = 1))
+not.na <- which(complete.cases(x.colors[, c('d_L', 'd_A', 'd_B')]))
+cols.srgb <- data.frame(as(LAB(x.colors$d_L, x.colors$d_A, x.colors$d_B), 'sRGB')@coords)
+
+x.colors$soil_color[not.na] <- with(cols.srgb[not.na, ], rgb(R, G, B, maxColorValue = 1))
 
 # aggregate bedrock depth probabilty by taxonname
 # at 90% level of confidence
@@ -88,15 +112,24 @@ depths(x.colors) <- taxonname ~ top + bottom
 site(x.colors) <- dp
 
 # generate index for new ordering
-new.order <- match(c('Whiterock', 'Copperopolis', 'Shabarudo', 'Dunstone', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot'), profile_id(x.colors))
+new.order <- match(c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot'), profile_id(x.colors))
 ```
 
 ```{r plot-color, fig.width=14, fig.height=6, htmlcap='sdfsdfsdf'}
 par(mar=c(1,0,3,0))
 plot(x.colors, divide.hz=FALSE, name='', plot.order=new.order, col.label='Soil Color', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
 addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
-title('Aggregate Soil Properties (mean)')
+title('Aggregate Soil Properties')
 ```
+
+```{r fig.width=14, fig.height=6}
+d <- profile_compare(x.colors, vars=c('d_L', 'd_A', 'd_B'), max_d=150, k=0)
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name='',  divide.hz=FALSE, y.offset=10)
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6)
+title('Aggregate Soil Properties')
+```
+
+
 
 ```{r plot-clay, fig.width=14, fig.height=6, htmlcap='sdfsdfsdf'}
 par(mar=c(1,0,3,0))
@@ -107,6 +140,73 @@ plot(x.colors, divide.hz=FALSE, color='phfield', name='', plot.order=new.order, 
 addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
 
 plot(x.colors, divide.hz=FALSE, color='total_frags_pct', name='', plot.order=new.order, col.label='Total Rock Fragment Volume (%)', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
+addVolumeFraction(x.colors, 'total_frags_pct')
 addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
 ```
+
+
+```{r fig.width=14, fig.height=6}
+d <- profile_compare(x.colors, vars=c('clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
+
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10)
+
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='clay')
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6)
+addVolumeFraction(x.colors, 'total_frags_pct')
+
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='phfield')
+
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='total_frags_pct')
+```
+
+```{r fig.width=14, fig.height=6}
+d <- profile_compare(x.colors, vars=c('d_L', 'clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
+
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10)
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+```
+
+
+
+```{r fig.width=14, fig.height=6}
+pig <- soilColorSignature(x.colors, r='d_r', g='d_g', b='d_b', RescaleLightnessBy = 1, method = 'colorBucket')
+# move row names over for distance matrix
+row.names(pig) <- pig$taxonname
+
+head(pig)
+
+d <- daisy(pig[, -1])
+dd <- diana(d)
+
+par(mar=c(1,1,1,1))
+plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.002, y.offset = 0.04, width=0.15, name='',  divide.hz=FALSE)
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+```
+
+```{r fig.width=14, fig.height=6}
+pig <- soilColorSignature(x.colors, r='d_r', g='d_g', b='d_b', RescaleLightnessBy = 1, method = 'depthSlices')
+# move row names over for distance matrix
+row.names(pig) <- pig$taxonname
+
+d <- daisy(pig[, -1])
+dd <- diana(d)
+
+par(mar=c(1,1,1,1))
+plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.15, name='',  divide.hz=FALSE)
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+```
+
+```{r fig.width=14, fig.height=6}
+pig <- soilColorSignature(x.colors, r='d_r', g='d_g', b='d_b', RescaleLightnessBy = 1, method = 'pam')
+# move row names over for distance matrix
+row.names(pig) <- pig$taxonname
+
+d <- daisy(pig[, -1])
+dd <- diana(d)
+
+par(mar=c(1,1,1,1))
+plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.15, name='',  divide.hz=FALSE)
+addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+```
+
 
