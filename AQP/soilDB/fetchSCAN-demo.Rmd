@@ -21,7 +21,9 @@ options(width=100, stringsAsFactors=FALSE)
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download climate data from the [SCAN/SNOTEL](http://www.wcc.nrcs.usda.gov/scan/) network. Stay tuned for updates and more detailed examples.
 
 ## Note
-This interface is very much a work in progress. [There are some SCAN / SNOTEL site with multiple (above-ground) sensors per sensor prefix](https://github.com/ncss-tech/soilDB/issues/14), which can lead to confusing results. For now the **first** above ground sensor is selected for each above-ground sensor prefix: ```c('TAVG', 'PRCP', 'PREC', 'SNWD', 'WTEQ', 'WDIRV', 'WSPDV', 'LRADT')```.
+This interface is very much a work in progress. [There are some SCAN / SNOTEL site with multiple (above-ground) sensors per sensor prefix](https://github.com/ncss-tech/soilDB/issues/14), which can lead to confusing results. For now the **first** above-ground sensor is selected for each above-ground sensor prefix: ```c('TAVG', 'PRCP', 'PREC', 'SNWD', 'WTEQ', 'WDIRV', 'WSPDV', 'LRADT')```.
+
+There are some sites with multiple below-ground sensors installed at the same depth. A message is printed when this happens. You can use the `sensor.id` column to access specific sensors. We are working on a solution.
 
 
 ## Installation
@@ -147,12 +149,16 @@ xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l'
 
 # Case Study: Pine Nut SCAN Site
 
-Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015.
+Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015. Note that this site has multiple soil temperature sensors installed at each depth.
 ```{r, fig.width=12, fig.height=8}
 x <- fetchSCAN(site.code=c(2144), year=2008:2015)
 
 # check available data
 str(x, 1)
+
+## still working on a solution for this issue: https://github.com/ncss-tech/soilDB/issues/14
+# ! multiple soil temperature sensors installed at each depth
+table(sensor.id=x$STO$sensor.id, sensor.depth=x$STO$depth)
 
 # extract SMS data to a new data.frame
 sms <- x$SMS
