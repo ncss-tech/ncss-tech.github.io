@@ -22,7 +22,7 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 
 Assigning Generalized Horizon Labels
 ===============================
-D.E. Beaudette, J.M. Skovlin (edited for clarity by Jenny Sutherland)
+D.E. Beaudette, J. Skovlin (edited for clarity by Jenny Sutherland)
 <br>
 `r format(Sys.time(), "%Y-%m-%d")`
 <br>
@@ -282,7 +282,7 @@ pedons$neighbor <- hz.eval$horizons$neighbor
 ```
 
 
-In the following figure, generalized horizon labels are plotted at nMDS coordinates as colored circles, along with original horizon designations and pedon IDs. Ideally, groupings of GHL should form relatively homogeneous clusters in this figure; however, there will always be some overlap at the edges. Heterogeneous regions should be inspected in cases where the assigned GHL may not make sense. In this example, the original designation of "Bt3" for pedon ID 09CKS036 does not seem to fit into the "Bt3" generalized horizon. According to the soil properties used (clay content, total rock fragments, horizon mid-point), the horizon may  better fit the "Bt2" generalized horizon. In addition, it appears that "Bw" and "BA" horizons can be included into the "A" generalized horizon. Decisions on issues such as this can only be made based on field experience or at least some level of expert knowledge about the soils in question. Once a decision has been made, additions to the GLH rules (e.g. adding "Bw" and "BA" to the "A" GHL) and possibly manual adjustment can be used to accomodate the changes.
+In the following figure, generalized horizon labels are plotted at nMDS coordinates as colored circles, along with original horizon designations and pedon IDs. Ideally, groupings of GHL should form relatively homogeneous clusters in this figure; however, there will always be some overlap at the edges. Heterogeneous regions should be inspected in cases where the assigned GHL may not make sense. In this example, the original designation of "Bt3" for pedon ID 09CKS036 does not seem to fit into the "Bt3" generalized horizon. According to the soil properties used (clay content, total rock fragments, horizon mid-point), the horizon may  better fit the "Bt2" generalized horizon. In addition, it appears that "Bw" and "BA" horizons can be included into the "A" generalized horizon. Decisions on issues such as this can only be made based on field experience or at least some level of expert knowledge about the soils in question. Once a decision has been made, additions to the GHL rules (e.g. adding "Bw" and "BA" to the "A" GHL) and possibly manual adjustment can be used to accomodate the changes.
 ```{r mds-plot, fig.width=9, fig.height=9, htmlcap='Horizon designations and GHL as plotted along nMDS axes.'}
 # convert pedons to a data.frame
 pedons.df <- as(pedons, 'data.frame')
