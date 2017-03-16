@@ -150,7 +150,7 @@ xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l'
 # Case Study: Pine Nut SCAN Site
 
 Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015. Note that this site has multiple soil temperature sensors installed at each depth.
-```{r, fig.width=12, fig.height=8}
+```{r, fig.width=12, fig.height=9}
 x <- fetchSCAN(site.code=c(2144), year=2008:2015)
 
 # check available data
@@ -183,6 +183,13 @@ levelplot(value ~ doy * factor(year) | factor(depth), main='Daily Mean VWC (%)',
           colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
           par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
           xlab='Julian Day', ylab='Year')
+
+# plot VWC by year/day, panels by year with depths stacked
+levelplot(value ~ doy * rev(factor(depth)) | factor(year), main='Daily Mean VWC (%)',
+          data=sms, layout=c(1,8), col.regions=cols, 
+          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
+          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+          xlab='Julian Day', ylab='Sensor Depth (cm)', ylim=rev(levels(factor(sms$depth))))
 ```
 
 
@@ -233,7 +240,7 @@ update(p.model + p.points, main='Select Percentiles of Data Measured at 20cm', s
 
 ### Conversion of VWC to Matric Potential: All Depths
 This time we will iterate over all sensors, develop water retention curves, and convert VWV to water potential values. Note that this approach will only work with a `SoilProfileCollection` object that contains a *single* profile.
-```{r, fig.width=12, fig.height=8}
+```{r, fig.width=12, fig.height=9}
 # split soil moisture data by sensor depth
 sms.list <- split(sms, sms$depth)
 
@@ -272,6 +279,13 @@ levelplot(log(phi, base=10) ~ doy * factor(year) | factor(depth), main='Daily Me
           colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
           par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
           xlab='Julian Day', ylab='Year')
+
+# plot daily mean water potential in log10-kPa by year and sensor stack
+levelplot(log(phi, base=10) ~ doy * rev(factor(depth)) | factor(year), main='Daily Mean Water Potential log10(-kPa)',
+          data=sms.phi, layout=c(1,8), col.regions=cols.phi,
+          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
+          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+          xlab='Julian Day', ylab='Sensor Depth (cm)', ylim=rev(levels(factor(sms.phi$depth))))
 
 levelplot(phi_leq_15_bar ~ doy * factor(year) | factor(depth), main='Daily Mean Water Potential <= 15 bar (1500 kPa)',
           data=sms.phi, layout=c(1,5), col.regions=c(grey(0.85), 'RoyalBlue'), cuts=1,
