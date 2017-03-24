@@ -51,7 +51,12 @@ and optionally filtered by:
 
  * start date ("YYYY-MM-DD")
  * end date ("YYYY-MM-DD")
- * sensor type ("soiltemp" is the only type currently available)
+ * sensor type:
+    + "all": all available time series data
+    + "soiltemp": soil temperature time series
+    + "soilVWC": soil volumetric water content time series
+    + "airtemp": air temperature time series
+    + "waterlevel": water level time series
  
 and aggregated to the following granularity:
 
@@ -180,6 +185,20 @@ as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'senso
 ```
 
 
+## Water Level Data
+
+```{r fig.width=10, fig.height=8}
+x <- fetchHenry(project='NorthernNY_watertable')
+
+# basic plot, each panel is a well
+xyplot(sensor_value ~ date_time | name, data=x$waterlevel, type='l', scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), as.table=TRUE, xlab='', ylab='Water Level (cm)', panel=function(...) {
+  panel.grid(-1, -1)
+  panel.abline(h=0, col='red', lty=2)
+  panel.xyplot(...)
+})
+```
+
 
 
 ### Additional Ideas
@@ -202,7 +221,7 @@ points(Mercator(x$sensors), col='red')
 ```{r, results='hide'}
 library(raster)
 library(rms)
-# get soil temperature, soil moisture, and air temperature data
+# get soil temperature
 x <- fetchHenry(sso = '2-SON', what = 'soiltemp')
 r <- raster('E:/gis_data/prism/final_MAAT_800m.tif')
 x$sensors$maat <- extract(r, x$sensors)
