@@ -187,16 +187,72 @@ as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'senso
 
 ## Water Level Data
 
-```{r fig.width=10, fig.height=8}
-x <- fetchHenry(project='NorthernNY_watertable')
+Get water level data associated with the "NorthernNY_watertable" project. Water level data are found in `x$waterlevel`.
+```{r}
+x <- fetchHenry(project='NorthernNY_watertable', gran = 'day', what='waterlevel')
+```
 
-# basic plot, each panel is a well
+Simple time-series style plot, each panel is a water level sensor.
+```{r fig.width=10, fig.height=8}
 xyplot(sensor_value ~ date_time | name, data=x$waterlevel, type='l', scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), as.table=TRUE, xlab='', ylab='Water Level (cm)', panel=function(...) {
   panel.grid(-1, -1)
   panel.abline(h=0, col='red', lty=2)
   panel.xyplot(...)
 })
+```
+
+Apply a threshold and plot TRUE (blue) / FALSE (grey): water level > 25 cm depth.
+```{r fig.width=10, fig.height=8}
+levelplot(factor(sensor_value > -25) ~ doy * factor(year) | name, main='Daily Water Level > 25 cm Depth',
+data=x$waterlevel, col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
+xlab='Julian Day', ylab='Year')
+```
+
+Aggregate representation of water level data, by sensor / year: 
+
+  * total records > threshold water level depth
+  * fraction of annual records > threshold water level depth
+  * maximum consecutive records > threshold water level depth
+```{r}
+# aggregation of water level data
+# i: data.frame, typically subset by ID / year
+# level: water table level used for threshold
+water.level.threshold <- function(i, level) {
+  # apply threshold
+  thresh <- i$sensor_value > level
+  # compute total records with water level > threshold
+  total.records <- length(which(thresh))
+  # fraction of records > threshold
+  fraction <- total.records / length(na.omit(i$sensor_value))
+  
+  # get runs of thresholded data
+  r <- rle(as.integer(na.omit(thresh)))
+  idx <- which(r$values == 1)
+  if(length(idx) > 0)
+    consecutive.records <- max(r$lengths[idx])
+  else
+    consecutive.records <- 0
+  
+  # format and return
+  d <- data.frame(total=total.records, fraction=fraction, max.consecutive.records=consecutive.records)
+  return(d)
+}
+
+# aggregate water level data
+wl.agg <- ddply(x$waterlevel, c('name', 'year'), .fun=water.level.threshold, level=-25)
+
+head(wl.agg)
+```
+
+Graphical representation of annual water level summaries.
+```{r fig.width=8, fig.height=6}
+cols <- colorRampPalette(brewer.pal(11, 'RdYlBu'), space='Lab', interpolate='spline', bias=1.75)
+levelplot(max.consecutive.records ~ factor(year) * factor(name), data=wl.agg, col.regions = cols, main='Maximum Consecutive Days\n> 25cm Water Level Depth', xlab='', ylab='')
+
+levelplot(fraction ~ factor(year) * factor(name), data=wl.agg, col.regions = cols, main='Fraction of Days / Year\n> 25cm Water Level Depth', xlab='', ylab='')
 ```
 
 
