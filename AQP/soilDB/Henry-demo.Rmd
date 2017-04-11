@@ -256,8 +256,71 @@ levelplot(fraction ~ factor(year) * factor(name), data=wl.agg, col.regions = col
 ```
 
 
+### Water Level and Precipitation
+Combine water level data from Henry DB and daily precipitation data from nearby SCAN station (suggested by Ben Marshall).
 
-### Additional Ideas
+This example requires the `latticeExtra` package and a couple of small adjustments to make the Henry and SCAN data compatible.
+```{r}
+library(soilDB)
+library(latticeExtra)
+
+# get specific data from Henry:
+# water level data only
+# as daily means
+# do not fill missing days with NA (adjust as needed)
+x <- fetchHenry(project='MD021', what='waterlevel', gran = 'day', pad.missing.days = FALSE)
+x <- subset(x$waterlevel, name == "Hatboro-155")
+
+# convert Henry date/time into `Date` class: compatibility with SCAN data
+x$date_time <- as.Date(x$date_time)
+
+# get data from nearby SCAN station for 2015--2017
+x.scan <- fetchSCAN(site.code=2049, year=c(2015,2016,2017))
+```
+
+When working with `Date` class values on the x-axis, it is often more convenient to derive the tick locations by hand. Here we generate the `start.date` and `stop.date` tick location using the oldest and latest water level records, then pad with 14 days. `seq.Date()` is helpful for generating a regular sequence of dates that span the calcuated "start" and "stop" dates.
+```{r}
+# create a new date axis
+# using the limits of the water level data and pad days
+start.date <- min(x$date_time) - 14
+stop.date <- max(x$date_time) + 14
+date.axis <- seq.Date(start.date, stop.date, by='1 month')
+```
+
+
+Lattice plots can be saved to regular R objects for further manipulation.
+```{r}
+# plot water level data, save to object
+p.1 <- xyplot(sensor_value ~ date_time, data=x, type=c('l', 'g'), cex=0.75, ylab='Water Level (cm)', xlab='', scales=list(x=list(at=date.axis, format="%b\n%Y"), y=list(tick.number=10)))
+
+# plot precip data, save to object
+p.2 <- xyplot(value ~ Date, data=x.scan$PRCP, as.table=TRUE, type=c('h'), strip=strip.custom(bg=grey(0.80)), scales=list(x=list(at=date.axis, format="%b\n%Y")), ylab='Precipitation (in)')
+
+# combine plots into panels (latticeExtra feature)
+p.3 <- c(p.1, p.2, layout=c(1,2), x.same=TRUE)
+```
+
+
+Make final adjustments and plot:
+
+  * fix scale labels
+  * add a y-axis label for each panel
+  * add a title
+  * truncate x-axis to the interval `start.date`--`stop.date`, define by the water level data
+  * add a custom set of grid lines to each panel
+  
+```{r fig.width=10, fig.height=7}
+update(p.3, scales=list(alternating=3, y=list(rot=0)), ylab=c('Water Level (cm)', 'Precipitation (in)'), main='Daily Values', xlim=c(start.date, stop.date), panel=function(...) {
+  panel.xyplot(...)
+  panel.abline(v=date.axis, col='grey', lty=3)
+  panel.grid(h = -1, v=0, col='grey', lty=3)
+})
+```
+
+
+
+
+## Additional Ideas
 
 1. Save sites as shape file
 ```{r save-as-shp, eval=FALSE}
