@@ -108,6 +108,9 @@ In this case, 51 of the 2642 horizons loaded into the selected set have more tha
 * `replacing missing lower horizon depths with top depth + 1cm ... [68 horizons]`
 In this case, 68 horizons have no lower depth defined. A missing lower horizon depth can create problems so a *surrogate* value is created by adding 1cm to the associated top depth.
 
+* `top/bottom depths equal, adding 1cm to bottom depth ... [306 horizons]`
+In this case, 306 horizons have equal top and bottom depths: typically associated with Cr and R horizons. Zero-thickness horizons can create problems so a *surrogate* value is created by adding 1cm to the associated bottom depth.
+
 * `-> QC: sites without pedons ...`
 As the message suggests, there are sites with no associated pedons. While this isn't necessarily a quality control issue, it should be investigated. The associated user site ID values can be extracted interactively with `get('sites.missing.pedons', envir=soilDB.env)`.
 
@@ -117,11 +120,18 @@ As this messages suggests, there are multiple pedons that share the same user pe
 * `-> QC: horizon errors detected ...`
 Horizon depths are checked for gaps, overlap, or bottom depths than are shallower than top depths. In most cases pedons flagged as having errors suggests a quality control issue. However, combination horizons (e.g. B/C) that have been entered as two distinct horizons sharing the same horizon depths will trigger this warning.
 
+* `-> QC: pedons missing bottom hz depths ...`
+This message contains instructions on how to track down pedons with missing bottom hz depths, via pedon ID.
+
+* `-> QC: equal hz top and bottom depths ... `
+This message contains instructions on how to track down pedons that have a horizon with equal top and bottom hz depths, via pedon ID.
+
+
 ## Adjusting the Defaults
 Some of the assumptions made by `fetchNASIS()` can be adjusted using arguments to the function:
 
 * `rmHzErrors = TRUE`
-Setting this value to `TRUE` (the default) will enable checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons. Note that any pedons flagged as having horizon depths errors (`rmHzErrors = TRUE`) will be omitted from the data returned by `fetchNASIS()`.
+Setting this value to `TRUE` (the default) will cause pedons flagged as having inconsistent horizonation to be removed from t he resulting object. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons (e.g. "B/C"). Either way, the checks are performed and reported as QC messages in the console.
 
 * `soilColorState='moist'`
 By default, **moist** soil colors are used to generate R-compatible colors and stored in the horizon-level attribute "soil_color". Possible values for this argument are 'moist' and 'dry'.
