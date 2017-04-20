@@ -1,19 +1,27 @@
-```{r setup, echo=FALSE, results='hide'}
-# setup
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE, verbose=FALSE)
+---
+title: "Getting Data from the Rapid Carbon Assessment Project"
+author: "D.E. Beaudette and S. Wills"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Getting Data from the Rapid Carbon Assessment Project
-=====================================================
-`r format(Sys.time(), "%Y-%m-%d")`
-Dylan Beaudette
 
-## Introduction
-This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to download [RaCA](http://soils.usda.gov/survey/raca/index.html) via SoilWeb. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) from the [aqp](http://aqp.r-forge.r-project.org/) package.
+# Introduction
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download [RaCA](http://soils.usda.gov/survey/raca/index.html) via SoilWeb. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) from the [aqp](http://ncss-tech.github.io/AQP/) package.
 
 
-### The SoilWeb RaCA Query API
+## The SoilWeb RaCA Query API
 
 RaCA data are queried via HTTP request to the SoilWeb server, with query parameters encoded as [URL parameters](http://en.wikipedia.org/wiki/Query_string). For example, by appending several parameters to the base URL it is possible to query "site-level" data associated with soils correlated to the Auburn series like this:
 
@@ -44,19 +52,18 @@ The **what** parameter determines which chunk of data will be returned:
   * **vnir**: VNIR spectra [queries by soil series or BBOX only]
 
 
-## Getting RaCA Data in R
+# Getting RaCA Data in R
 The [soilDB](http://cran.at.r-project.org/package=soilDB) package abstracts URL-based queries for RaCA data into a single function, `fetchRaCA()`. Calling this function with user-defined query paramters, e.g. `fetchRaCA(series='auburn')`, will download all data (site, horizon, veg, trees, stock) associated with the Auburn series and return the results as a `list`. VNIR spectra can be very large and are therefore not downloaded by default.
 
 
-### Installation
+## Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
-install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('soilDB', repos="http://R-Forge.R-project.org", type='source') # most recent copy from r-forge
+install.packages('soilDB', dep=TRUE)
 ```
 
-### Example Usage
+## Example Usage
 Data can be queried by two-letter state code, fuzzy-matching of series name, or using a geographic bounding-box in WGS84 referenced coordinates. See `?fetchRaCA()` for details.
 ```{r get-data, fig.width=6, fig.height=6, results='hide', eval=TRUE}
 # load libraries
@@ -94,7 +101,7 @@ legend('topright', pch=c(1, 15, 16), col=c('RoyalBlue', 'DarkGreen', 'DarkRed'),
 ```
 
 
-### Exploring the Results
+## Exploring the Results
 A list of objects and tables (`data.frame` objects) is returned by `fetchRaCA()`. Elements can be accessed using the `$` operator.
 ```{r explore-results}
 # check structure
@@ -102,7 +109,7 @@ str(r.bbox, 2)
 ```
 
 
-### Site/Pedon Data
+## Site/Pedon Data
 Site and pedon data are returned as a [SoilProfileCollection object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) within the `pedons` list element.
 ```{r site-pedon, fig.width=8, fig.height=4, results='hide', eval=TRUE}
 # extract site/pedon data
@@ -125,7 +132,7 @@ plot(s[1:20, ], name='hzname', max.depth=100)
 ```
 
 
-### Vegetation Data
+## Vegetation Data
 ```{r veg-trees}
 # tabulate vegetation data across the entire collection of RaCA data queried by BBOX
 sort(table(r.bbox$veg$plantnatvernm), decreasing=TRUE)
@@ -135,7 +142,7 @@ ddply(r.bbox$trees, 'siteiid', summarize, mean.dbh=mean(dbh), mean.height=mean(h
 ```
 
 
-### Soil Organic Carbon Concentrations
+## Soil Organic Carbon Concentrations
 ```{r carbon-conc-raw-data, fig.width=8, fig.height=5, eval=TRUE}
 # extract sample data horizon-level carbon and bulk density
 s <- r.series$sample
@@ -159,7 +166,7 @@ xyplot(
 ```
 
 
-### Soil Organic Carbon Stock Data
+## Soil Organic Carbon Stock Data
 ```{r carbon-stock, fig.width=8, fig.height=5, eval=TRUE}
 # join carbon stock estimates to SPC object
 # these are site-level data
@@ -185,7 +192,7 @@ bwplot(taxonname ~ value_100cm, data=site(s), xlab='Carbon Stock to 100cm (Mg pe
 ```
 
 
-### Depth-Wise Aggregation of Carbon Stock Data
+## Depth-Wise Aggregation of Carbon Stock Data
 ```{r stock-depth-aggregation, fig.width=7, fig.height=6, eval=TRUE}
 m <- melt(r.series$stock, id.vars='rcapid', measure.vars=c(2,4,6,8,10,12))
 
@@ -228,7 +235,7 @@ xyplot(
 
 
 
-### VNIR Spectra
+## VNIR Spectra
 VNIR spectra are large, and therefore not downloaded by default. The `get.vnir=TRUE` argument to `fetchRaCA()` will download VNIR spectra associated with the query results.
 ```{r vnir, fig.width=8, fig.height=4, results='hide', eval=TRUE}
 s <- fetchRaCA(series='auburn', get.vnir=TRUE)
@@ -250,8 +257,6 @@ cols <- rgb(t(col2rgb(spectra.pam$clustering)), maxColorValue=255, alpha=100)
 matplot(t(s$spectra), type='l', lty=1, col=cols, ylab='', xlab='', axes=FALSE)
 box()
 ```
-
-  
 
 
 ----------------------------
