@@ -85,13 +85,27 @@ print(p.1)
 print(p.2)
 ```
 
-```{r texture-triangle, fig.height=7, fig.width=7}
-## viz on texture triangle
+```{r fig.height=7, fig.width=7, fig.keep='last'}
 texture.triangle.low.rv.high(d[d$.id == 'clarksville', -1], sim=TRUE, cex=0.5); title('Clarksville')
+```
+
+```{r fig.height=7, fig.width=7, fig.keep='last'}
 texture.triangle.low.rv.high(d[d$.id == 'drummer', -1], sim=TRUE, cex=0.5); title('Drummer')
+```
+
+```{r fig.height=7, fig.width=7, fig.keep='last'}
 texture.triangle.low.rv.high(d[d$.id == 'auburn', -1], sim=TRUE, cex=0.5); title('Auburn')
+```
+
+```{r fig.height=7, fig.width=7, fig.keep='last'}
 texture.triangle.low.rv.high(d[d$.id == 'cecil', -1], sim=TRUE, cex=0.5); title('Cecil')
+```
+
+```{r fig.height=7, fig.width=7, fig.keep='last'}
 texture.triangle.low.rv.high(d[d$.id == 'vista', -1], sim=TRUE, cex=0.5); title('Vista')
+```
+
+```{r fig.height=7, fig.width=7, fig.keep='last'}
 texture.triangle.low.rv.high(d[d$.id == 'capay', -1], sim=TRUE, cex=0.5); title('Capay')
 ```
 
