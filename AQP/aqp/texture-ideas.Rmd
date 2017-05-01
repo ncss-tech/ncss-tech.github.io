@@ -1,8 +1,22 @@
+---
+title: "Low, RV, and High on the Soil Texure Triangle"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
+---
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+# setup
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
+
 
 
 ```{r get-data}
@@ -28,7 +42,7 @@ sim.data <- function(ssc, n.sim=1000) {
   # convert to compositional class, note range is now [0,1]
   ssc.acomp <- acomp(ssc)
   # simulate normally-distributed composition based on data
-  ssc.sim <- rnorm.acomp(n=n.sim, mean=meanCol(ssc.acomp), var=cov(ssc.acomp))
+  ssc.sim <- rnorm.acomp(n=n.sim, mean=meanCol(ssc.acomp), var=var(ssc.acomp))
   # convert to data.frame and original range of [0,100]
   ssc.sim <- as.data.frame(unclass(ssc.sim) * 100)
   # return stacked original + simulated data
