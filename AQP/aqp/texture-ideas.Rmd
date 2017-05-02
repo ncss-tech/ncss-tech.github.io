@@ -18,6 +18,11 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
 
+# Introduction
+This document outlines the basic usage of the `textureTriangleSummary()` function from the [`aqp` package](https://github.com/ncss-tech/aqp) (version >= 1.10-4). This function displays approximate "ranges" (based on user-defined percentiles) in sand, silt, and clay percentages on the soil texture triangle in the form of a shaded polygon. The outline of the polygon is created by connecting percentiles (typically 10th and 90th) of sand, silt, and clay fractions. The "Sample RV" is based on the univariate 50th percentiles (e.g. median sand, silt, and clay fractions). A reference, "normal composition" range and RV can be generated, based on the mean and (compositional) covariance of the source data. These calculations require the [`compositions` package](https://cran.r-project.org/package=compositions).
+
+
+# Prepare Example Data
 
 ```{r get-data}
 library(aqp)
@@ -42,6 +47,7 @@ sim.data <- function(ssc, n.sim=1000) {
   # convert to compositional class, note range is now [0,1]
   ssc.acomp <- acomp(ssc)
   # simulate normally-distributed composition based on data
+  # note that var() is dispatched to var.acomp()
   ssc.sim <- rnorm.acomp(n=n.sim, mean=meanCol(ssc.acomp), var=var(ssc.acomp))
   # convert to data.frame and original range of [0,100]
   ssc.sim <- as.data.frame(unclass(ssc.sim) * 100)
@@ -60,6 +66,8 @@ d <- ldply(d)
 d.sim <- ddply(d, '.id', function(i) sim.data(i[, -1]))
 m <- melt(d.sim, id.vars=c('.id', 'which'))
 ```
+
+# Compare Univariate Distributions
 
 ```{r univariate-summaries, fig.height=11, fig.width=8.5}
 # plotting style
@@ -85,28 +93,31 @@ print(p.1)
 print(p.2)
 ```
 
+
+# Display on Soil Texture Triangle
+See the manual page for details on the various arguments to `textureTriangleSummary()`.
 ```{r fig.height=7, fig.width=7, fig.keep='last'}
-texture.triangle.low.rv.high(d[d$.id == 'clarksville', -1], sim=TRUE, cex=0.5); title('Clarksville')
+textureTriangleSummary(d[d$.id == 'clarksville', -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('Clarksville\n0-10cm Weighted Mean')
 ```
 
 ```{r fig.height=7, fig.width=7, fig.keep='last'}
-texture.triangle.low.rv.high(d[d$.id == 'drummer', -1], sim=TRUE, cex=0.5); title('Drummer')
+textureTriangleSummary(d[d$.id == 'drummer', -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('Drummer\n0-10cm Weighted Mean')
 ```
 
 ```{r fig.height=7, fig.width=7, fig.keep='last'}
-texture.triangle.low.rv.high(d[d$.id == 'auburn', -1], sim=TRUE, cex=0.5); title('Auburn')
+textureTriangleSummary(d[d$.id == 'auburn', -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('Auburn\n0-10cm Weighted Mean')
 ```
 
 ```{r fig.height=7, fig.width=7, fig.keep='last'}
-texture.triangle.low.rv.high(d[d$.id == 'cecil', -1], sim=TRUE, cex=0.5); title('Cecil')
+textureTriangleSummary(d[d$.id == 'cecil', -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('Cecil\n0-10cm Weighted Mean')
 ```
 
 ```{r fig.height=7, fig.width=7, fig.keep='last'}
-texture.triangle.low.rv.high(d[d$.id == 'vista', -1], sim=TRUE, cex=0.5); title('Vista')
+textureTriangleSummary(d[d$.id == 'vista', -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('Vista\n0-10cm Weighted Mean')
 ```
 
 ```{r fig.height=7, fig.width=7, fig.keep='last'}
-texture.triangle.low.rv.high(d[d$.id == 'capay', -1], sim=TRUE, cex=0.5); title('Capay')
+textureTriangleSummary(d[d$.id == 'capay', -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('Capay\n0-10cm Weighted Mean')
 ```
 
 ----------------------------
