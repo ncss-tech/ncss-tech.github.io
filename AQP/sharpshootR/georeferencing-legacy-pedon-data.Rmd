@@ -1,0 +1,170 @@
+---
+title: "Georeferencing Legacy Pedon Data"
+author: "Jay Skovlin and D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+## Introduction
+This tutorial demonstrates how to use functions in the [sharpshootR](http://ncss-tech.github.io/AQP/sharpshootR/sharpshootR-Intro.html) package to derive centroids for PLSS location descriptions. Stay tuned for updates and more detailed examples.
+
+## Background
+Before the days of GPS technology the system used for locating sampling sites was the [Public Lands Survey System (PLSS)](https://en.wikipedia.org/wiki/Public_Land_Survey_System) description method.  Locating the data was accomplished using several different methods.  Sometimes the data was marked on a topographic map or pin-pricked on aerial photographs and then the PLSS was also derived for these locations.  Other times it was not marked on maps at all and was only given a PLSS location.  PLSS locations can be taken down to various levels of accuracy, however, a common level of accuracy in the datasets seems to be description down to the quarter-quarter section level.  
+
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('./Systemic-numbering-PLSS.gif')
+```
+Source: Public Domain, https://commons.wikimedia.org/w/index.php?curid=2741216
+
+
+
+
+### Installation
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r eval=FALSE}
+# run these commands in the R console
+install.packages('plotKML', dep=TRUE)
+install.packages('raster', dep=TRUE)
+install.packages('stringi', dep=TRUE)
+install.packages('sp', dep=TRUE)
+install.packages('rgeos', dep=TRUE)
+install.packages('elevatr', dep=TRUE)
+install.packages('cluster', dep=TRUE)
+```
+
+You will also need the latest version of `sharpshootR`:
+```{r eval=FALSE}
+install.packages('devtools', dep=TRUE)
+devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+## Building a text file of PLSS data
+Given that you have no spatial information other than the PLSS description, the first step is to build an organized file of the information. This is an example of the data and the format that I have constructed.  The functions below will know what to do with a format that follows this example. Building such a file can be a tedious task, but bringing legacy pedons into the spatial world is very important and well worth a focused effort.
+
+```{r}
+# load required packages
+library(sharpshootR)
+library(plyr)
+library(stringi)
+library(sp)
+library(plotKML)
+
+# set workspace
+setwd('C:/workspace/')
+
+# load data - subset the data to a could of clean sites to simplify this example!!!  
+d <- read.csv(file='PLSS_locations.csv', stringsAsFactors = FALSE)
+
+# show format
+head(d)
+```
+
+## Deriving centroids from PLSS information
+First we load our data file and prepare the data for further use.  For example this particular dataset had some aspect values that were classed and some that were in numeric format.  We will assign the mid-points for the classed data and then convert the format to numeric for further use.  Circular degree aspect values are difficult to use, so we will convert them to radians and then do a cosine transformation.  Slope values also need to be converted from percent slope to slope degrees.
+
+```{r}
+
+# use data included in the package to check for meridians by state
+idx <- grep('MT', plssMeridians$state)
+plssMeridians[idx, ]
+
+# add a meridian column
+d$m <- 'MT20'
+
+# show data
+head(d)
+
+```
+
+
+## Formatting PLSS Codes
+Several functions have been added to the sharpshootR package to help with formatting PLSS information so that it can be digested by the BLM web service.  The most common case encountered is where the section was surveyed and divided into quarter and quarter-quarter sections (SN).  Occasionally in mountainous areas there are sections which were not surveyed to the quarter section.  These areas are called protracted blocks (PB) or unprotracted blocks (UP).  It is important to know the correct format to use for each section.  
+
+The `formatPLSS()` function has a 'type' option which can be used to define the type of formatting required.  Set the `type='PB'` to format codes for protracted blocks and `type='UP`' to generate PLSS codes for unprotracted blocks.  Note that the default for the function is set to `type='SN'`. An example of how to generate the PLSS codes for protracted blocks is found below.
+
+The `PLSS2LL()` function relies on the GetTRS web service which is part of the functionality provided by the 
+[BLM PLSS web services](https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/exts/CadastralSpecialServices/GetTRS).
+This function will return the XY lattitude and longitude coordinates for a given formatted PLSS code. 
+
+```{r}
+
+# format PLSS codes
+d$plssid <-formatPLSS(d)
+
+# format PLSS codes for sections identified as protracted ('PB') blocks
+idx <- which(d$type=='PB')
+d$plssid[idx] <- formatPLSS(d[idx, ], type="PB")
+
+# fetch lat/long coordinates
+d2 <- PLSS2LL(d)
+
+# set type to 'UP' when coords are not returned
+idx <- which(is.na(d2$lat))
+d$type[idx] <- 'UP'
+
+# reformat PLSS for unprotracted blocks
+idx <- which(d$type=='UP')
+d$plssid[idx] <- formatPLSS(d[idx, ], type="UP")
+
+# run fetch lat/long coordinates again for unprotracted ('UP') blocks
+d2 <- PLSS2LL(d)
+
+# clean up for join - drop PLSS code column
+d2 <- d2[ , c(1,3:4)]
+
+# join coordinates back to the original data by unique 'id' column
+d3 <- join(d, d2, by='id', type='left')
+
+# show data - note the format change in the plssid column for the 'UP' site
+d3
+
+```
+
+## Visually display centroid locations
+Generate a KML file and view the resulting centroid locations for the data in Google Earth.  It can be helpful to generate a label column for each placemark in the KML that will identify the site ID and the level of PLSS information used to derive the corresponding centroid locations.
+
+```{r eval=FALSE}
+# prep for generating a kml file
+# set a labeling flag for location quality to only points with QQ, Q, and S
+d3$flag <- ifelse(!is.na(d3$qq), 'QQ', ifelse((is.na(d3$qq) & !is.na(d3$q)), 'Q', ifelse((is.na(d3$qq) & is.na(d3$q)), 'S', '')))
+
+# initialize SPDF
+coordinates(d3) <- ~ lon + lat
+proj4string(d3) <- '+proj=longlat +datum=NAD83'
+
+kml_file_path <- 'PLSS_location_centroids.kml'
+kml_open(file.name=kml_file_path, folder.name='Sites_centroids', overwrite=TRUE)
+kml_layer.SpatialPoints(d3, title='Sites_centroids', colour='royalblue', labels=paste(d3$id, d3$flag, sep=' - '), shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
+kml_close(kml_file_path)
+
+```
+
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('./GE-site-centroids.jpg')
+```
+
+## Taking it further
+Most soil survey data has additional site-level information such as slope percent, aspect (degrees or classes), and elevation for each site.  How do we use this information to take a centroid location and determine where in that section are the most likely locations of a site? For more information check out the next tutorial [deriving most-likely locations from centroids using additional site data]()
+
+
+## References
+[USGS PLSS Article](https://nationalmap.gov/small_scale/a_plss.html)
+
+
+
+
+
+----------------------------
+This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
