@@ -36,9 +36,9 @@ library(plyr)
 # return weighted mean of top 10cm
 get.data <- function(series) {
   x <- fetchKSSL(series)
-  s <- slab(x, pedon_key ~ clay + sand + silt, slab.structure=c(0,10), strict = FALSE, slab.fun = mean, na.rm=TRUE)
+  s <- slab(x, pedon_key ~ clay + sand + silt, slab.structure=c(0, 10), strict = FALSE, slab.fun = mean, na.rm=TRUE)
   s <- dcast(s, pedon_key ~ variable, value.var = 'value')
-  ssc <- na.omit(horizons(x)[, c('sand', 'silt', 'clay')])
+  ssc <- na.omit(s[, c('sand', 'silt', 'clay')])
   return(ssc)
 }
 
