@@ -19,7 +19,7 @@ Export Pedon Spatial Data from NASIS
 `r format(Sys.time(), "%Y-%m-%d")`
 Dylan Beaudette
 
-This document demonstrates how to use the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package to export pedon locations from the local NASIS database to shapefile.
+This document demonstrates how to use the `soilDB` package to export pedon locations from the local NASIS database to shapefile.
 
 ### Setup Local NASIS DB
  1. load selected set with pedons and sites of interest
@@ -36,9 +36,6 @@ With a recent version of R, it should be possible to get all of the packages tha
 install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('rgdal', dep=TRUE)
 install.packages('rgeos', dep=TRUE)
-# latest version from r-forge
-install.packages("aqp", repos = "http://R-Forge.R-project.org", type = "source")
-install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
 ```
 
 ### Get Pedons and Save to SHP
@@ -63,7 +60,7 @@ b <- gBuffer(b, byid=FALSE, width=10000)
 
 # load entire contents of local database (pedon data)
 # CRS: GCS WGS84
-f <- fetchNASIS()
+f <- fetchNASIS(rmHzErrors = FALSE)
 
 # some pedons are missing coordinates in NASIS
 # keep only those pedons with real coordinates
