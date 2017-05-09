@@ -127,6 +127,18 @@ $(document).ready(function () {
 </div>
 <div id="r-packages" class="section level1">
 <h1>R Packages</h1>
+<div id="keep-track-of-installed-packages-and-re-install-after-the-upgrade" class="section level2">
+<h2>Keep track of installed packages, and re-install after the upgrade</h2>
+<p>Before the upgrade:</p>
+<pre class="r"><code>setwd(&quot;C:/Temp/&quot;)
+packages &lt;- installed.packages()[,&quot;Package&quot;]
+save(packages, file=&quot;Rpackages&quot;)</code></pre>
+<p>After the upgrade:</p>
+<pre class="r"><code>setwd(&quot;C:/Temp/&quot;)
+load(&quot;Rpackages&quot;)
+for (p in setdiff(packages, installed.packages()[,&quot;Package&quot;]))
+install.packages(p)</code></pre>
+</div>
 </div>
 <div id="troubleshooting" class="section level1">
 <h1>Troubleshooting</h1>

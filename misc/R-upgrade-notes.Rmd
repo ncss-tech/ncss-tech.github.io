@@ -22,6 +22,24 @@ options(width=100, stringsAsFactors=FALSE)
 
 # R Packages
 
+## Keep track of installed packages, and re-install after the upgrade
+
+Before the upgrade:
+```{r eval=FALSE}
+setwd("C:/Temp/")
+packages <- installed.packages()[,"Package"]
+save(packages, file="Rpackages")
+```
+
+After the upgrade:
+```{r eval=FALSE}
+setwd("C:/Temp/")
+load("Rpackages")
+for (p in setdiff(packages, installed.packages()[,"Package"]))
+install.packages(p)
+```
+
+
 # Troubleshooting
 
 
