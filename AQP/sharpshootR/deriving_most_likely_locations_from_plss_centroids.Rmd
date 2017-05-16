@@ -1,5 +1,5 @@
 ---
-title: "Deriving most-likely locations with PLSS description area using site characteristics"
+title: "Deriving most-likely locations within a PLSS description area using site characteristics"
 author: "Jay Skovlin and D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
@@ -80,7 +80,7 @@ library(sp)
 setwd('C:/workspace/')
 
 # load example data from package!!!
-d <- read.csv(file='PLSS_centroid_sample.csv', sep =',', stringsAsFactors = FALSE)
+d <- read.csv(file='PLSS_centroid_sample_data.csv', sep =',', stringsAsFactors = FALSE)
 
 # show format
 head(d)
@@ -126,7 +126,7 @@ coordinates(d1) <- ~ lon + lat
 proj4string(d1) <- '+proj=longlat +datum=WGS84'
 
 # set idx to point of interest  
-idx.pt <- 2
+idx.pt <- 1
 d1@data[idx.pt, ]
 
 
