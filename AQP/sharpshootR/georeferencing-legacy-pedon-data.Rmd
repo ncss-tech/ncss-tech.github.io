@@ -64,7 +64,7 @@ library(plotKML)
 # set workspace
 setwd('C:/workspace/')
 
-# load data - subset the data to a could of clean sites to simplify this example!!!  
+# load data
 d <- read.csv(file='PLSS_locations.csv', stringsAsFactors = FALSE)
 
 # show format
@@ -144,9 +144,10 @@ d3$flag <- ifelse(!is.na(d3$qq), 'QQ', ifelse((is.na(d3$qq) & !is.na(d3$q)), 'Q'
 coordinates(d3) <- ~ lon + lat
 proj4string(d3) <- '+proj=longlat +datum=NAD83'
 
+# write KML file with label and PLSS description info
 kml_file_path <- 'PLSS_location_centroids.kml'
 kml_open(file.name=kml_file_path, folder.name='Sites_centroids', overwrite=TRUE)
-kml_layer.SpatialPoints(d3, title='Sites_centroids', colour='royalblue', labels=paste(d3$id, d3$flag, sep=' - '), shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
+kml_layer.SpatialPoints(d3, title='Sites_centroids', colour='royalblue', labels=paste(d3$id, d3$flag, paste(d3$qq, d3$q, d3$s, d3$t, d3$r, sep='/'), sep=' - '), shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
 kml_close(kml_file_path)
 
 ```
