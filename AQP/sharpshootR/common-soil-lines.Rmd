@@ -1,7 +1,8 @@
-```{r setup, warning=FALSE, messages=FALSE, echo=FALSE, results='hide'}
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
 library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
 # Linework Evaluation
@@ -12,11 +13,10 @@ library(rgdal)
 library(igraph)
 library(sharpshootR)
 library(lattice)
-library(Cairo)
 
 # load active survey
-# x <- readOGR(dsn='l:/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', stringsAsFactors=FALSE)
-x <- readOGR(dsn='l:/CA792/ca792_spatial/FG_CA792_OFFICIAL.gdb', layer='ca792_a', stringsAsFactors=FALSE)
+x <- readOGR(dsn='L:/NRCS/MLRAShared/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', stringsAsFactors=FALSE)
+# x <- readOGR(dsn='L:/NRCS/MLRAShared/CA792/ca792_spatial/FG_CA792_OFFICIAL.gdb', layer='ca792_a', stringsAsFactors=FALSE)
 
 # remove NOTCOM, DA, and empty (non-NA) symbols
 x <- x[which(! x$MUSYM %in% c('NOTCOM', 'DA', ' ', '', 'WATER', 'W')), ]
@@ -34,7 +34,7 @@ res <- polygonAdjacency(x, v='MUSYM')
 
 
 
-```{r ex-1, fig.width=10, fig.height=10}
+```{r ex-1, fig.width=20, fig.height=20}
 # plot spatial adjacency information
 par(mar=c(0,0,0,0))
 plotSoilRelationGraph(res$adjMat, vertex.scaling.factor = 1)
