@@ -1,6 +1,6 @@
 ---
 output:
-  html_document:
+  html_vignette:
     mathjax: null
     jquery: null
     smart: no
@@ -10,17 +10,17 @@ output:
 ## Setup an ODBC Connection to the Local NASIS Database
 NASIS 6.2
 <br>`r format(Sys.time(), "%Y-%m-%d")`
-<br>DEB
+
 
 ### Introduction
-This document describes how setup an ODBC link between a local NASIS database and **R**, so that pedon and DMU records can be queried with the [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package.
+This document describes how setup an ODBC link between a local NASIS database and **R**, so that pedon and DMU records can be queried with the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package.
 
 
 ### Open the ODBC Data Source Administrator
 1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. 
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
-  + Select the "SQL Server Native Client" driver.
+  + Select the "SQL Server" driver.
   + Name the data source `nasis_local`, the data source description is optional.
   + The server location is `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the [full name of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name). It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the "My Computer" icon and then clicking on the "Properties" tab. It will look something like: `CASONORA00L354`. When finished click "Next".
   
@@ -59,7 +59,7 @@ par(mar=c(0,0,0,0))
 plot(fp[1:10, ], name='hzname', label='taxonname')
 ```
 
-Good job, that wasn't so hard. Now is a good time to check out [some of the tutorials on the AQP website](http://aqp.r-forge.r-project.org/). Details on loading NASIS data into R can be found in [this tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp).
+Good job, that wasn't so hard. Now is a good time to check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/). Details on loading NASIS data into R can be found in [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
 
 
 
