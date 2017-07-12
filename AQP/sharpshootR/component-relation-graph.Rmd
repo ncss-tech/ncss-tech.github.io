@@ -122,6 +122,53 @@ for(i in seq(0, 1, length.out = 5)) {
 ```
 
 
+
+# Multiple, related soil series
+```{r}
+# data-getting function: this will generate an error if no data are available
+getSeriesData <- function(s) {
+  print(s)
+  base.url <- 'http://casoilresource.lawr.ucdavis.edu/soil_web/reflector_api/soils.php?what=soil_series_component_query&q_string='
+  # make URL
+  u <- url(URLencode(paste(base.url, s, sep='')))
+  # fetch data
+  d <- read.table(u, sep='|', header=TRUE, stringsAsFactors=FALSE)
+  return(d)
+}
+
+# series to look-up
+s.list <- c('ava', 'atlas', 'plumfield', 'hickory', 'belknap', 'zanesville', 'blair', 'bluford')
+
+
+# iterate over list and download data
+l <- lapply(s.list, getSeriesData)
+d <- ldply(l)
+
+# normalize component names
+d$compname <- tolower(d$compname)
+
+# keep only major components... requirement when working with so many records
+# d <- subset(d, select=c('mukey', 'compname', 'comppct_r'), subset= majcompflag == 'Yes' & compkind == 'Series')
+d <- subset(d, select=c('mukey', 'compname', 'comppct_r', 'majcompflag'), subset= compkind == 'Series')
+
+# keep only unique rows
+d <- unique(d)
+
+## why would there be NA comppct?
+# remove NA
+d <- na.omit(d)
+
+# convert into adj. matrix via community matrix analysis
+m <- component.adj.matrix(d, mu='mukey', co='compname', wt='comppct_r')
+
+# how frequently is any given component a "major" component?
+maj.comp.freq <- ddply(d, 'compname', summarize, 1 - prop.table(table(majcompflag))[1])
+names(maj.comp.freq) <- c('compname', 'freq')
+
+plotSoilRelationGraph(m, del.edges = 0.5, edge.scaling.factor=5, vertex.label.cex=sqrt(maj.comp.freq$freq+0.5))
+```
+
+
 # NASIS via local database
 ```{r get-format-nasis-data}
 # get legend/DMU/component data from NASIS
