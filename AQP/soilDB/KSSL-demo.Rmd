@@ -1,4 +1,7 @@
 ---
+title: "Getting and Comparing KSSL Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
@@ -9,20 +12,14 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Getting and Comparing KSSL Data
-===============================
-`r format(Sys.time(), "%Y-%m-%d")`
-Dylan Beaudette
-
-## Introduction
+# Introduction
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download [KSSL](http://ncsslabdatamart.sc.egov.usda.gov/) data from SoilWeb. These data are from the September 2016 snapshot, and will be updated as future snapshots are released. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](hhttp://ncss-tech.github.io/AQP/aqp/aqp-intro.html) from the [aqp](http://ncss-tech.github.io/AQP/) package.
 
-### Installation
+## Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -33,7 +30,7 @@ install.packages('soilDB', dep=TRUE)
 ```
 
 
-## Quick Example: getting lab characterization (KSSL) and basic morphology (NASIS)
+# Quick Example: getting lab characterization (KSSL) and basic morphology (NASIS)
 KSSL data are from the September 2016 snapshot, NASIS data are from the April 2016 snapshot. Details pending.
 ```{r fig.width=10, fig.height=6}
 library(soilDB)
@@ -55,7 +52,8 @@ lapply(s$morph, head)
 pedons <- s$SPC
 
 # simplify color data
-s.colors <- simplifyColorData(s$morph$phcolor, id.var = 'labsampnum')
+# note that both horizon ID and color "percentage" must be specified
+s.colors <- simplifyColorData(s$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
 
 # merge color data into SPC
 h <- horizons(pedons)
@@ -82,7 +80,7 @@ plot(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
 ```
 
 
-## Fetch Data Associated with a Set of IDs
+# Fetch Data Associated with a Set of IDs
 Fetching KSSL data for a set of IDs requires some additional "helper" functions. The following example fetches data according to a vector of "pedlabsampnum" IDs, extracts the horizon color data, filters missing data, and combines the results into a single table.
 
 First, paste the following code into your script or console to initialize our helper functions.
@@ -137,7 +135,7 @@ pedons <- do.call('rbind', pedons)
 plot(pedons, color='estimated_ph_h2o', name='hzn_desgn')
 
 # simplify combined color data
-colors <- simplifyColorData(phcolor, id.var = 'labsampnum')
+colors <- simplifyColorData(phcolor, id.var = 'labsampnum', wt='colorpct')
 
 # join combined color data to SPC
 h <- horizons(pedons)
@@ -149,7 +147,7 @@ plot(pedons, color='moist_soil_color', name='hzn_desgn')
 ```
 
 
-## Example Application
+# Example Application
 Data can be queried by "taxonname"" (typically a soil series), using a geographic bounding-box in WGS84 referenced coordinates, or by MLRA. Taxonname matching is case-insensitive and based on the most current taxonname in NASIS. See `?fetchKSSL()` or [this GitHub repository](https://github.com/dylanbeaudette/process-kssl-snapshot) for details.
 
 In this example, we are downloading KSSL data for the [musick](https://soilseriessc.egov.usda.gov/OSD_Docs/M/MUSIC.html), [chaix](https://soilseries.sc.egov.usda.gov/OSD_Docs/C/CHAIX.html), and [holland](https://soilseries.sc.egov.usda.gov/OSD_Docs/H/HOLLAND.html) soils; commonly found on granitic rocks of the Sierra Nevada Mountain region of California.
@@ -185,7 +183,7 @@ legend('topright', pch=21, pt.bg=c('RoyalBlue', 'DarkRed', 'DarkGreen'), legend=
 
 
 
-### Profile Plots
+## Profile Plots
 Generate "thematic" profile sketches by coloring horizons according to clay content.
 ```{r plot-pedons, fig.width=10, fig.height=6}
 par(mar=c(0,1,5,1))
@@ -195,7 +193,7 @@ plot(chaix, name='hzn_desgn', color='clay')
 ```
 
 
-### Combining Data
+## Combining Data
 Since the results from `fetchKSSL()` function always returns data in the same format, it is possible to stack the results of several KSSL queries using `rbind()`.
 ```{r combine-data, fig.width=10, fig.height=6}
 # check "correlated as" names from each object
@@ -232,7 +230,7 @@ tapply(g$depth, g$taxonname, summary)
 ```
 
 
-### Aggregation
+## Aggregation
 The `slab()` function is used to aggregate selected variables within collections of soil profiles along depth-slices. In this case, we aggregate clay, pH (1:1 H2O, estimated from saturated paste pH when missing), and base saturation at pH 8.2 along 1-cm thick slices and within groups defined by the variable 'taxonname'. See `?slab()` for details on how this function can be used.
 ```{r aggregate}
 g.slab <- slab(g, taxonname ~ clay + estimated_ph_h2o + bs82 + wmpd)
@@ -242,7 +240,7 @@ str(g.slab)
 ```
 
 
-### Refine Labels
+## Refine Labels
 It is convenient to know how many pedons there are within each collection--therefore, we append this value to the series name. Using the same approach, we can rename the soil properties with more useful descriptions and units of measure.
 ```{r rename}
 # re-name soils with series name + number of pedons-- order is critical !
@@ -258,7 +256,7 @@ levels(g.slab$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'Base Saturation at pH 8.
 ```
 
 
-### Graphically Compare
+## Graphically Compare
 The slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread. "Contributing fraction" values (% of pedons with data at a given depth) are printed along the right-hand side of each panel. These values provide both an indication of how deep the soils are, and, how much confidence can be placed in the aggregate data at any given depth.
 ```{r plot, fig.width=10, fig.height=6}
 # plot grouped, aggregate data
