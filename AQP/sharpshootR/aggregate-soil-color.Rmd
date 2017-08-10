@@ -9,7 +9,6 @@ output:
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 # options for knitr
 library(knitr, quietly = TRUE)
-library(printr, quietly = TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='png', dev.args=list(pointsize=10, type='cairo', antialias='subpixel'), tidy=TRUE)
 
 knit_hooks$set(htmlcap = function(before, options, envir) {
@@ -195,7 +194,7 @@ aggregateColorPlot(aggregateColor(f.sub, 'taxonname'), label.cex=0.65, main='Soi
 
 ### Many Soils Associated with Common Bedrock
 
-![alt text](soils-formed-diorite.png)
+![](soils-formed-diorite.png)
 
 ```{r agg-color-additional-examples-2, eval=FALSE}
 # geology + depth slices

@@ -1,0 +1,97 @@
+---
+title: "Mixing Soil Colors"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+# Example
+
+Required packages.
+```{r}
+library(soilDB)
+library(aqp)
+library(plyr)
+```
+
+
+Make some example data.
+```{r}
+colors <- c('10YR 3/5', '5YR 5/6', '2.5Y 5/6')
+weights <- c(60, 30, 10)
+
+# combine into a data.frame and convert to sRGB
+x <- cbind(
+  parseMunsell(colors, convertColors=FALSE),
+  parseMunsell(colors, return_triplets=TRUE),
+  pct=weights
+)
+
+x
+```
+
+
+Add required columns for `simplifyColorData()`.
+```{r}
+names(x)[1:3] <- paste0('color', names(x)[1:3])
+x$id <- 1
+x$colormoistst <- "Dry"
+
+# simplify
+simplifyColorData(x, id.var='id')
+
+```
+
+
+Demonstrate mixing soil colors in CIE LAB and sRGB color spaces via `mix_and_clean_colors()`.
+```{r, fig.width=6, fig.height=4}
+mixColorDemo <- function(x) {
+  x <- x[order(x$pct, decreasing = TRUE), ]
+  n.cols <- nrow(x)
+  x.vals <- 1:n.cols
+  y.vals <- rep(0, times=n.cols)
+  cols <- rgb(x[, c('r', 'g', 'b')])
+  col.txt <- paste0(x$colorhue, ' ', x$colorvalue , '/', x$colorchroma, '\n(', x$pct, '%)')
+  
+  plot(x.vals, y.vals, col=cols, pch=15, cex=5, axes=FALSE, ylab='', xlab='', xlim=c(0.5, n.cols + 2.5))
+  text(x.vals, y.vals, col.txt, pos=1, offset=1.1, cex=0.75)
+  text(x.vals[-length(x.vals)]+0.5, y.vals, '+', cex=2, lwd=2)
+  text(max(x.vals)+0.5, y.vals[1], '=', cex=2, lwd=2)
+  
+  # mix in both color spaces
+  mixed.lab <- mix_and_clean_colors(x, colorSpace = 'LAB')
+  mixed.srgb <- mix_and_clean_colors(x, colorSpace = 'sRGB')
+  
+  # add mixed colors
+  points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=5, pch=15)
+  col.txt <- paste0(mixed.lab$colorhue, ' ', mixed.lab$colorvalue , '/', mixed.lab$colorchroma, '\n(LAB)')
+  text(max(x.vals)+1, y.vals[1], col.txt, pos=1, offset=1.1, cex=0.75)
+  
+  points(max(x.vals)+1.5, y.vals[2], col=rgb(mixed.srgb[, c('r', 'g', 'b')]), cex=5, pch=15)
+  col.txt <- paste0(mixed.srgb$colorhue, ' ', mixed.srgb$colorvalue , '/', mixed.srgb$colorchroma, '\n(sRGB)')
+  text(max(x.vals)+1.5, y.vals[1], col.txt, pos=1, offset=1.1, cex=0.75)
+}
+
+
+par(mar=c(1,1,1,1))
+mixColorDemo(x)
+```
+
+
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
