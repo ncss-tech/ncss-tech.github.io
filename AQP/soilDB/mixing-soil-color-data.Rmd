@@ -55,7 +55,7 @@ simplifyColorData(x, id.var='id')
 
 
 Demonstrate mixing soil colors in CIE LAB and sRGB color spaces via `mix_and_clean_colors()`.
-```{r, fig.width=6, fig.height=4}
+```{r, fig.width=8, fig.height=4}
 mixColorDemo <- function(x) {
   x <- x[order(x$pct, decreasing = TRUE), ]
   n.cols <- nrow(x)
