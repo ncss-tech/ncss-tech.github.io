@@ -22,11 +22,15 @@ This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQ
 ## Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
-# run these commands in the R console
+# stable packages from CRAN
 install.packages('maps', dep=TRUE)
 install.packages('plyr', dep=TRUE)
 install.packages('reshape2', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
+
+# latest versions from GitHub
+devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 
