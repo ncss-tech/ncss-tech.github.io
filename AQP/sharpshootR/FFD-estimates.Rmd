@@ -1,0 +1,169 @@
+---
+title: "Frost-Free Day Estimation"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
+```
+
+
+# Background
+
+... finish this
+
+NASIS component table (ffd_r):
+  <i>The expected number of days between the last freezing temperature (0 degrees Celsius) in spring (Jan-Jul) and the first freezing temperature (0 degrees Celsius) in the fall (Aug-Dec). The number of days is based on the probability that the values for the standard "normal" period of 1961 to 1990 will be exceeded in 5 years out of 10.</i>
+
+Links:
+ 
+ * https://www.ncdc.noaa.gov/news/when-expect-your-last-spring-freeze
+ * ...
+
+
+
+
+# Examples
+
+
+## Setup R Environment
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+install.packages('sharpshootR', dep=TRUE)
+install.packages('soilDB', dep=TRUE)
+install.packages('plyr', dep=TRUE)
+
+# get latest version from GitHub
+install.packages('devtools', dep=TRUE)
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+
+Load required packages.
+```{r}
+library(sharpshootR)
+library(soilDB)
+library(plyr)
+```
+
+
+## CDEC
+The [California Data Exchange Center (CDEC)](https://cdec.water.ca.gov/) hosts all kinds of useful climate data. You can get these easily by station and sensor code with the `CDECquery()` function.
+```{r, fig.width=10, fig.height=5}
+# HHM: Highland Meadows
+# 32: daily min air temperature
+x <- CDECquery(id='HHM', sensor=32, interval='D', start='1900-01-01', end='2016-12-31')
+
+# estimate FFD over all years
+# air temperature are in deg F
+x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=32)
+
+# basic summary
+kable(x.ffd$summary)
+
+# graphical summary of FFD estimates
+par(mar=c(4,3.5,3,1))
+FFDplot(x.ffd, 'CDEC - Highland Meadows')
+```
+
+
+## SNOTEL
+Data from [SNOTEL Station 365](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=365).
+```{r, fig.width=10, fig.height=5}
+# site code and year range are required
+x <- fetchSCAN(site.code=365, year=c(1995:2016))
+
+# extract the daily min air temperature records
+x <- x$TMIN
+
+# re-name and add "year" column
+names(x)[2] <- 'datetime'
+x$year <- as.integer(format(x$datetime, "%Y"))
+
+# estimate FFD over all years
+# air temperature are in deg C
+x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
+
+# basic summary
+kable(x.ffd$summary)
+
+# graphical summary of FFD estimates
+par(mar=c(4,3.5,3,1))
+FFDplot(x.ffd, 'SNOTEL Station 365')
+```
+
+
+## SCAN
+Data from [SCAN Station 808](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=808).
+```{r, fig.width=10, fig.height=5}
+# same interface as SNOTEL
+# site code and year range are required
+x <- fetchSCAN(site.code=808, year=c(1995:2016))
+
+# extract the daily min air temperature records
+x <- x$TMIN
+
+# re-name and add "year" column
+names(x)[2] <- 'datetime'
+x$year <- as.integer(format(x$datetime, "%Y"))
+
+# estimate FFD over all years
+# air temperature are in deg C
+x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
+
+# basic summary
+kable(x.ffd$summary)
+
+# graphical summary of FFD estimates
+par(mar=c(4,3.5,3,1))
+FFDplot(x.ffd, 'SCAN Station 808')
+```
+
+
+## Henry Mount Soil Climate DB
+Air temperature data associated with NASIS user site ID "S2002CT005010".
+```{r, fig.width=10, fig.height=5}
+# must specify gran='hour' for hourly data
+# otherwise daily mean values are returned
+x <- fetchHenry(usersiteid = 'S2002CT005010', what = 'airtemp', gran='hour')
+
+# extract air temperature records
+x <- x$airtemp
+# convert date-time stamp to date (truncate time component)
+x$datetime <- as.Date(x$date_time)
+
+# compute daily min air temperature
+x <- ddply(x, 'datetime', summarize, value=min(sensor_value, na.rm=TRUE))
+# add "year" column
+x$year <- as.integer(format(x$datetime, "%Y"))
+
+# estimate FFD over all years
+# air temperature are in deg C
+x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
+
+# basic summary
+kable(x.ffd$summary)
+
+# graphical summary of FFD estimates
+par(mar=c(4,3.5,3,1))
+FFDplot(x.ffd, 'Henry: S2002CT005010')
+```
+
+
+
+----------------------------
+This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
+
