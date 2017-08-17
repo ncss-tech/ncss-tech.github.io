@@ -31,6 +31,16 @@ Links:
  * ...
 
 
+## Graphical Demonstration
+
+```{r eval=FALSE, echo=FALSE}
+ffp <- ddply(x, "year", sharpshootR:::.frostFreePeriod, minDays = 165, frostTemp=32)
+
+plot(0,0, xlim=c(0,366), ylim=c(0, 0.1), type='n')
+lines(density(ffp$lastSpring))
+lines(density(ffp$firstFall))
+```
+
 
 
 # Examples
