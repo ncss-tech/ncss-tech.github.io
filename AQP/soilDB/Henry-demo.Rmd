@@ -1,31 +1,28 @@
 ---
+title: "Henry Mount Soil Climate Database Tutorial"
+author: "D.E. Beaudette and J. Wood"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    mathjax: null
-    jquery: null
-    smart: no
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Henry Mount Soil Climate Database Tutorial
-==========================================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
 
-
-## Introduction
+# Introduction
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download data from the Henry Mount soil climate database. Soil climate data are routinely collected by SSO staff via buried sensor/data-logger devices ("hobos") and now above ground weather stations. The Henry Mount Soil Climate database was established to assist with the management and analysis of these data.
 
 
-## Setup R Environment
+# Setup R Environment
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -40,7 +37,7 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 ```
 
 
-## Getting and Viewing Data
+# Getting and Viewing Data
 Soil climate data can be queried by:
  
  * project (typically a soil survey area, "CA630")
@@ -59,7 +56,7 @@ and optionally filtered by:
     + "waterlevel": water level time series
  
 and aggregated to the following granularity:
-
+ * "hour" (houly data are returned if available)
  * "day" (MAST and mean summer/winter temperatures are automatically computed)
  * "week"
  * "month"
@@ -91,7 +88,7 @@ head(d[, c('user_site_id', 'name', 'sensor_depth', 'MAST', 'Winter', 'Summer', '
 ```
 
 
-### Plot Data
+## Plot Data
 Note that there are gaps in the data: between site visits and lack of synchronization of site visits with start/end of the year.
 ```{r plot-time-series, fig.width=10, fig.height=9}
 xyplot(sensor_value ~ date_time | name, data=x$soiltemp, main='Daily Soil Temperature (Deg. C)', type=c('l', 'g'), as.table=TRUE, layout=c(2,9), xlab='Date', ylab='Deg C')
@@ -112,12 +109,6 @@ data=x$soilVWC, layout=c(2,4), col.regions=c('grey', 'RoyalBlue'), cuts=1,
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
-
-# levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Air Temperature (Deg. C)',
-# data=x$airtemp, layout=c(1,1), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
-# colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
-# par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-# xlab='Julian Day', ylab='Year')
 ```
 
 This style of plotting data can be useful for making comparisons between years. 
@@ -141,9 +132,9 @@ xlab='Julian Day', ylab='Year')
 
 Aggregate over years by sensor / Julian day.
 ```{r plot-time-series-levelplot-3, fig.width=9, fig.height=6}
-
 # compute MAST by sensor
 a <- ddply(x$soiltemp, c('name', 'doy'), .fun=plyr::summarise, soiltemp=mean(sensor_value, na.rm = TRUE))
+
 # re-order sensor names according to MAST
 a.mast <- sort(tapply(a$soiltemp, a$name, mean, na.rm=TRUE))
 a$name <- factor(a$name, levels=names(a.mast))
@@ -162,6 +153,7 @@ fun <- function(i) {
   return(i)
 }
 
+# flag days with percent saturation >= 50%
 z <- ddply(x$soilVWC, c('sid', 'year'), .fun=fun)
 z$pct.sat <- factor(z$pct.sat >= 0.5, levels = c('TRUE', 'FALSE'), labels = c('Moist', 'Dry'))
 
@@ -173,7 +165,7 @@ xlab='Julian Day', ylab='Year')
 ```
 
 
-## Data Summaries
+# Data Summaries
 
 In the presence of missing data, MAST calculations will be biased towards those data that are not missing. For example, a block of missing data in January will result in an estimated MAST that is too high due to the missing data from the middle of winter. It is possible to estimate (mostly) unbiased MAST values in the presence of some missing data by averaging multiple years of data by Julian day.  This approach will generate reasonable summaries in the presence of missing data, as long as data gaps are "covered" by corresponding data from another year. The longer the period of record and shorter the data gaps, the better.
 
@@ -185,7 +177,7 @@ as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'senso
 ```
 
 
-## Water Level Data
+# Water Level Data
 
 Get water level data associated with the "NorthernNY_watertable" project. Water level data are found in `x$waterlevel`.
 ```{r}
@@ -210,6 +202,7 @@ colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75),
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
 ```
+
 
 Aggregate representation of water level data, by sensor / year: 
 
@@ -256,7 +249,7 @@ levelplot(fraction ~ factor(year) * factor(name), data=wl.agg, col.regions = col
 ```
 
 
-### Water Level and Precipitation
+## Water Level and Precipitation
 Combine water level data from Henry DB and daily precipitation data from nearby SCAN station (suggested by Ben Marshall).
 
 This example requires the `latticeExtra` package and a couple of small adjustments to make the Henry and SCAN data compatible.
@@ -284,7 +277,7 @@ When working with `Date` class values on the x-axis, it is often more convenient
 # using the limits of the water level data and pad days
 start.date <- min(x$date_time) - 14
 stop.date <- max(x$date_time) + 14
-date.axis <- seq.Date(start.date, stop.date, by='1 month')
+date.axis <- seq.Date(start.date, stop.date, by='2 months')
 ```
 
 
@@ -320,7 +313,7 @@ update(p.3, scales=list(alternating=3, y=list(rot=0)), ylab=c('Water Level (cm)'
 
 
 
-## Additional Ideas
+# Additional Ideas
 
 1. Save sites as shape file
 ```{r save-as-shp, eval=FALSE}
@@ -336,19 +329,29 @@ plot(g, interpolate=TRUE)
 points(Mercator(x$sensors), col='red')
 ```
 
-3. Fit a simple model relating MAST to MAAT (PRISM) using soil temperature data from the 2-SON office.
-```{r, results='hide'}
+3. Fit a simple model relating MAST to MAAT (PRISM) using soil temperature data from the several MLRA SSO.
+```{r, results='hide', eval=FALSE}
 library(raster)
 library(rms)
-# get soil temperature
-x <- fetchHenry(sso = '2-SON', what = 'soiltemp')
+
+# load PRISM mean annual air temp raster
 r <- raster('E:/gis_data/prism/final_MAAT_800m.tif')
-x$sensors$maat <- extract(r, x$sensors)
+
+# function for getting / processing data by MLRA SSO
+getData <- function(sso) {
+  x <- fetchHenry(sso = sso, what = 'soiltemp')
+  x$sensors$maat <- extract(r, x$sensors)
+  return(x$sensors@data)
+}
+
+# get / process data for select MLRA SSO
+# note: takes a couple minutes
+res <- ldply(c('2-SON', '2-TEM', '4-DIL'), getData)
 ```
 
-```{r, fig.width=6, fig.height=6}
-m.sp <- subset(x$sensors, subset=sensor_depth == 50)
-m <- as.data.frame(m.sp)
+```{r, fig.width=6, fig.height=6, eval=FALSE}
+m <- subset(res, subset=sensor_depth == 50)
+
 plot(MAST ~ maat, data=m)
 
 dd <- datadist(m)
@@ -356,9 +359,6 @@ options(datadist="dd")
 
 (m.ols <- ols(MAST ~ rcs(maat), data=m))
 plot(Predict(m.ols, conf.type = 'simultaneous'), ylab='MAST', xlab='MAAT (PRISM)')
-
-m.sp$resid <- resid(m.ols)
-spplot(m.sp, 'resid')
 ```
 
 
