@@ -315,13 +315,13 @@ update(p.3, scales=list(alternating=3, y=list(rot=0)), ylab=c('Water Level (cm)'
 
 # Additional Ideas
 
-1. Save sites as shape file
+Save sites as shape file.
 ```{r save-as-shp, eval=FALSE}
 library(rgdal)
 writeOGR(x$sensors, dsn='foldername', layer='filename', driver='ESRI Shapefile')
 ```
 
-2. Overlay site locations on a Google map
+Overlay site locations on a Google map.
 ```{r map-data, eval=FALSE}
 library(dismo)
 g <- gmap(x$sensors)
@@ -329,13 +329,25 @@ plot(g, interpolate=TRUE)
 points(Mercator(x$sensors), col='red')
 ```
 
-3. Fit a simple model relating MAST to MAAT (PRISM) using soil temperature data from the several MLRA SSO.
+Compute frost-free days.
+```{r, eval=FALSE}
+# describe sharpshootR::FFD()
+```
+
+Fit a simple model relating MAST to MAAT (PRISM) using soil temperature data from the several MLRA SSO.
 ```{r, results='hide', eval=FALSE}
 library(raster)
 library(rms)
 
 # load PRISM mean annual air temp raster
 r <- raster('E:/gis_data/prism/final_MAAT_800m.tif')
+
+# get sensor metadata
+s <- fetchHenry(what='sensors')$sensors
+
+# subet region 2 sensors
+idx <- grep('^2-', s$mlra_sso)
+s <- s[idx, ]
 
 # function for getting / processing data by MLRA SSO
 getData <- function(sso) {
@@ -346,7 +358,7 @@ getData <- function(sso) {
 
 # get / process data for select MLRA SSO
 # note: takes a couple minutes
-res <- ldply(c('2-SON', '2-TEM', '4-DIL'), getData)
+res <- ldply(unique(s$mlra_sso), getData)
 ```
 
 ```{r, fig.width=6, fig.height=6, eval=FALSE}
