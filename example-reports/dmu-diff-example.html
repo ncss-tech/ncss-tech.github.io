@@ -1,0 +1,3368 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+<title></title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Afont%3A%20normal%2012px%20Verdana%2C%20Arial%2C%20sans%2Dserif%3B%0A%7D%0A%2Ehighlighter%20%2Eadd%20%7B%20background%2Dcolor%3A%20%237fff7f%3B%0A%7D%0A%2Ehighlighter%20%2Eremove%20%7B%20background%2Dcolor%3A%20%23ff7f7f%3B%0A%7D%0A%2Ehighlighter%20td%2Emodify%20%7B%20background%2Dcolor%3A%20%237f7fff%3B%0A%7D%0A%2Ehighlighter%20td%2Econflict%20%7B%20background%2Dcolor%3A%20%23f00%3B%0A%7D%0A%2Ehighlighter%20%2Espec%20%7B%20background%2Dcolor%3A%20%23aaa%3B%0A%7D%0A%2Ehighlighter%20%2Emove%20%7B%20background%2Dcolor%3A%20%23ffa%3B%0A%7D%0A%2Ehighlighter%20%2Enull%20%7B%20color%3A%20%23888%3B%0A%7D%0A%2Ehighlighter%20table%20%7B%20border%2Dcollapse%3Acollapse%3B%0A%7D%0A%2Ehighlighter%20td%2C%20%2Ehighlighter%20th%20%7B%0Aborder%3A%201px%20solid%20%232D4068%3B%0Apadding%3A%203px%207px%202px%3B%0A%7D%0A%2Ehighlighter%20th%2C%20%2Ehighlighter%20%2Eheader%2C%20%2Ehighlighter%20%2Emeta%20%7B%0Abackground%2Dcolor%3A%20%23aaf%3B%0Afont%2Dweight%3A%20bold%3B%0Apadding%2Dbottom%3A%204px%3B%0Apadding%2Dtop%3A%205px%3B%0Atext%2Dalign%3Aleft%3B%0A%7D%0A%2Ehighlighter%20tr%2Eheader%20th%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20black%3B%0A%7D%0A%2Ehighlighter%20tr%2Eindex%20td%2C%20%2Ehighlighter%20%2Eindex%2C%20%2Ehighlighter%20tr%2Eheader%20th%2Eindex%20%7B%0Abackground%2Dcolor%3A%20white%3B%0Aborder%3A%20none%3B%0A%7D%0A%2Ehighlighter%20%2Egap%20%7B%0Acolor%3A%20%23888%3B%0A%7D%0A%2Ehighlighter%20td%20%7B%0Aempty%2Dcells%3A%20show%3B%0A%7D%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+
+
+
+<!-- dmu-diff (v0.1) -- instance created 2017-09-18 13:57:50-->
+<br>
+<div style="text-align: center; border-top-style: solid; border-bottom-style: solid; border-top-width: 2px; border-bottom-width: 2px;">
+<span style="font-size: 200%; font-weight: bold;">DMU Differences</span> <span style="font-size: 100%;"> <br> <br> 6281600u<br>vs.<br>MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes </span> <br><br> report version 0.1 <br> 2017-09-19
+</div>
+<p><br> This report provides <a href="https://en.wikipedia.org/wiki/Diff_utility">text differencing</a> capabilities, applied to DMU/component records and component/horizon records queried from the selected set. This type of analyis requires marking records as <em>old</em> (6281600u) and <em>new</em> (MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes) in the associated <code>config.R</code> file. Differences are higlighted in blue, deletions are in red, and additions are in green.</p>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+DMU/Component Diff
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+dmudesc
+</th>
+<th>
+compname
+</th>
+<th>
+comppct_r
+</th>
+<th>
+compkind
+</th>
+<th>
+...
+</th>
+<th>
+drainagecl
+</th>
+<th>
+pmgroupname
+</th>
+<th>
+elev_r
+</th>
+<th>
+slope_l
+</th>
+<th>
+slope_r
+</th>
+<th>
+slope_h
+</th>
+<th>
+aspectrep
+</th>
+<th>
+map_r
+</th>
+<th>
+maat_r
+</th>
+<th>
+mast_r
+</th>
+<th>
+reannualprecip_r
+</th>
+<th>
+ffd_r
+</th>
+<th>
+tfact
+</th>
+<th>
+wei
+</th>
+<th>
+weg
+</th>
+<th>
+nirrcapcl
+</th>
+<th>
+nirrcapscl
+</th>
+<th>
+irrcapcl
+</th>
+<th>
+irrcapscl
+</th>
+<th>
+frostact
+</th>
+<th>
+hydgrp
+</th>
+<th>
+corcon
+</th>
+<th>
+corsteel
+</th>
+<th>
+taxclname
+</th>
+<th>
+...
+</th>
+<th>
+taxpartsize
+</th>
+<th>
+taxpartsizemod
+</th>
+<th>
+taxceactcl
+</th>
+<th>
+taxreaction
+</th>
+<th>
+taxtempcl
+</th>
+<th>
+taxmoistscl
+</th>
+<th>
+taxtempregime
+</th>
+<th>
+soiltaxedition
+</th>
+<th>
+pmkind
+</th>
+<th>
+pmorigin
+</th>
+<th>
+landform.string
+</th>
+<th>
+...
+</th>
+<th>
+ecosite_name
+</th>
+<th>
+othervegid
+</th>
+<th>
+othervegclass
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+6281600u → MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes
+</td>
+<td class="modify">
+Wrango → Doowak
+</td>
+<td>
+65
+</td>
+<td>
+series
+</td>
+<td>
+...
+</td>
+<td>
+excessively
+</td>
+<td>
+mixed alluvium
+</td>
+<td class="modify">
+1448 → 1200
+</td>
+<td>
+4
+</td>
+<td class="modify">
+6 → 5
+</td>
+<td>
+8
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+178 → 175
+</td>
+<td class="modify">
+9.7 → 10
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+105 → 115
+</td>
+<td class="modify">
+2 → 5
+</td>
+<td class="modify">
+134 → 86
+</td>
+<td class="modify">
+2 → 3
+</td>
+<td>
+7
+</td>
+<td class="modify">
+s → w
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+low
+</td>
+<td class="modify">
+b → a
+</td>
+<td class="modify">
+low → moderate
+</td>
+<td>
+moderate
+</td>
+<td>
+Sandy-skeletal, mixed, mesic Xeric Torriorthents
+</td>
+<td>
+...
+</td>
+<td>
+sandy-skeletal
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td>
+not used
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+NULL → xeric
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+tenth edition → twelfth edition
+</td>
+<td>
+Alluvium
+</td>
+<td class="modify">
+Mixed → NA
+</td>
+<td>
+lake terrace
+</td>
+<td>
+...
+</td>
+<td>
+DROUGHTY LOAM 8-10 P.Z.
+</td>
+<td class="modify">
+NULL → 024XY041NV_1
+</td>
+<td class="modify">
+NULL → GRAVELLY FAN
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+6281600u → MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes
+</td>
+<td>
+Ruhe
+</td>
+<td>
+20
+</td>
+<td>
+series
+</td>
+<td>
+...
+</td>
+<td>
+well
+</td>
+<td class="modify">
+mixed alluvium and eolian deposites over lacustrine deposites → eolian sands over lacustrine deposits derived from tufa over lacustrine deposits
+</td>
+<td class="modify">
+1448 → 1200
+</td>
+<td>
+4
+</td>
+<td class="modify">
+6 → 5
+</td>
+<td>
+8
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+178 → 175
+</td>
+<td class="modify">
+9.7 → 10
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+105 → 125
+</td>
+<td>
+2
+</td>
+<td>
+134
+</td>
+<td>
+2
+</td>
+<td>
+7
+</td>
+<td>
+s
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+low
+</td>
+<td>
+d
+</td>
+<td>
+moderate
+</td>
+<td>
+high
+</td>
+<td>
+Mixed, mesic, shallow Typic Torripsamments
+</td>
+<td>
+...
+</td>
+<td>
+not used
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td>
+not used
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+NULL → typic
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+tenth edition → twelfth edition
+</td>
+<td class="modify">
+Lacustrine deposits &amp; Eolian deposits &amp; Alluvium → Eolian sands &amp; Lacustrine deposits &amp; Lacustrine deposits
+</td>
+<td class="modify">
+NA &amp; Mixed → NA &amp; Tufa
+</td>
+<td>
+lake terrace
+</td>
+<td>
+...
+</td>
+<td>
+SANDY 5-8 P.Z.
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+6281600u → MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes
+</td>
+<td>
+Bluewing
+</td>
+<td>
+5
+</td>
+<td>
+series
+</td>
+<td>
+...
+</td>
+<td>
+excessively
+</td>
+<td class="modify">
+mixed alluvium → sandy and gravelly alluvium
+</td>
+<td class="modify">
+NA → 1200
+</td>
+<td>
+2
+</td>
+<td class="modify">
+5 → 4
+</td>
+<td>
+8
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+NA → 175
+</td>
+<td class="modify">
+NA → 11
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+NA → 130
+</td>
+<td>
+5
+</td>
+<td>
+86
+</td>
+<td>
+3
+</td>
+<td>
+7
+</td>
+<td class="modify">
+w → s
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+low
+</td>
+<td>
+a
+</td>
+<td>
+moderate
+</td>
+<td class="modify">
+high → moderate
+</td>
+<td>
+Sandy-skeletal, mixed, mesic Typic Torriorthents
+</td>
+<td>
+...
+</td>
+<td>
+sandy-skeletal
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td>
+not used
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+NULL → typic
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+tenth edition → twelfth edition
+</td>
+<td class="modify">
+NULL → Alluvium
+</td>
+<td class="modify">
+NULL → NA
+</td>
+<td>
+drainageway
+</td>
+<td>
+...
+</td>
+<td>
+GRAVELLY LOAM 4-8 P.Z.
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+6281600u → MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes
+</td>
+<td>
+Stumble
+</td>
+<td>
+3
+</td>
+<td>
+series
+</td>
+<td>
+...
+</td>
+<td>
+somewhat excessively
+</td>
+<td>
+eolian sands
+</td>
+<td class="modify">
+NA → 1200
+</td>
+<td>
+4
+</td>
+<td>
+6
+</td>
+<td class="modify">
+8 → 10
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+NA → 175
+</td>
+<td class="modify">
+NA → 10
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+NA → 135
+</td>
+<td>
+5
+</td>
+<td>
+134
+</td>
+<td>
+2
+</td>
+<td>
+7
+</td>
+<td>
+s
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+low
+</td>
+<td>
+a
+</td>
+<td>
+moderate
+</td>
+<td>
+moderate
+</td>
+<td>
+Mixed, mesic Typic Torripsamments
+</td>
+<td>
+...
+</td>
+<td>
+not used
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td class="modify">
+NULL → not used
+</td>
+<td>
+not used
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+NULL → typic
+</td>
+<td>
+mesic
+</td>
+<td class="modify">
+tenth edition → twelfth edition
+</td>
+<td>
+Eolian sands
+</td>
+<td>
+NA
+</td>
+<td>
+sand sheet
+</td>
+<td>
+...
+</td>
+<td>
+SANDY 5-8 P.Z.
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+6281600u → MLRA 26 - 2w4dz Doowak-Ruhe complex, 4 to 8 percent slopes
+</td>
+<td>
+Beaches
+</td>
+<td>
+2
+</td>
+<td>
+miscellaneous area
+</td>
+<td>
+...
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td class="modify">
+NA → 1175
+</td>
+<td>
+2
+</td>
+<td>
+3
+</td>
+<td>
+4
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+56
+</td>
+<td>
+5
+</td>
+<td class="modify">
+8 → NULL
+</td>
+<td class="modify">
+w → NULL
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td class="modify">
+none → NULL
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+...
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+beach
+</td>
+<td>
+...
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+<td>
+null
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><br><br></p>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+Component/Horizon Diff: Doowak
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+hzname
+</th>
+<th>
+hzdept_r
+</th>
+<th>
+hzdepb_r
+</th>
+<th>
+texture
+</th>
+<th>
+fragvoltot_l
+</th>
+<th>
+fragvoltot_r
+</th>
+<th>
+fragvoltot_h
+</th>
+<th>
+sandtotal_l
+</th>
+<th>
+sandtotal_r
+</th>
+<th>
+sandtotal_h
+</th>
+<th>
+silttotal_l
+</th>
+<th>
+silttotal_r
+</th>
+<th>
+silttotal_h
+</th>
+<th>
+claytotal_l
+</th>
+<th>
+claytotal_r
+</th>
+<th>
+claytotal_h
+</th>
+<th>
+om_l
+</th>
+<th>
+om_r
+</th>
+<th>
+om_h
+</th>
+<th>
+structgrpname
+</th>
+<th>
+dbthirdbar_l
+</th>
+<th>
+dbthirdbar_r
+</th>
+<th>
+dbthirdbar_h
+</th>
+<th>
+ksat_l
+</th>
+<th>
+ksat_r
+</th>
+<th>
+ksat_h
+</th>
+<th>
+awc_l
+</th>
+<th>
+awc_r
+</th>
+<th>
+awc_h
+</th>
+<th>
+lep_r
+</th>
+<th>
+sar_r
+</th>
+<th>
+ec_r
+</th>
+<th>
+cec7_r
+</th>
+<th>
+sumbases_r
+</th>
+<th>
+ph1to1h2o_l
+</th>
+<th>
+ph1to1h2o_r
+</th>
+<th>
+ph1to1h2o_h
+</th>
+<th>
+caco3_l
+</th>
+<th>
+caco3_r
+</th>
+<th>
+caco3_h
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="add">
+<td>
++++
+</td>
+<td>
+A
+</td>
+<td>
+0
+</td>
+<td>
+15
+</td>
+<td>
+GRV-LS
+</td>
+<td>
+35
+</td>
+<td>
+40
+</td>
+<td>
+60
+</td>
+<td>
+77
+</td>
+<td>
+78
+</td>
+<td>
+88
+</td>
+<td>
+8
+</td>
+<td>
+17
+</td>
+<td>
+20
+</td>
+<td>
+3
+</td>
+<td>
+5
+</td>
+<td>
+10
+</td>
+<td>
+0.5
+</td>
+<td>
+0.75
+</td>
+<td>
+1
+</td>
+<td>
+moderate thick platy structure
+</td>
+<td>
+1.61
+</td>
+<td>
+1.64
+</td>
+<td>
+1.67
+</td>
+<td>
+14
+</td>
+<td>
+28
+</td>
+<td>
+42
+</td>
+<td>
+0.09
+</td>
+<td>
+0.11
+</td>
+<td>
+0.12
+</td>
+<td>
+0.2
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+4.2
+</td>
+<td>
+5.7
+</td>
+<td>
+7.4
+</td>
+<td>
+7.6
+</td>
+<td>
+8.4
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+<td>
+2
+</td>
+</tr>
+<tr class="add">
+<td>
++++
+</td>
+<td>
+Bk
+</td>
+<td>
+15
+</td>
+<td>
+152
+</td>
+<td>
+GRX-LS
+</td>
+<td>
+60
+</td>
+<td>
+72
+</td>
+<td>
+90
+</td>
+<td>
+77
+</td>
+<td>
+78
+</td>
+<td>
+95
+</td>
+<td>
+2
+</td>
+<td>
+17
+</td>
+<td>
+20
+</td>
+<td>
+3
+</td>
+<td>
+5
+</td>
+<td>
+8
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td>
+single grain
+</td>
+<td>
+1.62
+</td>
+<td>
+1.66
+</td>
+<td>
+1.69
+</td>
+<td>
+141
+</td>
+<td>
+423
+</td>
+<td>
+705
+</td>
+<td>
+0.03
+</td>
+<td>
+0.04
+</td>
+<td>
+0.05
+</td>
+<td>
+0.1
+</td>
+<td>
+3
+</td>
+<td>
+2
+</td>
+<td>
+3.8
+</td>
+<td>
+42.8
+</td>
+<td>
+7.4
+</td>
+<td>
+8.1
+</td>
+<td>
+8.4
+</td>
+<td>
+0
+</td>
+<td>
+2
+</td>
+<td>
+3
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<br><br>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+Component/Horizon Diff: Wrango
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+hzname
+</th>
+<th>
+hzdept_r
+</th>
+<th>
+hzdepb_r
+</th>
+<th>
+texture
+</th>
+<th>
+fragvoltot_l
+</th>
+<th>
+...
+</th>
+<th>
+sandtotal_l
+</th>
+<th>
+sandtotal_r
+</th>
+<th>
+sandtotal_h
+</th>
+<th>
+...
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="remove">
+<td>
+---
+</td>
+<td>
+H1
+</td>
+<td>
+0
+</td>
+<td>
+8
+</td>
+<td>
+GR-LS
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+<td>
+NA
+</td>
+<td>
+80
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+</tr>
+<tr class="remove">
+<td>
+---
+</td>
+<td>
+H2
+</td>
+<td>
+8
+</td>
+<td>
+25
+</td>
+<td>
+GR-FSL
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+<td>
+NA
+</td>
+<td>
+64.6
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+</tr>
+<tr class="remove">
+<td>
+---
+</td>
+<td>
+H3
+</td>
+<td>
+25
+</td>
+<td>
+152
+</td>
+<td>
+GRX-LCOS
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+<td>
+NA
+</td>
+<td>
+79.1
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<br><br>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+Component/Horizon Diff: Ruhe
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+hzname
+</th>
+<th>
+hzdept_r
+</th>
+<th>
+hzdepb_r
+</th>
+<th>
+texture
+</th>
+<th>
+fragvoltot_l
+</th>
+<th>
+fragvoltot_r
+</th>
+<th>
+fragvoltot_h
+</th>
+<th>
+sandtotal_l
+</th>
+<th>
+sandtotal_r
+</th>
+<th>
+sandtotal_h
+</th>
+<th>
+silttotal_l
+</th>
+<th>
+silttotal_r
+</th>
+<th>
+silttotal_h
+</th>
+<th>
+claytotal_l
+</th>
+<th>
+claytotal_r
+</th>
+<th>
+claytotal_h
+</th>
+<th>
+om_l
+</th>
+<th>
+om_r
+</th>
+<th>
+om_h
+</th>
+<th>
+structgrpname
+</th>
+<th>
+dbthirdbar_l
+</th>
+<th>
+dbthirdbar_r
+</th>
+<th>
+dbthirdbar_h
+</th>
+<th>
+ksat_l
+</th>
+<th>
+ksat_r
+</th>
+<th>
+ksat_h
+</th>
+<th>
+awc_l
+</th>
+<th>
+awc_r
+</th>
+<th>
+awc_h
+</th>
+<th>
+lep_r
+</th>
+<th>
+sar_r
+</th>
+<th>
+ec_r
+</th>
+<th>
+cec7_r
+</th>
+<th>
+sumbases_r
+</th>
+<th>
+ph1to1h2o_l
+</th>
+<th>
+ph1to1h2o_r
+</th>
+<th>
+ph1to1h2o_h
+</th>
+<th>
+caco3_l
+</th>
+<th>
+caco3_r
+</th>
+<th>
+caco3_h
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H1 → A
+</td>
+<td>
+0
+</td>
+<td>
+15
+</td>
+<td>
+ST-LS
+</td>
+<td class="modify">
+NA → 15
+</td>
+<td class="modify">
+27 → 30
+</td>
+<td class="modify">
+NA → 35
+</td>
+<td class="modify">
+NA → 75
+</td>
+<td class="modify">
+81.1 → 80
+</td>
+<td class="modify">
+NA → 85
+</td>
+<td class="modify">
+NA → 10
+</td>
+<td class="modify">
+16.4 → 17
+</td>
+<td class="modify">
+NA → 24
+</td>
+<td>
+0
+</td>
+<td class="modify">
+2.5 → 3
+</td>
+<td>
+5
+</td>
+<td>
+0
+</td>
+<td class="modify">
+0.25 → 0.5
+</td>
+<td class="modify">
+0.5 → 2
+</td>
+<td>
+single grain
+</td>
+<td class="modify">
+1.5 → 1.62
+</td>
+<td class="modify">
+1.55 → 1.66
+</td>
+<td class="modify">
+1.6 → 1.71
+</td>
+<td>
+42
+</td>
+<td>
+92
+</td>
+<td>
+141
+</td>
+<td>
+0.04
+</td>
+<td class="modify">
+0.06 → 0.07
+</td>
+<td class="modify">
+0.07 → 0.09
+</td>
+<td class="modify">
+1.5 → 0
+</td>
+<td>
+3
+</td>
+<td class="modify">
+3 → 2
+</td>
+<td class="modify">
+3 → 0.1
+</td>
+<td class="modify">
+NA → 39.1
+</td>
+<td>
+7.9
+</td>
+<td class="modify">
+8.5 → 8.6
+</td>
+<td>
+9
+</td>
+<td>
+1
+</td>
+<td class="modify">
+3 → 4
+</td>
+<td>
+5
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H2 → C
+</td>
+<td>
+15
+</td>
+<td>
+36
+</td>
+<td class="modify">
+GR-LS → LS
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+25 → 10
+</td>
+<td class="modify">
+NA → 35
+</td>
+<td class="modify">
+NA → 75
+</td>
+<td class="modify">
+81.1 → 78
+</td>
+<td class="modify">
+NA → 90
+</td>
+<td class="modify">
+NA → 7
+</td>
+<td class="modify">
+16.4 → 17
+</td>
+<td class="modify">
+NA → 25
+</td>
+<td>
+0
+</td>
+<td class="modify">
+2.5 → 5
+</td>
+<td>
+5
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td class="modify">
+0.5 → 1
+</td>
+<td class="modify">
+NULL → massive
+</td>
+<td class="modify">
+1.55 → 1.49
+</td>
+<td class="modify">
+1.65 → 1.54
+</td>
+<td class="modify">
+1.75 → 1.6
+</td>
+<td>
+42
+</td>
+<td>
+92
+</td>
+<td>
+141
+</td>
+<td>
+0.04
+</td>
+<td>
+0.07
+</td>
+<td>
+0.09
+</td>
+<td class="modify">
+1.5 → 0
+</td>
+<td>
+3
+</td>
+<td>
+3
+</td>
+<td class="modify">
+3 → 0.1
+</td>
+<td class="modify">
+NA → 43.9
+</td>
+<td>
+7.9
+</td>
+<td class="modify">
+8.5 → 8.6
+</td>
+<td>
+9
+</td>
+<td>
+5
+</td>
+<td>
+10
+</td>
+<td>
+15
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+Cr → 2Cr
+</td>
+<td>
+36
+</td>
+<td>
+89
+</td>
+<td>
+BR
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+null
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td class="modify">
+0.42 → 0.01
+</td>
+<td class="modify">
+70.71 → 0.215
+</td>
+<td class="modify">
+141 → 0.42
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H3 → 3C
+</td>
+<td>
+89
+</td>
+<td>
+152
+</td>
+<td class="modify">
+SR- CBX-COS S → CBX-COS
+</td>
+<td class="modify">
+NA → 10
+</td>
+<td class="modify">
+48 → 75
+</td>
+<td class="modify">
+NA → 90
+</td>
+<td class="modify">
+NA → 88
+</td>
+<td class="modify">
+96 → 92
+</td>
+<td class="modify">
+NA → 96
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+1.5 → 6
+</td>
+<td class="modify">
+NA → 12
+</td>
+<td>
+0
+</td>
+<td class="modify">
+2.5 → 2
+</td>
+<td>
+5
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td class="modify">
+NULL → single grain
+</td>
+<td class="modify">
+1.55 → 1.63
+</td>
+<td class="modify">
+1.65 → 1.68
+</td>
+<td class="modify">
+1.75 → 1.74
+</td>
+<td>
+42
+</td>
+<td>
+92
+</td>
+<td>
+141
+</td>
+<td>
+0.01
+</td>
+<td>
+0.02
+</td>
+<td>
+0.03
+</td>
+<td class="modify">
+1.5 → 0
+</td>
+<td>
+3
+</td>
+<td>
+6
+</td>
+<td class="modify">
+3 → 0.1
+</td>
+<td class="modify">
+NA → 85.6
+</td>
+<td>
+7.9
+</td>
+<td class="modify">
+8.8 → 9.2
+</td>
+<td>
+9.6
+</td>
+<td>
+5
+</td>
+<td>
+8
+</td>
+<td>
+10
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<br><br>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+Component/Horizon Diff: Bluewing
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+hzname
+</th>
+<th>
+hzdept_r
+</th>
+<th>
+hzdepb_r
+</th>
+<th>
+texture
+</th>
+<th>
+fragvoltot_l
+</th>
+<th>
+fragvoltot_r
+</th>
+<th>
+fragvoltot_h
+</th>
+<th>
+sandtotal_l
+</th>
+<th>
+sandtotal_r
+</th>
+<th>
+sandtotal_h
+</th>
+<th>
+silttotal_l
+</th>
+<th>
+silttotal_r
+</th>
+<th>
+silttotal_h
+</th>
+<th>
+claytotal_l
+</th>
+<th>
+claytotal_r
+</th>
+<th>
+claytotal_h
+</th>
+<th>
+om_l
+</th>
+<th>
+om_r
+</th>
+<th>
+om_h
+</th>
+<th>
+structgrpname
+</th>
+<th>
+dbthirdbar_l
+</th>
+<th>
+dbthirdbar_r
+</th>
+<th>
+dbthirdbar_h
+</th>
+<th>
+ksat_l
+</th>
+<th>
+ksat_r
+</th>
+<th>
+ksat_h
+</th>
+<th>
+awc_l
+</th>
+<th>
+awc_r
+</th>
+<th>
+awc_h
+</th>
+<th>
+lep_r
+</th>
+<th>
+sar_r
+</th>
+<th>
+ec_r
+</th>
+<th>
+cec7_r
+</th>
+<th>
+sumbases_r
+</th>
+<th>
+ph1to1h2o_l
+</th>
+<th>
+ph1to1h2o_r
+</th>
+<th>
+ph1to1h2o_h
+</th>
+<th>
+caco3_l
+</th>
+<th>
+caco3_r
+</th>
+<th>
+caco3_h
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H1 → A
+</td>
+<td>
+0
+</td>
+<td class="modify">
+18 → 3
+</td>
+<td>
+STV-LS
+</td>
+<td class="modify">
+NA → 35
+</td>
+<td class="modify">
+56 → 45
+</td>
+<td class="modify">
+NA → 60
+</td>
+<td class="modify">
+NA → 75
+</td>
+<td class="modify">
+84.3 → 78
+</td>
+<td class="modify">
+NA → 83
+</td>
+<td class="modify">
+NA → 10
+</td>
+<td class="modify">
+9.2 → 17
+</td>
+<td class="modify">
+NA → 22
+</td>
+<td>
+3
+</td>
+<td class="modify">
+6.5 → 5
+</td>
+<td class="modify">
+10 → 8
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td>
+massive
+</td>
+<td class="modify">
+1.4 → 1.64
+</td>
+<td class="modify">
+1.5 → 1.68
+</td>
+<td class="modify">
+1.6 → 1.72
+</td>
+<td>
+42
+</td>
+<td>
+92
+</td>
+<td>
+141
+</td>
+<td class="modify">
+0.04 → 0.03
+</td>
+<td>
+0.05
+</td>
+<td class="modify">
+0.05 → 0.06
+</td>
+<td class="modify">
+1.5 → 0.1
+</td>
+<td>
+3
+</td>
+<td>
+1
+</td>
+<td class="modify">
+5 → 3.1
+</td>
+<td class="modify">
+NA → 4.6
+</td>
+<td>
+7.4
+</td>
+<td class="modify">
+8.2 → 8.8
+</td>
+<td>
+9
+</td>
+<td>
+0
+</td>
+<td class="modify">
+3 → 1
+</td>
+<td class="modify">
+5 → 2
+</td>
+</tr>
+<tr class="add">
+<td>
++++
+</td>
+<td>
+Bk1
+</td>
+<td>
+3
+</td>
+<td>
+122
+</td>
+<td>
+GRV-LCOS
+</td>
+<td>
+35
+</td>
+<td>
+50
+</td>
+<td>
+80
+</td>
+<td>
+78
+</td>
+<td>
+84
+</td>
+<td>
+95
+</td>
+<td>
+2
+</td>
+<td>
+9
+</td>
+<td>
+15
+</td>
+<td>
+3
+</td>
+<td>
+7
+</td>
+<td>
+8
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td>
+massive
+</td>
+<td>
+1.55
+</td>
+<td>
+1.65
+</td>
+<td>
+1.75
+</td>
+<td>
+141
+</td>
+<td>
+423
+</td>
+<td>
+705
+</td>
+<td>
+0.04
+</td>
+<td>
+0.05
+</td>
+<td>
+0.06
+</td>
+<td>
+0.2
+</td>
+<td>
+3
+</td>
+<td>
+2
+</td>
+<td>
+4.8
+</td>
+<td>
+43.8
+</td>
+<td>
+7.4
+</td>
+<td>
+8.6
+</td>
+<td>
+9
+</td>
+<td>
+1
+</td>
+<td>
+3
+</td>
+<td>
+5
+</td>
+</tr>
+<tr class="add">
+<td>
++++
+</td>
+<td>
+Bk2
+</td>
+<td>
+122
+</td>
+<td>
+157
+</td>
+<td>
+GRX-COS
+</td>
+<td>
+35
+</td>
+<td>
+60
+</td>
+<td>
+80
+</td>
+<td>
+78
+</td>
+<td>
+89
+</td>
+<td>
+95
+</td>
+<td>
+2
+</td>
+<td>
+7
+</td>
+<td>
+15
+</td>
+<td>
+3
+</td>
+<td>
+4
+</td>
+<td>
+8
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td>
+massive
+</td>
+<td>
+1.55
+</td>
+<td>
+1.65
+</td>
+<td>
+1.75
+</td>
+<td>
+141
+</td>
+<td>
+423
+</td>
+<td>
+705
+</td>
+<td>
+0.04
+</td>
+<td>
+0.05
+</td>
+<td>
+0.06
+</td>
+<td>
+0.1
+</td>
+<td>
+7
+</td>
+<td>
+2
+</td>
+<td>
+4.8
+</td>
+<td>
+43.8
+</td>
+<td>
+7.4
+</td>
+<td>
+8.8
+</td>
+<td>
+9
+</td>
+<td>
+1
+</td>
+<td>
+3
+</td>
+<td>
+5
+</td>
+</tr>
+<tr class="remove">
+<td>
+---
+</td>
+<td>
+H2
+</td>
+<td>
+18
+</td>
+<td>
+152
+</td>
+<td>
+SR- GRX-S GRX-LCOS
+</td>
+<td>
+NA
+</td>
+<td>
+45
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+84.3
+</td>
+<td>
+NA
+</td>
+<td>
+NA
+</td>
+<td>
+9.2
+</td>
+<td>
+NA
+</td>
+<td>
+3
+</td>
+<td>
+6.5
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td>
+null
+</td>
+<td>
+1.45
+</td>
+<td>
+1.55
+</td>
+<td>
+1.65
+</td>
+<td>
+141
+</td>
+<td>
+423
+</td>
+<td>
+705
+</td>
+<td>
+0.04
+</td>
+<td>
+0.05
+</td>
+<td>
+0.06
+</td>
+<td>
+1.5
+</td>
+<td>
+6
+</td>
+<td>
+2
+</td>
+<td>
+5
+</td>
+<td>
+NA
+</td>
+<td>
+7.4
+</td>
+<td>
+8.2
+</td>
+<td>
+9
+</td>
+<td>
+1
+</td>
+<td>
+3
+</td>
+<td>
+5
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<br><br>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+Component/Horizon Diff: Stumble
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+hzname
+</th>
+<th>
+hzdept_r
+</th>
+<th>
+hzdepb_r
+</th>
+<th>
+texture
+</th>
+<th>
+fragvoltot_l
+</th>
+<th>
+fragvoltot_r
+</th>
+<th>
+fragvoltot_h
+</th>
+<th>
+sandtotal_l
+</th>
+<th>
+sandtotal_r
+</th>
+<th>
+sandtotal_h
+</th>
+<th>
+silttotal_l
+</th>
+<th>
+silttotal_r
+</th>
+<th>
+silttotal_h
+</th>
+<th>
+claytotal_l
+</th>
+<th>
+claytotal_r
+</th>
+<th>
+claytotal_h
+</th>
+<th>
+om_l
+</th>
+<th>
+om_r
+</th>
+<th>
+om_h
+</th>
+<th>
+structgrpname
+</th>
+<th>
+dbthirdbar_l
+</th>
+<th>
+dbthirdbar_r
+</th>
+<th>
+dbthirdbar_h
+</th>
+<th>
+ksat_l
+</th>
+<th>
+...
+</th>
+<th>
+awc_h
+</th>
+<th>
+lep_r
+</th>
+<th>
+sar_r
+</th>
+<th>
+ec_r
+</th>
+<th>
+cec7_r
+</th>
+<th>
+sumbases_r
+</th>
+<th>
+ph1to1h2o_l
+</th>
+<th>
+ph1to1h2o_r
+</th>
+<th>
+ph1to1h2o_h
+</th>
+<th>
+caco3_l
+</th>
+<th>
+caco3_r
+</th>
+<th>
+caco3_h
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H1 → A
+</td>
+<td>
+0
+</td>
+<td>
+15
+</td>
+<td>
+LS
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+12 → 0
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+NA → 74
+</td>
+<td class="modify">
+84.3 → 78
+</td>
+<td class="modify">
+NA → 85
+</td>
+<td class="modify">
+NA → 7
+</td>
+<td class="modify">
+9.2 → 16
+</td>
+<td class="modify">
+NA → 23
+</td>
+<td>
+3
+</td>
+<td class="modify">
+6.5 → 6
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td class="modify">
+0.25 → 0.3
+</td>
+<td class="modify">
+0.5 → 0.75
+</td>
+<td>
+single grain
+</td>
+<td class="modify">
+1.4 → 1.58
+</td>
+<td class="modify">
+1.5 → 1.64
+</td>
+<td class="modify">
+1.6 → 1.7
+</td>
+<td>
+42
+</td>
+<td>
+...
+</td>
+<td>
+0.08
+</td>
+<td class="modify">
+1.5 → 0.4
+</td>
+<td>
+3
+</td>
+<td>
+1
+</td>
+<td class="modify">
+5 → 4.5
+</td>
+<td class="modify">
+NA → 6
+</td>
+<td>
+6.6
+</td>
+<td>
+7.5
+</td>
+<td class="modify">
+8.4 → 9
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H2 → C1
+</td>
+<td>
+15
+</td>
+<td>
+74
+</td>
+<td>
+LS
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+12 → 5
+</td>
+<td class="modify">
+NA → 14
+</td>
+<td class="modify">
+NA → 76
+</td>
+<td class="modify">
+84.3 → 78
+</td>
+<td class="modify">
+NA → 85
+</td>
+<td class="modify">
+NA → 7
+</td>
+<td class="modify">
+9.2 → 16
+</td>
+<td class="modify">
+NA → 21
+</td>
+<td>
+3
+</td>
+<td class="modify">
+6.5 → 6
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td class="modify">
+NULL → massive
+</td>
+<td class="modify">
+1.4 → 1.6
+</td>
+<td class="modify">
+1.5 → 1.6
+</td>
+<td class="modify">
+1.6 → 1.61
+</td>
+<td>
+42
+</td>
+<td>
+...
+</td>
+<td>
+0.08
+</td>
+<td class="modify">
+1.5 → 0.4
+</td>
+<td>
+3
+</td>
+<td>
+2
+</td>
+<td class="modify">
+5 → 4.5
+</td>
+<td class="modify">
+NA → 43.5
+</td>
+<td>
+7.9
+</td>
+<td>
+8.2
+</td>
+<td class="modify">
+8.4 → 9
+</td>
+<td>
+1
+</td>
+<td class="modify">
+3 → 2
+</td>
+<td>
+5
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td class="modify">
+H3 → C2
+</td>
+<td>
+74
+</td>
+<td class="modify">
+127 → 152
+</td>
+<td>
+GR-LS
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+25 → 20
+</td>
+<td class="modify">
+NA → 35
+</td>
+<td class="modify">
+NA → 76
+</td>
+<td class="modify">
+84.3 → 78
+</td>
+<td class="modify">
+NA → 85
+</td>
+<td class="modify">
+NA → 7
+</td>
+<td class="modify">
+9.2 → 16
+</td>
+<td class="modify">
+NA → 21
+</td>
+<td>
+3
+</td>
+<td class="modify">
+6.5 → 6
+</td>
+<td>
+10
+</td>
+<td>
+0
+</td>
+<td>
+0.25
+</td>
+<td>
+0.5
+</td>
+<td class="modify">
+NULL → massive
+</td>
+<td class="modify">
+1.4 → 1.6
+</td>
+<td class="modify">
+1.5 → 1.6
+</td>
+<td class="modify">
+1.6 → 1.61
+</td>
+<td>
+42
+</td>
+<td>
+...
+</td>
+<td>
+0.06
+</td>
+<td class="modify">
+1.5 → 0.3
+</td>
+<td>
+3
+</td>
+<td>
+4
+</td>
+<td class="modify">
+5 → 4.5
+</td>
+<td class="modify">
+NA → 51.9
+</td>
+<td>
+7.9
+</td>
+<td>
+8.5
+</td>
+<td>
+9
+</td>
+<td>
+1
+</td>
+<td class="modify">
+3 → 2
+</td>
+<td>
+5
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<br><br>
+<div class="highlighter" style="align:center; font-size:80%;">
+<h3>
+Component/Horizon Diff: Beaches
+</h3>
+<table>
+<thead>
+<tr class="header">
+<th>
+@@
+</th>
+<th>
+hzname
+</th>
+<th>
+hzdept_r
+</th>
+<th>
+...
+</th>
+<th>
+texture
+</th>
+<th>
+fragvoltot_l
+</th>
+<th>
+fragvoltot_r
+</th>
+<th>
+fragvoltot_h
+</th>
+<th>
+sandtotal_l
+</th>
+<th>
+...
+</th>
+<th>
+om_h
+</th>
+<th>
+structgrpname
+</th>
+<th>
+dbthirdbar_l
+</th>
+<th>
+...
+</th>
+<th>
+awc_h
+</th>
+<th>
+lep_r
+</th>
+<th>
+sar_r
+</th>
+<th>
+...
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td>
+H1
+</td>
+<td>
+0
+</td>
+<td>
+...
+</td>
+<td>
+GRX-S
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+74 → 62
+</td>
+<td class="modify">
+NA → 95
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+<td>
+0.1
+</td>
+<td class="modify">
+NULL → single grain
+</td>
+<td>
+1.6
+</td>
+<td>
+...
+</td>
+<td>
+0.03
+</td>
+<td class="modify">
+1.5 → 0
+</td>
+<td>
+0
+</td>
+<td>
+...
+</td>
+</tr>
+<tr class="modify">
+<td class="modify">
+⇒
+</td>
+<td>
+H2
+</td>
+<td>
+15
+</td>
+<td>
+...
+</td>
+<td>
+GRX-COS
+</td>
+<td class="modify">
+NA → 0
+</td>
+<td class="modify">
+48 → 42
+</td>
+<td class="modify">
+NA → 85
+</td>
+<td>
+NA
+</td>
+<td>
+...
+</td>
+<td>
+0.1
+</td>
+<td class="modify">
+NULL → massive
+</td>
+<td>
+1.6
+</td>
+<td>
+...
+</td>
+<td>
+0.03
+</td>
+<td class="modify">
+1.5 → 0
+</td>
+<td>
+0
+</td>
+<td>
+...
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><br><br></p>
+<hr />
+<p>This document is based on <code>soilDB</code> version 1.8.12, and <code>daff</code> version 0.3.0. <br> Report <a href="https://github.com/ncss-tech/soilReports">configuration and source code are hosted on GitHub</a>.</p>
+
+
+
+
+</body>
+</html>
