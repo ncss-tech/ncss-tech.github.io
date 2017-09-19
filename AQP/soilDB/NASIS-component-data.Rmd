@@ -12,7 +12,6 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
-library(tint)
 library(knitr)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
@@ -167,8 +166,9 @@ ggplot(subset(x, subset= coiid %in% x$coiid[x$ponddurcl != 'None']), aes(month, 
 
 ## Component Ecological Site Data
 Details pending.
-```{r, eval=FALSE}
+```{r}
 nc.esd <- get_component_esd_data_from_NASIS_db()
+head(nc.esd)
 ```
 
 
@@ -222,6 +222,8 @@ legend('bottomleft', legend = c('MU (national musym)', 'DMU (dmu description)', 
 ## Rank Component Records Based on Horizon Data Population
 Rank data map units that contain a major component named "Amador" based on the degree to which component horizon data has been populated.
 
+*this needs work*
+
 ```{r, fig.width=8, fig.height=4}
 library(lattice)
 # re-load relevant data from NASIS:
@@ -267,7 +269,7 @@ dotplot(dmudesc ~ frac.populated, data=p, cex=1.25, ylab='DMU Description', xlab
 ```
 
 
-# Boring Details ##
+# Boring Details
 Just kidding, this stuff matters.
 
 ## Status and QC Messages
@@ -288,6 +290,9 @@ Some of the assumptions made by `fetchNASIS_component_data()` can be adjusted us
 
 * `rmHzErrors = TRUE`
 Setting this value to `TRUE` (the default) will enable checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons. Note that any records flagged as having horizon depths errors (`rmHzErrors = TRUE`) will be omitted from the data returned by `fetchNASIS_component_data()`.
+
+* `fill = FALSE`
+Should missing "month" rows in the comonth table be filled with NA (FALSE)?
 
 
 
