@@ -143,11 +143,11 @@ FFDplot(x.ffd, 'SCAN Station 808')
 
 
 ## Henry Mount Soil Climate DB
-Air temperature data associated with NASIS user site ID "S2002CT005010".
+Air temperature data associated with NASIS user site ID "1997NV005022".
 ```{r, fig.width=10, fig.height=5}
 # must specify gran='hour' for hourly data
 # otherwise daily mean values are returned
-x <- fetchHenry(usersiteid = 'S2002CT005010', what = 'airtemp', gran='hour')
+x <- fetchHenry(usersiteid = '1997NV005022', what = 'airtemp', gran='hour')
 
 # extract air temperature records
 x <- x$airtemp
@@ -168,7 +168,7 @@ kable(x.ffd$summary)
 
 # graphical summary of FFD estimates
 par(mar=c(4,3.5,3,1))
-FFDplot(x.ffd, 'Henry: S2002CT005010')
+FFDplot(x.ffd, 'Henry: 1997NV005022')
 ```
 
 
