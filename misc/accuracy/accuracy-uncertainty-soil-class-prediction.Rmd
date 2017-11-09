@@ -13,7 +13,7 @@ bibliography: bibliography.bib
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, fig.align='center')
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -59,7 +59,7 @@ where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$
 
 ## Shannon Entropy
 
-Shannon Entropy was calculated according to [@Kempen2009]:
+A normalized version [@Kempen2009] of Shannon entropy can be calculated:
 
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
 where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minumum information, maximum entropy).
@@ -69,7 +69,7 @@ where $H$ is an index of uncertainty associated with predicted probabilities, $\
 Following [@Burrough1997]:
 
 $$ \mathit{CI} = [1 - (\mu_{max} - \mu_{max-1})] $$
-where $\mathit{CI}$ is and index confusion between the first most likely, $\mu_{max}$, and second most likey, $\mu_{max-1}$, class probabilities.
+where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu_{max}$, and second most likey, $\mu_{max-1}$, class probabilities.
 
 ### Integration of Class Distances
 Is this even possible?
@@ -86,17 +86,20 @@ Drawing from Dirichlet distribution:
     + https://www.hakkalabs.co/articles/the-dirichlet-distribution
     + http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
   * single simulation fixed alpha
-  * many simulations with various "styles" of alpha
+  * many simulations with several cases:
+    + high uncertainty
+    + low uncertainty
+    + complex mixture
 
 
 ## Shannon entropy vs. confusion index
 ```{r}
 library(igraph)
-library(vegan)
 library(latticeExtra)
+library(plyr)
 library(reshape2)
 
-# normalized Shannon entropy (Kempen et al, 2006)
+# normalized Shannon entropy (Kempen et al, 2009)
 shannon.H <- function(i, b) {
   res <- -1 * sum(i * log(i, base=b))
   return(res)
@@ -111,51 +114,73 @@ confusion.index <- function(i) {
 
 
 # simulate predicted class probabilities via draws from dirichlet 
-# class likelyhood set via hyper-parameter vector alpha
-n <- 10
-alpha <- c(1,1,2,20,25,3,5,6,3,2)
+# (n pixel * k classes)
+# n: number of simulated "pixels" 
+# k: number of classes
+# alpha: dirichlet hyperparameter (class likelyhood)
+simulate.predictions <- function(n, k, alpha) {
+  # generate simulated 
+  x <- sample_dirichlet(n, alpha = alpha)
+  x <- t(x)
+  
+  # reshape
+  d <- as.data.frame(x)
+  d$id <- rownames(d)
+  m <- melt(d, id.vars = 'id')
+  
+  # compute H and CI for each simulated case
+  H <- apply(x, 1, shannon.H, b=k)
+  CI <- apply(x, 1, confusion.index)
+  
+  # reshape for plotting
+  z <- data.frame(H=H, CI=CI)
+  z.long <- make.groups(H=z$H, CI=z$CI)
+  
+  return(list(predictions=m, stats=z, stats.long=z.long))
+}
+```
 
-x <- sample_dirichlet(1000, alpha = alpha)
-x <- t(x)
 
-# ## not much different
-# # simulate via multinominal
-# x.mn <- rmultinom(1000, size=100, prob = alpha) / 100
-# x.mn <- t(x.mn)
+```{r, fig.width=10, fig.height=4}
+s <- list()
 
-# reshape
-d <- as.data.frame(x)
-d$id <- rownames(d)
-m <- melt(d, id.vars = 'id')
+alpha <- c(1,10,2,20,25,3,5,6,3,2)
+s[['Case 1']] <- simulate.predictions(n=1000, k=10, alpha)
+
+alpha <- c(1,1,2,3,3,3,5,6,3,25)
+s[['Case 2']] <- simulate.predictions(n=1000, k=10, alpha)
+
+alpha <- c(1,1,1,1,1,1,1,1,1,50)
+s[['Case 3']] <- simulate.predictions(n=1000, k=10, alpha)
+
+# stack class probs
+ss <- ldply(s, function(i) i$predictions)
 
 # plot class probabilities
-(p.1 <- densityplot( ~ value, groups=variable, data=m, pch=NA, xlim=c(-0.1, 1.1)))
+p.1 <- densityplot( ~ value | .id, groups=variable, data=ss, 
+pch=NA, xlim=c(-0.1, 1.1), scales=list(alternating=3, x=list(tick.number=5)), xlab='Class Probability',
+strip=strip.custom(bg=grey(0.85)))
+
+print(p.1)
 ```
 
 
-```{r}
-# compute H and CI for each simulated case
-H <- apply(x, 1, shannon.H, b=n)
-CI <- apply(x, 1, confusion.index)
+```{r, fig.width=10, fig.height=4}
+# stack stats
+cp <- ldply(s, function(i) i$stats.long)
 
-# reshape for plotting
-z <- data.frame(H=H, CI=CI)
-z <- make.groups(H=z$H, CI=z$CI)
+p.2 <- densityplot( ~ data | .id, groups=which, data=cp, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='')
 
-p.2 <- densityplot( ~ data, groups=which, data=z, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1))
-
-# combine, ack: lost the legend
-p <- c('Class Probability'=p.1, 'Shannon H and CI'=p.2)
-
-# plot
-update(p, layout=c(1,2), strip=strip.custom(bg=grey(0.85)), scales=list(y=list(rot=0), x=list(tick.number=10)))
+print(p.2)
 ```
 
-```{r}
+```{r fig.width=6, fig.height=6}
+ss <- ldply(s, function(i) i$stats)
+
 # how do these two compare in general?
-plot(CI ~ H, asp=1)
+xyplot(CI ~ H, groups=.id, data=ss, asp=1, auto.key = list(columns=3, lines=FALSE, points=TRUE), par.settings=list(superpose.symbol=list(alpha=0.5)))
 
-cor(CI, H, method = 'spearman')
+ddply(ss, '.id', .fun=summarize, cor=cor(CI, H, method = 'spearman'))
 ```
 
 
