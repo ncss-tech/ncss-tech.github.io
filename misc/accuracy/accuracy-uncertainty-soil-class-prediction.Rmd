@@ -1,0 +1,179 @@
+---
+title: "Accuracy and Uncertainty"
+date: "`r Sys.Date()`"
+author: D.E. Beaudette
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: no
+    theme: journal
+    smart: no
+bibliography: bibliography.bib
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Background
+
+This docment is my attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up on the phone conferences. As such, it is very much a **work in progress**.
+
+Our current QC/QA process is based on many forms of evaluation, accumulates some degree of subjectivity and relies heavily on qualitative forms of information (field experience, institutional knowledge, etc.).  On the opposite side of the spectrum, the validation of raster mapping is often claimed to be free of subjective interference and entirely quantitative. Those are "good things" that we should always strive for, however, the simplicity of calculating a "percent correctly classified" can interfere with a more nuanced evaluation of accuracy. As I mentioned on the phone (and implicitly volunteered for) a validation "score" might be more meaningful than any single validation metrics. One such score might include:
+
+  * agreement between predicted probabilities and observed class (e.g. Brier scores)
+  * agreement between most-likely class and observed class, accounting for class similarities
+  * distribution of class-wise Shannon entropy values
+  * prior vs. predicted vs. validation proportion of classes
+  * some kind of metric that integrates spatial connectivity of predictions / observations, for example: cross-tabulate predictions / validation by geomorphon classes
+
+I strongly believe that we need a robust suite of metrics primarily for internal discussion and evaluation of raster mapping products; even more so when complex modeling frameworks such as randomforest or neural nets are used.
+
+## Accuracy
+
+Confusion matrix
+
+### Brier Scores
+https://en.wikipedia.org/wiki/Brier_score
+
+Brier scores [@Harrell2001] quantify agreement between observed classes and predicted probabilities:
+$$ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  $$
+where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$, and class labels, $\mathbf{y}$. Larger values suggest less agreement between probabilities and observed class labels.
+
+
+### Tau with Class Distances
+
+[@Rossiter2017] implemented in `aqp::tauw()`
+
+
+### Other Methods
+  * purity
+  * class representation
+  * raw confusion matrix
+  * ???
+
+
+## Uncertainty
+
+## Shannon Entropy
+
+Shannon Entropy was calculated according to [@Kempen2009]:
+
+$$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
+where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minumum information, maximum entropy).
+
+## Confusion Index
+
+Following [@Burrough1997]:
+
+$$ \mathit{CI} = [1 - (\mu_{max} - \mu_{max-1})] $$
+where $\mathit{CI}$ is and index confusion between the first most likely, $\mu_{max}$, and second most likey, $\mu_{max-1}$, class probabilities.
+
+### Integration of Class Distances
+Is this even possible?
+
+
+# Examples via Simulation
+**this isn't done yet**
+
+Drawing from Dirichlet distribution:
+
+  * interpretation of alpha isn't that simple:
+    + http://projects.csail.mit.edu/church/w/images/thumb/7/73/Dirichlet.png/400px-Dirichlet.png
+    + https://stats.stackexchange.com/questions/244917/what-exactly-is-the-alpha-in-the-dirichlet-distribution/244946#244946
+    + https://www.hakkalabs.co/articles/the-dirichlet-distribution
+    + http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
+  * single simulation fixed alpha
+  * many simulations with various "styles" of alpha
+
+
+## Shannon entropy vs. confusion index
+```{r}
+library(igraph)
+library(vegan)
+library(latticeExtra)
+library(reshape2)
+
+# normalized Shannon entropy (Kempen et al, 2006)
+shannon.H <- function(i, b) {
+  res <- -1 * sum(i * log(i, base=b))
+  return(res)
+}
+
+# confusion index (Burrough et al., 1997)
+confusion.index <- function(i) {
+  i <- sort(i, decreasing = TRUE)
+  res <- 1 - (i[1] - i[2])
+  return(res)
+}
+
+
+# simulate predicted class probabilities via draws from dirichlet 
+# class likelyhood set via hyper-parameter vector alpha
+n <- 10
+alpha <- c(1,1,2,20,25,3,5,6,3,2)
+
+x <- sample_dirichlet(1000, alpha = alpha)
+x <- t(x)
+
+# ## not much different
+# # simulate via multinominal
+# x.mn <- rmultinom(1000, size=100, prob = alpha) / 100
+# x.mn <- t(x.mn)
+
+# reshape
+d <- as.data.frame(x)
+d$id <- rownames(d)
+m <- melt(d, id.vars = 'id')
+
+# plot class probabilities
+(p.1 <- densityplot( ~ value, groups=variable, data=m, pch=NA, xlim=c(-0.1, 1.1)))
+```
+
+
+```{r}
+# compute H and CI for each simulated case
+H <- apply(x, 1, shannon.H, b=n)
+CI <- apply(x, 1, confusion.index)
+
+# reshape for plotting
+z <- data.frame(H=H, CI=CI)
+z <- make.groups(H=z$H, CI=z$CI)
+
+p.2 <- densityplot( ~ data, groups=which, data=z, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1))
+
+# combine, ack: lost the legend
+p <- c('Class Probability'=p.1, 'Shannon H and CI'=p.2)
+
+# plot
+update(p, layout=c(1,2), strip=strip.custom(bg=grey(0.85)), scales=list(y=list(rot=0), x=list(tick.number=10)))
+```
+
+```{r}
+# how do these two compare in general?
+plot(CI ~ H, asp=1)
+
+cor(CI, H, method = 'spearman')
+```
+
+
+
+# Real Examples
+
+
+# Resources
+
+ * http://biostat.mc.vanderbilt.edu/wiki/Main/RmS
+
+# References
+fake text here
+
+
+
+
+
+
+
+
