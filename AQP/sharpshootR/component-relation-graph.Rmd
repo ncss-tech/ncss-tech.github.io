@@ -13,15 +13,10 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
-
-
-
-Details pending. [A recent discussion on the topic](http://casoilresource.lawr.ucdavis.edu/wiki/SoilSeriesRelationGraph#Recent_Dialog).
 
 # Simple Example
 ```{r fig.width=14, fig.height=7}
@@ -218,6 +213,7 @@ plotSoilRelationGraph(m, spanning.tree='max', vertex.scaling.factor=1, edge.scal
 
 
 # SSURGO via SDA
+Always be sure to exclude STATSGO records.
 ```{r get-format-SSURGO-data, results='hide'}
 # select by survey area(s)
 q <- "SELECT 
