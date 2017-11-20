@@ -121,7 +121,7 @@ $(document).ready(function () {
 
 <div id="soil-data-access-sda2-tutorial" class="section level1">
 <h1>Soil Data Access (SDA2) Tutorial</h1>
-<p>2017-11-14 <br>Dylan Beaudette</p>
+<p>2017-11-20 <br>Dylan Beaudette</p>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>This is a short tutorial on how to interact with the <a href="http://sdmdataaccess.nrcs.usda.gov/">Soil Data Access (SDA) web-service</a> using R. Queries are written using <a href="https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx">a dialect of SQL</a>. On first glance SQL appears similar to the language used to write NASIS queries and reports, however, these are two distinct languages. Soil Data Access is a &quot;window&quot; into the spatial and tabular data associated with the current SSURGO snapshot. Queries can contain spatial and tabular filters. If you are new to SDA or SQL, have a look at <a href="http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx">this page</a>. Here is a <a href="https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=SDA-SQL_Library_Home">SSURGO-specific</a> library of SQL code, organized by task.</p>
@@ -129,8 +129,31 @@ $(document).ready(function () {
 <p>The <code>soilDB</code> library for R provides a helper function (<code>SDA_query()</code>) for submitting queries to SDA, processing the result, and reformatting the results into a rectangular table (a <code>data.frame</code>). Most of the work required to use the <code>SDA_query()</code> function will be writing SQL to describe the columns you would like returned and how the data should be filtered and possibly grouped.</p>
 <p>Follow along with the blocks of code below by copying / pasting into a new R &quot;script&quot; document. Each block of command can be run by pasting into the R console, or by &quot;stepping through&quot; lines of code by moving the cursor to the top of a block (in the R script panel) and repeatedly pressing ctrl + enter.</p>
 <p>If you are feeling adventurous, have a look at a draft <a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html">tutorial on queries that return geometry from SDA</a>. Additional tips on advanced spatial queries can be found <a href="http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf">here</a>.</p>
-<div id="install-required-r-packages" class="section level3">
-<h3>Install Required R Packages</h3>
+<div id="critical-note-ssurgo-vs.-statsgo" class="section level3">
+<h3>Critical Note: SSURGO vs. STATSGO</h3>
+<p>SSURGO (1:24k soil survey) and STATSGO (1:250k soil survey) records are stored <em>together</em> in SDA. Therefore, it is critical that evey query to SDA include some kind of filter for selecting the appropriate records. Filtering strategies include:</p>
+<ul>
+<li>explicit exclusion of STATSGO records, via <code>legend.areasymbol != 'US'</code> in the WHERE clause</li>
+<li>implicit exclusion of STATSGO records, via SSURGO areasymbol in the WHERE clause</li>
+<li>spatial queries using SDA helper functions: e.g. <code>SDA_Get_Mukey_from_intersection_with_WktWgs84()</code></li>
+<li>explicit selection of SSURGO / STATSGO records by record ID: e.g. <code>mukey</code>, <code>cokey</code>, etc.</li>
+</ul>
+<p>Explicit exclusion of STATSGO records:</p>
+<pre class="sql"><code>SELECT [...]
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+INNER JOIN component co ON mu.mukey = co.mukey
+WHERE legend.areasymbol != 'US' ;</code></pre>
+<p>Implicit exclusion of STATSGO records:</p>
+<pre class="sql"><code>SELECT [...]
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+INNER JOIN component co ON mu.mukey = co.mukey
+WHERE legend.areasymbol = 'CA113' ;</code></pre>
+</div>
+</div>
+<div id="install-required-r-packages" class="section level2">
+<h2>Install Required R Packages</h2>
 <p>You only need to do this once. If you haven't installed these packages, then copy the code below and paste into the RStudio &quot;console&quot; pane.</p>
 <pre class="r"><code># run these commands in the R console
 # stable version from CRAN + dependencies
@@ -138,12 +161,10 @@ install.packages(&quot;httr&quot;, dep=TRUE)
 install.packages(&quot;soilDB&quot;, dep=TRUE)
 install.packages(&quot;rgdal&quot;, dep = TRUE)
 install.packages(&quot;raster&quot;, dep = TRUE)
-install.packages(&quot;rgeos&quot;, dep = TRUE)
-# latest versions from r-forge
-install.packages(&quot;soilDB&quot;, repos = &quot;http://R-Forge.R-project.org&quot;, type = &quot;source&quot;)</code></pre>
+install.packages(&quot;rgeos&quot;, dep = TRUE)</code></pre>
 </div>
-<div id="simple-queries" class="section level3">
-<h3>Simple Queries</h3>
+<div id="simple-queries" class="section level2">
+<h2>Simple Queries</h2>
 <p>Now that you have the required packages, load them into the current R session.</p>
 <pre class="r"><code>library(soilDB)
 library(sp)
@@ -163,7 +184,7 @@ library(rgeos)</code></pre>
 <pre class="r"><code>SDA_query(&quot;SELECT areasymbol, saverest FROM sacatalog WHERE areasymbol LIKE 'CA%' ORDER BY saverest DESC&quot;)[1, ]</code></pre>
 <pre><code>##   areasymbol              saverest
 ## 1      CA805 10/27/2017 8:48:19 PM</code></pre>
-<p>A simple query from the component table, for a single map unit: <code>mukey = '461958'</code>.</p>
+<p>A simple query from the component table, for a single map unit: <code>mukey = '461958'</code>. This is a SSURGO map unit key, therefore STATSGO records are implicitly removed from the results.</p>
 <pre class="r"><code>q &lt;- &quot;SELECT 
 mukey, cokey, comppct_r, compname, taxclname
 FROM component
@@ -181,11 +202,16 @@ head(res)</code></pre>
 ## 4 461958 15060457         3       Hedge                                      &lt;NA&gt;
 ## 5 461958 15060458         3     Kimball                                      &lt;NA&gt;
 ## 6 461958 15060459         1     Unnamed                                      &lt;NA&gt;</code></pre>
-<p>Get a list of map units that contain &quot;Amador&quot; as minor component.</p>
+<p>Get a list of map units that contain &quot;Amador&quot; as minor component. Note that this type of query requires explicit exclusion of STATSGO records.</p>
 <pre class="r"><code>q &lt;- &quot;SELECT 
 muname, mapunit.mukey, cokey, compname, comppct_r
-FROM mapunit INNER JOIN component on mapunit.mukey = component.mukey
-WHERE compname LIKE '%amador%'
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+INNER JOIN component on mapunit.mukey = component.mukey
+WHERE
+-- exclude STATSGO
+legend.areasymbol != 'US'
+AND compname LIKE '%amador%'
 AND majcompflag = 'No'&quot;
 
 # run the query
@@ -193,30 +219,30 @@ res &lt;- SDA_query(q)
 
 # check
 head(res)</code></pre>
-<pre><code>##                                                                    muname  mukey    cokey compname
-## 1                       Pardee-Ranchoseco complex, 3 to 15 percent slopes 461931 15060344   Amador
-## 2                                      Peters clay, 1 to 8 percent slopes 461933 15060359   Amador
-## 3                             Vleck gravelly loam, 2 to 15 percent slopes 461979 15060552   Amador
-## 4 Hicksville sandy clay loam, 0 to 2 percent slopes, occasionally flooded 461904 15060200   Amador
-## 5                         Hornitos fine sandy loam, 3 to 8 percent slopes 462948 14464953   Amador
-## 6                        Hornitos fine sandy loam, 8 to 30 percent slopes 462949 14464957   Amador
+<pre><code>##                                                                    muname   mukey    cokey compname
+## 1                       Pardee-Ranchoseco complex, 3 to 15 percent slopes  461931 15060344   Amador
+## 2                                      Peters clay, 1 to 8 percent slopes  461933 15060359   Amador
+## 3                             Vleck gravelly loam, 2 to 15 percent slopes  461979 15060552   Amador
+## 4 Hicksville sandy clay loam, 0 to 2 percent slopes, occasionally flooded  461904 15060200   Amador
+## 5                       Pardee-Ranchoseco complex, 3 to 15 percent slopes 1420721 14614808   Amador
+## 6 Hicksville sandy clay loam, 0 to 2 percent slopes, occasionally flooded 1612051 14453806   Amador
 ##   comppct_r
 ## 1         3
 ## 2         5
 ## 3         7
 ## 4         3
-## 5         5
-## 6         5</code></pre>
+## 5         3
+## 6         3</code></pre>
 <pre class="r"><code># optionally save the results to CSV file
 # write.csv(res, file='path-to-file.csv', row.names=FALSE)</code></pre>
-<p>Get basic map unit and component data for a single survey area, Yolo County (ca113).</p>
+<p>Get basic map unit and component data for a single survey area, Yolo County (CA113). There is no need to exclude STATSGO records because we are specifying a SSURGO areasymbol in the WHERE clause.</p>
 <pre class="r"><code>q &lt;- &quot;SELECT 
 component.mukey, cokey, comppct_r, compname, taxclname, 
 taxorder, taxsuborder, taxgrtgroup, taxsubgrp
 FROM legend
 INNER JOIN mapunit ON mapunit.lkey = legend.lkey
-LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
-WHERE legend.areasymbol = 'ca113'&quot;
+INNER JOIN component ON component.mukey = mapunit.mukey
+WHERE legend.areasymbol = 'CA113'&quot;
 
 # run the query
 res &lt;- SDA_query(q)
@@ -237,12 +263,13 @@ head(res)</code></pre>
 ## 4      &lt;NA&gt;        &lt;NA&gt;         &lt;NA&gt;                       &lt;NA&gt;
 ## 5 Mollisols     Xerolls Haploxerolls       Cumulic Haploxerolls
 ## 6 Mollisols     Xerolls Haploxerolls        Pachic Haploxerolls</code></pre>
-<p>Cross tabulate the occurrence of components named &quot;Auburn&quot; and &quot;Dunstone&quot; with survey areasymbol.</p>
+<p>Cross tabulate the occurrence of components named &quot;Auburn&quot; and &quot;Dunstone&quot; with survey areasymbol. Note that this type of query requires explicit exclusion of STATSGO records.</p>
 <pre class="r"><code>q &lt;- &quot;SELECT areasymbol, component.mukey, cokey, comppct_r, compname, compkind, taxclname
 FROM legend
 INNER JOIN mapunit ON mapunit.lkey = legend.lkey
-LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+INNER JOIN component ON component.mukey = mapunit.mukey
 WHERE compname IN ('Auburn', 'Dunstone')
+-- exclude STATSGO
 AND areasymbol != 'US'
 ORDER BY areasymbol, compname&quot;
 
@@ -267,9 +294,9 @@ xtabs(~ areasymbol + compname, data=res)</code></pre>
 ##      CA731      5        0
 ##      CA750      1        0</code></pre>
 </div>
-<div id="queries-using-simple-spatial-filters" class="section level3">
-<h3>Queries Using Simple Spatial Filters</h3>
-<p>Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402).</p>
+<div id="queries-using-simple-spatial-filters" class="section level2">
+<h2>Queries Using Simple Spatial Filters</h2>
+<p>Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402). Spatial queries using SDA helper functions automatically exclude STATSGO records.</p>
 <pre class="r"><code>q &lt;- &quot;SELECT mukey, muname
 FROM mapunit
 WHERE mukey IN (
@@ -352,8 +379,8 @@ head(res)</code></pre>
 ## 5 462541 14460419     Modesto         5
 ## 6 462541 14460420      Dinuba         5</code></pre>
 </div>
-<div id="queries-using-complex-spatial-filters" class="section level3">
-<h3>Queries Using Complex Spatial Filters</h3>
+<div id="queries-using-complex-spatial-filters" class="section level2">
+<h2>Queries Using Complex Spatial Filters</h2>
 <p>The examples above illustrate how to perform SDA queries using a single spatial filter. Typically we need to perform these queries over a collection of points, lines or polygons. The <code>soilDB</code> package provides some helper functions for iterating over a collection of features (usually points). Note that spatial queries for more than 1000 features should probably be done using a local copy of the map unit polygons.</p>
 <p>The first function <code>SDA_make_spatial_query()</code> will convert a single <code>Spatial*</code> (Points, Lines, Polygons) object to WKT and submit a spatial query to SDA, returning intersecting map unit keys and names. Let's try it using a <code>SpatialPoints</code> object with 1 feature.</p>
 <pre class="r"><code># the query point is in geographic coordinates with WGS84 datum
@@ -413,8 +440,7 @@ mtext('mukey', side=3, line=-1, at = c(0,0), adj = 0)</code></pre>
 <p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
 <p>More examples pending...</p>
 <hr />
-<p>This document is based on <code>soilDB</code> version 1.8.14.</p>
-</div>
+<p>This document is based on <code>soilDB</code> version 1.8.15.</p>
 </div>
 </div>
 

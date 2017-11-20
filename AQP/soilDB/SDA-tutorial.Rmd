@@ -31,7 +31,36 @@ Follow along with the blocks of code below by copying / pasting into a new R "sc
 
 If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
 
-### Install Required R Packages
+
+### Critical Note: SSURGO vs. STATSGO
+SSURGO (1:24k soil survey) and STATSGO (1:250k soil survey) records are stored *together* in SDA. Therefore, it is critical that evey query to SDA include some kind of filter for selecting the appropriate records. Filtering strategies include:
+
+   * explicit exclusion of STATSGO records, via `legend.areasymbol != 'US'` in the WHERE clause
+   * implicit exclusion of STATSGO records, via SSURGO areasymbol in the WHERE clause
+   * spatial queries using SDA helper functions: e.g. `SDA_Get_Mukey_from_intersection_with_WktWgs84()`
+   * explicit selection of SSURGO / STATSGO records by record ID: e.g. `mukey`, `cokey`, etc.
+
+
+Explicit exclusion of STATSGO records:
+```{sql, eval=FALSE}
+SELECT [...]
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+INNER JOIN component co ON mu.mukey = co.mukey
+WHERE legend.areasymbol != 'US' ;
+```
+
+Implicit exclusion of STATSGO records:
+```{sql, eval=FALSE}
+SELECT [...]
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+INNER JOIN component co ON mu.mukey = co.mukey
+WHERE legend.areasymbol = 'CA113' ;
+```
+
+
+## Install Required R Packages
 You only need to do this once. If you haven't installed these packages, then copy the code below and paste into the RStudio "console" pane.
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -41,13 +70,10 @@ install.packages("soilDB", dep=TRUE)
 install.packages("rgdal", dep = TRUE)
 install.packages("raster", dep = TRUE)
 install.packages("rgeos", dep = TRUE)
-# latest versions from r-forge
-install.packages("soilDB", repos = "http://R-Forge.R-project.org", type = "source")
 ```
 
 
-### Simple Queries 
-
+## Simple Queries 
 Now that you have the required packages, load them into the current R session.
 ```{r load-libs}
 library(soilDB)
@@ -74,7 +100,7 @@ What is the most recently updates survey in CA?
 SDA_query("SELECT areasymbol, saverest FROM sacatalog WHERE areasymbol LIKE 'CA%' ORDER BY saverest DESC")[1, ]
 ```
 
-A simple query from the component table, for a single map unit: `mukey = '461958'`.
+A simple query from the component table, for a single map unit: `mukey = '461958'`. This is a SSURGO map unit key, therefore STATSGO records are implicitly removed from the results.
 ```{r basic-SDA-1}
 q <- "SELECT 
 mukey, cokey, comppct_r, compname, taxclname
@@ -88,12 +114,17 @@ res <- SDA_query(q)
 head(res)
 ```
 
-Get a list of map units that contain "Amador" as minor component.
+Get a list of map units that contain "Amador" as minor component. Note that this type of query requires explicit exclusion of STATSGO records.
 ```{r basic-SDA-2}
 q <- "SELECT 
 muname, mapunit.mukey, cokey, compname, comppct_r
-FROM mapunit INNER JOIN component on mapunit.mukey = component.mukey
-WHERE compname LIKE '%amador%'
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+INNER JOIN component on mapunit.mukey = component.mukey
+WHERE
+-- exclude STATSGO
+legend.areasymbol != 'US'
+AND compname LIKE '%amador%'
 AND majcompflag = 'No'"
 
 # run the query
@@ -106,15 +137,15 @@ head(res)
 # write.csv(res, file='path-to-file.csv', row.names=FALSE)
 ```
 
-Get basic map unit and component data for a single survey area, Yolo County (ca113).
+Get basic map unit and component data for a single survey area, Yolo County (CA113). There is no need to exclude STATSGO records because we are specifying a SSURGO areasymbol in the WHERE clause.
 ```{r basic-SDA-3}
 q <- "SELECT 
 component.mukey, cokey, comppct_r, compname, taxclname, 
 taxorder, taxsuborder, taxgrtgroup, taxsubgrp
 FROM legend
 INNER JOIN mapunit ON mapunit.lkey = legend.lkey
-LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
-WHERE legend.areasymbol = 'ca113'"
+INNER JOIN component ON component.mukey = mapunit.mukey
+WHERE legend.areasymbol = 'CA113'"
 
 # run the query
 res <- SDA_query(q)
@@ -123,13 +154,14 @@ res <- SDA_query(q)
 head(res)
 ```
 
-Cross tabulate the occurrence of components named "Auburn" and "Dunstone" with survey areasymbol.
+Cross tabulate the occurrence of components named "Auburn" and "Dunstone" with survey areasymbol. Note that this type of query requires explicit exclusion of STATSGO records.
 ```{r basic-SDA-4}
 q <- "SELECT areasymbol, component.mukey, cokey, comppct_r, compname, compkind, taxclname
 FROM legend
 INNER JOIN mapunit ON mapunit.lkey = legend.lkey
-LEFT OUTER JOIN component ON component.mukey = mapunit.mukey
+INNER JOIN component ON component.mukey = mapunit.mukey
 WHERE compname IN ('Auburn', 'Dunstone')
+-- exclude STATSGO
 AND areasymbol != 'US'
 ORDER BY areasymbol, compname"
 
@@ -138,9 +170,10 @@ res <- SDA_query(q)
 xtabs(~ areasymbol + compname, data=res)
 ```
 
-### Queries Using Simple Spatial Filters
 
-Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402).
+## Queries Using Simple Spatial Filters
+
+Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402). Spatial queries using SDA helper functions automatically exclude STATSGO records.
 ```{r sda-spatial-query-basics-1}
 q <- "SELECT mukey, muname
 FROM mapunit
@@ -224,7 +257,7 @@ head(res)
 ```
 
 
-### Queries Using Complex Spatial Filters
+## Queries Using Complex Spatial Filters
 The examples above illustrate how to perform SDA queries using a single spatial filter. Typically we need to perform these queries over a collection of points, lines or polygons. The `soilDB` package provides some helper functions for iterating over a collection of features (usually points). Note that spatial queries for more than 1000 features should probably be done using a local copy of the map unit polygons.
 
 The first function `SDA_make_spatial_query()` will convert a single `Spatial*` (Points, Lines, Polygons) object to WKT and submit a spatial query to SDA, returning intersecting map unit keys and names. Let's try it using a `SpatialPoints` object with 1 feature.

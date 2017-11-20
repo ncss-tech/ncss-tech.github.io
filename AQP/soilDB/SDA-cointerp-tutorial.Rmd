@@ -1,15 +1,14 @@
-
 ---
 output:
-  html_vignette:
-    mathjax: null
+  html_document:
+    fig_caption: yes
     jquery: null
+    mathjax: null
     smart: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
-library(printr, quietly = TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 
@@ -42,8 +41,14 @@ library(lattice)
 
 # beware, there are hard limits (10k rows) on what can be returned by SDA
 q <- "SELECT component.cokey, compname, mrulename, interplr, interplrc
-FROM component INNER JOIN cointerp ON component.cokey = cointerp.cokey
-WHERE compname IN ('Auburn', 'Dunstone', 'Hanford')
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+INNER JOIN component ON component.mukey = mapunit.mukey
+INNER JOIN cointerp ON component.cokey = cointerp.cokey
+WHERE
+-- exclude STATSGO
+areasymbol != 'US'
+AND compname IN ('Auburn', 'Dunstone', 'Hanford')
 AND seqnum = 0
 AND mrulename IN ('ENG - Construction Materials; Topsoil', 
 'ENG - Sewage Lagoons', 'ENG - Septic Tank Absorption Fields', 
@@ -121,8 +126,14 @@ interp.list <- c('ENG - Construction Materials; Topsoil',
 
 # compose query
 q <- paste0("SELECT compname, mrulename, AVG(interplr) as interplr_mean
-FROM component INNER JOIN cointerp ON component.cokey = cointerp.cokey
-WHERE compname IN ", format_SQL_in_statement(soil.list), "
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+INNER JOIN component ON component.mukey = mapunit.mukey
+INNER JOIN cointerp ON component.cokey = cointerp.cokey
+WHERE 
+-- exclude STATSGO
+areasymbol != 'US'
+AND compname IN ", format_SQL_in_statement(soil.list), "
 AND seqnum = 0
 AND mrulename IN ", format_SQL_in_statement(interp.list), "
 AND interplr IS NOT NULL
