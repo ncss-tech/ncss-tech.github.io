@@ -42,10 +42,11 @@ Brier scores [@Harrell2001] quantify agreement between observed classes and pred
 $$ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  $$
 where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$, and class labels, $\mathbf{y}$. Larger values suggest less agreement between probabilities and observed class labels.
 
+What about a weighted version of this score, based on a re-statement of the distance matrix?
 
-### Tau with Class Distances
+### Tau with Class Distances (similarity-weighted)
 
-[@Rossiter2017] implemented in `aqp::tauw()`
+[@Rossiter2017] implemented in `aqp::tauw()`. This paper contains some discussion on a weighted version of Shannon Entropy... (?)
 
 ```{r eval=FALSE, echo=FALSE}
 ## from tauw manual page.
@@ -107,15 +108,19 @@ A normalized version [@Kempen2009] of Shannon entropy can be calculated:
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
 where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minumum information, maximum entropy).
 
+### Weighted Shannon Entropy
+
+A simple extension (weighted entropy score) of the standard version is described in [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029130/):
+
+$$ \mathit{WES} = -\sum_{i=1}^{n}{w_{i} * p_{i} * log_{n}(p_{i})}  $$
+where $w_{i}$ is the weight associated with $p_{i]}$. This isn't quite applicable as the weights (we are interested in) are based on pair-wise distances between classes. Perhaps the theory of [mutual information](https://en.wikipedia.org/wiki/Mutual_information) or [joint entropy](https://en.wikipedia.org/wiki/Joint_entropy) are the more appropriate route.
+
 ## Confusion Index
 
 Following [@Burrough1997]:
 
 $$ \mathit{CI} = [1 - (\mu_{max} - \mu_{max-1})] $$
 where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu_{max}$, and second most likey, $\mu_{max-1}$, class probabilities.
-
-### Integration of Class Distances
-Is this even possible?
 
 
 # Examples via Simulation
