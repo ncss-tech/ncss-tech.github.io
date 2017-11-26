@@ -161,7 +161,7 @@ stats.cor <- ddply(ss, 'example', .fun=plyr::summarize,
 
 # Background
 
-This docment is my attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up on the phone conferences. As such, it is very much a **work in progress**.
+This document is my attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up on the phone conferences. As such, it is very much a **work in progress**.
 
 Our current QC/QA process is based on many forms of evaluation, accumulates some degree of subjectivity and relies heavily on qualitative forms of information (field experience, institutional knowledge, etc.).  On the opposite side of the spectrum, the validation of raster mapping is often claimed to be free of subjective interference and entirely quantitative. Those are "good things" that we should always strive for, however, the simplicity of calculating a "percent correctly classified" can interfere with a more nuanced evaluation of accuracy. As I mentioned on the phone (and implicitly volunteered for) a validation "score" might be more meaningful than any single validation metrics. One such score might include:
 
@@ -185,12 +185,13 @@ $$ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  $$
 where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$, and class labels, $\mathbf{y}$. Larger values suggest less agreement between probabilities and observed class labels.
 
 **TODO**
+
   1. What about a weighted version of this score, based on a re-statement of the distance matrix?
   2. Add general purpose `brierScore()` function to aqp, adapt from `get.ml.hz()`.
 
 ### Tau with Class Distances (similarity-weighted)
 
-[@Rossiter2017] implemented in `aqp::tauw()`. This paper contains some discussion on a weighted version of Shannon Entropy... (?)
+[@Rossiter2017] implemented in `aqp::tauw()`. This paper contains some discussion on a weighted version of Shannon Entropy using the subset of similarities between predicted classes and the *actual* class.
 
 ```{r eval=FALSE}
 ## from tauw manual page.
@@ -250,22 +251,39 @@ summaryTauW(tauW(crossclass, W=weights, P=priors))
 A normalized version [@Kempen2009] of Shannon entropy can be calculated:
 
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
-where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minumum information, maximum entropy).
+where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minimum information, maximum entropy).
+
+```{r}
+p <- c(0.1, 0.1, 0.2, 0.6)
+p.H <- round(shannon.H(p, length(p)), 2)
+p.CI <- round(confusion.index(p), 2)
+```
+
+For example, given probabilities of [`r p`], Shannon H would be `r p.H`.
+
 
 ### Weighted Shannon Entropy
 
 A simple extension (weighted entropy score) of the standard version is described in [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029130/):
 
 $$ \mathit{WES} = -\sum_{i=1}^{n}{w_{i} * p_{i} * log_{n}(p_{i})}  $$
-where $w_{i}$ is the weight associated with $p_{i]}$. This isn't quite applicable as the weights (we are interested in) are based on pair-wise distances between classes. Perhaps the theory of [mutual information](https://en.wikipedia.org/wiki/Mutual_information) or [joint entropy](https://en.wikipedia.org/wiki/Joint_entropy) are the more appropriate route.
+where $w_{i}$ is the weight associated with $p_{i}$. This isn't quite applicable as the weights (we are interested in) are based on pair-wise distances between classes. More promising ideas:
+
+   * [mutual information](https://en.wikipedia.org/wiki/Mutual_information)
+   * [pointwise mutual information](https://en.wikipedia.org/wiki/Pointwise_mutual_information) 
+   * [zebu package vignette](http://cdn.rawgit.com/oliviermfmartin/zebu/master/inst/doc/zebu.html)
+   * [joint entropy](https://en.wikipedia.org/wiki/Joint_entropy)
+
+Pairwise mutual information seems like a convenient extension of Shannon H that would easily accommodate pairwise distances.
 
 ## Confusion Index
 
 Following [@Burrough1997]:
 
 $$ \mathit{CI} = [1 - (\mu_{max} - \mu_{max-1})] $$
-where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu_{max}$, and second most likey, $\mu_{max-1}$, class probabilities.
+where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu_{max}$, and second most likely, $\mu_{max-1}$, class probabilities.
 
+For example, given probabilities of [`r p`], CI would be `r p.CI`.
 
 # Examples via Simulation
 **this isn't done yet**
@@ -285,7 +303,7 @@ Drawing from Dirichlet distribution:
 
 
 ## Shannon entropy vs. confusion index
-Consider a probabalistic soil class model, that generates predictions for 5 possible classes. Suites of predicted probabilities fall into 3 general cases:
+Consider a probabilistic soil class model, that generates predictions for 5 possible classes. Suites of predicted probabilities fall into 3 general cases:
 
 ```{r}
 extractExample <- function(x, n=1) {
