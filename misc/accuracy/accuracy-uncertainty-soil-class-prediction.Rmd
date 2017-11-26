@@ -13,9 +13,151 @@ bibliography: bibliography.bib
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, fig.align='center')
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, fig.align='center', echo=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
+
+```{r data-prep-and-function}
+library(igraph)
+library(latticeExtra)
+library(plyr)
+library(reshape2)
+library(wesanderson)
+library(grid)
+
+# normalized Shannon entropy (Kempen et al, 2009)
+shannon.H <- function(i, b) {
+  res <- -1 * sum(i * log(i, base=b))
+  return(res)
+}
+
+# confusion index (Burrough et al., 1997)
+confusion.index <- function(i) {
+  i <- sort(i, decreasing = TRUE)
+  res <- 1 - (i[1] - i[2])
+  return(res)
+}
+
+
+# simulate predicted class probabilities via draws from dirichlet 
+# (n pixel * k classes)
+# n: number of simulated "pixels" 
+# alpha: dirichlet hyperparameter (class likelihood)
+simulate.predictions <- function(n, alpha) {
+  # number of classes
+  k <- length(alpha)
+  
+  # generate simulated probabilities
+  x <- sample_dirichlet(n, alpha = alpha)
+  x <- t(x)
+  
+  # reshape
+  d <- as.data.frame(x)
+  d$id <- rownames(d)
+  m <- melt(d, id.vars = 'id')
+  m$variable <- factor(m$variable, labels = paste0(c('soil '), toupper(letters[1:k])))
+  
+  # compute H and CI for each simulated case
+  H <- apply(x, 1, shannon.H, b=k)
+  CI <- apply(x, 1, confusion.index)
+  
+  # reshape for plotting
+  z <- data.frame(H=H, CI=CI)
+  z.long <- make.groups(H=z$H, CI=z$CI)
+  
+  return(list(predictions=m, stats=z, stats.long=z.long))
+}
+```
+
+```{r simulate-date}
+s <- list()
+n <- 1000
+
+alpha.1 <- c(4,10,5,22,25)
+s[['Case 1']] <- simulate.predictions(n=n, alpha=alpha.1)
+
+alpha.2 <- c(1,3,5,6,15)
+s[['Case 2']] <- simulate.predictions(n=n, alpha=alpha.2)
+
+alpha.3 <- c(2,2,2,2,40)
+s[['Case 3']] <- simulate.predictions(n=n, alpha=alpha.3)
+
+# stack class probs
+ss <- ldply(s, function(i) i$predictions)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+```
+
+```{r make-figures}
+## class probabilities
+cols <- brewer.pal(9, 'Set1')
+tps <- list(superpose.line=list(col=cols, lwd=1, alpha=0.85))
+
+p.1 <- densityplot( ~ value | example, groups=variable, data=ss, 
+pch=NA, xlim=c(-0.1, 1.1), scales=list(alternating=3, x=list(tick.number=5)), xlab='Class Probability',
+strip=strip.custom(bg=grey(0.85)), auto.key=list(columns=5, lines=TRUE, points=FALSE),
+par.settings=tps, panel=function(...) {
+  gs <- seq(0,1, by=0.1)
+  panel.abline(v=gs, lty=3, col='grey')
+  panel.densityplot(...)
+})
+
+
+## stack stats
+ss <- ldply(s, function(i) i$stats.long)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+
+# uncertainty metrics
+cols <- wes_palette("Zissou")[c(1,5)]
+tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
+
+p.2 <- densityplot( ~ data | example, groups=which, data=ss, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
+  gs <- seq(0,1, by=0.1)
+  panel.abline(v=gs, lty=3, col='grey')
+  panel.densityplot(...)
+})
+
+
+## scatter plot of H vs. CI
+ss <- ldply(s, function(i) i$stats)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+
+# how do these two compare in general?
+p.3 <- xyplot(H ~ CI | example, data=ss, asp=1, auto.key = list(columns=3, lines=FALSE, points=TRUE),
+scales=list(alternating=1, at=seq(0, 1, by=0.2)), xlim=c(-0.1, 1.1), ylim=c(-0.1, 1.1), xlab='Confusion Index', ylab='Shannon H',
+strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
+panel=function(x, y, subscripts=subscripts, ...) {
+  gs <- seq(0,1, by=0.1)
+  l <- lm(y ~ x)
+  med.H <- round(median(y), 2)
+  med.CI <- round(median(x), 2)
+  iqr.H <- round(IQR(y), 2)
+  iqr.CI <- round(IQR(x), 2)
+  cor.xy <- round(cor(x, y, method = 'spearman'), 2)
+  ann <- paste0('H: ', med.H, ' (', iqr.H, ')\n', 
+                'CI: ', med.CI, ' (', iqr.CI, ')\n',
+                'cor: ', cor.xy)
+
+  panel.abline(h=gs, v=gs, lty=3, col='grey')
+  panel.points(ss$CI, ss$H, col=grey(0.85), alpha=0.1)
+  panel.xyplot(x, y, subscripts=subscripts, ...)
+  panel.abline(l, col='black', lwd=1.5, ...)
+  panel.abline(0, 1, lty=2)
+  grid.text(ann, x = unit(0.05, 'npc'), unit(0.95, 'npc'), just = c('left', 'top'), gp = gpar(cex=0.75, font=2))
+})
+
+stats.cor <- ddply(ss, 'example', .fun=plyr::summarize, 
+                   H.med=median(H), CI.med=median(CI),
+                   H.iqr=IQR(H), CI.iqr=IQR(CI),
+                   cor=cor(CI, H, method = 'spearman')
+                   )
+
+```
+
+
 
 # Background
 
@@ -42,13 +184,15 @@ Brier scores [@Harrell2001] quantify agreement between observed classes and pred
 $$ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  $$
 where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$, and class labels, $\mathbf{y}$. Larger values suggest less agreement between probabilities and observed class labels.
 
-What about a weighted version of this score, based on a re-statement of the distance matrix?
+**TODO**
+  1. What about a weighted version of this score, based on a re-statement of the distance matrix?
+  2. Add general purpose `brierScore()` function to aqp, adapt from `get.ml.hz()`.
 
 ### Tau with Class Distances (similarity-weighted)
 
 [@Rossiter2017] implemented in `aqp::tauw()`. This paper contains some discussion on a weighted version of Shannon Entropy... (?)
 
-```{r eval=FALSE, echo=FALSE}
+```{r eval=FALSE}
 ## from tauw manual page.
 
 # example confusion matrix
@@ -141,94 +285,38 @@ Drawing from Dirichlet distribution:
 
 
 ## Shannon entropy vs. confusion index
+Consider a probabalistic soil class model, that generates predictions for 5 possible classes. Suites of predicted probabilities fall into 3 general cases:
+
 ```{r}
-library(igraph)
-library(latticeExtra)
-library(plyr)
-library(reshape2)
-
-# normalized Shannon entropy (Kempen et al, 2009)
-shannon.H <- function(i, b) {
-  res <- -1 * sum(i * log(i, base=b))
-  return(res)
+extractExample <- function(x, n=1) {
+  p <- dcast(x$predictions, id ~ variable, value.var = 'value')[1:n, ]
+  stats <- x$stats[1:n, ]
+  d <- data.frame(p[, -1], stats)
+  return(d)
 }
 
-# confusion index (Burrough et al., 1997)
-confusion.index <- function(i) {
-  i <- sort(i, decreasing = TRUE)
-  res <- 1 - (i[1] - i[2])
-  return(res)
-}
+ex <- ldply(s, extractExample, n=1)
+names(ex)[1] <- 'example'
 
-
-# simulate predicted class probabilities via draws from dirichlet 
-# (n pixel * k classes)
-# n: number of simulated "pixels" 
-# k: number of classes
-# alpha: dirichlet hyperparameter (class likelyhood)
-simulate.predictions <- function(n, k, alpha) {
-  # generate simulated 
-  x <- sample_dirichlet(n, alpha = alpha)
-  x <- t(x)
-  
-  # reshape
-  d <- as.data.frame(x)
-  d$id <- rownames(d)
-  m <- melt(d, id.vars = 'id')
-  
-  # compute H and CI for each simulated case
-  H <- apply(x, 1, shannon.H, b=k)
-  CI <- apply(x, 1, confusion.index)
-  
-  # reshape for plotting
-  z <- data.frame(H=H, CI=CI)
-  z.long <- make.groups(H=z$H, CI=z$CI)
-  
-  return(list(predictions=m, stats=z, stats.long=z.long))
-}
+kableExtra::kable_styling(knitr::kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
 
 
-```{r, fig.width=10, fig.height=4}
-s <- list()
-
-alpha <- c(1,10,2,20,25,3,5,6,3,2)
-s[['Case 1']] <- simulate.predictions(n=1000, k=10, alpha)
-
-alpha <- c(1,1,2,3,3,3,5,6,3,25)
-s[['Case 2']] <- simulate.predictions(n=1000, k=10, alpha)
-
-alpha <- c(1,1,1,1,1,1,1,1,1,50)
-s[['Case 3']] <- simulate.predictions(n=1000, k=10, alpha)
-
-# stack class probs
-ss <- ldply(s, function(i) i$predictions)
-
-# plot class probabilities
-p.1 <- densityplot( ~ value | .id, groups=variable, data=ss, 
-pch=NA, xlim=c(-0.1, 1.1), scales=list(alternating=3, x=list(tick.number=5)), xlab='Class Probability',
-strip=strip.custom(bg=grey(0.85)))
-
+```{r, fig.width=10, fig.height=4, fig.cap='Probability distributions of model predictions, 1000 simulations.'}
+# examples of three cases
 print(p.1)
 ```
 
 
-```{r, fig.width=10, fig.height=4}
-# stack stats
-cp <- ldply(s, function(i) i$stats.long)
-
-p.2 <- densityplot( ~ data | .id, groups=which, data=cp, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='')
-
+```{r, fig.width=10, fig.height=4, fig.cap='Distribution of H and CI values computed from simulated predictions.'}
+# uncertainty metrics
 print(p.2)
 ```
 
-```{r fig.width=6, fig.height=6}
-ss <- ldply(s, function(i) i$stats)
+```{r fig.width=10, fig.height=5, fig.cap='Relationship between H and CI values. Annotations are medians (IQR) and Spearman rank correlation.'}
+print(p.3)
 
-# how do these two compare in general?
-xyplot(CI ~ H, groups=.id, data=ss, asp=1, auto.key = list(columns=3, lines=FALSE, points=TRUE), par.settings=list(superpose.symbol=list(alpha=0.5)))
-
-ddply(ss, '.id', .fun=summarize, cor=cor(CI, H, method = 'spearman'))
+# kableExtra::kable_styling(knitr::kable(stats.cor, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
 
 
