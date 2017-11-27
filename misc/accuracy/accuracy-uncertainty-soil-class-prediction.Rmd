@@ -25,6 +25,7 @@ library(plyr)
 library(reshape2)
 library(wesanderson)
 library(grid)
+library(aqp)
 
 # normalized Shannon entropy (Kempen et al, 2009)
 shannon.H <- function(i, b) {
@@ -39,34 +40,121 @@ confusion.index <- function(i) {
   return(res)
 }
 
+# x.i: data.frame, rows are predictions/observations, columns contain classes
+# class.labels: vector of class labels, corrosponding to column names in x.i
+# actual: name of column containing the observed class
+brierScore <- function(x.i, class.labels, actual='actual') {
+  # save the gen hz probabilities into new df
+  x.pr <- x.i[, class.labels, drop=FALSE]
+  # init new matrix to store most-likely gen hz class
+  m <- matrix(0, ncol=ncol(x.pr), nrow=nrow(x.pr))
+  # same structure as x.pr
+  dimnames(m)[[2]] <- names(x.pr)
+  # set appropriate genhz to 1
+  for(i in 1:nrow(x.i)) {
+    ml.hz.i <- x.i[[actual]][i]
+    m[i, ml.hz.i] <- 1
+    }
+  # compute brier score
+  bs <- sum((x.pr - m)^2, na.rm=TRUE) / nrow(x.pr)
+  return(bs)
+  }
+
+
+
 
 # simulate predicted class probabilities via draws from dirichlet 
 # (n pixel * k classes)
 # n: number of simulated "pixels" 
 # alpha: dirichlet hyperparameter (class likelihood)
-simulate.predictions <- function(n, alpha) {
+simulatePredictions <- function(n, alpha) {
   # number of classes
   k <- length(alpha)
+  class.labels <- toupper(letters[1:k])
   
   # generate simulated probabilities
   x <- sample_dirichlet(n, alpha = alpha)
   x <- t(x)
   
-  # reshape
+  # add class labels and id
   d <- as.data.frame(x)
+  names(d) <- class.labels
   d$id <- rownames(d)
-  m <- melt(d, id.vars = 'id')
-  m$variable <- factor(m$variable, labels = paste0(c('soil '), toupper(letters[1:k])))
+  
+  # simulate actual classes using predicted probabilities
+  d <- ddply(d, 'id', function(i) {
+    i$actual <- sample(class.labels, size = 1, prob = i[, class.labels])
+    return(i)
+  })
+  
+  # reshape for plotting
+  m <- melt(d, id.vars = 'id', measure.vars = class.labels)
   
   # compute H and CI for each simulated case
   H <- apply(x, 1, shannon.H, b=k)
   CI <- apply(x, 1, confusion.index)
   
   # reshape for plotting
-  z <- data.frame(H=H, CI=CI)
-  z.long <- make.groups(H=z$H, CI=z$CI)
+  z <- data.frame(Shannon.H=H, CI=CI)
+  z.long <- make.groups(Shannon.H=z$Shannon.H, CI=z$CI)
   
-  return(list(predictions=m, stats=z, stats.long=z.long))
+  return(list(predictions=d, predictions.long=m, stats=z, stats.long=z.long, classes=class.labels))
+}
+
+# get an example of predictions and associated uncertainty stats
+extractExample <- function(x, n=1) {
+  p <- x$predictions[1:n, ]
+  p$id <- NULL
+  stats <- x$stats[1:n, ]
+  d <- data.frame(p, stats)
+  return(d)
+}
+
+
+# generate some performance metrics
+# x: results from simulatePredictions()
+performance <- function(x, w=NULL) {
+  # predictions
+  p <- x$predictions
+  
+  # default weights matrix
+  if(is.null(w)) {
+    w <- outer(1:length(x$classes), 1:length(x$classes))
+    w[] <- 0
+    diag(w) <- 1
+    dimnames(w) <- list(x$classes, x$classes)
+  }
+  
+  
+  # confusion matrix
+  tab <- crossTabProbs(x)
+  
+  # simple brier score
+  bs <- brierScore(p, x$classes)
+  
+  ## TODO: decide on use of priors
+  # weighted tau
+  tau.res <-tauW(tab, w)
+  
+  
+  res <- data.frame(brier.score=bs, tau=tau.res$tau, tau.w=tau.res$tau.w, PCC=tau.res$overall.naive)
+  return(res)
+}
+
+# generate confusion matrix from simulatePredictions()
+# matrix is based on this most likely class vs. actual class
+# x: output from simulatePredictions()
+crossTabProbs <- function(x) {
+  p <- x$predictions
+  # most likely class lables
+  max.pr.class <- x$classes[apply(p[, x$classes], 1, which.max)]
+  # upgrade to factors for cross tabulation
+  max.pr.class <- factor(max.pr.class, levels = x$classes)
+  p$actual <- factor(p$actual, levels = x$classes)
+  # confusion matrix, rows are predictions, columns are actual
+  tab <- table(predictions=max.pr.class, actual=p$actual)
+  
+  return(tab)
 }
 ```
 
@@ -75,26 +163,25 @@ s <- list()
 n <- 1000
 
 alpha.1 <- c(4,10,5,22,25)
-s[['Case 1']] <- simulate.predictions(n=n, alpha=alpha.1)
+s[['Case 1']] <- simulatePredictions(n=n, alpha=alpha.1)
 
-alpha.2 <- c(1,3,5,6,15)
-s[['Case 2']] <- simulate.predictions(n=n, alpha=alpha.2)
+alpha.2 <- c(3,4,5,6,15)
+s[['Case 2']] <- simulatePredictions(n=n, alpha=alpha.2)
 
 alpha.3 <- c(2,2,2,2,40)
-s[['Case 3']] <- simulate.predictions(n=n, alpha=alpha.3)
-
-# stack class probs
-ss <- ldply(s, function(i) i$predictions)
-names(ss)[1] <- 'example'
-ss$example <- factor(ss$example)
+s[['Case 3']] <- simulatePredictions(n=n, alpha=alpha.3)
 ```
 
 ```{r make-figures}
 ## class probabilities
+ss <- ldply(s, function(i) i$predictions.long)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+
 cols <- brewer.pal(9, 'Set1')
 tps <- list(superpose.line=list(col=cols, lwd=1, alpha=0.85))
 
-p.1 <- densityplot( ~ value | example, groups=variable, data=ss, 
+p.1 <- densityplot( ~ value | example, groups=variable, data=ss, as.table=TRUE, layout=c(3,1),
 pch=NA, xlim=c(-0.1, 1.1), scales=list(alternating=3, x=list(tick.number=5)), xlab='Class Probability',
 strip=strip.custom(bg=grey(0.85)), auto.key=list(columns=5, lines=TRUE, points=FALSE),
 par.settings=tps, panel=function(...) {
@@ -104,7 +191,7 @@ par.settings=tps, panel=function(...) {
 })
 
 
-## stack stats
+## distribution of stats
 ss <- ldply(s, function(i) i$stats.long)
 names(ss)[1] <- 'example'
 ss$example <- factor(ss$example)
@@ -113,7 +200,7 @@ ss$example <- factor(ss$example)
 cols <- wes_palette("Zissou")[c(1,5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
 
-p.2 <- densityplot( ~ data | example, groups=which, data=ss, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
+p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
   gs <- seq(0,1, by=0.1)
   panel.abline(v=gs, lty=3, col='grey')
   panel.densityplot(...)
@@ -126,7 +213,7 @@ names(ss)[1] <- 'example'
 ss$example <- factor(ss$example)
 
 # how do these two compare in general?
-p.3 <- xyplot(H ~ CI | example, data=ss, asp=1, auto.key = list(columns=3, lines=FALSE, points=TRUE),
+p.3 <- xyplot(Shannon.H ~ CI | example, data=ss, asp=1, auto.key = list(columns=3, lines=FALSE, points=TRUE), as.table=TRUE, layout=c(3,1),
 scales=list(alternating=1, at=seq(0, 1, by=0.2)), xlim=c(-0.1, 1.1), ylim=c(-0.1, 1.1), xlab='Confusion Index', ylab='Shannon H',
 strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
 panel=function(x, y, subscripts=subscripts, ...) {
@@ -142,7 +229,7 @@ panel=function(x, y, subscripts=subscripts, ...) {
                 'cor: ', cor.xy)
 
   panel.abline(h=gs, v=gs, lty=3, col='grey')
-  panel.points(ss$CI, ss$H, col=grey(0.85), alpha=0.1)
+  panel.points(ss$CI, ss$Shannon.H, col=grey(0.85), alpha=0.1)
   panel.xyplot(x, y, subscripts=subscripts, ...)
   panel.abline(l, col='black', lwd=1.5, ...)
   panel.abline(0, 1, lty=2)
@@ -150,9 +237,9 @@ panel=function(x, y, subscripts=subscripts, ...) {
 })
 
 stats.cor <- ddply(ss, 'example', .fun=plyr::summarize, 
-                   H.med=median(H), CI.med=median(CI),
-                   H.iqr=IQR(H), CI.iqr=IQR(CI),
-                   cor=cor(CI, H, method = 'spearman')
+                   H.med=median(Shannon.H), CI.med=median(CI),
+                   H.iqr=IQR(Shannon.H), CI.iqr=IQR(CI),
+                   cor=cor(CI, Shannon.H, method = 'spearman')
                    )
 
 ```
@@ -161,35 +248,78 @@ stats.cor <- ddply(ss, 'example', .fun=plyr::summarize,
 
 # Background
 
-This document is my attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up on the phone conferences. As such, it is very much a **work in progress**.
+This document is an attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up on the phone conferences.
 
 Our current QC/QA process is based on many forms of evaluation, accumulates some degree of subjectivity and relies heavily on qualitative forms of information (field experience, institutional knowledge, etc.).  On the opposite side of the spectrum, the validation of raster mapping is often claimed to be free of subjective interference and entirely quantitative. Those are "good things" that we should always strive for, however, the simplicity of calculating a "percent correctly classified" can interfere with a more nuanced evaluation of accuracy. As I mentioned on the phone (and implicitly volunteered for) a validation "score" might be more meaningful than any single validation metrics. One such score might include:
 
   * agreement between predicted probabilities and observed class (e.g. Brier scores)
-  * agreement between most-likely class and observed class, accounting for class similarities
+  * agreement between the most likely class and observed class, accounting for class similarities (e.g. weighted Tau)
   * distribution of class-wise Shannon entropy values
-  * prior vs. predicted vs. validation proportion of classes
-  * some kind of metric that integrates spatial connectivity of predictions / observations, for example: cross-tabulate predictions / validation by geomorphon classes
+  * calibration vs. predicted vs. validation proportion of classes
+  * some kind of metric that integrates spatial connectivity of predictions / observations, for example: cross-tabulate calibration / prediction / validation classes with geomorphon classes
 
-I strongly believe that we need a robust suite of metrics primarily for internal discussion and evaluation of raster mapping products; even more so when complex modeling frameworks such as randomforest or neural nets are used.
+I strongly believe that we need a robust suite of metrics primarily for internal discussion and evaluation of raster mapping products; even more so when complex modeling frameworks such as randomForest or neural nets are used.
 
-## Accuracy
 
-Confusion matrix
+# Concept Demonstration via Simulated Data
 
-### Brier Scores
+## Simulation via Dirichlet
+
+Consider a supervised classification that generates predictions for 5 possible soil classes. Suites of predicted probabilities fall into 3 general cases:
+
+   * "Case 1": classes **D** and **E** are nearly tied for the most likely class, but their respective probabilities are generally < 0.5
+   * "Case 2": class **E** is almost always the most likely class, but classes **B**, **C**, and **D** are tied for second place
+   * "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
+
+```{r, fig.width=10, fig.height=4, fig.cap='Probability distributions of predictions.'}
+# examples of three cases
+print(p.1)
+```
+
+Even though these are simulated data, the three cases above demonstrate common modeling scenarios where classification uncertainty ranges from very low ("Case 3") in some areas to quite high ("Case 1") in others. These three cases could easily be associated with real situations:
+
+  * "Case 1": predictions for soil classes represent a hillslope complex that isn't quite disentangled by the model
+  * "Case 2": predictions for soil classes represent limited success in partitioning between a single water shedding (**E**) vs. multiple water collecting positions (**A**-**D**)
+  * "Case 3": predictions for soil classes represent a successful partitioning between Holocene age deposits (**E**) vs. older alluvial terraces (**A**-**D**)
+
+
+
+
+### Follow-Up / Sanity-Check
+Drawing from Dirichlet distribution:
+
+  * interpretation of alpha isn't that simple:
+    + http://projects.csail.mit.edu/church/w/images/thumb/7/73/Dirichlet.png/400px-Dirichlet.png
+    + https://stats.stackexchange.com/questions/244917/what-exactly-is-the-alpha-in-the-dirichlet-distribution/244946#244946
+    + https://www.hakkalabs.co/articles/the-dirichlet-distribution
+    + http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
+
+
+# Accuracy
+
+## Confusion Matrix
+```{r results='asis'}
+pp <- llply(s, crossTabProbs)
+for(i in names(pp)) {
+  print(kable_styling(kable(pp[[i]], format='html', caption = i), full_width = FALSE))
+}
+```
+
+
+## Brier Scores
 https://en.wikipedia.org/wiki/Brier_score
 
 Brier scores [@Harrell2001] quantify agreement between observed classes and predicted probabilities:
 $$ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  $$
 where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$, and class labels, $\mathbf{y}$. Larger values suggest less agreement between probabilities and observed class labels.
 
-**TODO**
+### TODO
 
   1. What about a weighted version of this score, based on a re-statement of the distance matrix?
   2. Add general purpose `brierScore()` function to aqp, adapt from `get.ml.hz()`.
 
-### Tau with Class Distances (similarity-weighted)
+
+## Tau and Weighted Tau (class-similarity)
 
 [@Rossiter2017] implemented in `aqp::tauw()`. This paper contains some discussion on a weighted version of Shannon Entropy using the subset of similarities between predicted classes and the *actual* class.
 
@@ -237,14 +367,17 @@ summaryTauW(tauW(crossclass, W=weights, P=priors))
 
 ```
 
-### Other Methods
-  * purity
-  * class representation
-  * raw confusion matrix
-  * ???
+
+## Comparison
+```{r}
+pp <- ldply(s, performance)
+names(pp)[1] <- 'example'
+
+kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
+```
 
 
-## Uncertainty
+# Uncertainty
 
 ## Shannon Entropy
 
@@ -253,13 +386,16 @@ A normalized version [@Kempen2009] of Shannon entropy can be calculated:
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
 where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minimum information, maximum entropy).
 
-```{r}
-p <- c(0.1, 0.1, 0.2, 0.6)
-p.H <- round(shannon.H(p, length(p)), 2)
-p.CI <- round(confusion.index(p), 2)
-```
+Examples from the simulated data:
 
-For example, given probabilities of [`r p`], Shannon H would be `r p.H`.
+```{r}
+ex <- ldply(s, extractExample, n=1)
+names(ex)[1] <- 'example'
+ex$actual <- NULL
+ex$CI <- NULL
+
+column_spec(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), 7, bold=TRUE)
+```
 
 
 ### Weighted Shannon Entropy
@@ -283,40 +419,27 @@ Following [@Burrough1997]:
 $$ \mathit{CI} = [1 - (\mu_{max} - \mu_{max-1})] $$
 where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu_{max}$, and second most likely, $\mu_{max-1}$, class probabilities.
 
-For example, given probabilities of [`r p`], CI would be `r p.CI`.
+Examples from the simulated data:
 
-# Examples via Simulation
-**this isn't done yet**
+```{r}
+ex <- ldply(s, extractExample, n=1)
+names(ex)[1] <- 'example'
+ex$actual <- NULL
+ex$Shannon.H <- NULL
 
-Drawing from Dirichlet distribution:
-
-  * interpretation of alpha isn't that simple:
-    + http://projects.csail.mit.edu/church/w/images/thumb/7/73/Dirichlet.png/400px-Dirichlet.png
-    + https://stats.stackexchange.com/questions/244917/what-exactly-is-the-alpha-in-the-dirichlet-distribution/244946#244946
-    + https://www.hakkalabs.co/articles/the-dirichlet-distribution
-    + http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
-  * single simulation fixed alpha
-  * many simulations with several cases:
-    + high uncertainty
-    + low uncertainty
-    + complex mixture
+column_spec(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), 7, bold=TRUE)
+```
 
 
 ## Shannon entropy vs. confusion index
 Consider a probabilistic soil class model, that generates predictions for 5 possible classes. Suites of predicted probabilities fall into 3 general cases:
 
 ```{r}
-extractExample <- function(x, n=1) {
-  p <- dcast(x$predictions, id ~ variable, value.var = 'value')[1:n, ]
-  stats <- x$stats[1:n, ]
-  d <- data.frame(p[, -1], stats)
-  return(d)
-}
-
 ex <- ldply(s, extractExample, n=1)
 names(ex)[1] <- 'example'
+ex$actual <- NULL
 
-kableExtra::kable_styling(knitr::kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
+kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
 
 
@@ -334,12 +457,12 @@ print(p.2)
 ```{r fig.width=10, fig.height=5, fig.cap='Relationship between H and CI values. Annotations are medians (IQR) and Spearman rank correlation.'}
 print(p.3)
 
-# kableExtra::kable_styling(knitr::kable(stats.cor, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
+# kable_styling(kable(stats.cor, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
 
 
 
-# Real Examples
+# Real Examples: Sequoia Kings Canyon (CA792)
 
 
 # Resources
