@@ -1,3 +1,5 @@
+## TODO: these will likely be integrated into AQP suite
+
 # normalized Shannon entropy (Kempen et al, 2009)
 shannon.H <- function(i, b) {
   res <- -1 * sum(i * log(i, base=b), na.rm=TRUE)
