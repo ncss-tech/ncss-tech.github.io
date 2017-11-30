@@ -64,7 +64,7 @@ simulatePredictions <- function(n, alpha) {
   m <- melt(d, id.vars = 'id', measure.vars = class.labels)
   
   # compute H and CI for each simulated case
-  H <- apply(x, 1, shannon.H, b=k)
+  H <- apply(x, 1, shannon.H, b=2)
   CI <- apply(x, 1, confusion.index)
   
   # reshape for plotting

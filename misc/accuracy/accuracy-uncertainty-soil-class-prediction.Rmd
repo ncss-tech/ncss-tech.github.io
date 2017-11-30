@@ -74,8 +74,8 @@ ss$example <- factor(ss$example)
 cols <- wes_palette("Zissou")[c(1,5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
 
-p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
-  gs <- seq(0,1, by=0.1)
+p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
+  gs <- seq(0, 2.5, by=0.25)
   panel.abline(v=gs, lty=3, col='grey')
   panel.densityplot(...)
 })
@@ -86,12 +86,14 @@ ss <- ldply(s, function(i) i$stats)
 names(ss)[1] <- 'example'
 ss$example <- factor(ss$example)
 
+# xlim=c(-0.1, 1.1), ylim=c(-0.1, 1.1),
+
 # how do these two compare in general?
-p.3 <- xyplot(Shannon.H ~ CI | example, data=ss, asp=1, auto.key = list(columns=3, lines=FALSE, points=TRUE), as.table=TRUE, layout=c(3,1),
-scales=list(alternating=1, at=seq(0, 1, by=0.2)), xlim=c(-0.1, 1.1), ylim=c(-0.1, 1.1), xlab='Confusion Index', ylab='Shannon H',
+p.3 <- xyplot(Shannon.H ~ CI | example, data=ss, auto.key = list(columns=3, lines=FALSE, points=TRUE), as.table=TRUE, layout=c(3,1),
+scales=list(alternating=1),  xlab='Confusion Index', ylab='Shannon H',
 strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
 panel=function(x, y, subscripts=subscripts, ...) {
-  gs <- seq(0,1, by=0.1)
+  panel.grid(-1, -1, lty=3, col='grey')
   l <- lm(y ~ x)
   med.H <- round(median(y), 2)
   med.CI <- round(median(x), 2)
@@ -101,8 +103,7 @@ panel=function(x, y, subscripts=subscripts, ...) {
   ann <- paste0('H: ', med.H, ' (', iqr.H, ')\n', 
                 'CI: ', med.CI, ' (', iqr.CI, ')\n',
                 'cor: ', cor.xy)
-
-  panel.abline(h=gs, v=gs, lty=3, col='grey')
+  
   panel.points(ss$CI, ss$Shannon.H, col=grey(0.85), alpha=0.1)
   panel.xyplot(x, y, subscripts=subscripts, ...)
   panel.abline(l, col='black', lwd=1.5, ...)
@@ -118,6 +119,11 @@ stats.cor <- ddply(ss, 'example', .fun=plyr::summarize,
 
 ```
 
+```{r eval=FALSE}
+# H as a function of n
+plot(1:1000, sapply(1:1000, function(i) shannon.H(rep(1/i, times=i))), type='l')
+
+```
 
 
 # Background
@@ -373,7 +379,8 @@ d <- as.data.frame(x)
 d$id <- rownames(d)
 
 # uncertainty
-H <- apply(x, 1, shannon.H, b=ncol(x))
+H <- apply(x, 1, shannon.H, b=2)
+H.norm <- apply(x, 1, shannon.H, b=length(class.labels))
 CI <- apply(x, 1, confusion.index)
 
 # prep for plotting
@@ -415,17 +422,16 @@ densityplot( ~ value , groups=variable, data=m, subset= value > 0.001,
 cols <- wes_palette("Zissou")[c(1,5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
 
-densityplot( ~ data, groups=which, data=g, as.table=TRUE, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), xlim=c(-0.1, 1.1), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
-  gs <- seq(0,1, by=0.1)
-  panel.abline(v=gs, lty=3, col='grey')
+densityplot( ~ data, groups=which, data=g, as.table=TRUE, pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
+  panel.grid(-1, -1, lty=3, col='grey')
   panel.densityplot(...)
 })
 
 
-xyplot(H ~ CI, asp=1, scales=list(alternating=1, at=seq(0, 1, by=0.2)), xlim=c(-0.1, 1.1), ylim=c(-0.1, 1.1), xlab='Confusion Index', ylab='Shannon H',
+xyplot(H ~ CI, asp=1, scales=list(alternating=1), xlab='Confusion Index', ylab='Shannon H',
        strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
        panel=function(x, y, subscripts=subscripts, ...) {
-         gs <- seq(0,1, by=0.1)
+         panel.grid(-1, -1, lty=3, col='grey')
          med.H <- round(median(y), 2)
          med.CI <- round(median(x), 2)
          iqr.H <- round(IQR(y), 2)
@@ -434,9 +440,6 @@ xyplot(H ~ CI, asp=1, scales=list(alternating=1, at=seq(0, 1, by=0.2)), xlim=c(-
          ann <- paste0('H: ', med.H, ' (', iqr.H, ')\n', 
                        'CI: ', med.CI, ' (', iqr.CI, ')\n',
                        'cor: ', cor.xy)
-         
-         panel.abline(h=gs, v=gs, lty=3, col='grey')
-         # panel.points(ss$CI, ss$Shannon.H, col=grey(0.85), alpha=0.1)
          panel.xyplot(x, y, subscripts=subscripts, ...)
          panel.abline(0, 1, lty=2)
          grid.text(ann, x = unit(0.05, 'npc'), unit(0.95, 'npc'), just = c('left', 'top'), gp = gpar(cex=0.75, font=2))
