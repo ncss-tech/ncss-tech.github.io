@@ -398,7 +398,7 @@ plot(apply(x, 1, median), H, col=rgb(0,0,0,alpha = 0.125), pch=16, xlab='Median 
 plot(apply(x, 1, max), H, col=rgb(0,0,0,alpha = 0.125), pch=16, xlab='Max Probability per Pixel', ylab='Shannon H', las=1)
 
 plot(apply(x, 1, median), CI, col=rgb(0,0,0,alpha = 0.125), pch=16, xlab='Median Probability per Pixel', ylab='CI', las=1)
-plot(apply(x, 1, max), CI, col=rgb(0,0,0,alpha = 0.125), pch=16, xlab='Median Probability per Pixel', ylab='CI', las=1)
+plot(apply(x, 1, max), CI, col=rgb(0,0,0,alpha = 0.125), pch=16, xlab='Max Probability per Pixel', ylab='CI', las=1)
 
 
 bwplot(value ~ variable, data=m, subset= value > 0.001, xlab='Class', ylab='Predicted Probabilities > 0.001')
