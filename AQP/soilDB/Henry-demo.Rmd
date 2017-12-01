@@ -13,6 +13,7 @@ keep_md: no
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -27,6 +28,7 @@ With a recent version of R (>= 2.15), it is possible to get all of the packages 
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
 install.packages('RColorBrewer', dep=TRUE)
+install.packages('latticeExtra', dep=TRUE)
 install.packages('reshape', dep=TRUE)
 install.packages('dismo', dep=TRUE)
 install.packages('rgdal', dep=TRUE)
@@ -66,7 +68,7 @@ and aggregated to the following granularity:
 Query daily sensor data associated with the Sequoia / Kings Canyon soil survey.
 ```{r get-data, fig.width=6, fig.height=7, results='hide'}
 library(soilDB)
-library(lattice)
+library(latticeExtra)
 library(RColorBrewer)
 library(plyr)
 
@@ -78,76 +80,157 @@ str(x, 2)
 ```
 
 Quick listing of essential site-level data. "Functional years" is the number of years of non-missing data, after grouping data by Julian day. "Complete years" is the number of years that have 365 days of non-missing data. "dslv" is the number of days since the data-logger was last visited.
-```{r view-data, fig.width=6, fig.height=7}
+```{r}
 # convert into data.frame
 d <- as.data.frame(x$sensors)
-# keep only information on soil temperature sensors
-d <- subset(d, subset=sensor_type == 'soiltemp')
+# keep only information on soil temperature sensors at 50cm
+d <- subset(d, subset=sensor_type == 'soiltemp' & sensor_depth == 50)
 # check top 6 rows and select columns
-head(d[, c('user_site_id', 'name', 'sensor_depth', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')])
+```
+
+```{r echo=FALSE}
+kable(head(d[, c('user_site_id', 'name', 'sensor_depth', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')]), row.names = FALSE)
+```
+
+
+The tables with sensor data (e.g. `x$soiltemp`) look like this:
+```{r echo=FALSE}
+kable_styling(kable(head(x$soiltemp), row.names = FALSE, format='html'), full_width = FALSE)
 ```
 
 
 ## Plot Data
-Note that there are gaps in the data: between site visits and lack of synchronization of site visits with start/end of the year.
-```{r plot-time-series, fig.width=10, fig.height=9}
-xyplot(sensor_value ~ date_time | name, data=x$soiltemp, main='Daily Soil Temperature (Deg. C)', type=c('l', 'g'), as.table=TRUE, layout=c(2,9), xlab='Date', ylab='Deg C')
-xyplot(sensor_value ~ date_time | name, data=x$soilVWC, main='Daily Soil Moisture', type=c('l', 'g'), as.table=TRUE, layout=c(2,6), xlab='Date', ylab='Deg C')
+All of the following examples are based on *lattice* graphics. The syntax takes a little getting used to, but provides a very flexible framework for layout of grouped data into panels. Try adapting the examples below as a starting point for more complex or customized figures. Critical elements of the syntax include:
+
+   * formula interface: `sensor_value ~ date_time | sensor_name`: *y ~ x | facet-by-groups*
+   * data source: `data=x$soiltemp`: *get data from the soiltemperature sensor records*
+   * optional subsetting: `subset=sensor_depth == 50`: *keep only records at 50cm*
+
+
+```{r fig.width=8, fig.height=8}
+# soil temperature at 50cm
+xyplot(sensor_value ~ date_time | sensor_name, 
+       data=x$soiltemp, subset=sensor_depth == 50, 
+       main='Daily Soil Temperature (Deg. C) at 50cm', type=c('l', 'g'), 
+       as.table=TRUE, xlab='Date', ylab='Deg C', 
+       scales=list(alternating=3, cex=0.75, x=list(rot=45)), 
+       strip=strip.custom(bg='grey')
+       )
+```
+
+```{r fig.width=8, fig.height=4}
+xyplot(sensor_value ~ date_time | sensor_name, 
+       data=x$soilVWC, subset=sensor_depth == 50, 
+       main='Daily Soil Moisture at 50cm', type=c('l', 'g'), 
+       as.table=TRUE, xlab='Date', ylab='Deg C', 
+       scales=list(alternating=3, cex=0.75, x=list(rot=45)), 
+       strip=strip.custom(bg='grey')
+       )
 ```
 
 
-Another approach for investigating data gaps, blue: data, grey: no data.
-```{r plot-time-series-levelplot, fig.width=9, fig.height=11}
-levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Soil Temperature (Deg. C)',
-data=x$soiltemp, layout=c(2,7), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
-colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
-par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-xlab='Julian Day', ylab='Year')
-
-levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | name, main='Daily Soil Moisture',
-data=x$soilVWC, layout=c(2,4), col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+One approach for investigating data gaps, blue: data, grey: no data.
+```{r fig.width=9, fig.height=9}
+levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | sensor_name, 
+data=x$soiltemp,
+subset=sensor_depth == 50, 
+main='Daily Soil Temperature (Deg. C) at 50cm',
+col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
 ```
 
-This style of plotting data can be useful for making comparisons between years. 
-```{r plot-time-series-levelplot-2, fig.width=9, fig.height=11.5}
+Again, this time only include 2013-2017.
+```{r fig.width=9, fig.height=6}
+levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | sensor_name, 
+data=x$soiltemp,
+subset=sensor_depth == 50 & year %in% 2013:2017, 
+main='Daily Soil Temperature (Deg. C) at 50cm',
+col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
+xlab='Julian Day', ylab='Year')
+```
+
+Soil moisture data.
+```{r fig.width=9, fig.height=4}
+levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | sensor_name, main='Daily Soil Moisture at 50cm',
+data=x$soilVWC, subset=sensor_depth == 50, 
+col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
+xlab='Julian Day', ylab='Year')
+```
+
+Comparison between years, faceted by sensor name.
+```{r fig.width=8, fig.height=8}
 # generate some better colors
-cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
+cols.temp <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
 
-levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Temperature (Deg. C)',
-data=x$soiltemp, layout=c(2,7), col.regions=cols,
-colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
-par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-xlab='Julian Day', ylab='Year')
-
-levelplot(sensor_value ~ doy * factor(year) | name, main='Daily Soil Moisture',
-data=x$soilVWC, layout=c(2,4), col.regions=cols,
+levelplot(sensor_value ~ doy * factor(year) | sensor_name, main='Daily Soil Temperature (Deg. C) at 50cm',
+data=x$soiltemp, col.regions=cols.temp,
+subset=sensor_depth == 50 & year %in% 2013:2017,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Julian Day', ylab='Year')
 ```
 
+Comparison between sensor depths, faceted by sensor name.
+```{r fig.width=8, fig.height=5}
+# generate some better colors
+cols.vwc <- colorRampPalette(brewer.pal(11, 'RdYlBu'), space='Lab', interpolate='spline')
 
-Aggregate over years by sensor / Julian day.
-```{r plot-time-series-levelplot-3, fig.width=9, fig.height=6}
+levelplot(sensor_value ~ doy * factor(sensor_depth) | sensor_name, main='Daily Soil Moisture',
+data=x$soilVWC, col.regions=cols.vwc,
+subset=year == 2015,
+colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+xlab='Julian Day', ylab='Sensor Depth (cm)')
+```
+
+Facet data (organize into panels) by a combination of sensor name and depth.
+```{r fig.width=9, fig.height=7}
+p <- levelplot(sensor_value ~ doy * factor(year) | sensor_name + factor(sensor_depth), main='Daily Soil Moisture',
+data=x$soilVWC, col.regions=cols.vwc,
+colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), 
+xlab='Julian Day', ylab='Year')
+
+useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
+```
+
+Same idea, this time with soil moisture data.
+```{r fig.width=9, fig.height=7}
+p <- levelplot(sensor_value ~ doy * factor(year) | sensor_name + factor(sensor_depth), main='Daily Soil Moisture',
+data=x$soiltemp, col.regions=cols.temp,
+subset=sensor_name %in% c('Ashmountain', 'CedarGrove', 'LeConte'), 
+colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), 
+xlab='Julian Day', ylab='Year')
+
+useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
+```
+
+
+Aggregate over years by sensor / Julian day, 50cm data only.
+```{r fig.width=9, fig.height=6}
 # compute MAST by sensor
-a <- ddply(x$soiltemp, c('name', 'doy'), .fun=plyr::summarise, soiltemp=mean(sensor_value, na.rm = TRUE))
+a <- ddply(x$soiltemp[which(x$soiltemp$sensor_depth == 50), ], c('sensor_name', 'doy'), .fun=plyr::summarise, soiltemp=mean(sensor_value, na.rm = TRUE))
 
 # re-order sensor names according to MAST
-a.mast <- sort(tapply(a$soiltemp, a$name, mean, na.rm=TRUE))
-a$name <- factor(a$name, levels=names(a.mast))
+a.mast <- sort(tapply(a$soiltemp, a$sensor_name, median, na.rm=TRUE))
+a$sensor_name <- factor(a$sensor_name, levels=names(a.mast))
 
-levelplot(soiltemp ~ doy * name, main='Daily Soil Temperature (Deg. C)',
-data=a, col.regions=cols, xlab='Julian Day', ylab='',
+levelplot(soiltemp ~ doy * sensor_name, main='Median Soil Temperature (Deg. C) at 50cm',
+data=a, col.regions=cols.temp, xlab='Julian Day', ylab='',
 colorkey=list(space='top'), scales=list(alternating=3, cex=0.75, x=list(tick.number=15)))
 ```
 
 
 
-Convert data to percent saturation. (still working on this)
-```{r, fig.width=9, fig.height=11.5, eval=FALSE}
+Convert data to percent saturation and flag days with pct. saturation >= 50%.
+```{r fig.width=9, fig.height=7}
 fun <- function(i) {
   i$pct.sat <- i$sensor_value / max(i$sensor_value, na.rm = TRUE)
   return(i)
@@ -157,11 +240,14 @@ fun <- function(i) {
 z <- ddply(x$soilVWC, c('sid', 'year'), .fun=fun)
 z$pct.sat <- factor(z$pct.sat >= 0.5, levels = c('TRUE', 'FALSE'), labels = c('Moist', 'Dry'))
 
-levelplot(pct.sat ~ doy * factor(year) | name, main='Daily Soil Moisture',
-data=z, layout=c(2,4), col.regions=c('grey', 'RoyalBlue'), cuts=1,
+p <- levelplot(pct.sat ~ doy * factor(year) | sensor_name + factor(sensor_depth), main='Percent Saturation >= 50%',
+data=z, 
+col.regions=c('grey', 'RoyalBlue'), cuts=1,
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
-par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+par.strip.text=list(cex=0.85), 
 xlab='Julian Day', ylab='Year')
+
+useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
 ```
 
 
@@ -172,22 +258,30 @@ In the presence of missing data, MAST calculations will be biased towards those 
 Soil temperature regime assignment for gelic, cryic, and frigid conditions typically require additional information and are marked with an '*'.
 
 When daily data are queried, unbiased summaries and indices of data "completeness" are calculated.
-```{r data-summary, fig.width=6, fig.height=7}
+```{r data-summary, fig.width=6, fig.height=7, eval=FALSE}
 as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'sensor_depth', 'name', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'gap.index')]
+```
+
+```{r echo=FALSE}
+kable(as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'sensor_depth', 'name', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'gap.index')], row.names=FALSE)
 ```
 
 
 # Water Level Data
 
-Get water level data associated with the "NorthernNY_watertable" project. Water level data are found in `x$waterlevel`.
+Get water level data associated with the "NorthernNY_watertable" project. Water level data are found in `x$waterlevel`. All of these sensors have been installed at 100cm depth.
 ```{r}
 x <- fetchHenry(project='NorthernNY_watertable', gran = 'day', what='waterlevel')
 ```
 
 Simple time-series style plot, each panel is a water level sensor.
 ```{r fig.width=10, fig.height=8}
-xyplot(sensor_value ~ date_time | name, data=x$waterlevel, type='l', scales=list(alternating=3, cex=0.75), 
-par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), as.table=TRUE, xlab='', ylab='Water Level (cm)', panel=function(...) {
+xyplot(sensor_value ~ date_time | sensor_name, data=x$waterlevel,
+subset=sensor_depth == 100,
+type='l', scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), as.table=TRUE, xlab='', ylab='Water Level (cm)',
+main='Sensor Installed at 100cm',
+panel=function(...) {
   panel.grid(-1, -1)
   panel.abline(h=0, col='red', lty=2)
   panel.xyplot(...)
@@ -196,8 +290,10 @@ par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), as.table=TRUE, xla
 
 Apply a threshold and plot TRUE (blue) / FALSE (grey): water level > 25 cm depth.
 ```{r fig.width=10, fig.height=8}
-levelplot(factor(sensor_value > -25) ~ doy * factor(year) | name, main='Daily Water Level > 25 cm Depth',
-data=x$waterlevel, col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+levelplot(factor(sensor_value > -25) ~ doy * factor(year) | sensor_name, main='Daily Water Level > 25 cm Depth',
+data=x$waterlevel, 
+subset=sensor_depth == 100,
+col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
 xlab='Julian Day', ylab='Year')
@@ -235,17 +331,20 @@ water.level.threshold <- function(i, level) {
 }
 
 # aggregate water level data
-wl.agg <- ddply(x$waterlevel, c('name', 'year'), .fun=water.level.threshold, level=-25)
+wl.agg <- ddply(x$waterlevel, c('sensor_name', 'year'), .fun=water.level.threshold, level=-25)
+```
 
-head(wl.agg)
+```{r echo=FALSE}
+kable(head(wl.agg), row.names=FALSE)
 ```
 
 Graphical representation of annual water level summaries.
 ```{r fig.width=8, fig.height=6}
 cols <- colorRampPalette(brewer.pal(11, 'RdYlBu'), space='Lab', interpolate='spline', bias=1.75)
-levelplot(max.consecutive.records ~ factor(year) * factor(name), data=wl.agg, col.regions = cols, main='Maximum Consecutive Days\n> 25cm Water Level Depth', xlab='', ylab='')
 
-levelplot(fraction ~ factor(year) * factor(name), data=wl.agg, col.regions = cols, main='Fraction of Days / Year\n> 25cm Water Level Depth', xlab='', ylab='')
+levelplot(max.consecutive.records ~ factor(year) * factor(sensor_name), data=wl.agg, col.regions = cols, main='Maximum Consecutive Days\n> 25cm Water Level Depth', xlab='', ylab='')
+
+levelplot(fraction ~ factor(year) * factor(sensor_name), data=wl.agg, col.regions = cols, main='Fraction of Days / Year\n> 25cm Water Level Depth', xlab='', ylab='')
 ```
 
 
