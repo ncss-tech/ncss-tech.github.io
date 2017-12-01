@@ -1,40 +1,3 @@
-## TODO: these will likely be integrated into AQP suite
-
-# normalized Shannon entropy (Kempen et al, 2009)
-shannon.H <- function(i, b) {
-  res <- -1 * sum(i * log(i, base=b), na.rm=TRUE)
-  return(res)
-}
-
-# confusion index (Burrough et al., 1997)
-confusion.index <- function(i) {
-  i <- sort(i, decreasing = TRUE)
-  res <- 1 - (i[1] - i[2])
-  return(res)
-}
-
-# x.i: data.frame, rows are predictions/observations, columns contain classes
-# class.labels: vector of class labels, corrosponding to column names in x.i
-# actual: name of column containing the observed class
-brierScore <- function(x.i, class.labels, actual='actual') {
-  # save the gen hz probabilities into new df
-  x.pr <- x.i[, class.labels, drop=FALSE]
-  # init new matrix to store most-likely gen hz class
-  m <- matrix(0, ncol=ncol(x.pr), nrow=nrow(x.pr))
-  # same structure as x.pr
-  dimnames(m)[[2]] <- names(x.pr)
-  # set appropriate genhz to 1
-  for(i in 1:nrow(x.i)) {
-    ml.hz.i <- x.i[[actual]][i]
-    m[i, ml.hz.i] <- 1
-  }
-  # compute brier score
-  bs <- sum((x.pr - m)^2, na.rm=TRUE) / nrow(x.pr)
-  return(bs)
-}
-
-
-
 
 # simulate predicted class probabilities via draws from dirichlet 
 # (n pixel * k classes)
@@ -46,6 +9,7 @@ simulatePredictions <- function(n, alpha) {
   class.labels <- toupper(letters[1:k])
   
   # generate simulated probabilities
+  # igraph function
   x <- sample_dirichlet(n, alpha = alpha)
   x <- t(x)
   
@@ -64,12 +28,13 @@ simulatePredictions <- function(n, alpha) {
   m <- melt(d, id.vars = 'id', measure.vars = class.labels)
   
   # compute H and CI for each simulated case
-  H <- apply(x, 1, shannon.H, b=2)
-  CI <- apply(x, 1, confusion.index)
+  H <- apply(x, 1, shannonEntropy, b=2)
+  H.norm <- apply(x, 1, shannonEntropy, b=k)
+  CI <- apply(x, 1, confusionIndex)
   
   # reshape for plotting
-  z <- data.frame(Shannon.H=H, CI=CI)
-  z.long <- make.groups(Shannon.H=z$Shannon.H, CI=z$CI)
+  z <- data.frame(Shannon.H=H, Normalized.H=H.norm, CI=CI)
+  z.long <- make.groups(Shannon.H=z$Shannon.H, Normalized.H=z$Normalized.H, CI=z$CI)
   
   return(list(predictions=d, predictions.long=m, stats=z, stats.long=z.long, classes=class.labels))
 }
@@ -103,6 +68,7 @@ performance <- function(x, w=NULL) {
   tab <- crossTabProbs(x)
   
   # simple brier score
+  # x$classes is the unique set of class labels
   bs <- brierScore(p, x$classes)
   
   ## TODO: decide on use of priors
@@ -119,11 +85,14 @@ performance <- function(x, w=NULL) {
 # x: output from simulatePredictions()
 crossTabProbs <- function(x) {
   p <- x$predictions
+  
   # most likely class lables
   max.pr.class <- x$classes[apply(p[, x$classes], 1, which.max)]
+  
   # upgrade to factors for cross tabulation
   max.pr.class <- factor(max.pr.class, levels = x$classes)
   p$actual <- factor(p$actual, levels = x$classes)
+  
   # confusion matrix, rows are predictions, columns are actual
   tab <- table(predictions=max.pr.class, actual=p$actual)
   
