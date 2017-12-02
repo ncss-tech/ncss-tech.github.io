@@ -12,7 +12,6 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -22,10 +21,11 @@ This is a very basic introduction to the `SoilProfileCollection` class object de
 
 
 # Object Creation
-`SoilProfileCollection` objects are typically created by "promoting" `data.frame` objects (rectangular tables of data) that contain at least three essential columns: 
- * 1) an ID column uniquely identifying groups of horizons (e.g. pedons)
- * 2) horizon top boundaries
- * 3) horizon bottom boundaries
+`SoilProfileCollection` objects are typically created by "promoting" `data.frame` objects (rectangular tables of data) that contain at least three essential columns:
+
+   1. an ID column uniquely identifying groups of horizons (e.g. pedons)
+   2. horizon top boundaries
+   3. horizon bottom boundaries
 
 The `data.frame` should be pre-sorted according to the profile ID and horizon top boundary. Formula notation is used to define the columns used to promote a `data.frame` object:
 
@@ -104,9 +104,10 @@ coordinates(sp4)
 
 
 # Horizon and Site Data
-Typically, horizon and site data are the most important components of `SoilProfileCollection` objects. Both are internally stored as `data.frame` objects; with one or more rows (per profile ID) in the horizon table and one row (per profile ID) in the site table. Columns from either table can be accessed with the `$` style notation of `data.frames`. New data can be assigned to either table in the same manner, as long as the length of the new data is either: 
- * 1) same length as the number of profiles in the collection (target is the site table)
- * 2) same length as the number of horizons in the collection (target is the horizon table)
+Typically, horizon and site data are the most important components of `SoilProfileCollection` objects. Both are internally stored as `data.frame` objects; with one or more rows (per profile ID) in the horizon table and one row (per profile ID) in the site table. Columns from either table can be accessed with the `$` style notation of `data.frames`. New data can be assigned to either table in the same manner, as long as the length of the new data is either:
+
+   1. same length as the number of profiles in the collection (target is the site table)
+   2. same length as the number of horizons in the collection (target is the horizon table)
  
 ```{r hz_and_site_data}
 # assignment of new data to existing or new attributes
