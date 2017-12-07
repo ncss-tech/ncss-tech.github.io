@@ -29,12 +29,12 @@ simulatePredictions <- function(n, alpha) {
   
   # compute H and CI for each simulated case
   H <- apply(x, 1, shannonEntropy, b=2)
-  H.norm <- apply(x, 1, shannonEntropy, b=k)
+  # H.norm <- apply(x, 1, shannonEntropy, b=k)
   CI <- apply(x, 1, confusionIndex)
   
   # reshape for plotting
-  z <- data.frame(Shannon.H=H, Normalized.H=H.norm, CI=CI)
-  z.long <- make.groups(Shannon.H=z$Shannon.H, Normalized.H=z$Normalized.H, CI=z$CI)
+  z <- data.frame(Shannon.H=H, CI=CI)
+  z.long <- make.groups(Shannon.H=z$Shannon.H, CI=z$CI)
   
   return(list(predictions=d, predictions.long=m, stats=z, stats.long=z.long, classes=class.labels))
 }
@@ -71,12 +71,14 @@ performance <- function(x, w=NULL) {
   # x$classes is the unique set of class labels
   bs <- brierScore(p, x$classes)
   
-  ## TODO: decide on use of priors
-  # weighted tau
-  tau.res <-tauW(tab, w)
+  # un-weighted tau
+  # equal priors, the default
+  tau.equal.res <-tauW(tab)
+  # priors from actual observations
+  tau.actual.res <-tauW(tab, P=prop.table(table(p$actual)))
   
   
-  res <- data.frame(brier.score=bs, tau=tau.res$tau, tau.w=tau.res$tau.w, PCC=tau.res$overall.naive)
+  res <- data.frame(brier.score=bs, tau.equal=tau.equal.res$tau, tau.actual=tau.actual.res$tau, PCC=tau.equal.res$overall.naive)
   return(res)
 }
 

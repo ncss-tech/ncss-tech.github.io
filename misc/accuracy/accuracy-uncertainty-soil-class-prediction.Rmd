@@ -70,11 +70,12 @@ ss <- ldply(s, function(i) i$stats.long)
 names(ss)[1] <- 'example'
 ss$example <- factor(ss$example)
 
+
 # uncertainty metrics
-cols <- wes_palette("Zissou")[c(1,3,5)]
+cols <- wes_palette("Zissou")[c(1, 5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
 
-p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=3, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
+p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
   gs <- seq(0, 2.5, by=0.25)
   panel.abline(v=gs, lty=3, col='grey')
   panel.densityplot(...)
@@ -111,33 +112,33 @@ panel=function(x, y, subscripts=subscripts, ...) {
   grid.text(ann, x = unit(0.05, 'npc'), unit(0.95, 'npc'), just = c('left', 'top'), gp = gpar(cex=0.75, font=2))
 })
 
-p.4 <- xyplot(Shannon.H ~ Normalized.H | example, data=ss, auto.key = list(columns=3, lines=FALSE, points=TRUE), as.table=TRUE, layout=c(3,1),
-scales=list(alternating=1),  xlab='Normalized Shannon H', ylab='Shannon H',
-strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
-panel=function(x, y, subscripts=subscripts, ...) {
-  panel.grid(-1, -1, lty=3, col='grey')
-  l <- lm(y ~ x)
-  med.H <- round(median(y), 2)
-  med.CI <- round(median(x), 2)
-  iqr.H <- round(IQR(y), 2)
-  iqr.CI <- round(IQR(x), 2)
-  cor.xy <- round(cor(x, y, method = 'spearman'), 2)
-  ann <- paste0('H: ', med.H, ' (', iqr.H, ')\n', 
-                'CI: ', med.CI, ' (', iqr.CI, ')\n',
-                'cor: ', cor.xy)
-  
-  panel.points(ss$Normalized.H, ss$Shannon.H, col=grey(0.85), alpha=0.1)
-  panel.xyplot(x, y, subscripts=subscripts, ...)
-  panel.abline(l, col='black', lwd=1.5, ...)
-  # panel.abline(0, 1, lty=2)
-  grid.text(ann, x = unit(0.05, 'npc'), unit(0.95, 'npc'), just = c('left', 'top'), gp = gpar(cex=0.75, font=2))
-})
-
-stats.cor <- ddply(ss, 'example', .fun=plyr::summarize, 
-                   H.med=median(Shannon.H), CI.med=median(CI),
-                   H.iqr=IQR(Shannon.H), CI.iqr=IQR(CI),
-                   cor=cor(CI, Shannon.H, method = 'spearman')
-                   )
+# p.4 <- xyplot(Shannon.H ~ Normalized.H | example, data=ss, auto.key = list(columns=3, lines=FALSE, points=TRUE), as.table=TRUE, layout=c(3,1),
+# scales=list(alternating=1),  xlab='Normalized Shannon H', ylab='Shannon H',
+# strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
+# panel=function(x, y, subscripts=subscripts, ...) {
+#   panel.grid(-1, -1, lty=3, col='grey')
+#   l <- lm(y ~ x)
+#   med.H <- round(median(y), 2)
+#   med.CI <- round(median(x), 2)
+#   iqr.H <- round(IQR(y), 2)
+#   iqr.CI <- round(IQR(x), 2)
+#   cor.xy <- round(cor(x, y, method = 'spearman'), 2)
+#   ann <- paste0('H: ', med.H, ' (', iqr.H, ')\n', 
+#                 'CI: ', med.CI, ' (', iqr.CI, ')\n',
+#                 'cor: ', cor.xy)
+#   
+#   panel.points(ss$Normalized.H, ss$Shannon.H, col=grey(0.85), alpha=0.1)
+#   panel.xyplot(x, y, subscripts=subscripts, ...)
+#   panel.abline(l, col='black', lwd=1.5, ...)
+#   # panel.abline(0, 1, lty=2)
+#   grid.text(ann, x = unit(0.05, 'npc'), unit(0.95, 'npc'), just = c('left', 'top'), gp = gpar(cex=0.75, font=2))
+# })
+# 
+# stats.cor <- ddply(ss, 'example', .fun=plyr::summarize, 
+#                    H.med=median(Shannon.H), CI.med=median(CI),
+#                    H.iqr=IQR(Shannon.H), CI.iqr=IQR(CI),
+#                    cor=cor(CI, Shannon.H, method = 'spearman')
+#                    )
 
 ```
 
@@ -148,27 +149,31 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 
 # Background
 
-This document is an attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before reading any further be sure to read the recent paper by @Rossiter2017.
+This document is an attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by @Rossiter2017.
 
 ## Status Quo
-The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes (suggests?) two commonly used metrics for the description of accuracy and uncertainty: percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
+The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes (suggests?) two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
 
 Given the complex nature of class mapping results (e.g. stack of class probabilities) and inherent (likely quantifiable) similarity of soil classes, I think that we should explore options for a more robust suite of accuracy and uncertainty metrics. Furthermore, it is my opinion that any evaluation of probabilistic predictions should be integrated over *all* classes. 
 
 
-## Theses (nailed to my cubicle wall)
+## Theses
 
-  * The $\tau$ statistic of [@Rossiter2017] is a more reliable (nuanced?) representation of accuracy vs. PCC.
+  * The $\tau$ statistic of [@Rossiter2017] is a more reliable and nuanced representation of accuracy vs. PCC.
 
   * The $\tau$ statistic can be *upgraded* with additional *knowledge* given the availability of 1) prior understanding of class proportions, and/or, 2) meaningful parameterization of pair-wise class distances.
   
   * There can be consensus on formulation of *approximate* pair-wise distances, within a given modeling domain. Pair-wise distances may not necessarily be the same across modeling domains or projects.
   
   * Brier scores are option for an even more nuanced representation of accuracy as they integrate all predicted probabilities.
+
+  * The confusion index of @Burrough1997 is an *unstable* metric when the number of predicted classes is large and when the most likely classes are associated with low probabilities.
    
   * Shannon entropy (log base 2) is a more reliable representation of uncertainty than the confusion index, especially when the number of possible classes varies by project. The importance of a universally reliable representation of uncertainty is even more important when several methods are used concurrently.
   
   * There *should be* a way to integrate pair-wise distances into the Shannon entropy (or related method) and Brier scores; maybe we will discover those here.
+  
+
   
   
 
@@ -191,9 +196,7 @@ Accuracy and uncertainty metrics are primarily vehicles for understanding, re-ca
 
 ## Anonymous Commentary
 
-   * Yes, tau is the way to go -- you need to be very clear on the prior probabilities. That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
-   
-   * The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
+
    
    * To me Brier scores are to rate a probabilistic forecaster making many binary probabilistic predictions. So for a map you would have each pixel with a prediction and its probability, you could indeed compute the per-point Brier score and sum them.  But that does not give any credit to "incorrect" but similar classes that might have had a slightly lower probability.  Yes you can do a multinomial Brier score.  But again no credit for taxonomic similarity.
    
@@ -205,8 +208,6 @@ Accuracy and uncertainty metrics are primarily vehicles for understanding, re-ca
 
 
 # Concept Demonstration via Simulated Data
-
-## Simulation via Dirichlet
 
 Consider a supervised classification that generates predictions for 5 possible soil classes. Suites of predicted probabilities fall into 3 general cases:
 
@@ -309,6 +310,11 @@ summaryTauW(tauW(crossclass, W=weights, P=priors))
 ```
 
 
+   * Yes, tau is the way to go -- you need to be very clear on the prior probabilities. That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
+   
+   * The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
+
+
 ## Comparison
 ```{r}
 pp <- ldply(s, performance)
@@ -320,70 +326,21 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
 
 # Uncertainty
 
-## Shannon Entropy
 
-
+## Shanon Entropy
 
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{2}(p_{i})}  $$
 
-where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Smaller values imply less entropy (more information).
+where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Smaller values imply less entropy (more information). Given equal class probabilities, H will increas as the number of classes increases.
 
 
-
-```{r, fig.width=6, fig.height=4}
-# H as a function of n
-n.seq <- 2:100
-H <- sapply(n.seq, function(i) shannonEntropy(rep(1/i, times=i), b = 2))
-d <- data.frame(n=n.seq, H=H)
-
-xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col='royalblue', lwd=2, type=c('l', 'g'), main='Theoretical Limits\nEqual Class Probability')
-```
-
-A normalized version [@Kempen2009] of Shannon entropy that is constrained to values between 0 and 1:
+@Kempen2009 described a normalized version of Shannon entropy that is constrained to values between 0 and 1:
 
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
-where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Values range from 0 (maximum information, minimum entropy) to 1 (minimum information, maximum entropy).
+where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. This representation may be conveniently contained within the range of $[0,1]$, however, it cannot be used to compare uncertainty from models using different numbers of classes.
 
+It is my recommendation that the $log_{2}$ version of Shannon H be used as our *primary* metric of uncertainty for predictive soil class mapping.
 
-```{r, fig.width=6, fig.height=4}
-# H as a function of n
-n.seq <- 2:100
-H <- sapply(n.seq, function(i) shannonEntropy(rep(1/i, times=i), b = 2))
-d <- data.frame(n=n.seq, H=H)
-
-xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col='royalblue', lwd=2,  main='Theoretical Limits\nEqual Class Probability', panel=function(...) {
-  panel.xyplot(..., type=c('l', 'g'))
-  panel.abline(h=1, col='red', lty=2)
-  panel.text(x=80, y=1.2, 'Normalized Shannon Entropy', font=2, cex=0.8)
-})
-```
-
-
-Examples from the simulated data:
-
-```{r}
-ex <- ldply(s, extractExample, n=1)
-names(ex)[1] <- 'example'
-ex$actual <- NULL
-ex$CI <- NULL
-
-column_spec(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), 7, bold=TRUE)
-```
-
-
-### Weighted Shannon Entropy
-
-A simple extension (weighted entropy score) of the standard version is described in [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029130/):
-
-$$ \mathit{WES} = -\sum_{i=1}^{n}{w_{i} * p_{i} * log_{n}(p_{i})}  $$
-where $w_{i}$ is the weight associated with $p_{i}$. This isn't quite applicable as the weights (we are interested in) are based on pair-wise distances between classes. More promising ideas:
-
-   * [mutual information](https://en.wikipedia.org/wiki/Mutual_information)
-   * [pointwise mutual information](https://en.wikipedia.org/wiki/Pointwise_mutual_information) 
-   * [zebu package vignette](http://cdn.rawgit.com/oliviermfmartin/zebu/master/inst/doc/zebu.html)
-   * [joint entropy](https://en.wikipedia.org/wiki/Joint_entropy)
-
-Pairwise mutual information seems like a convenient extension of Shannon H that would easily accommodate pairwise distances.
 
 ## Confusion Index
 
@@ -392,32 +349,48 @@ Following [@Burrough1997]:
 $$ \mathit{CI} = [1 - (\mu_{max} - \mu_{max-1})] $$
 where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu_{max}$, and second most likely, $\mu_{max-1}$, class probabilities.
 
-Examples from the simulated data:
 
-```{r}
-ex <- ldply(s, extractExample, n=1)
-names(ex)[1] <- 'example'
-ex$actual <- NULL
-ex$Shannon.H <- NULL
+## Comparison
 
-column_spec(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), 7, bold=TRUE)
+```{r, fig.width=7, fig.height=4}
+# H as a function of n
+n.seq <- 2:100
+H <- sapply(n.seq, function(i) shannonEntropy(rep(1/i, times=i), b = 2))
+d <- data.frame(n=n.seq, H=H)
+
+cols <- wes_palette("Zissou")[c(1, 5)]
+
+xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Theoretical Limits\nEqual Class Probability', panel=function(...) {
+  panel.xyplot(..., type=c('l', 'g'))
+  panel.abline(h=1, col=cols[2], lty=2)
+  panel.text(x=80, y=1.2, 'Confusion Index', font=2, cex=0.8)
+})
 ```
 
 
-## Shannon entropy vs. confusion index
-
-### Equal Class Probability
-
-```{r}
+```{r fig.width=7, fig.height=4.5}
 n.seq <- 2:26
 l <- lapply(n.seq, function(i) simulatePredictions(1, alpha=c(rep(1, times=i))))
 
 stats <- ldply(l, function(i) i$stats)
 stats <- data.frame(n=n.seq, stats)
 
-xyplot(Shannon.H + Normalized.H + CI ~ n, data=stats, main='Simulated Limits\nApprox. Equal Probabilities', xlab='Number of Classes', ylab='Uncertainty Metric', scales=list(x=list(tick.number=10)), type=c('b', 'g'), ylim=c(0, 5), par.settings=list(superpose.symbol=list(col=cols, pch=16, cex=1), superpose.line=list(col=cols, lwd=2)), auto.key=list(columns=3, lines=TRUE, points=FALSE))
+cols <- wes_palette("Zissou")[c(1,5)]
+
+xyplot(Shannon.H + CI ~ n, data=stats, main='Simulated Limits\nApprox. Equal Probabilities', xlab='Number of Classes', ylab='Uncertainty Metric', scales=list(x=list(tick.number=10)), type=c('b', 'g'), ylim=c(0, 5), par.settings=list(superpose.symbol=list(col=cols, pch=16, cex=1), superpose.line=list(col=cols, lwd=2)), auto.key=list(columns=2, lines=TRUE, points=FALSE))
 ```
 
+
+Examples from the simulated data:
+
+```{r}
+ex <- ldply(s, extractExample, n=1)
+names(ex)[1] <- 'example'
+ex$actual <- NULL
+ex$Normalized.H <- NULL
+
+add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), header=c(" " = 1, "Class Probabilities" = 5, "Uncertainty" = 2))
+```
 
 
 ### Three Common Suites of Class Probabilities
@@ -428,7 +401,7 @@ ex <- ldply(s, extractExample, n=1)
 names(ex)[1] <- 'example'
 ex$actual <- NULL
 
-kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
+# kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
 
 
@@ -593,6 +566,25 @@ riparian                       0             22                 9               
     + https://stats.stackexchange.com/questions/244917/what-exactly-is-the-alpha-in-the-dirichlet-distribution/244946#244946
     + https://www.hakkalabs.co/articles/the-dirichlet-distribution
     + http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
+
+
+
+
+
+
+## Weighted Shannon Entropy
+
+A simple extension (weighted entropy score) of the standard version is described in [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029130/):
+
+$$ \mathit{WES} = -\sum_{i=1}^{n}{w_{i} * p_{i} * log_{n}(p_{i})}  $$
+where $w_{i}$ is the weight associated with $p_{i}$. This isn't quite applicable as the weights (we are interested in) are based on pair-wise distances between classes. More promising ideas:
+
+   * [mutual information](https://en.wikipedia.org/wiki/Mutual_information)
+   * [pointwise mutual information](https://en.wikipedia.org/wiki/Pointwise_mutual_information) 
+   * [zebu package vignette](http://cdn.rawgit.com/oliviermfmartin/zebu/master/inst/doc/zebu.html)
+   * [joint entropy](https://en.wikipedia.org/wiki/Joint_entropy)
+
+Pairwise mutual information seems like a convenient extension of Shannon H that would easily accommodate pairwise distances.
 
 
 # Resources
