@@ -1,8 +1,11 @@
 ---
+title: "Aggregate Soil Properties by Bedrock Kind"
+date: "`r Sys.Date()`"
+author: D.E. Beaudette
 output:
   html_document:
-    mathjax: null
-    jquery: null
+    fig_caption: yes
+    number_sections: no
     smart: no
 ---
 
@@ -13,14 +16,8 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-## Aggregate Soil Properties by Bedrock Kind
-2013-03-08
 
-Dylan Beaudette
-
-
-
-### Installation
+## Installation
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -29,7 +26,7 @@ install.packages('RODBC', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
 ```
 
-### ODBC Connection to the Local NASIS database
+## ODBC Connection to the Local NASIS database
 Setting up this connection is simple, and outlined in this [guide](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html). Queries submitted to the national database will load pedons or DMU data into your local database. Functions in `soilDB` can only access data in your local database, defined by the "selected set". While it is possible to filter pedon or DMU records within **R**, it is sometimes simpler to modify the "selected set" in NASIS. In other words:
 
   1. load up your local database with pedons associated with your office, project, or MLRA
@@ -37,7 +34,7 @@ Setting up this connection is simple, and outlined in this [guide](http://ncss-t
   3. load data into **R** for further filtering/processing
   
 
-### Loading data from NASIS
+## Loading data from NASIS
 
 Before running this code, be sure to read the instructions above on setting up and ODBC connection and selected set. This approach could also be used to load equivalent data from a PedonPC database using `fetchPedonPC('path.to.your.data.base.accdb')`. Note that the filtering step described below should be adjusted to fit *your* data. In this case, we are keeping pedons from the "CA630" survey area, and filtering based on the occurrence of this pattern within the user site ID.
 ```{r prep-environment, results='hide'}
@@ -57,7 +54,7 @@ f <- f[idx, ]
 ```
 
 
-### Tabulate occurrence of various bedrock kinds
+## Tabulate occurrence of various bedrock kinds
 
 The `table()` function is a great way to count the number of cases of each level of a category, or, cross-tabulation among several categories. Objects returned by `table()` can be readily visualized using the `dotplot()` function.
 ```{r inspect-raw-data, fig.height=4, fig.width=8}
@@ -96,7 +93,7 @@ f.sub <- subsetProfiles(f, s="!is.na(generalized_bedrock)")
 ```
 
 
-### Aggregate select soil properties by depth, within each generalized bedrock kind
+## Aggregate select soil properties by depth, within each generalized bedrock kind
 
 See `?slab` for details on how to use this function. Note that this approach combines pedons of all depth-classes. Depending on the number of pedons in the collection, it may take a couple of minutes to finish.
 ```{r aggregate}
@@ -111,7 +108,7 @@ a$generalized_bedrock <- factor(a$generalized_bedrock, levels=names(bedrock.tab)
 ```
 
 
-### Plot aggregate data
+## Plot aggregate data
 
 Lattice graphics are used to plot the median property bounded by the 25th and 75th percentiles, with data split into panels according to generalized bedrock type. Percentages printed on the right-hand side of each panel describe the fraction of pedons contributing data at each depth. See `?panel.depth_function` for details on how to plot aggregate soils data.
 ```{r make-plots}
@@ -123,8 +120,8 @@ p.ph <- xyplot(mid ~ p.q50 | generalized_bedrock, upper=a$p.q75, lower=a$p.q25, 
 ```
 
 
-### Apply plot style and combine figures into a single composite
-```{r plot, fig.width=17, fig.height=10}
+## Apply plot style and combine figures into a single composite
+```{r plot, fig.width=17, fig.height=12}
 # apply styling/colors
 trellis.par.set(tps)
 
