@@ -6,7 +6,6 @@ output:
   html_document:
     fig_caption: yes
     number_sections: no
-    theme: journal
     smart: no
 bibliography: bibliography.bib
 ---
@@ -152,7 +151,7 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 This document is an attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by @Rossiter2017.
 
 ## Status Quo
-The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes (suggests?) two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
+The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
 
 Given the complex nature of class mapping results (e.g. stack of class probabilities) and inherent (likely quantifiable) similarity of soil classes, I think that we should explore options for a more robust suite of accuracy and uncertainty metrics. Furthermore, it is my opinion that any evaluation of probabilistic predictions should be integrated over *all* classes. 
 
@@ -175,8 +174,6 @@ Given the complex nature of class mapping results (e.g. stack of class probabili
   
 
   
-  
-
 
 ## Soap Box Time
 Our current QC/QA process is based on many forms of evaluation, accumulates some degree of subjectivity and relies heavily on qualitative forms of information (field experience, institutional knowledge, etc.).  On the opposite side of the spectrum, the validation of raster mapping is often claimed to be free of subjective interference and entirely quantitative. Those are "good things" that we should always strive for, however, the simplicity of calculating a "percent correctly classified" can interfere with a more nuanced evaluation of accuracy. As I mentioned on the phone (and implicitly volunteered for) a validation "score" might be more meaningful than any single validation metrics. 
@@ -194,17 +191,7 @@ I strongly believe that we need a robust suite of metrics primarily for internal
 Accuracy and uncertainty metrics are primarily vehicles for understanding, re-calibrating (as needed), and communicating statistical models as part of the development and QA/QC process.
 
 
-## Anonymous Commentary
 
-
-   
-   * To me Brier scores are to rate a probabilistic forecaster making many binary probabilistic predictions. So for a map you would have each pixel with a prediction and its probability, you could indeed compute the per-point Brier score and sum them.  But that does not give any credit to "incorrect" but similar classes that might have had a slightly lower probability.  Yes you can do a multinomial Brier score.  But again no credit for taxonomic similarity.
-   
-   *  I think of mapping in upstate NY where it's quite difficult to reliably separate Fragiudepts and Hapludeptss with densic subsoils but not a true Fragipan. The land use is not so different (although Fragiudults have more tree throw). Similar is separating Arnot-Lordstown-Mardin-Bath (Dystrudepts, lots of coarse fragments, cool climate, differene thickness to bedrock) on upland tills with irregular bedrock depth. Here there is definitely a use sequence from shallow->deep but otherwise identical properties.  This was my main motivation in the 'adjusted accuracy' paper. So the issue is not so much a Brier score like:
-
-   (Fragidepts 0.7, Hapludepts 0.3) -> actual Fragidults -> Brier score (.3)^2 = .09; actual Hapludults -> Brier score (.7)^2 = .49.  These are not such different outcomes in practice. Now, if the 2nd predicted class were really different (say, Glossiborolls) then this would make some sense.
-   
-   * In your example you use the weighted Shannon of Kempen. OK, this standardizes to 0...1 but does not reveal the case where the classifier made more or fewer predictions. By using log2 not logn the index keeps increasing with the number of equal predictions, this seems correct:
 
 
 # Concept Demonstration via Simulated Data
@@ -234,7 +221,7 @@ Even though these are simulated data, the three cases above demonstrate common m
 
 ## Confusion Matrix
 
-```{r results='asis'}
+```{r results='asis', eval=FALSE}
 pp <- llply(s, crossTabProbs)
 for(i in names(pp)) {
   print(kable_styling(kable(pp[[i]], format='html', caption = i), full_width = FALSE))
@@ -309,10 +296,13 @@ summaryTauW(tauW(crossclass, W=weights, P=priors))
 
 ```
 
+### Commentary from DGR
 
-   * Yes, tau is the way to go -- you need to be very clear on the prior probabilities. That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
+   * Prior class probabilities. Commentary from DGR:
+      + That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
    
-   * The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
+   * Class similarity
+      + The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
 
 
 ## Comparison
@@ -339,7 +329,7 @@ where $H$ is an index of uncertainty associated with predicted probabilities, $\
 $$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
 where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. This representation may be conveniently contained within the range of $[0,1]$, however, it cannot be used to compare uncertainty from models using different numbers of classes.
 
-It is my recommendation that the $log_{2}$ version of Shannon H be used as our *primary* metric of uncertainty for predictive soil class mapping.
+It is my recommendation that the $log_{2}$ version of Shannon H be used as our *primary* metric of uncertainty for predictive soil class mapping. The normalized version of $H$ might be useful for understanding uncertainty within a single model or in such cases that comparisons between $CI$ and normalized $H$ need to be made on the same scale.
 
 
 ## Confusion Index
@@ -429,7 +419,7 @@ print(p.3)
 Confusion Index
 ![](seki-CI.jpg)
 
-Shannon H
+Shannon H<br>
 ![](seki-H.jpg)
 
 
