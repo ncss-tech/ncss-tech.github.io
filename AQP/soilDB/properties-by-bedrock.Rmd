@@ -46,7 +46,7 @@ library(lattice)
 tps <- list(superpose.line=list(col='RoyalBlue', lwd=2))
 
 # load all pedons from the selected set
-f <- fetchNASIS()
+f <- fetchNASIS(what='pedons')
 
 # filter out those pedons from within CA630
 idx <- grep(pattern='CA630', f$site_id, ignore.case=TRUE)
@@ -59,7 +59,7 @@ f <- f[idx, ]
 The `table()` function is a great way to count the number of cases of each level of a category, or, cross-tabulation among several categories. Objects returned by `table()` can be readily visualized using the `dotplot()` function.
 ```{r inspect-raw-data, fig.height=4, fig.width=8}
 # tabulate all bedrock kinds
-bt <- table(f$bedrock_kind)
+bt <- table(f$bedrckkind)
 
 # display just the top 20
 dotplot(sort(bt, decreasing=TRUE)[1:20], col='black')
@@ -71,15 +71,15 @@ There are several bedrock kinds that are functionally similar within CA630, so w
 f$generalized_bedrock <- rep(NA, times=length(f))
 
 # generate new labels for bedrock kinds that are functionally similar
-f$generalized_bedrock[f$bedrock_kind %in% c('Metavolcanics', 'Greenstone')] <- 'Metavolcanics'
-f$generalized_bedrock[f$bedrock_kind %in% c('Diorite', 'Granite', 'Granodiorite', 'Granitoid')] <- 'Granite'
-f$generalized_bedrock[f$bedrock_kind %in% c('Mica schist', 'Schist', 'Phyllite', 'Metasedimentary rock')] <- 'Metasedimentary'
-f$generalized_bedrock[f$bedrock_kind %in% c('Slate')] <- 'Slate'
-f$generalized_bedrock[f$bedrock_kind %in% c('Serpentinite', 'Ultramafic rock')] <- 'Serpentinite / U.M.'
-f$generalized_bedrock[f$bedrock_kind %in% c('Volcanic breccia', 'Andesite')] <- 'Mehrten Fm.'
-f$generalized_bedrock[f$bedrock_kind %in% c('Tuff', 'Rhyolite')] <- 'Valley Springs Fm.'
-f$generalized_bedrock[f$bedrock_kind %in% c('Marble')] <- 'Marble'
-f$generalized_bedrock[f$bedrock_kind %in% c('Latite')] <- 'Latite'
+f$generalized_bedrock[grep('Metavolcanic|Greenstone', f$bedrckkind, ignore.case = TRUE)] <- 'Metavolcanics'
+f$generalized_bedrock[grep('Diorite|Granite|Granodiorite|Granitoid', f$bedrckkind, ignore.case = TRUE)] <- 'Granite'
+f$generalized_bedrock[grep('Mica schist|Schist|Phyllite|Metasedimentary', f$bedrckkind, ignore.case = TRUE)] <- 'Metasedimentary'
+f$generalized_bedrock[grep('Slate', f$bedrckkind, ignore.case = TRUE)] <- 'Slate'
+f$generalized_bedrock[grep('Serpentinite|Ultramafic rock', f$bedrckkind, ignore.case = TRUE)] <- 'Serpentinite / U.M.'
+f$generalized_bedrock[grep('Volcanic breccia|Andesite', f$bedrckkind, ignore.case = TRUE)] <- 'Mehrten Fm.'
+f$generalized_bedrock[grep('Tuff|Rhyolite', f$bedrckkind, ignore.case = TRUE)] <- 'Valley Springs Fm.'
+f$generalized_bedrock[grep('Marble', f$bedrckkind, ignore.case = TRUE)] <- 'Marble'
+f$generalized_bedrock[grep('Latite', f$bedrckkind, ignore.case = TRUE)] <- 'Latite'
 ```
 
 
