@@ -191,6 +191,11 @@ I strongly believe that we need a robust suite of metrics primarily for internal
 Accuracy and uncertainty metrics are primarily vehicles for understanding, re-calibrating (as needed), and communicating statistical models as part of the development and QA/QC process.
 
 
+## TODO
+
+   * what are reasonable $\tau$ index values? we need some kind of range of threshold for standards
+   * how do we answer "how much better is **x** vs. SSURGO?"
+   * apply these concepts to the Boundary Waters project, so that we have some benchmark values of $\tau$ and $H$
 
 
 
