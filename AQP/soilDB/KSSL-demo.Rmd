@@ -41,7 +41,6 @@ library(soilDB)
 library(plyr)
 library(reshape2)
 
-
 # get lab and morphologic data
 s <- fetchKSSL(series='auburn', returnMorphologicData = TRUE)
 
@@ -81,6 +80,7 @@ horizons(pedons) <- h
 # check
 par(mar=c(0,0,3,0))
 plot(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
+addVolumeFraction(pedons, 'total_frags_pct', pch=1, cex.min=0.25, cex.max = 0.5)
 ```
 
 

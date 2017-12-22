@@ -9,7 +9,6 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -21,7 +20,7 @@ options(width=100, stringsAsFactors=FALSE)
 > This tutorial is based on essential background material described in the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) and related [NASIS ODBC connection](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html) tutorials. If you have not reviewed those tutorials, please do so before proceeding.
 
 ## Introduction
-The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
+The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
 
 
 ## Component Data
@@ -40,8 +39,8 @@ Load up your local database and selected set with some pedon data and follow alo
 # load required libraries
 library(soilDB)
 
-# get data, using defaults
-p <- fetchNASIS()
+# get pedon data, using defaults
+p <- fetchNASIS(what='pedons')
 ```
 
 ### Filtering / Extracting Data
@@ -62,7 +61,7 @@ title("Pedons with taxonname matching regular expression 'amador'", cex.main=0.8
 2. Extract those pedons with a landform string containing the pattern "glacial":
 ```{r, fig.width=8.5, fig.height=3.5}
 # generate a numerical index to matching pedons
-idx <- grep('glacial', p$landform.string, ignore.case = TRUE)
+idx <- grep('glacial', p$landform_string, ignore.case = TRUE)
 # extract using the index
 g <- p[idx, ]
 # try plotting, hide horizon designation and IDs
@@ -130,14 +129,20 @@ This message contains instructions on how to track down pedons that have a horiz
 ## Adjusting the Defaults
 Some of the assumptions made by `fetchNASIS()` can be adjusted using arguments to the function:
 
-* `rmHzErrors = TRUE`
+  * `SS=TRUE`
+Toggle use of selected set or entire contents of the local NASIS database (`SS=FALSE`).
+
+  * `rmHzErrors = TRUE`
 Setting this value to `TRUE` (the default) will cause pedons flagged as having inconsistent horizonation to be removed from t he resulting object. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons (e.g. "B/C"). Either way, the checks are performed and reported as QC messages in the console.
 
-* `soilColorState='moist'`
+  * `soilColorState='moist'`
 By default, **moist** soil colors are used to generate R-compatible colors and stored in the horizon-level attribute "soil_color". Possible values for this argument are 'moist' and 'dry'.
 
-* `nullFragsAreZero = TRUE`
+  * `nullFragsAreZero = TRUE`
 Setting this value to `TRUE` (the default) will convert NULL rock fragment volumes to 0s. This is typically the right assumption as rock fragment data are typically populated *only* when observed. If you know that your data contain a combination of *ommited* information (e.g. there are no rock fragment volumes populated) then consider setting this argument to `FALSE`. Note that this argument will have significant effects on the rock fragment data returned by `fetchNASIS()` as illustrated below:
+
+  * `lab = FALSE`
+Setting this value to `TRUE` will join available data from the *phlabresults* table to horizon-level records in the output.
 
 ```{r null-frags-demo}
 # load required libraries
@@ -146,10 +151,10 @@ library(plyr)
 library(reshape2)
 
 # default setting, NULL fragment volume is interpreted as 0
-f.1 <- fetchNASIS(nullFragsAreZero = FALSE)
+f.1 <- fetchNASIS(what='pedons', nullFragsAreZero = FALSE)
 
 # assume NULL fragment volume is NULL
-f.2 <- fetchNASIS(nullFragsAreZero = TRUE)
+f.2 <- fetchNASIS(what='pedons', nullFragsAreZero = TRUE)
 
 # fragment classes to investigate
 vars <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")
@@ -183,3 +188,4 @@ An increased level of verbosity in the quality control messages can be enabled b
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
