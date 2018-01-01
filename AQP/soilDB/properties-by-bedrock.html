@@ -152,7 +152,7 @@ library(lattice)
 tps &lt;- list(superpose.line=list(col='RoyalBlue', lwd=2))
 
 # load all pedons from the selected set
-f &lt;- fetchNASIS(what='pedons')
+f &lt;- fetchNASIS(from='pedons')
 
 # filter out those pedons from within CA630
 idx &lt;- grep(pattern='CA630', f$site_id, ignore.case=TRUE)

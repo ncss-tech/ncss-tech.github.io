@@ -40,7 +40,7 @@ Load up your local database and selected set with some pedon data and follow alo
 library(soilDB)
 
 # get pedon data, using defaults
-p <- fetchNASIS(what='pedons')
+p <- fetchNASIS(from='pedons')
 ```
 
 ### Filtering / Extracting Data
@@ -151,10 +151,10 @@ library(plyr)
 library(reshape2)
 
 # default setting, NULL fragment volume is interpreted as 0
-f.1 <- fetchNASIS(what='pedons', nullFragsAreZero = FALSE)
+f.1 <- fetchNASIS(from='pedons', nullFragsAreZero = FALSE)
 
 # assume NULL fragment volume is NULL
-f.2 <- fetchNASIS(what='pedons', nullFragsAreZero = TRUE)
+f.2 <- fetchNASIS(from='pedons', nullFragsAreZero = TRUE)
 
 # fragment classes to investigate
 vars <- c("fine_gravel", "gravel", "cobbles", "stones", "boulders", "paragravel", "paracobbles", "channers", "flagstones")

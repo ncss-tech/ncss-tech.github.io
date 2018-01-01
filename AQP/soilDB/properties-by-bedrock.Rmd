@@ -46,7 +46,7 @@ library(lattice)
 tps <- list(superpose.line=list(col='RoyalBlue', lwd=2))
 
 # load all pedons from the selected set
-f <- fetchNASIS(what='pedons')
+f <- fetchNASIS(from='pedons')
 
 # filter out those pedons from within CA630
 idx <- grep(pattern='CA630', f$site_id, ignore.case=TRUE)

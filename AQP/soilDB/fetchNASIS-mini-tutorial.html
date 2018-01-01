@@ -147,7 +147,7 @@ $(document).ready(function () {
 library(soilDB)
 
 # get pedon data, using defaults
-p &lt;- fetchNASIS(what='pedons')</code></pre>
+p &lt;- fetchNASIS(from='pedons')</code></pre>
 <div id="filtering-extracting-data" class="section level3">
 <h3>Filtering / Extracting Data</h3>
 <p>There are several approaches to filtering pedon data that have been loaded via <code>fetchNASIS()</code>. Filtering by pattern matching (<a href="https://en.wikipedia.org/wiki/Regular_expression">regular expression</a>) is the most common. The <code>grep()</code> function in R performs pattern matching using regular expression. These examples assume that you have been following along with code examples from the top of this document. Note that each of these examples ignore letter case.</p>
@@ -227,10 +227,10 @@ library(plyr)
 library(reshape2)
 
 # default setting, NULL fragment volume is interpreted as 0
-f.1 &lt;- fetchNASIS(what='pedons', nullFragsAreZero = FALSE)
+f.1 &lt;- fetchNASIS(from='pedons', nullFragsAreZero = FALSE)
 
 # assume NULL fragment volume is NULL
-f.2 &lt;- fetchNASIS(what='pedons', nullFragsAreZero = TRUE)
+f.2 &lt;- fetchNASIS(from='pedons', nullFragsAreZero = TRUE)
 
 # fragment classes to investigate
 vars &lt;- c(&quot;fine_gravel&quot;, &quot;gravel&quot;, &quot;cobbles&quot;, &quot;stones&quot;, &quot;boulders&quot;, &quot;paragravel&quot;, &quot;paracobbles&quot;, &quot;channers&quot;, &quot;flagstones&quot;)
