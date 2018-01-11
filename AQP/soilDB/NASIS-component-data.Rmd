@@ -25,7 +25,7 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 
 
 # Introduction
-The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()` or `fetchNASIS_component_data()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
+The `soilDB` package contains a number of **convenience functions** (usually having a prefix of "fetch") for extracting data from commonly used databases, performing basic quality control checks, and returning the result as a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object. In order to simplify the process of stitching-together the many linked (and sometimes nested) tables associated with data in NASIS, convenience functions (e.g. `fetchNASIS()`) must make a number of assumptions about the data. This document describes how those assumptions can be adjusted and how they may affect subsequent data analysis.
 
 # Pedon Data
 Please see the [related tutorial on loading NASIS pedon data into R](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
@@ -43,7 +43,7 @@ Load up your local database and selected set with some components. NASIS queries
  * Legend
  * Area
 
-The most commonly used data from the data map unit, component, component horizon tables can be quickly loaded using the `fetchNASIS_component_data()` function.
+The most commonly used data from the data map unit, component, component horizon tables can be quickly loaded using the `fetchNASIS()` function.
 ```{r, results='hide'}
 # load required libraries
 library(soilDB)
@@ -51,7 +51,7 @@ library(ggplot2)
 library(plyr)
 
 # get component + component horizon data as a SoilProfileCollection, using defaults
-nc <- fetchNASIS_component_data()
+nc <- fetchNASIS(from = 'components')
 ```
 
 The result is a [SoilProfileCollection](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) object and can be subset or visualized as such. Lets try extracting just the components with names that match the pattern "Amador".
@@ -75,7 +75,7 @@ nc.sub.unique <- nc.sub[idx, ]
 
 # plot the subset
 par(mar=c(2,0,3,0))
-plot(nc.sub.unique, color='claytotal_r', print.id=FALSE, n=length(nc.sub))
+plot(nc.sub.unique, color='claytotal_r', label='dmudesc', n=length(nc.sub))
 title(sub='Unique components named "Amador"', line=0)
 ```
 
@@ -83,7 +83,7 @@ title(sub='Unique components named "Amador"', line=0)
 
 ## Linked Pedons
 
-Sometimes it is convenient to know which pedons are linked to components. The following function returns a `data.frame` (table) of data containing component record IDs, pedon record IDs, and pedon IDs. This can be used to link the results of `fetchNASIS_component_data()` to the results of `fetchNASIS()` (pedon data). Lets assemble a list of all pedons linked to a component named "Amador", using the subset from above.
+Sometimes it is convenient to know which pedons are linked to components. The following function returns a `data.frame` (table) of data containing component record IDs, pedon record IDs, and pedon IDs. Lets assemble a list of all pedons linked to a component named "Amador", using the subset from above.
 ```{r}
 # get the full set of linked pedon data from the selected set
 nc.linked.pedons <- get_copedon_from_NASIS_db()
@@ -154,13 +154,17 @@ ggplot(subset(x, subset= compname == 'Gillender'), aes(month, factor(id), flodfr
 
 Try plotting those components with flooding / ponding frequency classes that are something other than "None" (or NULL).
 ```{r, fig.width=11, fig.height=6}
-ggplot(subset(x, subset= coiid %in% x$coiid[x$flodfreqcl != 'None']), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+idx <- which(x$flodfreqcl != 'none')
+ggplot(subset(x, subset= coiid %in% x$coiid[idx]), aes(month, factor(id), flodfreqcl)) + geom_tile(aes(fill = flodfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
 
-ggplot(subset(x, subset= coiid %in% x$coiid[x$floddurcl != 'None']), aes(month, factor(id), floddurcl)) + geom_tile(aes(fill = floddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+idx <- which(x$floddurcl != 'none')
+ggplot(subset(x, subset= coiid %in% x$coiid[idx]), aes(month, factor(id), floddurcl)) + geom_tile(aes(fill = floddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Flooding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
 
-ggplot(subset(x, subset=coiid %in% x$coiid[x$pondfreqcl != 'None']), aes(month, factor(id), pondfreqcl)) + geom_tile(aes(fill = pondfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Ponding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+idx <- which(x$pondfreqcl != 'none')
+ggplot(subset(x, subset=coiid %in% x$coiid[idx]), aes(month, factor(id), pondfreqcl)) + geom_tile(aes(fill = pondfreqcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Ponding Frequency') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
 
-ggplot(subset(x, subset= coiid %in% x$coiid[x$ponddurcl != 'None']), aes(month, factor(id), ponddurcl)) + geom_tile(aes(fill = ponddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Ponding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
+idx <- which(x$ponddurcl != 'none')
+ggplot(subset(x, subset= coiid %in% x$coiid[idx]), aes(month, factor(id), ponddurcl)) + geom_tile(aes(fill = ponddurcl), color='white', lwd=1) + scale_fill_brewer(palette = "Spectral", drop=FALSE, na.value='grey80', name='Ponding Duration') + scale_x_discrete(drop=FALSE) + theme_minimal() + xlab('') + ylab('')
 ```
 
 
@@ -238,7 +242,7 @@ nc <- nc[idx, ]
 nc <- nc[which(nc$majcompflag == 1), ]
 
 # get component horizon data
-nc.hz <- fetchNASIS_component_data()
+nc.hz <- fetchNASIS(from='components')
 # subset the unique set of component IDs that have horizon data
 nc.hz.coiids <- site(nc.hz)$coiid
 
@@ -273,7 +277,7 @@ dotplot(dmudesc ~ frac.populated, data=p, cex=1.25, ylab='DMU Description', xlab
 Just kidding, this stuff matters.
 
 ## Status and QC Messages
-As part of the quality control process, a number of possible messages are printed to the console when running `fetchNASIS_component_data()`. These messages and their meaning are described below:
+As part of the quality control process, a number of possible messages are printed to the console when running `fetchNASIS()`. These messages and their meaning are described below:
 
 * `-> QC: horizon errors detected ...`
 Horizon depths are checked for gaps, overlap, or bottom depths than are shallower than top depths. In most cases pedons flagged as having errors suggests a quality control issue. However, combination horizons (e.g. B/C) that have been entered as two distinct horizons sharing the same horizon depths will trigger this warning.
@@ -286,10 +290,10 @@ This message means that there may be several "representative" DMU assigned to a 
 
 
 ## Adjusting the Defaults
-Some of the assumptions made by `fetchNASIS_component_data()` can be adjusted using arguments to the function:
+Some of the assumptions made by `fetchNASIS()` can be adjusted using arguments to the function:
 
 * `rmHzErrors = TRUE`
-Setting this value to `TRUE` (the default) will enable checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons. Note that any records flagged as having horizon depths errors (`rmHzErrors = TRUE`) will be omitted from the data returned by `fetchNASIS_component_data()`.
+Setting this value to `TRUE` (the default) will enable checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon depth errors, or know that your selected set contains many combination horizons. Note that any records flagged as having horizon depths errors (`rmHzErrors = TRUE`) will be omitted from the data returned by `fetchNASIS()`.
 
 * `fill = FALSE`
 Should missing "month" rows in the comonth table be filled with NA (FALSE)?
