@@ -170,7 +170,7 @@ aggregateColorPlot(aggregateColor(sp3, 'genhz'))
 
 ### Soil Color Signatures
 
-![alt text](soil-series-color-signature.png)
+![](soil-series-color-signature.png)
 
 ```{r agg-color-additional-examples-1, eval=FALSE}
 # get data from NASIS or similar source
@@ -208,6 +208,12 @@ f.sub$slice <- factor(f.sub$slice, levels=guessGenHzLevels(f.sub, 'slice')$level
 aggregateColorPlot(aggregateColor(f.sub, 'slice'), label.cex=0.65, main='Soils Formed on "Diorite"')
 ```
 
+
+
+### OSD Colors from MLRAs 13, 133A, 137, 130B, 148
+*will post code soon*
+
+![](slices-136_133A_137_130B_148.png)
 
 ## How Does it Work?
 
