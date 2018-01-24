@@ -41,6 +41,7 @@ library(aqp)
 library(Hmisc)
 library(lattice)
 library(MASS)
+library(plyr)
 
 # load sample data set, a data.frame object with horizon-level data from 10 profiles
 data(sp4)
@@ -333,38 +334,74 @@ addVolumeFraction(sp4, 'frag_pct') # symbolize volume fraction data
 ```
 
 Annotation of depth-intervals can be accomplished using "brackets":
-```{r plotting-depth-interval, fig.height=4, fig.width=8}
+```{r plotting-depth-interval}
 # extract top/bottom depths associated with all A horizons
+# return as a single data.frame / profile
 f <- function(i) {
   h <- horizons(i)
   idx <- grep('^A', h$name)
-  c(min(h$top[idx]), max(h$bottom[idx], na.rm=TRUE))
+  res <- data.frame(top=min(h$top[idx]), bottom=max(h$bottom[idx], na.rm=TRUE))
+  return(res)
 }
 
-# apply function to sp1, result is a list
+# apply function to each profile in sp4, result is a list
 a <- profileApply(sp4, f, simplify=FALSE)
-# convert list into matrix
-a <- do.call('rbind', a)
+# convert list into data.frame
+a <- ldply(a)
+# set idname so that addBrackets can locate the correct profile
+names(a)[1] <- idname(sp4)
 
-par(mar=c(0,0,3,0)) # tighter figure margins
+a
+```
+
+```{r fig.height=4, fig.width=8}
+par(mar=c(0,0,0,0)) # tighter figure margins
 plot(sp4, name='name')
 # annotate with brackets
-lsp <- get('last_spc_plot', envir=aqp.env)
-addBracket(idx=lsp$plot.order, top=a[, 1], bottom=a[, 2], col='red')
+addBracket(a, col='red')
 ```
 
 It is possible to arrange profile sketches by site-level grouping variable:
 ```{r, fig.height=4, fig.width=8}
 # use improvised site-level attribute 'group' 
-par(mar=c(0,0,3,0)) # tighter figure margins
+par(mar=c(0,0,0,0)) # tighter figure margins
+groupedProfilePlot(sp4, groups='group')
+# note that depth brackets "know" which profiles to use
+addBracket(a, col='red')
+```
+
+There need not be brackets for all profiles in a collection:
+```{r, fig.height=4, fig.width=8}
+# add a label for each bracket
+a.sub <- a[1:4, ]
+# tighter figure margins
+par(mar=c(0,0,0,0))
 groupedProfilePlot(sp4, groups='group')
 # note that depth brackets "know which profiles to use"
-lsp <- get('last_spc_plot', envir=aqp.env)
-a <- a[lsp$plot.order, ]
-addBracket(idx=lsp$plot.order, top=a[, 1], bottom=a[, 2], col='red', label = site(sp4)$id, label.cex = 0.75)
+addBracket(a.sub, col='red')
 ```
 
 
+When bottom depths are missing and arrow is used:
+```{r, fig.height=4, fig.width=8}
+a$bottom <- NA
+# tighter figure margins
+par(mar=c(0,0,0,0))
+groupedProfilePlot(sp4, groups='group')
+# note that depth brackets "know which profiles to use"
+addBracket(a, col='red')
+```
+
+Further customization of brackets:
+```{r, fig.height=4, fig.width=8}
+# add a label for each bracket
+a$label <- site(sp4)$id
+# tighter figure margins
+par(mar=c(0,0,0,0))
+groupedProfilePlot(sp4, groups='group')
+# note that depth brackets "know which profiles to use"
+addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
+```
 
 
 # Iterating Over Profiles in a Collection
@@ -531,7 +568,6 @@ xyplot(top ~ p.q50 | variable, groups=which, data=g, ylab='Depth',
 
 Occasionally there is a need for converting data associated with soil horizons, as described in the field, to a new set of depth intervals. This kind of *change of support* operation requires some form of aggregation (mean, median, etc.) and possibly interpolation (e.g. splines). The `slab` function is the simplest way to implement a change of depth support via aggregation. The following example is based on a set of 9 randomly generated profiles, re-aligned to the Global Soil Map (GSM) standard depths.
 ```{r, fig.height=4.5, fig.width=9}
-library(plyr)
 library(reshape2)
 library(RColorBrewer)
 
