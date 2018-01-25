@@ -12,7 +12,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -24,6 +24,7 @@ With a recent version of R, it should be possible to get all of the packages tha
 install.packages('aqp', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('RODBC', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
+install.packages('sharpshootR', dep=TRUE) # stable version from CRAN + dependencies
 ```
 
 ## ODBC Connection to the Local NASIS database
@@ -41,6 +42,8 @@ Before running this code, be sure to read the instructions above on setting up a
 # load required libraries
 library(soilDB)
 library(lattice)
+library(sharpshootR)
+library(igraph)
 
 # setup plotting style for later
 tps <- list(superpose.line=list(col='RoyalBlue', lwd=2))
@@ -92,13 +95,23 @@ f.sub <- subsetProfiles(f, s="!is.na(generalized_bedrock)")
 (bedrock.tab <- table(f.sub$generalized_bedrock))
 ```
 
+Check cross-tabulation of original / generalized bedrock within subset via graph.
+```{r fig.width=8, fig.height=8}
+tab <- table(f.sub$bedrckkind, f.sub$generalized_bedrock)
+# convert contingency table -> adj. matrix
+m <- genhzTableToAdjMat(tab)
+# plot using a function from the sharpshootR package
+par(mar=c(1,1,1,1))
+plotSoilRelationGraph(m, graph.mode = 'directed', edge.arrow.size=0.5)
+```
+
 
 ## Aggregate select soil properties by depth, within each generalized bedrock kind
 
 See `?slab` for details on how to use this function. Note that this approach combines pedons of all depth-classes. Depending on the number of pedons in the collection, it may take a couple of minutes to finish.
 ```{r aggregate}
 ## aggregate properties by generalized bedrock kind
-a <- slab(f.sub, generalized_bedrock ~ clay + total_frags_pct + phfield, strict=TRUE)
+a <- slab(f.sub, generalized_bedrock ~ clay + total_frags_pct + phfield)
 
 # compute mid-point between slice top and bottom depth for plotting
 a$mid <- with(a, (top+bottom)/2)

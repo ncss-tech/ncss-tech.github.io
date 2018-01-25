@@ -1,6 +1,9 @@
 ---
+title: "Assigning Generalized Horizon Labels"
+author: "D.E. Beaudette, J. Skovlin (edited for clarity by Jenny Sutherland)"
+date: "`r Sys.Date()`"
 output:
-  html_vignette:
+  html_document:
     mathjax: null
     jquery: null
     smart: no
@@ -8,7 +11,6 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
-library(printr, quietly = TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 
@@ -18,15 +20,6 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
     }
     })
 ```
-
-
-Assigning Generalized Horizon Labels
-===============================
-D.E. Beaudette, J. Skovlin (edited for clarity by Jenny Sutherland)
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
 
 # Introduction
@@ -108,8 +101,7 @@ The following code block demonstrates how to pull data in using the [`fetchNASIS
 ```{r use-nasis-data, eval=FALSE}
 # first load the desired data set within NASIS into your NASIS selected set
 # then load data from the NASIS selected set into R
-# note that the `nullFragsAreZero` argument converts NULL rock fragment class data into 0s
-pedons <- fetchNASIS(nullFragsAreZero=TRUE)
+pedons <- fetchNASIS(from='pedons')
 # optionally subset the data by taxon name - enter your taxon name
 pedons <- pedons[grep(pattern='ENTER_YOUR_TAXON_NAME', pedons$taxonname, ignore.case=TRUE), ]
 ```
@@ -355,4 +347,7 @@ write.table(h, file=rules.file, row.names=FALSE, quote=FALSE, na='', col.names=F
 # Concluding Remarks
 In the next document, we will work with pedon data from NASIS and use our GHL to generate estimates of "low-rv-high" style range in characteristics. An alternative approach to assignment of GHL can be performed with the "Update comp layer id by hzname (horizon group Aggregation)" calculation. This calculation, however, performs only basic pattern matching and likely requires considerable manual intervention.
 
+
+-----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
