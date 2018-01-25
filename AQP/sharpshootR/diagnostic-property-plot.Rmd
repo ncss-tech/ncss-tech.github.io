@@ -1,34 +1,30 @@
 ---
+title: "A Novel Display of Categorical Pedon Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
     jquery: null
     smart: no
-    keep_md: no
 ---
 
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-# setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
+
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
-A Novel Display of Categorical Pedon Data
-==============================================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
 
-
-## Introduction
+# Introduction
 This tutorial describes a simple process for visualizing patterns in categorical data associated with pedon data.
 
-### Adapting Content to Your Data
+## Adapting Content to Your Data
 Copy and paste blocks of code in this tutorial into a new R Studio script file (*ctrl + shift + n* makes a new file), edit, and then run. Running lines or blocks of code in an RStudio script file is as simple as moving the cursor to the line (or selecting a block) of code and press *ctrl + enter*.
 
-## Setup R Environment
+# Setup R Environment
 This step is only required the **first time** you open R. These packages will be available via `library()` in later sessions.
 
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
@@ -40,6 +36,8 @@ install.packages('sharpshootR', dep=TRUE) # stable version from CRAN + dependenc
 ```
 
 
+# Examples
+The following examples are based on the `loafercreek` example dataset from the `soilDB` package. This is a good example of the type of `SoilProfileCollection` object returned by `fetchNASIS(from='pedons')`. The 
 
 ```{r, fig.width=8, fig.height=7}
 library(aqp)
@@ -53,28 +51,38 @@ loafercreek <- loafercreek[1:20, ]
 
 # get depth class
 sdc <- getSoilDepthClass(loafercreek)
+
+# check it out
+head(sdc)
+
+# join back into site-level attributes
 site(loafercreek) <- sdc
 
 # diagnostic properties to consider, no need to convert to factors
+# these are stored in the site-level attributes of the SPC
 v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
        'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
        'shallow', 'mod.deep', 'deep', 'very.deep')
 
 
+# presence / absense matrix of several diagnostic features
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='pedon_id', dend.label = 'taxonname')
 
 x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='pedon_id')
 x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='taxonname')
+```
 
+It is possible to include other categorical variables such as hillslope position. The `multinominal2logical()` is used to expand a set of categories into a matrix of TRUE/FALSE.
 
-## binary + multinominal categories
-
-# new versions of fetchNASIS do this automatically
-loafercreek$hillslope_pos <- factor(loafercreek$hillslope_pos, levels=c('Toeslope', 'Footslope', 'Backslope', 'Shoulder', 'Summit'))
-
+```{r, fig.width=8, fig.height=7}
 # work-around: new function in sharpshootR
 hp <- multinominal2logical(loafercreek, 'hillslope_pos')
+
+# check it out
+head(hp)
+
+# join back into site-level attributes
 site(loafercreek) <- hp
 
 # init variable names
