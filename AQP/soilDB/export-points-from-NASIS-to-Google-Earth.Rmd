@@ -1,4 +1,7 @@
 ---
+title: "Viewing Pedon Data from NASIS in Google Earth"
+author: "Jay Skovlin"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
@@ -13,11 +16,6 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-
-Viewing Pedon Data from NASIS in Google Earth
-===============================
-`r format(Sys.time(), "%Y-%m-%d")`
-Jay Skovlin
 
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to export pedon locations from a local NASIS database and then use the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf) package to generate KML files for viewing in Google Earth.  
 
@@ -69,7 +67,7 @@ par(mar=c(1,1,1,1))
 plot(s)
 
 # subset to columns from the site data that may useful as labels
-s <- s[, c('site_id', 'pedon_id', 'obs_date', 'pedlabsampnum', 'taxonname', 'hillslope_pos', 'elev_field', 'slope_field', 'aspect_field', 'plantassocnm', 'bedrckdepth', 'bedrock_kind', 'pmkind', 'pmorigin')]
+s <- s[, c('site_id', 'pedon_id', 'obs_date', 'pedlabsampnum', 'taxonname', 'hillslopeprof', 'elev_field', 'slope_field', 'aspect_field', 'plantassocnm', 'bedrckdepth', 'bedrckkind', 'pmkind', 'pmorigin')]
 
 # generate a basic KML file of site locations with site_id specified as the placemark labels
 # set KML file path
@@ -99,7 +97,7 @@ The script below builds a URL to a web-based NASIS pedon description report for 
 
 ```{r example3, eval=FALSE}
 # build URL to NASIS Web Pedon Description Report and add this as a column to our site data
-s$report_link <- paste(']]><![CDATA[<a href="https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon+Description+html+(userpedid)&pedon_id=', s$pedon_id, '">Pedon Description Report</a>]]><![CDATA[', sep='')
+s$report_link <- paste(']]><![CDATA[<a href="https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=Pedon_Site_Description_usepedonid&pedon_id=', s$pedon_id, '">Pedon Description Report</a>]]><![CDATA[', sep='')
 
 kml_file_path <- 'C:/temp/R_sites_with_report_link.kml'
 kml_open(file.name=kml_file_path, folder.name='Sites_with_URL', overwrite=TRUE)
