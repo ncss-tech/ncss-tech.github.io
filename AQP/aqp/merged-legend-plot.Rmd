@@ -1,35 +1,28 @@
 ---
+title: "Plotting multiple SoilProfileCollection objects"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    theme: journal
     mathjax: null
     jquery: null
-    smart: false
+    smart: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=TRUE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
-
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
 ```
 
 
+# Introduction
+Plotting several `SoilProfileCollection` objects in the same context can be challenging. This document illustrates two methods for organizing profiles into groups within a single sketch.
 
-Plotting multiple SoilProfileCollection objects
-===============================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
+# Get Data
+We are going to demonstrate some concepts using both KSSL (lab) and OSD (typical morphology) data for the [Sobrante](http://casoilresource.lawr.ucdavis.edu/sde/?series=sobrante) and [Auburn](http://casoilresource.lawr.ucdavis.edu/sde/?series=auburn) soil series.
 
 ```{r load-packages-get-data}
 library(aqp)
@@ -43,7 +36,38 @@ osd <- fetchOSD(c('sobrante', 'auburn'))
 # get KSSL data for these series
 kssl.1 <- fetchKSSL('sobrante')
 kssl.2 <- fetchKSSL('auburn')
+```
 
+Note that the KSSL-derived SPC objects share the same structure, but the OSD-derived object does not. This will have implications on how the data can be displayed within the same sketch.
+```{r eval=FALSE}
+str(kss1.1)
+str(kss1.2)
+str(osd)
+```
+
+# Method 1: Split Sketch into Groups
+We can easily combine the two KSSL-derived objects using `rbind()`. The colors and legend can be automatically generated from the entire set of (combined) `clay` values.
+```{r fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
+# combine similar SPCs into a new SPC
+g <- rbind(kssl.1, kssl.2)
+
+# there is some variabilty in capitalization: need to normalize these names
+table(g$taxonname)
+
+# normalize taxonname (soil series) via capitalization
+g$taxonname <- toupper(g$taxonname)
+
+# plot groups of profiles organized by normalized taxonname
+par(mar=c(1,1,4,3))
+groupedProfilePlot(g, groups = 'taxonname', name='hzn_desgn', color='clay', label='pedon_id', id.style='side')
+```
+
+
+# Method 2: Plot SPC Objects of Variable Provenance
+`SoilProfileCollection` objects from any source can be included into the same sketch using `plotMultipleSPC()`. However, the symbology of soil property values via color must be manually defined.
+
+## Create "Merged" Color Scheme
+```{r}
 # color ramp function
 cr <- colorRamp(rev(brewer.pal(10, 'Spectral')))
 
@@ -72,15 +96,30 @@ legend.data <- list(legend=pretty.vals, col=rgb(cr(scales::rescale(pretty.vals))
 spc.list <- list(osd, kssl.1, kssl.2)
 ```
 
-```{r plot-color, fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
+
+## Plot
+```{r fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
+# assemble list of arguments to plotSPC for each object
 # note the use of .color for pre-computed value->color 
+args.list <- list(
+  list(name='hzname', color='soil_color', id.style='side'), 
+  list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side'), 
+  list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side')
+  )
+
 par(mar=c(1,1,3,3))
-plotMultipleSPC(spc.list, group.labels=c('OSD', 'Sobrante', 'Auburn'), args=list(list(name='hzname', color='soil_color', id.style='side'), list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side'), list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side')))
+plotMultipleSPC(spc.list, group.labels=c('OSD', 'Sobrante', 'Auburn'), args=args.list)
 
 # legend is the combined legend
 mtext(side=3, text='Clay Content (%)', font=2, line=1.6)
 legend('bottom', legend=legend.data$legend, col=legend.data$col, bty='n', pch=15, horiz=TRUE, xpd=TRUE, inset=c(0, 0.99))
 ```
+
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
 
 
