@@ -1,4 +1,7 @@
 ---
+title: "Export Pedon Spatial Data from NASIS"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     mathjax: null
@@ -14,14 +17,9 @@ options(width=100, stringsAsFactors=FALSE)
 ```
 
 
-Export Pedon Spatial Data from NASIS
-===============================
-`r format(Sys.time(), "%Y-%m-%d")`
-Dylan Beaudette
-
 This document demonstrates how to use the `soilDB` package to export pedon locations from the local NASIS database to shapefile.
 
-### Setup Local NASIS DB
+## Setup Local NASIS DB
  1. load selected set with pedons and sites of interest
  2. determine spatial subset layer and adjust path accordingly
  3. adjust buffer accordingly
@@ -29,7 +27,7 @@ This document demonstrates how to use the `soilDB` package to export pedon locat
  5. adjust output directory accordingly
 
 
-### Install R Packages
+## Install R Packages
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on with the following commands. Note that you only have to do this once.
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -38,7 +36,7 @@ install.packages('rgdal', dep=TRUE)
 install.packages('rgeos', dep=TRUE)
 ```
 
-### Get Pedons and Save to SHP
+## Get Pedons and Save to SHP
 Copy and paste the following code into a new R script document. Step through the lines of code (e.g. run each line starting from the top) by moving the cursor to the top line and then press ctrl + enter repeatedly.
 ```{r example, eval=FALSE}
 require(soilDB)
@@ -47,7 +45,7 @@ require(rgeos)
 
 # Load a suitable boundary for spatial subset of NASIS pedons
 # CRS: UTM z10 NAD83
-b <-  readOGR(dsn='L:/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_b', encoding='encoding', stringsAsFactors=FALSE)
+b <-  readOGR(dsn='L:/NRCS/MLRAShared/CA630/FG_CA630_OFFICIAL.gdb', layer='ca630_b', encoding='encoding', stringsAsFactors=FALSE)
 
 # just in case, check that the "boundary" coordinate system is projected
 proj4string(b)
@@ -64,6 +62,7 @@ f <- fetchNASIS(rmHzErrors = FALSE)
 
 # some pedons are missing coordinates in NASIS
 # keep only those pedons with real coordinates
+# make an index to those pedons with non-missing WGS84 coordinates
 good.idx <- which(!is.na(f$x_std) & !is.na(f$y_std))
 f <- f[good.idx, ]
 
@@ -74,7 +73,7 @@ proj4string(f) <- '+proj=longlat +datum=WGS84'
 # extract only site data
 s <- as(f, 'SpatialPointsDataFrame')
 
-# project boundary to CRS of points
+# project boundary to CRS of points: longlat WGS84
 b <- spTransform(b, CRS(proj4string(s)))
 
 # graphical check
@@ -87,16 +86,16 @@ points(s, col='black', cex=0.5)
 # perform subset
 idx <- gIntersects(s, b, byid = TRUE)
 ids <- which(apply(idx, 2, any))
-s <- s[ids,]
+s <- s[ids, ]
 
 # check subset
 points(s, col='red', cex=1, pch=0)
 
 # subsetting the columns useful for analysis
-s <- s[, c("pedlabsampnum", "pedon_id","taxonname", "hillslope_pos", "elev_field", "slope_field", "aspect_field", "plantassocnm", "bedrckdepth", "bedrock_kind", 'pmkind', 'pmorigin')]
+s <- s[, c("pedlabsampnum", "pedon_id","taxonname", "hillslopeprof", "elev_field", "slope_field", "aspect_field", "plantassocnm", "bedrckdepth", "bedrckkind", 'pmkind', 'pmorigin')]
 
 # write to SHP
-# output CRS is CGS NAD83
+# output CRS is CGS WGS84
 writeOGR(s, dsn='.', layer='NASIS-pedons', driver='ESRI Shapefile', overwrite_layer=TRUE)
 ```
 
