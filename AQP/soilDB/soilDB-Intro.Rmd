@@ -103,12 +103,12 @@ The `fetchNASIS()` function will load pedons from the "selected set" in your loc
 ```{r local-nasis-demo, eval=FALSE}
 library(soilDB)
 # fetch pedons from the selected set, replace NULL rock fragment fractions with 0
-f <- fetchNASIS(nullFragsAreZero=TRUE)
+f <- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
 # fetch pedons from the selected set, do not replace NULL rock fragment fractions with 0
-f <- fetchNASIS(nullFragsAreZero=FALSE)
+f <- fetchNASIS(from='pedons', nullFragsAreZero=FALSE)
 
 # DMU data
-fc <- fetchNASIS_component_data()
+fc <- fetchNASIS(from='components',)
 ```
 
 **Fetch Pedons from PedonPC 5.x Database**
@@ -333,7 +333,7 @@ f.diag.top <- function(x, d.hz) {
 	# extract diagnostic horizon data
 	d <- diagnostic_hz(x)
 	# subset to the requested diagnostic hz
-	d <- subset(d, diag_kind == d.hz)
+	d <- subset(d, featkind == d.hz)
   
 	# if missing return NA
 	if(nrow(d) == 0)
