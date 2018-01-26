@@ -16,10 +16,6 @@ options(width=100, stringsAsFactors=FALSE)
 ```
 
 
-
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
-
-
 # Introduction
 
 
@@ -138,7 +134,7 @@ title('Aggregate Soil Properties')
 
 
 
-```{r plot-clay, fig.width=14, fig.height=6, htmlcap='sdfsdfsdf'}
+```{r plot-clay, fig.width=14, fig.height=6}
 par(mar=c(1,0,3,0))
 plot(x.colors, divide.hz=FALSE, color='clay', name='', plot.order=new.order, col.label='Clay Content (%)', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
 addBracket(depth.brackets, col='black', label.cex=0.85)
@@ -217,3 +213,6 @@ addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
 ```
 
 
+----------------------------------------------------
+
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
