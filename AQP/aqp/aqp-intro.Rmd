@@ -382,7 +382,7 @@ addBracket(a.sub, col='red')
 ```
 
 
-When bottom depths are missing and arrow is used:
+When bottom depths are missing an arrow is used:
 ```{r, fig.height=4, fig.width=8}
 a$bottom <- NA
 # tighter figure margins

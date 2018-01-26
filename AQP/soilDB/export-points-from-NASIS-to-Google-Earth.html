@@ -11,7 +11,7 @@
 
 <meta name="author" content="Jay Skovlin" />
 
-<meta name="date" content="2018-01-25" />
+<meta name="date" content="2018-01-26" />
 
 <title>Viewing Pedon Data from NASIS in Google Earth</title>
 
@@ -36,7 +36,7 @@ if (window.hljs) {
   hljs.configure({languages: []});
   hljs.initHighlightingOnLoad();
   if (document.readyState && document.readyState === "complete") {
-    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+    window.setTimeout(function() { hljs.initHighlightingOnLoad(); }, 0);
   }
 }
 </script>
@@ -121,7 +121,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Viewing Pedon Data from NASIS in Google Earth</h1>
 <h4 class="author"><em>Jay Skovlin</em></h4>
-<h4 class="date"><em>2018-01-25</em></h4>
+<h4 class="date"><em>2018-01-26</em></h4>
 
 </div>
 
@@ -156,7 +156,7 @@ getwd()
 setwd('C:/temp/')
 
 # load pedon data from selected set in NASIS
-f &lt;- fetchNASIS()
+f &lt;- fetchNASIS(from='pedons')
 
 # some pedon data may be missing coordinates in NASIS
 # filter to keep only those pedons with coordinates

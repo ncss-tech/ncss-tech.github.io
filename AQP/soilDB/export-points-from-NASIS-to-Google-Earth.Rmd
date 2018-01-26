@@ -47,7 +47,7 @@ getwd()
 setwd('C:/temp/')
 
 # load pedon data from selected set in NASIS
-f <- fetchNASIS()
+f <- fetchNASIS(from='pedons')
 
 # some pedon data may be missing coordinates in NASIS
 # filter to keep only those pedons with coordinates
