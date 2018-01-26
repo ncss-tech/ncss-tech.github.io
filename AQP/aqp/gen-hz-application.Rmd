@@ -1,7 +1,7 @@
 ---
-title: "Assigning Generalized Horizon Labels"
-author: "D.E. Beaudette"
-date: "Wednesday, September 24, 2014"
+title: 
+author: 
+date: 
 output: html_document
 ---
 
@@ -18,7 +18,7 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 ```
 
 
-Using Generalized Horizon Labels
+Assigning and Using Generalized Horizon Labels
 ================================
 D.E. Beaudette, J.M. Skovlin
 <br>
@@ -85,7 +85,7 @@ The following code block demonstrates how to pull data in using the [`fetchNASIS
 ```{r use-nasis-data, eval=FALSE}
 # first load the desired data set within NASIS into your NASIS selected set
 # then load data from the NASIS selected set into R
-pedons <- fetchNASIS()
+pedons <- fetchNASIS(from='pedons')
 # optionally subset the data by taxon name - enter your taxon name
 pedons <- pedons[grep(pattern='ENTER_YOUR_TAXON_NAME', f$taxonname, ignore.case=TRUE), ]
 ```

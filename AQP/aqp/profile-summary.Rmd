@@ -37,7 +37,7 @@ soils <- c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argo
 Optionally re-make cached data. Requires NASIS and relevant soils in the selected set.
 ```{r, eval=FALSE}
 # get all pedons from the selected set
-x <- fetchNASIS(rmHzErrors = FALSE, nullFragsAreZero = FALSE)
+x <- fetchNASIS(from='pedons', rmHzErrors = FALSE, nullFragsAreZero = FALSE)
 
 # convert vector of taxonnames into REGEX pattern for matching
 pat <- paste0(soils, collapse='|')

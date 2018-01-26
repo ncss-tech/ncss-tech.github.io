@@ -108,7 +108,7 @@ f <- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
 f <- fetchNASIS(from='pedons', nullFragsAreZero=FALSE)
 
 # DMU data
-fc <- fetchNASIS(from='components',)
+fc <- fetchNASIS(from='components')
 ```
 
 **Fetch Pedons from PedonPC 5.x Database**

@@ -66,7 +66,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 
 
 # presence / absense matrix of several diagnostic features
-x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrckkind', dend.label = 'taxonname')
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='pedon_id', dend.label = 'taxonname')
 
 x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='pedon_id')
@@ -77,7 +77,7 @@ It is possible to include other categorical variables such as hillslope position
 
 ```{r, fig.width=8, fig.height=7}
 # work-around: new function in sharpshootR
-hp <- multinominal2logical(loafercreek, 'hillslope_pos')
+hp <- multinominal2logical(loafercreek, 'hillslopeprof')
 
 # check it out
 head(hp)
@@ -91,8 +91,8 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 
 # should work as before
 # use the 'sort.vars = FALSE' option to set the order of the variable names to the order they are listed in 'v'
-x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname', sort.vars = FALSE)
-x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='bedrock_kind', sort.vars = FALSE)
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrckkind', dend.label = 'taxonname', sort.vars = FALSE)
+x <- diagnosticPropertyPlot2(loafercreek, v, k=5, grid.label='bedrckkind', sort.vars = FALSE)
 ```
 
 

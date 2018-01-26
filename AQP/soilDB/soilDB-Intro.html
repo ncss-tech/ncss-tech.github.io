@@ -198,7 +198,7 @@ f &lt;- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
 f &lt;- fetchNASIS(from='pedons', nullFragsAreZero=FALSE)
 
 # DMU data
-fc &lt;- fetchNASIS(from='components',)</code></pre>
+fc &lt;- fetchNASIS(from='components')</code></pre>
 <p><strong>Fetch Pedons from PedonPC 5.x Database</strong></p>
 <p>The <code>fetchPedonPC(dsn)</code> function will load all pedon records into the current R session, based on the value of <code>dsn</code>-- a path to a PedonPC version 5.x database. Note that it is not currently possible to use 64bit R to connect with 32bit Acccess. Therefore, if you plan on using this function, please remember to use the 32bit R executable.</p>
 <pre class="r"><code>library(soilDB)
