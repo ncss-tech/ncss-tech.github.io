@@ -52,7 +52,7 @@ After installing the above packages, add some sites/pedons into the selected set
 library(soilDB)
 
 # fetch all pedons from the selected set in local NASIS database
-fp <- fetchNASIS()
+fp <- fetchNASIS(from='pedons')
 
 # make sketches of the first 10 pedons:
 par(mar=c(0,0,0,0))
