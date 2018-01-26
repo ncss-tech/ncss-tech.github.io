@@ -1,26 +1,25 @@
 ---
+title: "Soil Data Access (SDA2) Tutorial"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    fig_caption: yes
-    jquery: null
     mathjax: null
+    jquery: null
     smart: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-# library(printr, quietly=TRUE)
+
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Soil Data Access (SDA2) Tutorial
-================================
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>Dylan Beaudette
 
-## Introduction
+
+# Introduction
 This is a short tutorial on how to interact with the [Soil Data Access (SDA) web-service](http://sdmdataaccess.nrcs.usda.gov/) using R. Queries are written using [a dialect of SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). On first glance SQL appears similar to the language used to write NASIS queries and reports, however, these are two distinct languages. Soil Data Access is a "window" into the spatial and tabular data associated with the current SSURGO snapshot. Queries can contain spatial and tabular filters. If you are new to SDA or SQL, have a look at [this page](http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx). Here is a [SSURGO-specific](https://nasis.sc.egov.usda.gov/NasisReportsWebSite/limsreport.aspx?report_name=SDA-SQL_Library_Home) library of SQL code, organized by task.
 
 Spatial queries can be included in SQL statements submitted to SDA as long as the geometry has first been transformed to [WGS84 geographic](http://spatialreference.org/ref/epsg/wgs-84/) (or [psuedo-Web Mercator](http://spatialreference.org/ref/sr-org/7483/)) coordinates and formatted as "[well known text](https://en.wikipedia.org/wiki/Well-known_text)" (WKT). The `sp` and `rgdal` packages provide functionality for converting between coordinate systems via `spTransform()`. Coordinate reference system definitions (a "CRS") are typically provided using [proj4](https://en.wikipedia.org/wiki/PROJ.4) notation. You can search for various CRS definitions in a variety of formats using [spatialreference.org/](http://spatialreference.org/). 
@@ -32,7 +31,7 @@ Follow along with the blocks of code below by copying / pasting into a new R "sc
 If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
 
 
-### Critical Note: SSURGO vs. STATSGO
+## Critical Note: SSURGO vs. STATSGO
 SSURGO (1:24k soil survey) and STATSGO (1:250k soil survey) records are stored *together* in SDA. Therefore, it is critical that evey query to SDA include some kind of filter for selecting the appropriate records. Filtering strategies include:
 
    * explicit exclusion of STATSGO records, via `legend.areasymbol != 'US'` in the WHERE clause
@@ -73,7 +72,7 @@ install.packages("rgeos", dep = TRUE)
 ```
 
 
-## Simple Queries 
+# Simple Queries 
 Now that you have the required packages, load them into the current R session.
 ```{r load-libs}
 library(soilDB)
@@ -171,9 +170,9 @@ xtabs(~ areasymbol + compname, data=res)
 ```
 
 
-## Queries Using Simple Spatial Filters
-
+# Queries Using Simple Spatial Filters
 Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402). Spatial queries using SDA helper functions automatically exclude STATSGO records.
+
 ```{r sda-spatial-query-basics-1}
 q <- "SELECT mukey, muname
 FROM mapunit
@@ -257,7 +256,7 @@ head(res)
 ```
 
 
-## Queries Using Complex Spatial Filters
+# Queries Using Complex Spatial Filters
 The examples above illustrate how to perform SDA queries using a single spatial filter. Typically we need to perform these queries over a collection of points, lines or polygons. The `soilDB` package provides some helper functions for iterating over a collection of features (usually points). Note that spatial queries for more than 1000 features should probably be done using a local copy of the map unit polygons.
 
 The first function `SDA_make_spatial_query()` will convert a single `Spatial*` (Points, Lines, Polygons) object to WKT and submit a spatial query to SDA, returning intersecting map unit keys and names. Let's try it using a `SpatialPoints` object with 1 feature.

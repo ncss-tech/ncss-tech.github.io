@@ -11,7 +11,6 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -55,7 +54,7 @@ x <- x[idx, ]
 save(x, file='profile-summary-SPC.rda')
 ```
 
-
+Get the cached copy of the `SoilProfileCollection` object used in this tutorial.
 ```{r}
 # load cached copy
 load(url('http://ncss-tech.github.io/AQP/aqp/profile-summary-SPC.rda'))
@@ -67,7 +66,7 @@ for(i in soils)
 # tabulate number of profiiles
 table(x$taxonname)
 
-# convert soil colors to LAB colorspace
+# convert soil colors to CIE LAB colorspace
 # moist colors
 cols.lab <- as(sRGB(x$m_r, x$m_g, x$m_b), 'LAB')@coords
 x$m_L <- cols.lab[, 1]
@@ -113,19 +112,27 @@ site(x.colors) <- dp
 
 # generate index for new ordering
 new.order <- match(c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot'), profile_id(x.colors))
+
+# make a table of data for adding depth brackets to profile sketches
+# see ?addBracket for details
+depth.brackets <- site(x.colors)
+names(depth.brackets)[2:3] <- c('top', 'bottom')
+
+# add a label
+depth.brackets$label <- 'P(soil >= 90%)'
 ```
 
-```{r plot-color, fig.width=14, fig.height=6, htmlcap='sdfsdfsdf'}
+```{r plot-color, fig.width=14, fig.height=6}
 par(mar=c(1,0,3,0))
 plot(x.colors, divide.hz=FALSE, name='', plot.order=new.order, col.label='Soil Color', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
+addBracket(depth.brackets, col='black', label.cex=0.85)
 title('Aggregate Soil Properties')
 ```
 
 ```{r fig.width=14, fig.height=6}
 d <- profile_compare(x.colors, vars=c('d_L', 'd_A', 'd_B'), max_d=150, k=0)
 plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name='',  divide.hz=FALSE, y.offset=10)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6)
+addBracket(depth.brackets, col='black', label.cex=0.6)
 title('Aggregate Soil Properties')
 ```
 
@@ -134,14 +141,14 @@ title('Aggregate Soil Properties')
 ```{r plot-clay, fig.width=14, fig.height=6, htmlcap='sdfsdfsdf'}
 par(mar=c(1,0,3,0))
 plot(x.colors, divide.hz=FALSE, color='clay', name='', plot.order=new.order, col.label='Clay Content (%)', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
+addBracket(depth.brackets, col='black', label.cex=0.85)
 
 plot(x.colors, divide.hz=FALSE, color='phfield', name='', plot.order=new.order, col.label='pH', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
+addBracket(depth.brackets, col='black', label.cex=0.85)
 
 plot(x.colors, divide.hz=FALSE, color='total_frags_pct', name='', plot.order=new.order, col.label='Total Rock Fragment Volume (%)', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
 addVolumeFraction(x.colors, 'total_frags_pct')
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.85)
+addBracket(depth.brackets, col='black', label.cex=0.85)
 ```
 
 
@@ -151,7 +158,7 @@ d <- profile_compare(x.colors, vars=c('clay', 'phfield', 'total_frags_pct'), max
 plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10)
 
 plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='clay')
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6)
+addBracket(depth.brackets, col='black', label.cex=0.6)
 addVolumeFraction(x.colors, 'total_frags_pct')
 
 plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='phfield')
@@ -163,7 +170,7 @@ plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide
 d <- profile_compare(x.colors, vars=c('d_L', 'clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
 
 plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
 ```
 
 
@@ -180,7 +187,7 @@ dd <- diana(d)
 
 par(mar=c(1,1,1,1))
 plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.002, y.offset = 0.04, width=0.15, name='',  divide.hz=FALSE)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
 ```
 
 ```{r fig.width=14, fig.height=6}
@@ -193,7 +200,7 @@ dd <- diana(d)
 
 par(mar=c(1,1,1,1))
 plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.15, name='',  divide.hz=FALSE)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
 ```
 
 ```{r fig.width=14, fig.height=6}
@@ -206,7 +213,7 @@ dd <- diana(d)
 
 par(mar=c(1,1,1,1))
 plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.15, name='',  divide.hz=FALSE)
-addBracket(x.colors$soil.top, x.colors$soil.bottom, col='black', label='P(soil >= 90%)', label.cex=0.6, offset = -0.25)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
 ```
 
 

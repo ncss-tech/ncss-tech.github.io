@@ -1,26 +1,22 @@
 ---
+title: "Writing SDA Queries that Return Geometry"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    fig_caption: yes
-    jquery: null
     mathjax: null
+    jquery: null
     smart: no
 ---
-
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
+
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Writing SDA Queries that Return Geometry
-================================
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>Dylan Beaudette
-
-## Introduction
+# Introduction
 This is a short tutorial on how to interact with the [Soil Data Access (SDA) web-service](http://sdmdataaccess.nrcs.usda.gov/) using R. Queries are written using [a dialect of SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). On first glance SQL appears similar to the language used to write NASIS queries and reports, however, these are two distinct languages. Soil Data Access is a "window" into the spatial and tabular data associated with the current SSURGO snapshot. Queries can contain spatial and tabular filters. If you are new to SDA or SQL, have a look at [this page](http://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx).
 
 If this is your first time using SDA, please see a related [tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) to get started.
@@ -31,7 +27,7 @@ Additional tips on advanced spatial queries can be found [here](http://sdmdataac
 
 Follow along with the blocks of code below by copying / pasting into a new R "script" document. Each block of commands can be run by pasting them into the R console, or by "stepping through" lines of code by moving the cursor to the top of a block (in the R script panel) and repeatedly pressing ctrl + enter.
 
-### Install Required R Packages
+## Install Required R Packages
 You only need to do this once. If you haven't installed these packages, then copy the code below and paste into the RStudio "console" pane.
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -44,9 +40,18 @@ install.packages("rgeos", dep = TRUE)
 ```
 
 
-### Simple Queries 
+## Critical Note: SSURGO vs. STATSGO
+SSURGO (1:24k soil survey) and STATSGO (1:250k soil survey) records are stored *together* in SDA. Therefore, it is critical that evey query to SDA include some kind of filter for selecting the appropriate records. Filtering strategies include:
 
-Now that you have the required packages, load them into the current R session.
+   * explicit exclusion of STATSGO records, via `legend.areasymbol != 'US'` in the WHERE clause
+   * implicit exclusion of STATSGO records, via SSURGO areasymbol in the WHERE clause
+   * spatial queries using SDA helper functions: e.g. `SDA_Get_Mukey_from_intersection_with_WktWgs84()`
+   * explicit selection of SSURGO / STATSGO records by record ID: e.g. `mukey`, `cokey`, etc.
+
+
+# Simple Queries 
+
+These queries implicitly *filter-out* STATSGO via `SDA_Get_MupolygonWktWgs84_from_Mukey`.
 ```{r}
 library(soilDB)
 library(rgeos)
@@ -77,9 +82,11 @@ FROM mapunit
 CROSS APPLY SDA_Get_MupolygonWktWgs84_from_Mukey(mapunit.mukey) as G
 WHERE mukey IN (SELECT DISTINCT mukey FROM component WHERE compname like 'amador%' AND majcompflag = 'Yes')"
 
+# result is a data.frame, "MupolygonWktWgs84" contains WKT representation of geometry
 res <- SDA_query(q)
 str(res)
 
+# convert to SPDF
 s <- processSDA_WKT(res)
 
 # check: OK
