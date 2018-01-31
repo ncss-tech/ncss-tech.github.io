@@ -103,12 +103,18 @@ par(mar=c(4.5,4,1,1))
 plotTransect(x, grad.var.name = 'elev_field', crs = CRS('+proj=utm +zone=10 +datum=NAD83'))
 ```
 
-```{r fig.width=8, fig.height=8}
+```{r fig.width=6, fig.height=4}
 ## better example from CA792
 # this requires the latest soilDB from github
 # devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 data("mineralKing")
 
+par(mar=c(1,1,2,1))
+groupedProfilePlot(mineralKing, groups='taxonname', print.id=FALSE)
+```
+
+
+```{r fig.width=8, fig.height=8}
 # init coordinates
 coordinates(mineralKing) <- ~ x_std + y_std
 proj4string(mineralKing) <- '+proj=longlat +datum=NAD83'
