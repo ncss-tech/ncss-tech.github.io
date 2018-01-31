@@ -1,0 +1,109 @@
+---
+title: "Frost-Free Day Estimation"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
+```
+
+
+```{sql}
+SELECT 
+-- IDs and observation dates
+siteiid as siteiid, peiid, usiteid as site_id, upedonid as pedon_id, obsdate as obs_date,
+-- soil temperature and depth of measurement
+soitemp, soitempdep
+-- tables or sub-queries after FROM keyword
+FROM
+-- I find it simplest to start at the "top" of the hierarchy
+site_View_1
+-- joins to additional tables
+-- each join must specify a join condition
+INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref
+LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref
+LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
+-- ordering of results
+ORDER BY obs_date, siteiid;
+```
+
+
+```{r}
+library(RODBC)
+library(soilDB)
+
+## TODO: add coordinates
+
+q <- "
+SELECT siteiid as siteiid, peiid, usiteid as site_id, upedonid as pedon_id, obsdate as obs_date,
+soitemp, soitempdep
+
+FROM
+
+site_View_1 
+INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref
+LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref
+LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
+order by obs_date, siteiid;"
+
+# setup connection local NASIS
+channel <- RODBC::odbcDriverConnect(connection="DSN=nasis_local;UID=NasisSqlRO;PWD=nasisRe@d0n1y")
+
+# exec query
+d <- RODBC::sqlQuery(channel, q, stringsAsFactors=FALSE)
+
+# close connection
+RODBC::odbcClose(channel)
+
+str(d)
+d <- na.omit(d)
+
+d <- subset(d, subset=soitempdep == 50)
+
+str(d)
+
+# multple rows: these are all lab samples = 2x pedons
+idx <- which(d$siteiid %in% names(which(table(d$siteiid) > 1)))
+d[idx, ]
+
+plot(soitemp ~ obs_date, data=d, type='b')
+
+d$doy <- as.integer(format(d$obs_date, "%j"))
+
+plot(soitemp ~ doy, data=d, type='p', ylim=c(-5, 30))
+```
+
+CA792 pedons
+```{r}
+p <- fetchNASIS(from='pedons')
+
+idx <- which(site(p)$peiid %in% d$peiid)
+p <- p[idx, ]
+
+length(p)
+```
+
+
+```{r}
+# only retain points with coordinates
+idx <- which(!is.na(p$x_std) & !is.na(p$y_std))
+p <- p[idx, ]
+
+# these are GCS WGS84 coordinates from NASIS
+coordinates(p) <- ~ x_std + y_std
+proj4string(p) <- '+proj=longlat +datum=WGS84'
+
+s <- as(p, 'SpatialPointsDataFrame')
+plot(s)
+```
+
