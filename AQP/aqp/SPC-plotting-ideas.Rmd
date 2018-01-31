@@ -1,0 +1,167 @@
+---
+title: "Generating Sketches from SPC Objects"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+This is a work in progress, please see the in-line comments for a description of what is going on here.
+
+```{r fig.width=8, fig.height=5}
+# load required libraries
+library(soilDB)
+library(aqp)
+library(sharpshootR)
+library(sp)
+
+# sample data from soilDB packaeg
+data("loafercreek")
+
+# keep first 10 profiles
+x <- loafercreek[1:10, ]
+
+# default margins are too wide, make smaller
+par(mar=c(1,1,2,1))
+
+# profile sketches
+plot(x, label='pedon_id')
+
+# group profiles by hillslope position
+groupedProfilePlot(x, 'hillslopeprof', label='pedon_id')
+
+# extract site data so that we can annotate wit PSCS depths
+s <- site(x)
+
+# reminder of ID used by SPC
+idname(x)
+
+# subset site data into ID and PSCS top / bottom 
+s <- s[, c('peiid', 'psctopdepth', 'pscbotdepth')]
+
+# re-name for addBrackets() function
+names(s)[2:3] <- c('top', 'bottom') 
+
+# plot sketches and annotate with PSCS
+par(mar=c(1,1,1,1))
+# ommit pedon IDs for now
+plot(x, print.id=FALSE)
+# add PSCS brackets as vertical var
+addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+
+# check structure of diagnostic horizon data
+head(diagnostic_hz(x))
+# tabulate and sort
+sort(table(diagnostic_hz(x)$featkind))
+
+# add brackets for some diagnostic features
+addDiagnosticBracket(x, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, kind='paralithic contact', col='black')
+```
+
+```{r fig.width=8, fig.height=5}
+# experiment with re-ordering sketches
+# order according to elevation as described in the field
+new.order <- order(x$elev_field)
+new.order
+
+# plot profiles in the new order
+par(mar=c(4.5,1,1,1))
+plot(x, plot.order=new.order, print.id=FALSE)
+
+# the "brackets" will automatically follow the new ordering
+addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, kind='paralithic contact', col='black')
+
+# add an axis with elevation associated with each profile
+axis(side=1, at = 1:length(x), labels = x$elev_field[new.order], line = 1)
+mtext('Elevation (m)', side = 1, line = 3.25)
+```
+
+```{r fig.width=8, fig.height=8}
+## plot data as a transect, using coordinates and elevation
+
+# initialize spatial object in SPC
+coordinates(x) <- ~ x_std + y_std
+# set coordinate reference system (CRS)
+proj4string(x) <- '+proj=longlat +datum=WGS84'
+
+# this example requires projected coordinates, units of meters
+# we provide a local, projected CRS: UTM z10 NAD83
+par(mar=c(4.5,4,1,1))
+plotTransect(x, grad.var.name = 'elev_field', crs = CRS('+proj=utm +zone=10 +datum=NAD83'))
+```
+
+```{r fig.width=8, fig.height=8}
+## better example from CA792
+# this requires the latest soilDB from github
+# devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+data("mineralKing")
+
+# init coordinates
+coordinates(mineralKing) <- ~ x_std + y_std
+proj4string(mineralKing) <- '+proj=longlat +datum=NAD83'
+
+# local CRS
+crs.utm <- CRS('+proj=utm +zone=11 +datum=NAD83')
+
+par(mar=c(4.5,4,4,1))
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id')
+
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', color='clay')
+```
+
+
+```{r fig.width=10, fig.height=5}
+# load example dataset
+data(gopheridge)
+
+# randomly select 20 profiles
+gopheridge <- sample(gopheridge, 20)
+
+# define a new function
+# get hz mid-point of hz with max clay content
+f.max.clay.depth <- function(x) {
+  h <- horizons(x)
+  max.clay <- which.max(h$clay)
+  res <- with(h[max.clay, ], (hzdept+hzdepb) / 2)
+  return(res)
+}
+
+# apply function to each profile
+# results are put into @site
+gopheridge$max.clay.depth <- profileApply(gopheridge, f.max.clay.depth)
+
+
+# plot and annotate with max clay depths
+par(mar=c(0,0,0,0))
+plot(gopheridge, name='hzname', print.id=FALSE)
+x.pos <- 1:length(gopheridge)
+points(x.pos, gopheridge$max.clay.depth, col='white', pch=21, cex=0.75, bg='black')
+```
+
+```{r}
+##
+# see ?sp5 examples
+```
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
+
+
+
+
