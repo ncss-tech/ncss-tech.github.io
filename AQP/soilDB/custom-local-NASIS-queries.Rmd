@@ -1,5 +1,5 @@
 ---
-title: "Frost-Free Day Estimation"
+title: "Custom Queries to the Local NASIS Database"
 author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
@@ -18,7 +18,7 @@ options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
 
-```{sql}
+```{sql, eval=FALSE}
 SELECT 
 -- IDs and observation dates
 siteiid as siteiid, peiid, usiteid as site_id, upedonid as pedon_id, obsdate as obs_date,
