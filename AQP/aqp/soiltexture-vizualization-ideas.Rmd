@@ -1,0 +1,100 @@
+---
+title: "Soil Texture Vizualization Ideas"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+
+```{r fig.height=7, fig.width=7}
+library(soiltexture)
+library(soilDB)
+library(scales)
+
+# load sample data from soilDB package
+data("loafercreek")
+
+# extract just horizon data
+h <- horizons(loafercreek)
+
+# extract components of field texture, removing rows with missing data
+ssc <- h[, c('genhz', 'sand', 'silt', 'clay')]
+ssc <- na.omit(ssc)
+
+# adjust names for plotting with TT.plot()
+# names must be SAND, SILT, CLAY
+names(ssc) <- toupper(names(ssc))
+
+# test of bogus data
+ssc$sum <- rowSums(ssc[, c('SAND', 'SILT', 'CLAY')])
+# > 5% deviation from 100%
+idx <- which(abs(ssc$sum - 100) > 5)
+
+# check errors
+ssc[idx, ]
+
+# ommit errors
+# maybe fix these later?
+ssc <- ssc[-idx, ]
+
+# initialize an empty triangle, quick demo of output
+TT.plot(class.sys = "USDA-NCSS.TT", cex.lab=0.75, cex.axis=0.75)
+
+
+# plot our data
+# note that there are many arguments used to ajust style
+TT.plot(
+  class.sys= "USDA-NCSS.TT",    # use "our" texture triangle
+  tri.data=ssc,                 # data.frame with sand, silt, clay values
+  main= "Loafercreek",          # title
+  tri.sum.tst=FALSE,            # do not test for exact sum(sand, silt, clay) == 100
+  cex.lab=0.75,                 # scaling of label text
+  cex.axis=0.75,                # scaling of axis
+  cex=0.5,                      # scaling of point symbols
+  col=alpha('royalblue', 0.5),  # color of point symbols, with 50% transparency
+  frame.bg.col='white',         # background color
+  class.lab.col='black',        # color for texture class labels
+  lwd.axis=2                    # line thickness for axis
+)
+
+
+# split by generalized horizon name into a list of data.frames
+ssc.list <- split(ssc, ssc$GENHZ)
+
+# manually extract just A horizons
+x <- ssc.list$A
+
+# compose title using the current genhz
+this.hz <- x$GENHZ[1]
+title.text <- sprintf("Loafercreek: %s Horizons", this.hz)
+
+TT.plot(
+  class.sys= "USDA-NCSS.TT",    # use "our" texture triangle
+  tri.data=x,                 # 
+  main=title.text,    # title
+  tri.sum.tst=FALSE,            # do not test for exact sum(sand, silt, clay) == 100
+  cex.lab=0.75,                 # scaling of label text
+  cex.axis=0.75,                # scaling of axis
+  cex=0.5,                      # scaling of point symbols
+  col=alpha('royalblue', 0.5),  # color of point symbols, with 50% transparency
+  frame.bg.col='white',         # background color
+  class.lab.col='black',        # color for texture class labels
+  lwd.axis=2                    # line thickness for axis
+)
+```
+
+
+
