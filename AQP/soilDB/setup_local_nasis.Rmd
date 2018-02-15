@@ -1,4 +1,6 @@
 ---
+title: "Setup an ODBC Connection to the Local NASIS Database"
+date: "`r Sys.Date()`"
 output:
   html_vignette:
     mathjax: null
@@ -7,16 +9,11 @@ output:
     self_contained: yes
 ---
 
-## Setup an ODBC Connection to the Local NASIS Database
-NASIS 6.2
-<br>`r format(Sys.time(), "%Y-%m-%d")`
-
-
-### Introduction
+## Introduction
 This document describes how setup an ODBC link between a local NASIS database and **R**, so that pedon and DMU records can be queried with the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package.
 
 
-### Open the ODBC Data Source Administrator
+## Open the ODBC Data Source Administrator
 1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. 
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
@@ -36,7 +33,7 @@ This document describes how setup an ODBC link between a local NASIS database an
 6. Close the ODBC control panel by clicking on 'OK'
 
 
-### Install Required Packages
+## Install Required Packages
 You will need to install a couple of packages before R is able to read data from the local NASIS database. This only has to be done once, usually the first time you open RStudio on your machine. Open RStudio (start menu, search for RStudio) and copy and paste the following lines into the R console. Press the enter key and wait: R will automatically download and install these packages. If this is the first time you have installed packages, you may notice that many more than the following two packages are being installed. This is normal-- the `RODBC` and `soilDB` packages depend on [many other related packages](http://mran.revolutionanalytics.com/packagedata/graphs/soilDB.png), which must be installed first.
 
 ```{r install-packages, eval=FALSE}
@@ -46,7 +43,7 @@ install.packages("soilDB", dep=TRUE) # stable version from CRAN + dependencies
 ```
 
 
-### An example R session
+## An example R session
 After installing the above packages, add some sites/pedons into the selected set and try loading them into your R session.
 ```{r example, eval=FALSE}
 # load required libraries
