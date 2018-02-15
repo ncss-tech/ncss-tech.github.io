@@ -26,7 +26,8 @@ This document describes how setup an ODBC link between a local NASIS database an
   
 3. Choose the second option: "SQL Server authentication...", **don't try and re-type these, just copy/paste*
   + login: `NASISSQLRO` 
-  + password: `nasisRe@d0n1y`
+  + Windows 7 password: `nasisRe@d0n1y`
+  + Windows 10 password: `nasisRe@d0n1y365`
   
 4. On the next screen, select "Nasis-local" as the default data base.
 
