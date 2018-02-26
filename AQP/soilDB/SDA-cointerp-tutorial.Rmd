@@ -1,4 +1,7 @@
 ---
+title: "Component Interpretation Summary via SDA"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     fig_caption: yes
@@ -6,6 +9,7 @@ output:
     mathjax: null
     smart: no
 ---
+
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
@@ -19,14 +23,6 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
     })
 ```
 
-
-Component Interpretation Summary via SDA
-========================================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
-This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
 You probably need to install some packages before this will work. Have a look at [this tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) to get setup.
 
@@ -163,4 +159,8 @@ title('Component Similarity via Select Interpretation Fuzzy Values')
 ```
 
 Interesting. Discussion to be continued...
+
+
+-------------------------------------
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
