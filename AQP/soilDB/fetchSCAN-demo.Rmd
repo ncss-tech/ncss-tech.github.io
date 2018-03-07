@@ -69,7 +69,7 @@ dlply(m, 'site.code', function(i) unique(i$Ecode))
 Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
 ```{r, fig.width=8, fig.height=8}
 # fetchSCAN can accept multiple years
-x <- fetchSCAN(site.code=2001, year=c(2013,2014,2015,2016))
+x <- fetchSCAN(site.code=2001, year=c(2014,2015,2016,2017))
 
 # check the results
 str(x, 1)
@@ -298,3 +298,4 @@ levelplot(phi_leq_15_bar ~ doy * factor(year) | factor(depth), main='Daily Mean 
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
