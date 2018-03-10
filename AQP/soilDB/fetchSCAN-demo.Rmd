@@ -58,10 +58,14 @@ library(plyr)
 library(latticeExtra)
 
 # get basic sensor metadata for several SCAN/SNOTEL sites
-m <- SCAN_sensor_metadata(site.code=c(2072,356,2148,2187))
+m <- SCAN_site_metadata(site.code=c(2072,356,2148,2187))
 
-# print a list of sensor types by station
-dlply(m, 'site.code', function(i) unique(i$Ecode))
+knitr::kable(m, row.names = FALSE)
+
+x <- fetchSCAN(site.code=c(574), year=c(2016))
+
+# print a list of sensor types
+names(x[-1])
 ```
 
 
@@ -87,6 +91,29 @@ date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 
 xyplot(value ~ Date | factor(depth), data=x$SMS, as.table=TRUE, type=c('l','g'), strip=strip.custom(bg=grey(0.80)), layout=c(1,length(sensor.depths)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), ylab='Volumetric Water Content', main='Soil Moisture at Several Depths')
 ```
 
+# Visualizing sensor depths within the context of a soil profile
+One way to get a visual diagram of where the SCAN soil moisture and temperature sensors occur within the context of the soil profile horizons is to use the linkage in the attached metadata to join the sensor depths to the profile horizonation.
+```{r fig.width=8, fig.height=8, warning=FALSE}
+# get more data
+x <- fetchSCAN(site.code=c(574), year=c(2016))
+s <- fetchKSSL(pedlabsampnum = na.omit(x$metadata$pedlabsampnum), returnMorphologicData = FALSE)
+
+# get unique set of soil moisture sensor depths
+sensor.depths <- unique(x$SMS$depth)
+
+# slice the KSSL data associated with the sensor depths
+s1 <- slice(s, sensor.depths ~ .)
+
+# generate a better axis for dates
+date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 months')
+
+# plot profile of lab data horizons then over plot with location of sensor depths within them
+plot(s, name='hzn_desgn', label='pedon_id', id.style='top', cex.names=0.75, x.idx.offset=0.5, axis.line.offset=-15)
+title(paste('Sensor Depths for SCAN site', unique(x$SMS$Site), sep=" "), line=0.5, cex.main=1.5)
+
+# over plot the sensor depths on the previous plot
+plot(s1, width=0.005, name='hzn_top', label='pedon_id', print.id=FALSE, id.style='top', cex.names=0.75, x.idx.offset=0.5, lwd=2, fill='blue', plot.depth.axis=FALSE, add=TRUE)
+```
 
 
 # Getting Data from Multiple Stations
