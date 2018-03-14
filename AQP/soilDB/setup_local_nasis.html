@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="date" content="2018-02-15" />
+<meta name="date" content="2018-03-14" />
 
 <title>Setup an ODBC Connection to the Local NASIS Database</title>
 
@@ -68,7 +68,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 <h1 class="title toc-ignore">Setup an ODBC Connection to the Local NASIS Database</h1>
-<h4 class="date"><em>2018-02-15</em></h4>
+<h4 class="date"><em>2018-03-14</em></h4>
 
 
 
@@ -79,11 +79,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="open-the-odbc-data-source-administrator" class="section level2">
 <h2>Open the ODBC Data Source Administrator</h2>
 <ol style="list-style-type: decimal">
-<li><p>Go to the Start Menu and search for 'ODBC'. See <a href="http://msdn.microsoft.com/en-us/library/ms188691.aspx">this page</a> if you get lost.</p></li>
+<li><p>Go to the Start Menu and search for 'ODBC'. See <a href="http://msdn.microsoft.com/en-us/library/ms188691.aspx">this page</a> if you get lost. Select the 64bit ODBC application if you are using Windows 10.</p></li>
 <li>With the &quot;User DSN&quot; tab selected, create a new data source by clicking on the &quot;Add...&quot; button.</li>
 </ol>
 <ul>
-<li>Select the &quot;SQL Server&quot; driver.</li>
+<li>Select the &quot;SQL Server&quot; driver. (64bit if prompted for a choice)</li>
 <li>Name the data source <code>nasis_local</code>, the data source description is optional.</li>
 <li>The server location is <code>XXXXXX\NASISSQLEXPRESS</code>, where <code>XXXXXX</code> is the <a href="http://windows.microsoft.com/en-us/windows7/find-your-computer-name">full name of your local machine</a>. It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the &quot;My Computer&quot; icon and then clicking on the &quot;Properties&quot; tab. It will look something like: <code>CASONORA00L354</code>. When finished click &quot;Next&quot;.</li>
 </ul>
