@@ -42,6 +42,7 @@ install.packages('sp', dep=TRUE)
 install.packages('rgeos', dep=TRUE)
 install.packages('elevatr', dep=TRUE)
 install.packages('cluster', dep=TRUE)
+install.packages('xtable', dep=TRUE)
 ```
 
 You will also need the latest version of `sharpshootR`:
@@ -60,6 +61,7 @@ library(plyr)
 library(stringi)
 library(sp)
 library(plotKML)
+library(xtable)
 
 # set workspace
 setwd('C:/workspace/')
@@ -68,7 +70,7 @@ setwd('C:/workspace/')
 d <- read.csv(file='PLSS_locations.csv', stringsAsFactors = FALSE)
 
 # show format
-head(d)
+kable(d)
 ```
 
 ## Deriving centroids from PLSS information
@@ -84,7 +86,7 @@ plssMeridians[idx, ]
 d$m <- 'MT20'
 
 # show data
-head(d)
+kable(d)
 
 ```
 
@@ -96,29 +98,40 @@ The `formatPLSS()` function has a 'type' option which can be used to define the 
 
 The `PLSS2LL()` function relies on the GetTRS web service which is part of the functionality provided by the 
 [BLM PLSS web services](https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/exts/CadastralSpecialServices/GetTRS).
-This function will return the XY lattitude and longitude coordinates for a given formatted PLSS code. 
+This function will return the XY lattitude and longitude coordinates for a given formatted PLSS code. If the coordinates are not returned you may need to truncate the plssid code down to just the section (removing the QQ or Q pieces) - see an example of this process below.
+
+Note: The function will return coordinates for most regular PLSS cases, however, depending on the area there can be widespread divergence from regular PLSS grids.  Knowing the regularity of the sectional grid for your area of interest is important.  One way to get an idea of this is to load the following .kmz file and view it in Google Earth:
+
+https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/kml/mapImage.kmz
 
 ```{r}
 
 # format PLSS codes
 d$plssid <-formatPLSS(d)
 
-# format PLSS codes for sections identified as protracted ('PB') blocks
-idx <- which(d$type=='PB')
-d$plssid[idx] <- formatPLSS(d[idx, ], type="PB")
+# view table with plssid codes
+kable(d)
 
 # fetch lat/long coordinates
 d2 <- PLSS2LL(d)
 
-# set type to 'UP' when coords are not returned
-idx <- which(is.na(d2$lat))
-d$type[idx] <- 'UP'
-
-# reformat PLSS for unprotracted blocks
+# reformat PLSS for protracted ('PB') or unprotracted blocks ('UP')
 idx <- which(d$type=='UP')
 d$plssid[idx] <- formatPLSS(d[idx, ], type="UP")
 
 # run fetch lat/long coordinates again for unprotracted ('UP') blocks
+d2 <- PLSS2LL(d)
+
+# check for other records that did not return coordinates
+idx <- which(is.na(d2$lat))
+kable(d[idx, ])
+
+# truncate the plssid back to section for this record by removing the last 2 characters
+d$plssid[idx] <- stri_sub(d$plssid[idx], 1, stri_length(d$plssid[idx])-2)
+d$plssid[idx]
+
+# run fetch lat/long coordinates one more time to return the coordinates for the truncated plssid
+# NOTE: the section centroid will be returned, eventhough this site and the other UP sites have Q or QQ information
 d2 <- PLSS2LL(d)
 
 # clean up for join - drop PLSS code column
@@ -127,8 +140,12 @@ d2 <- d2[ , c(1,3:4)]
 # join coordinates back to the original data by unique 'id' column
 d3 <- join(d, d2, by='id', type='left')
 
+# add a column to flag this data for manually locating it later
+d3$check <- 'NA'
+d3$check <- ifelse((is.na(d3$qq) & is.na(d3$q) & nchar(d3$plssid) < 21), 'yes', 'no')
+
 # show data - note the format change in the plssid column for the 'UP' site
-d3
+kable(d3)
 
 ```
 
