@@ -1,0 +1,67 @@
+---
+title: "Visualizing Soil Temperature Regime"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+You will need the latest version of `soilDB`:
+```{r eval=FALSE}
+# install.packages('devtools', dep=TRUE)
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+
+```{r, fig.width=9, fig.height=7}
+library(soilDB)
+```
+
+
+```{r, fig.width=9, fig.height=7}
+estimateSTR(mast = 12, mean.summer = 15, mean.winter = 8)
+estimateSTR(mast = 4, mean.summer = 8, mean.winter = 1, O.hz = TRUE, saturated = FALSE, permafrost = FALSE)
+```
+
+
+
+
+```{r, fig.width=9, fig.height=7}
+par(mar=c(4,1,0,1))
+STRplot(mast = 0:25, msst = 10, mwst = 1)
+STRplot(mast = 0:25, msst = 9, mwst = 1)
+STRplot(mast = 0:25, msst = 7, mwst = 1)
+STRplot(mast = 0:25, msst = 6, mwst = 1)
+STRplot(mast = 0:25, msst = 5, mwst = 1)
+```
+
+```{r, fig.width=9, fig.height=7}
+par(mar=c(4,1,0,1))
+STRplot(mast = 5, msst = 1:18, mwst = 0)
+STRplot(mast = 5, msst = 1:18, mwst = 1)
+STRplot(mast = 5, msst = 1:18, mwst = 2)
+STRplot(mast = 5, msst = 1:18, mwst = 3)
+STRplot(mast = 5, msst = 1:18, mwst = 5)
+```
+
+```{r, fig.width=9, fig.height=7}
+par(mar=c(4,1,0,1))
+STRplot(mast = 10, msst = 1:18, mwst = 5)
+```
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
