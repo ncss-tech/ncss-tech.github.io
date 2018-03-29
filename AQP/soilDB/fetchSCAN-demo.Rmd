@@ -47,7 +47,9 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 
 
 
-# Quick Example: getting sensor metadata
+# Sensor Metadata
+
+## Metadata for Select Stations
 Each SCAN / SNOTEL station may have a different set of sensors.
 ```{r, packages, eval=TRUE}
 # load required packages
@@ -56,6 +58,7 @@ library(soilDB)
 library(reshape2)
 library(plyr)
 library(latticeExtra)
+library(maps)
 
 # get basic sensor metadata for several SCAN/SNOTEL sites
 m <- SCAN_site_metadata(site.code=c(2072,356,2148,2187))
@@ -69,7 +72,30 @@ names(x[-1])
 ```
 
 
-# Getting Data from a Single Station
+## Metadata for all Stations
+
+```{r, fig.width=8, fig.height=7}
+data('SCAN_SNOTEL_metadata', package = 'soilDB')
+
+map('state', lwd=2)
+title(main='SCAN / SNOTEL Sites')
+points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, subset=Network == 'SCAN', bg='DarkRed', pch=21)
+points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, subset=Network == 'SNOTEL', bg='RoyalBlue', pch=21)
+
+legend('bottomleft', legend=c('SCAN', 'SNOTEL'), pch=21, pt.bg=c('DarkRed', 'RoyalBlue'), bty='n')
+```
+
+```{r, fig.width=8, fig.height=7}
+map('state', lwd=2)
+title(main='SCAN / SNOTEL Sites')
+points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, bg='RoyalBlue', pch=21, cex=0.85)
+points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, subset=!is.na(pedlabsampnum), bg='DarkRed', pch=22)
+
+legend('bottomleft', legend=c('All Stations', 'Linked to Lab Data'), pch=c(21, 22), pt.bg=c('RoyalBlue', 'DarkRed'), bty='n')
+```
+
+
+# Sensor and Site Data for a Single Station
 Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
 ```{r, fig.width=8, fig.height=8}
 # fetchSCAN can accept multiple years
