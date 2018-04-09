@@ -19,7 +19,7 @@ This document describes how setup an ODBC link between a local NASIS database an
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
   + Select the "SQL Server" driver. (64bit if prompted for a choice)
   + Name the data source `nasis_local`, the data source description is optional.
-  + The server location is `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the [full name of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name). It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the "My Computer" icon and then clicking on the "Properties" tab. It will look something like: `CASONORA00L354`. When finished click "Next".
+  + The server location is `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the [full name of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name). It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the "My Computer" icon and then clicking on the "Properties" tab. On Windows 10, you can access your computer name by opening the "System" control panel. It will look something like: `CASONORA00L354`. When finished click "Next".
   
 3. Choose the second option: "SQL Server authentication...", **don't try and re-type these, just copy/paste*
   + login: `NASISSQLRO` 
