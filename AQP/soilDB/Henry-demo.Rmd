@@ -122,7 +122,7 @@ xyplot(sensor_value ~ date_time | sensor_name,
 xyplot(sensor_value ~ date_time | sensor_name, 
        data=x$soilVWC, subset=sensor_depth == 50, 
        main='Daily Soil Moisture at 50cm', type=c('l', 'g'), 
-       as.table=TRUE, xlab='Date', ylab='Deg C', 
+       as.table=TRUE, xlab='Date', ylab='Volumetric Water Content', 
        scales=list(alternating=3, cex=0.75, x=list(rot=45)), 
        strip=strip.custom(bg='grey')
        )
