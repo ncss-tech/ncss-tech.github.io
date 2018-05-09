@@ -200,6 +200,65 @@ xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l'
 ```
 
 
+# Estimating MAST, MSST, MWST, STR
+This is a *mostly-complete* example of how to estimate mean anual soil temperature (MAST), mean summer soil temperature (MSST), mean winter soil temperature (MWST), and [soil temperature regime (STR)](http://ncss-tech.github.io/AQP/soilDB/STR-eval.html) using some of the internals from the [`fetchHenry` function](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html).
+```{r fig.width=12, fig.height=10, results='hide'}
+# get period of record for several sites
+# note: multiple below-ground sensors
+x <- fetchSCAN(site.code=c(2096, 2097, 2099, 2101), year=2000:2017)
+
+## still working on a solution for this issue: https://github.com/ncss-tech/soilDB/issues/14
+# ! multiple soil temperature sensors installed at each depth
+table(sensor.id=x$STO$sensor.id, sensor.depth=x$STO$depth)
+
+# subset data at 50cm (51cm is close enough, rounding error)
+soiltemp <- subset(x$STO, subset=depth == 51)
+
+# add parts of date for plotting
+soiltemp$year <- format(soiltemp$Date, "%Y")
+soiltemp$doy <- as.numeric(format(soiltemp$Date, "%j"))
+
+
+cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
+
+# plot soiltemp by year/day, panels by sensor ID
+useOuterStrips(levelplot(value ~ doy * factor(year) | sensor.id + factor(Site), main='Daily Mean Soil Temperature at 50cm (deg C)',
+          data=soiltemp, col.regions=cols, xlim=c(1,365),
+          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
+          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+          xlab='Julian Day', ylab='Year'))
+
+# ... something isn't correct with sensor STO.I-2_20
+# plot just STO.I_20
+# ... better
+levelplot(value ~ doy * factor(year) | factor(Site), main='Daily Mean Soil Temperature at 50cm (deg C)',
+          subset= sensor.id == 'STO.I_20',
+          data=soiltemp, col.regions=cols, xlim=c(1,365),
+          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
+          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+          xlab='Julian Day', ylab='Year')
+
+# subset to single sensor
+soiltemp <- subset(soiltemp, subset= sensor.id == 'STO.I_20')
+
+
+## TODO: generalize to accept SCAN / SNOTEL data as-is
+
+# for now, make compatible
+soiltemp$sid <- soiltemp$Site
+soiltemp$sensor_value <- soiltemp$value
+soiltemp$date_time <- soiltemp$Date
+
+# prep dates and pad with missing DOY
+soiltemp <- soilDB:::.formatDates(soiltemp, gran = 'day', pad.missing.days = TRUE)
+
+# compute soil temperature summaries, assuming 50cm depth
+d <- summarizeSoilTemperature(soiltemp)
+
+d
+```
+
+
 # Case Study: Pine Nut SCAN Site
 
 Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015. Note that this site has multiple soil temperature sensors installed at each depth.
