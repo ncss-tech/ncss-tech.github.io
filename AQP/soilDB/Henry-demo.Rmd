@@ -79,7 +79,7 @@ x <- fetchHenry(project='CA792')
 str(x, 2)
 ```
 
-Quick listing of essential site-level data. "Functional years" is the number of years of non-missing data, after grouping data by Julian day. "Complete years" is the number of years that have 365 days of non-missing data. "dslv" is the number of days since the data-logger was last visited.
+Quick listing of essential site-level data. "Functional years" is the number of years of non-missing data, after grouping data by Day of Year. "Complete years" is the number of years that have 365 days of non-missing data. "dslv" is the number of days since the data-logger was last visited.
 ```{r}
 # convert into data.frame
 d <- as.data.frame(x$sensors)
@@ -138,7 +138,7 @@ main='Daily Soil Temperature (Deg. C) at 50cm',
 col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 ```
 
 Again, this time only include 2013-2017.
@@ -150,7 +150,7 @@ main='Daily Soil Temperature (Deg. C) at 50cm',
 col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 ```
 
 Soil moisture data.
@@ -160,7 +160,7 @@ data=x$soilVWC, subset=sensor_depth == 50,
 col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 ```
 
 Comparison between years, faceted by sensor name.
@@ -173,7 +173,7 @@ data=x$soiltemp, col.regions=cols.temp,
 subset=sensor_depth == 50 & year %in% 2013:2017,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 ```
 
 Comparison between sensor depths, faceted by sensor name.
@@ -186,7 +186,7 @@ data=x$soilVWC, col.regions=cols.vwc,
 subset=year == 2015,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-xlab='Julian Day', ylab='Sensor Depth (cm)')
+xlab='Day of Year', ylab='Sensor Depth (cm)')
 ```
 
 Facet data (organize into panels) by a combination of sensor name and depth.
@@ -195,7 +195,7 @@ p <- levelplot(sensor_value ~ doy * factor(year) | sensor_name + factor(sensor_d
 data=x$soilVWC, col.regions=cols.vwc,
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 
 useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
 ```
@@ -207,13 +207,13 @@ data=x$soiltemp, col.regions=cols.temp,
 subset=sensor_name %in% c('Ashmountain', 'CedarGrove', 'LeConte'), 
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 
 useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
 ```
 
 
-Aggregate over years by sensor / Julian day, 50cm data only.
+Aggregate over years by sensor / Day of Year, 50cm data only.
 ```{r fig.width=9, fig.height=6}
 # compute MAST by sensor
 a <- ddply(x$soiltemp[which(x$soiltemp$sensor_depth == 50), ], c('sensor_name', 'doy'), .fun=plyr::summarise, soiltemp=mean(sensor_value, na.rm = TRUE))
@@ -223,7 +223,7 @@ a.mast <- sort(tapply(a$soiltemp, a$sensor_name, median, na.rm=TRUE))
 a$sensor_name <- factor(a$sensor_name, levels=names(a.mast))
 
 levelplot(soiltemp ~ doy * sensor_name, main='Median Soil Temperature (Deg. C) at 50cm',
-data=a, col.regions=cols.temp, xlab='Julian Day', ylab='',
+data=a, col.regions=cols.temp, xlab='Day of Year', ylab='',
 colorkey=list(space='top'), scales=list(alternating=3, cex=0.75, x=list(tick.number=15)))
 ```
 
@@ -245,7 +245,7 @@ data=z,
 col.regions=c('grey', 'RoyalBlue'), cuts=1,
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 
 useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
 ```
@@ -253,7 +253,7 @@ useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='g
 
 # Data Summaries
 
-In the presence of missing data, MAST calculations will be biased towards those data that are not missing. For example, a block of missing data in January will result in an estimated MAST that is too high due to the missing data from the middle of winter. It is possible to estimate (mostly) unbiased MAST values in the presence of some missing data by averaging multiple years of data by Julian day.  This approach will generate reasonable summaries in the presence of missing data, as long as data gaps are "covered" by corresponding data from another year. The longer the period of record and shorter the data gaps, the better.
+In the presence of missing data, MAST calculations will be biased towards those data that are not missing. For example, a block of missing data in January will result in an estimated MAST that is too high due to the missing data from the middle of winter. It is possible to estimate (mostly) unbiased MAST values in the presence of some missing data by averaging multiple years of data by Day of Year.  This approach will generate reasonable summaries in the presence of missing data, as long as data gaps are "covered" by corresponding data from another year. The longer the period of record and shorter the data gaps, the better.
 
 Soil temperature regime assignment for gelic, cryic, and frigid conditions typically require additional information and are marked with an '*'.
 
@@ -296,7 +296,7 @@ subset=sensor_depth == 100,
 col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-xlab='Julian Day', ylab='Year')
+xlab='Day of Year', ylab='Year')
 ```
 
 
