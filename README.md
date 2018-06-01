@@ -1,25 +1,25 @@
 # ncss-tech.github.io
 This is the place for documentation, tutorials, organization coding standards, and other such material.
 
-# Membership
+## Membership
 
 
-# Best Practices
+## Best Practices
 
-## Making and Maintaining a Repository
+### Making and Maintaining a Repository
 
-## Contributors
+### Contributors
 
-## Issues, Branches, and Pull Requests
+### Issues, Branches, and Pull Requests
 
 
-# Documentation / Tutorials
+## Documentation / Tutorials
 
-## AQP Suite
+### AQP Suite
 
-## soilRreports Examples
+### soilReports Examples
 
-## Misc. Documents
+### Misc. Documents
 
 
 
