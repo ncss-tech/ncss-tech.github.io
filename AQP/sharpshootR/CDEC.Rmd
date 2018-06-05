@@ -13,6 +13,7 @@ keep_md: no
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
@@ -20,8 +21,17 @@ options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 
 # Background
 
-The [California Data Exchange Center (CDEC)](https://cdec.water.ca.gov/) hosts all kinds of useful climate data. You can get these easily by station and sensor code with the `CDECquery()` function.
+The [California Data Exchange Center (CDEC)](https://cdec.water.ca.gov/) hosts all kinds of useful climate data. You can get these easily by station and sensor code with the `CDECquery()` function. Lookup sensor codes by station with the `CDEC_StationInfo()` function.
 
+Find CDEC stations via:
+
+   * [map](http://cdec.water.ca.gov/cdecstation2/)
+   * [search](http://cdec.water.ca.gov/cgi-progs/staSearch)
+   * [station ID](http://cdec.water.ca.gov/dynamicapp/staMeta)
+   * [other](http://cdec.water.ca.gov/staInfo.html)
+
+
+List of sensor codes [by ID](http://cdec.water.ca.gov/misc/senslist.html) and associated units of measure.
 
 
 
@@ -58,39 +68,62 @@ library(RColorBrewer)
 library(zoo)
 ```
 
+## Basic Usage
+
+Get the sensor list for the [SPW](http://cdec.water.ca.gov/dynamicapp/staMeta?station_id=SPW) station.
+```{r }
+res <- CDEC_StationInfo('SPW')
+kable_styling(kable(res, format = 'html'), font_size = 10)
+```
+
+
+Get daily precipitation (sensor = **45**, interval = **'D'**) for a specified time interval.
+```{r}
+res <- CDECquery(id='SPW', sensor=45, interval='D', start='2018-01-01', end='2018-01-31')
+
+# first 10 rows
+kable_styling(kable(head(res, 10), format = 'html'), font_size = 10)
+```
+
 
 ## Soil Temperature and Moisture
+Some of the CDEC stations have below-ground sensors. The [Highland Meadow](http://cdec.water.ca.gov/dynamicapp/staMeta?station_id=HHM) station was the first one to have soil sensors installed at three depths. These data are collected every 20 minutes.
 
-[HHM](http://cdec.water.ca.gov/cgi-progs/queryCSV?station_id=hhm)
 ```{r results='hide', fig.width=12, fig.height=8}
-
+# define station
 stn <- 'HHM'
+# get station / sensor information
 stn.info <- CDEC_StationInfo(stn)
 
+# find sensor IDs for soil temperature and moisture
 soil.temp.sensors <- stn.info$sensor[grep('soil temp', stn.info$sensor_details, ignore.case = TRUE)]
 soil.moist.sensors <- stn.info$sensor[grep('soil moistr', stn.info$sensor_details, ignore.case = TRUE)]
 
 
+# iterate over soil temperature sensor codes and download data
+# result is a data.frame
 d.soil_temp <- ldply(soil.temp.sensors, .progress = 'text', .fun=function(i) {
-  x <- CDECquery(stn, i, 'E', '2016-09-15', '2019-01-01')
+  x <- CDECquery(stn, i, 'E', '2017-01-01', '2017-12-31')
   x$id <- stn.info$sensor_details[which(stn.info$sensor == i)]
   return(x)
 })
 
 
-# filter out bad values
+# remove soil temperature less than 20 deg F
 d.soil_temp <- subset(d.soil_temp, subset=value > 20)
 
 
+# iterate over soil moisture sensor codes and download data
+# result is a data.frame
 d.soil_moist <- ldply(soil.moist.sensors, .progress = 'text', .fun=function(i) {
-  x <- CDECquery(stn, i, 'E', '2016-09-15', '2019-01-01')
+  x <- CDECquery(stn, i, 'E', '2017-01-01', '2017-12-31')
   x$id <- stn.info$sensor_details[which(stn.info$sensor == i)]
   # smooth with rolling median
   x$value <- rollmedian(x$value, k=5, fill = TRUE)
   return(x)
 })
 
-# filter out bad values
+# remove soil moisture (VWC) < 5%
 d.soil_moist <- subset(d.soil_moist, subset=value > 5)
 
 # combine for plotting
@@ -187,52 +220,6 @@ sn <- seas.norm(ss)
 plot(sn)
 ```
 
-
-### Precipitation Derivatives
-```{r fig.width=11, fig.height=5}
-##
-## re-think "scaled SWE" idea... data are not normally distributed, therefore z-scores aren't a good indicator
-## consider SPI transform
-
-# http://joewheatley.net/20th-century-droughts/
-getSPI <- function(y){
-  #empirical, symmetrized Standard Precipitation Index
-  fit.cdf <- ecdf(y)
-  fit.rcdf <- ecdf(-y)
-  cdfs <- fit.cdf(y)
-  rcdfs <- 1 -fit.rcdf(-y)
-  #invert normal
-  spi.t <- qnorm(cdfs)
-  spi.tp <- na.omit(spi.t[ spi.t != Inf ]) #drop Inf
-  #reversed
-  rspi.t <- qnorm(rcdfs)
-  rspi.tp <- na.omit(rspi.t[ rspi.t != -Inf ]) #drop Inf
-  #symmetrise
-  spi.sym <- (spi.t+rspi.t)/2
-  spi.sym[which(spi.t == Inf)] <- rspi.t[which(spi.t==Inf)]
-  spi.sym[which(rspi.t == -Inf)] <- spi.t[which(rspi.t==-Inf)]
-  return(spi.sym)
-}
-
-
-
-# get daily precip totals from Stan Powerhouse
-x <- CDECquery(id='spw', sensor=45, interval='D', start='1900-01-01', end='2019-01-01')
-
-# compute total precip by year/month
-a <- ddply(x, c('year', 'month'), summarize, s=sum(value, na.rm=TRUE))
-
-# convert monthly precipitation values into Z-scores by month
-a.scaled <- ddply(a, 'month', summarize, year=year, scaled.ppt=scale(s))
-
-# color ramp
-cols.div <- colorRampPalette(brewer.pal(10, 'Spectral'), space='Lab', interpolate='spline', bias=1.8)
-
-# plot, each pixel is colored by the total precip by year/month
-levelplot(scaled.ppt ~ year * month, data=a.scaled, col.regions=cols.div, xlab='', 
-          ylab='', scales=list(x=list(tick.number=10)), 
-          main='Monthly Total Precipitation (as z-score) SPW')
-```
 
 
 
