@@ -11,17 +11,46 @@ smart: no
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+## Background
+The `estimateSTR()` function from the `soilDB` package applies a [soil temperature regime](https://en.wikipedia.org/wiki/USDA_soil_taxonomy#Soil_Temperature_Regimes_(STR)) (STR) classification using rules from Soil Taxonomy (12th edition). Accurate classificaiton of STR depends on the following properties:
 
+   * MAST: mean annual soil temperature (degrees C, at 50cm)
+   * MSST: mean summer soil temperature (degrees C, at 50cm)
+   * MWST: mean winter soil temperature (degrees C, at 50cm)
+   * O horizon presence / absense
+   * permafrost presence / absense
+
+The function will generate resonable, but possibly wrong, results if missing O horizon, saturation, and permafrost values. This is only an issue for the gelic / cryic / frigid STR, e.g. in very cold climates.
+
+
+STR include:
+
+   * gelic (suggests `permafrost` argument)
+   * cryic (suggests `permafrost`, `O.hz`, and `saturated` arguments)
+   * frigid (suggests `O.hz`, and `saturated` arguments)
+   * mesic
+   * thermic
+   * hyperthermic
+   * isofrigid
+   * isomesic
+   * isothermic
+   * isohyperthermic
+
+
+## Setup
 You will need the latest version of `soilDB`:
 ```{r eval=FALSE}
 # install.packages('devtools', dep=TRUE)
 devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
+
+
+## Basic Usage
+Note that this function is vectorized and works as expected, as long as each argument is the same length.
 
 
 ```{r, fig.width=9, fig.height=7}
@@ -34,7 +63,11 @@ estimateSTR(mast = 12, mean.summer = 15, mean.winter = 8)
 estimateSTR(mast = 4, mean.summer = 8, mean.winter = 1, O.hz = TRUE, saturated = FALSE, permafrost = FALSE)
 ```
 
+## Graphical Summaries
+These are quite dense. Some notes:
 
+   * The "O horizon / Saturation" flags come into play at the cryic / frigid break. "X" means "no", "O" means O horizon present, and "S" means "saturation" as specified in the keys.
+   * Rows with a "?" describe situations in which STR is estimated by splitting the difference in temperature thresholds when O horizon and / or Saturation values are missing. 
 
 
 ```{r, fig.width=9, fig.height=7}
