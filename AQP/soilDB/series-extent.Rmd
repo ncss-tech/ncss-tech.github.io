@@ -1,4 +1,7 @@
 ---
+title: "Investigating Soil Series Extent"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
   html_document:
     fig_caption: yes
@@ -15,15 +18,11 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-Investigating Soil Series Extent
-===============================================================
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>Dylan Beaudette
 
-## Introduction
+# Introduction
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is purged when SoilWeb is periodically synced to the official data.
 
-## Installation
+# Installation
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
@@ -31,12 +30,14 @@ install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
 install.packages('dismo', dep=TRUE)
 install.packages('RColorBrewer', dep=TRUE)
 install.packages('maps', dep=TRUE)
+install.packages('scales', dep=TRUE)
+install.packages('mapview', dep=TRUE)
 
 # you will need the latest version of soilDB
 devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
-## Examples 
+# Examples 
 Illustrate the extent of SSURGO map units associated with the Amador series.
 ```{r libraries, results='hide'}
 # load required libraries
@@ -68,7 +69,7 @@ proj4string(amador)
 slot(amador, 'data')
 ```
 
-### Compare Amador, Pardee, and San Joaquin Extents
+## Compare Amador, Pardee, and San Joaquin Extents
 ```{r example-2, results='hide'}
 # define some nice colors
 cols <- brewer.pal('Set1', n=3)
@@ -102,7 +103,15 @@ box()
 legend('topright', col=cols, pch=15, legend=s.extent$series)
 ```
 
-### Exporting Series Extent Data
+
+## Interactive mapping from R
+This is based on the [mapview](https://r-spatial.github.io/mapview/) package.
+```{r}
+library(mapview)
+mapview(amador)
+```
+
+## Exporting Series Extent Data
 Save soil series extent data in multiple formats.
 ```{r example-4, eval=FALSE}
 # save using the coordinate reference system associated with this object (GCS WGS84)
@@ -117,13 +126,48 @@ writeOGR(s.extent.utm, dsn='.', layer='amador-pardee-san-joaquin-extent-utm', dr
 ```
 
 
-## Boomer Soil Series Extent
+# Graphical Display of Joint Series Extent
+
+```{r, results='hide'}
+library(scales) # need this for alpha()
+
+# define some nice colors
+cols <- brewer.pal('Set1', n=3)
+
+# list of series for investigation of joint occurrence
+s <- c('pentz', 'peters', 'pardee', 'amador', 'san joaquin', 'redding', 'auburn')
+# get list of extents
+l <- lapply(s, seriesExtent)
+
+# map of CA
+par(mar=c(1,1,1,1))
+map('state', 'ca')
+
+# rough estimation of joint density via transparency  / overlay
+lapply(l, function(i) {
+  plot(i, border=NA, col=alpha(cols[2], 0.25), add=TRUE)
+  })
+
+# finish map
+box()
+title(main='Joint Occurrence', line=1.25)
+mtext(side=1, text=as.character(Sys.Date()), line=0)
+```
+
+
+# Boomer Soil Series Extent
 Lets investigate the spatial extent and MLRA overlap for the [Boomer](http://casoilresource.lawr.ucdavis.edu/sde/?series=boomer) soil series. We will use the SoilWeb SEE data for an estimate of the spatial extent and [Soil Data Access](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) for MLRA overlap information.
 
 
 Get extent and make a simple map.
 ```{r}
+# define some nice colors
+cols <- brewer.pal('Set1', n=3)
+
+# get extent
 boomer <- seriesExtent('boomer')
+
+# basic figure
 par(mar=c(1,0,1,0))
 map(database='county', regions='california')
 plot(boomer, col=cols[2], border=cols[2], add=TRUE)

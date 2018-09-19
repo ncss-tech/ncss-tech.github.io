@@ -34,7 +34,7 @@ Links:
 ## Graphical Demonstration
 
 ```{r eval=FALSE, echo=FALSE}
-ffp <- ddply(x, "year", sharpshootR:::.frostFreePeriod, minDays = 165, frostTemp=32)
+ffp <- plyr::ddply(x, "year", sharpshootR:::.frostFreePeriod, minDays = 165, frostTemp=32)
 
 plot(0,0, xlim=c(0,366), ylim=c(0, 0.1), type='n')
 lines(density(ffp$lastSpring))
@@ -70,13 +70,13 @@ library(plyr)
 
 
 ## CDEC
-The [California Data Exchange Center (CDEC)](https://cdec.water.ca.gov/) hosts all kinds of useful climate data. You can get these easily by station and sensor code with the `CDECquery()` function.
+The [California Data Exchange Center (CDEC)](https://cdec.water.ca.gov/) hosts all kinds of useful climate data. You can get these easily by station and sensor code with the `CDECquery()` function. See the [related tutorial for more ideas](http://ncss-tech.github.io/AQP/sharpshootR/CDEC.html).
 ```{r, fig.width=10, fig.height=5}
 # HHM: Highland Meadows
 # 32: daily min air temperature
 x <- CDECquery(id='HHM', sensor=32, interval='D', start='1900-01-01', end='2016-12-31')
 
-# estimate FFD over all years
+# estimate FFD over all years, stored in 'year' column
 # air temperature are in deg F
 x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=32)
 
