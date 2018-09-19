@@ -70,10 +70,20 @@ library(zoo)
 
 ## Basic Usage
 
-Get the sensor list for the [SPW](http://cdec.water.ca.gov/dynamicapp/staMeta?station_id=SPW) station.
+Get metadata for the Stanislaus Powerhouse, [SPW](http://cdec.water.ca.gov/dynamicapp/staMeta?station_id=SPW), station. The results are stored in a list containing site and sensor metadata, along with any commentary related to the history of the station.
 ```{r }
-res <- CDEC_StationInfo('SPW')
-kable_styling(kable(res, format = 'html'), font_size = 10)
+meta <- CDEC_StationInfo('SPW')
+str(meta, 1)
+```
+
+Site metadata.
+```{r}
+kable_styling(kable(meta$site.meta, format = 'html'), font_size = 10)
+```
+
+Sensor metadata.
+```{r}
+kable_styling(kable(meta$sensor.meta, format = 'html'), font_size = 10)
 ```
 
 
@@ -89,91 +99,114 @@ kable_styling(kable(head(res, 10), format = 'html'), font_size = 10)
 ## Soil Temperature and Moisture
 Some of the CDEC stations have below-ground sensors. The [Highland Meadow](http://cdec.water.ca.gov/dynamicapp/staMeta?station_id=HHM) station was the first one to have soil sensors installed at three depths. These data are collected every 20 minutes.
 
-```{r results='hide', fig.width=12, fig.height=8}
-# define station
+Get the 3 soil temperature and volumetric water content (VWC) sensor IDs for HHM. Queries are by sensor ID.
+```{r results='hide'}
+# CDEC station ID
 stn <- 'HHM'
-# get station / sensor information
+
+# note that station metadata is a list
 stn.info <- CDEC_StationInfo(stn)
+sensors <- stn.info$sensor.meta
 
-# find sensor IDs for soil temperature and moisture
-soil.temp.sensors <- stn.info$sensor[grep('soil temp', stn.info$sensor_details, ignore.case = TRUE)]
-soil.moist.sensors <- stn.info$sensor[grep('soil moistr', stn.info$sensor_details, ignore.case = TRUE)]
-
-
-# iterate over soil temperature sensor codes and download data
-# result is a data.frame
-d.soil_temp <- ldply(soil.temp.sensors, .progress = 'text', .fun=function(i) {
-  x <- CDECquery(stn, i, 'E', '2017-01-01', '2017-12-31')
-  x$id <- stn.info$sensor_details[which(stn.info$sensor == i)]
-  return(x)
-})
-
-
-# remove soil temperature less than 20 deg F
-d.soil_temp <- subset(d.soil_temp, subset=value > 20)
-
-
-# iterate over soil moisture sensor codes and download data
-# result is a data.frame
-d.soil_moist <- ldply(soil.moist.sensors, .progress = 'text', .fun=function(i) {
-  x <- CDECquery(stn, i, 'E', '2017-01-01', '2017-12-31')
-  x$id <- stn.info$sensor_details[which(stn.info$sensor == i)]
-  # smooth with rolling median
-  x$value <- rollmedian(x$value, k=5, fill = TRUE)
-  return(x)
-})
-
-# remove soil moisture (VWC) < 5%
-d.soil_moist <- subset(d.soil_moist, subset=value > 5)
-
-# combine for plotting
-d <- make.groups('Soil Temperature (F)'=d.soil_temp, 'Soil Volumetric Water Content (%)'=d.soil_moist)
-
-# plot colors and line widths
-tps <- list(superpose.line=list(col=brewer.pal(3, 'Set1'), lwd=1.5))
-
-xyplot(value ~ datetime | which, groups=id, data=d, type=c('g', 'l'), auto.key=list(cex=0.5, columns=2, points=FALSE, lines=TRUE), strip=strip.custom(bg=grey(0.90)), par.settings=tps, layout=c(1,2), scales=list(alternating=3, x=list(format="%b\n%Y"), y=list(relation='free')), xlab='', ylab='', sub='HHM')
+# lookup sensor codes for soil temp and moisture
+soil.temp.sensors <- sensors$sensor[grep('soil temp', sensors$sensor_details, ignore.case = TRUE)]
+soil.moist.sensors <- sensors$sensor[grep('soil moistr', sensors$sensor_details, ignore.case = TRUE)]
 ```
 
 
+Query the data. It might take a couple of seconds. Note that we are making two distinct requests, each for three sensors.
+```{r}
+d.soil_temp <- CDECquery(id = stn, sensor = soil.temp.sensors, interval = 'E', start = '2017-09-15', end = '2018-09-15')
+d.soil_moist <- CDECquery(id = stn, sensor = soil.moist.sensors, interval = 'E', start = '2017-09-15', end = '2018-09-15')
+
+# quick check: nice!
+kable_styling(kable(head(d.soil_temp, 10), format = 'html'), font_size = 10)
+
+# this is a lot of data
+nrow(d.soil_temp)
+```
+
+
+Perform some basic filtering, note units.
+```{r results='hide'}
+# remove soil temperature less than 20 deg F
+d.soil_temp <- subset(d.soil_temp, subset=value > 20)
+
+# remove soil moisture (VWC) < 1%
+d.soil_moist <- subset(d.soil_moist, subset=value > 1)
+```
+
+
+Plot soil moisture and temperature in a single figure. There are many ways to do this, here we are using concepts from the `lattice` package. Note that we stack the two data sets into "long format" for plotting.
+```{r results='hide', fig.width=12, fig.height=8}
+# combine into long format for plotting
+d <- make.groups('Soil Temperature (F)'=d.soil_temp, 'Soil Volumetric Water Content (%)'=d.soil_moist)
+
+# define some reasonable plot colors and line widths
+tps <- list(superpose.line=list(col=brewer.pal(3, 'Set1'), lwd=1.5))
+
+# plot
+xyplot(value ~ datetime | which, groups=sensor_type, data=d, type=c('g', 'l'), auto.key=list(cex=0.5, columns=2, points=FALSE, lines=TRUE), strip=strip.custom(bg=grey(0.90)), par.settings=tps, layout=c(1,2), scales=list(alternating=3, x=list(format="%b %d\n%Y", tick.number=10), y=list(relation='free', rot=0)), xlab='', ylab='', sub=stn)
+```
+
+
+Sometimes the daily median is sufficient.
+```{r results='hide', fig.width=12, fig.height=8}
+# truncate datetime to date
+d$date <- as.Date(d$datetime)
+
+# aggregating over date / sensor group / specific sensor
+a <- ddply(d, c('date', 'which', 'sensor_type'), .progress = 'text', .fun = plyr::summarize, q50=median(value, na.rm=TRUE))
+
+# plot daily median
+xyplot(q50 ~ date | which, groups=sensor_type, data=a, type=c('g', 'l'), auto.key=list(cex=0.5, columns=2, points=FALSE, lines=TRUE), strip=strip.custom(bg=grey(0.90)), par.settings=tps, layout=c(1,2), scales=list(alternating=3, x=list(format="%b\n%Y", tick.number=10), y=list(relation='free', rot=0)), xlab='', ylab='', sub=stn)
+```
 
 ## Precipitation
 
-### Daily Precipitation for Current Water Year
-```{r}
-x <- CDECquery(id='sor', sensor=45, interval='D', start='2017-07-01', end='2019-01-01')
+### Daily Precipitation
 
+Query the daily precipitation measurements spanning the 2017-2018 water year from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
+
+```{r, fig.height=5, fig.width=7}
+# get data, note sensor number
+x <- CDECquery(id='sor', sensor=45, interval='D', start='2017-09-01', end='2019-09-01')
+
+# compute cumulative PPT
 # replace NA with 0 in cumulative calc
 x$cumulative <- cumsum(ifelse(is.na(x$value), 0, x$value))
 
-plot(value ~ datetime, data=x, type='h')
-plot(cumulative ~ datetime, data=x, type='S')
+# plot
+xyplot(value ~ datetime, data=x, type=c('h', 'g'), scales=list(x=list(alternating=3, format="%b\n%Y", tick.number=20)), xlab='', ylab='Daily PPT (inches)', main='Sonora Ranger Station\nDaily Total Precipitation (inches)')
+
+xyplot(cumulative ~ datetime, data=x, type=c('s', 'g'), scales=list(x=list(alternating=3, format="%b\n%Y", tick.number=20)), xlab='', ylab='Cumulative PPT (inches)', main='Sonora Ranger Station\nCumulative Precipitation (inches)')
+
+# total
 sum(x$value, na.rm = TRUE)
 ```
 
 ### Monthly Precipitation
-```{r}
+Query the entire record of monthly precipitation measurements from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
+```{r, fig.height=5, fig.width=7}
 x <- CDECquery(id='sor', sensor=2, interval='M', start='1900-01-01', end='2019-01-01')
 
 # plot
-bwplot( month ~ value, data=x, xlab='', ylab='', main='Sonora Ranger Station\nMonthly Total Precipitation (inches)')
+bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in Monthly Total PPT', xlab='Monthly Total PPT (inches)')
 ```
 
 
 ### Visualization Ideas
 Query the entire record of daily precipitation measurements from New Hogan Lake ([NHG](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=NHG)).
 ```{r}
-# stations are specified with 3-letter codes
 x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2019-01-01')
 summary(x$value)
 head(x)
 nrow(x)
 ```
 
-Plot raw data that are great than 0 inches.
+Plot raw data.
 ```{r, fig.width=8, fig.height=4}
-x <- subset(x, value >= 0)
-xyplot(value ~ datetime, data=x, type='l', main='NEW HOGAN LAKE (NHG)', ylab='Daily Precipitation (inches)', xlab='')
+xyplot(value ~ datetime, data=x, type='h', main='NEW HOGAN LAKE (NHG)', ylab='Daily Precipitation (inches)', xlab='')
 ```
 
 Sum daily precipitation by year/month and display as box-whisker plot.
@@ -187,7 +220,8 @@ bwplot(ppt ~ month, data=a, xlab='', ylab='Monthly Total Precipitation (inches)'
 Visualize monthly precipitation as grouped by year/month.
 ```{r, fig.width=12, fig.height=5}
 # color ramp for monthly PPT
-cols <- colorRampPalette(rev(viridis(10)), space='Lab', interpolate='spline')
+# denote 0 with grey 
+cols <- colorRampPalette(rev(c(viridis(10), grey(0.90))), space='Lab', interpolate='spline')
 
 levelplot(ppt ~ factor(year) * month, data=a, col.regions=cols, xlab='', 
           ylab='', scales=list(x=list(tick.number=10, rot=45)), 
@@ -197,8 +231,8 @@ levelplot(ppt ~ factor(year) * month, data=a, col.regions=cols, xlab='',
 
 Alternate representation via `seas` package.
 ```{r, fig.width=11, fig.height=5}
-# alter column names and convert units from in to mm
-names(x)[1] <- 'date'
+# alter column names and convert units from inches to mm
+x$date <- as.Date(x$datetime)
 x$value <- x$value * 25.4
 x$precip <- x$value
 
