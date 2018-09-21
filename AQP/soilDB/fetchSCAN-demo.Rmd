@@ -11,7 +11,6 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -255,7 +254,7 @@ soiltemp <- soilDB:::.formatDates(soiltemp, gran = 'day', pad.missing.days = TRU
 # compute soil temperature summaries, assuming 50cm depth
 d <- summarizeSoilTemperature(soiltemp)
 
-d
+kable(d)
 ```
 
 
@@ -315,7 +314,7 @@ Previously the VG parameters had to be obtained manually from [these reports](ht
 s <- fetchKSSL(pedon_id = 'S08NV003003')
 
 # VG parameters now returned by fetchKSSL() as of 2016-11-17
-(horizons(s)[, c('hzn_desgn', 'hzn_top', 'hzn_bot', 'theta_r', 'theta_s', 'alpha', 'npar')])
+kable(horizons(s)[, c('hzn_desgn', 'hzn_top', 'hzn_bot', 'theta_r', 'theta_s', 'alpha', 'npar')])
 ```
 
 ### Conversion of VWC to Matric Potential: Single Depth
