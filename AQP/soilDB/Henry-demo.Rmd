@@ -89,13 +89,41 @@ d <- subset(d, subset=sensor_type == 'soiltemp' & sensor_depth == 50)
 ```
 
 ```{r echo=FALSE}
-kable(head(d[, c('user_site_id', 'name', 'sensor_depth', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')]), row.names = FALSE)
+kable_styling(kable(head(d[, c('user_site_id', 'name', 'sensor_depth', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'dslv')]), row.names = FALSE, format='html'), full_width = FALSE)
 ```
 
 
 The tables with sensor data (e.g. `x$soiltemp`) look like this:
 ```{r echo=FALSE}
 kable_styling(kable(head(x$soiltemp), row.names = FALSE, format='html'), full_width = FALSE)
+```
+
+Make a simple graphical timeline of the data by sensor.
+```{r fig.width=8, fig.height=5}
+HenryTimeLine <- function(sensor_data, ...) {
+  
+  # filter NA
+  x.no.na <- na.omit(sensor_data)
+  # compute date ranges by sensor
+  x.range <- ddply(x.no.na, 'sensor_name', .fun = plyr::summarise, start=as.Date(min(date_time)), end=as.Date(max(date_time)))
+  x.range$sensor_name <- factor(x.range$sensor_name)
+  
+  # composite plot
+  p <- segplot(sensor_name ~ start + end, data=x.range,
+        scales=list(alternating=3, x=list(cex=0.85, tick.number=10), y=list(relation='free', cex=0.65, rot=0)),
+        band.height=0.75,
+        xlab='', ylab='',
+        panel = function(...) {
+          panel.abline(h=1:length(levels(x.range$sensor_name)), col='grey', lty=3)
+          panel.segplot(...)
+        }, ...
+  )
+  
+  return(p)
+}
+
+HenryTimeLine(x$soiltemp, main='Soil Temperature Records', col='RoyalBlue')
+HenryTimeLine(x$soilVWC, main='Soil VWC Records', col='RoyalBlue')
 ```
 
 
@@ -263,7 +291,7 @@ as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'senso
 ```
 
 ```{r echo=FALSE}
-kable(as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'sensor_depth', 'name', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'gap.index')], row.names=FALSE)
+kable_styling(kable(as.data.frame(x$sensors)[which(!is.na(x$sensors$MAST)), c('user_site_id', 'sensor_depth', 'name', 'MAST', 'Winter', 'Summer', 'STR', 'functional.yrs', 'complete.yrs', 'gap.index')], row.names=FALSE, format='html'), full_width = FALSE)
 ```
 
 
@@ -335,7 +363,7 @@ wl.agg <- ddply(x$waterlevel, c('sensor_name', 'year'), .fun=water.level.thresho
 ```
 
 ```{r echo=FALSE}
-kable(head(wl.agg), row.names=FALSE)
+kable_styling(kable(head(wl.agg), row.names=FALSE, format = 'html'), full_width = FALSE)
 ```
 
 Graphical representation of annual water level summaries.
