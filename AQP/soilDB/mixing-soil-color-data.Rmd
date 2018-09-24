@@ -35,7 +35,8 @@ weights <- c(60, 30, 10)
 x <- cbind(
   parseMunsell(colors, convertColors=FALSE),
   parseMunsell(colors, return_triplets=TRUE),
-  pct=weights
+  pct=weights,
+  col=parseMunsell(colors, convertColors=TRUE)
 )
 
 x
@@ -50,12 +51,11 @@ x$colormoistst <- "Dry"
 
 # simplify
 simplifyColorData(x, id.var='id')
-
 ```
 
 
 Demonstrate mixing soil colors in CIE LAB and sRGB color spaces via `mix_and_clean_colors()`.
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=7, fig.height=2.5}
 mixColorDemo <- function(x) {
   x <- x[order(x$pct, decreasing = TRUE), ]
   n.cols <- nrow(x)
