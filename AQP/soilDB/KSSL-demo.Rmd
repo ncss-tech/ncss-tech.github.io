@@ -12,13 +12,12 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
 # Introduction
-This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download [KSSL](http://ncsslabdatamart.sc.egov.usda.gov/) data from SoilWeb. These data are from the [August 2017 snapshot](https://github.com/dylanbeaudette/process-kssl-snapshot), and will be updated as future snapshots are released. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](hhttp://ncss-tech.github.io/AQP/aqp/aqp-intro.html) from the [aqp](http://ncss-tech.github.io/AQP/) package.
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download [KSSL](http://ncsslabdatamart.sc.egov.usda.gov/) data from SoilWeb. These data are from the [September 2018 snapshot](https://github.com/dylanbeaudette/process-kssl-snapshot), and will be updated as future snapshots are released. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](hhttp://ncss-tech.github.io/AQP/aqp/aqp-intro.html) from the [aqp](http://ncss-tech.github.io/AQP/) package.
 
 ## Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
@@ -36,7 +35,7 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 
 
 # Quick Example: getting lab characterization (KSSL) and basic morphology (NASIS)
-KSSL and NASIS data are from the August 2017 snapshot. Details pending.
+KSSL and NASIS data are from the September 2018 snapshot. Details pending.
 ```{r fig.width=10, fig.height=6}
 library(soilDB)
 library(plyr)
