@@ -1,0 +1,220 @@
+---
+title: "Querying Soil Series Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+---
+
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Introduction
+
+
+## Installation
+With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+```{r install-deps, eval=FALSE}
+# stable packages from CRAN
+install.packages('aqp', dep=TRUE)
+install.packages('soilDB', dep=TRUE)
+install.packages('sharpshootR', dep=TRUE)
+install.packages('dendextend', dep=TRUE)
+
+# latest versions from GitHub
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+
+## An Official (soil) Series Description
+
+[SDE](https://casoilresource.lawr.ucdavis.edu/sde/?series=davidson)
+[Conventional interface](https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DAVIDSON.html)
+
+
+[SEE](https://casoilresource.lawr.ucdavis.edu/see/#davidson)
+
+
+# Basic Soil Morphology and Taxonomic Data
+
+```{r fig.width=10, fig.height=6}
+library(soilDB)
+library(sharpshootR)
+library(dendextend)
+library(lattice)
+
+
+soils <- c('amador', 'pentz', 'pardee', 'auburn', 'loafercreek', 'millvilla')
+s <- fetchOSD(soils)
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s, max.depth = 120, scaling.factor = 0.025)
+```
+
+
+## Extended Summaries
+```{r fig.width=10, fig.height=6}
+soils <- c('argonaut', 'auburn', 'vleck', 'zook')
+s <- fetchOSD(soils, extended = TRUE)
+
+# note additional data, packed into a list
+str(s, 1)
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s$SPC, scaling.factor = 0.015)
+```
+
+
+```{r echo=FALSE}
+kable_styling(kable(s$hillpos, format='html', digits = 2), font_size = 10)
+kable_styling(kable(s$geomcomp, format='html', digits = 2), font_size = 10)
+kable_styling(kable(s$pmkind, format='html'), font_size = 10)
+kable_styling(kable(s$pmorigin, format='html'), font_size = 10)
+kable_styling(kable(s$mlra, format='html'), font_size = 9)
+```
+
+## Vizualization of Proportions
+```{r fig.width=12, fig.height=5}
+# result is a lattice graphics object
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
+```
+
+```{r fig.width=12, fig.height=5}
+# result is a lattice graphics object
+res <- vizGeomorphicComponent(s$geomcomp)
+print(res$fig)
+```
+
+
+# OSD Full Text Search
+[OSD Full Text Search](http://soilmap2-1.lawr.ucdavis.edu/osd-search/)
+```{r fig.width=10, fig.height=6}
+
+soils <- OSDquery(brief_narrative = 'andesite', mlra = '18')
+head(soils)
+
+s <- fetchOSD(soils$series)
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s, scaling.factor = 0.0225)
+```
+
+
+```{r fig.width=10, fig.height=6}
+
+soils <- OSDquery(geog_location = 'strath & terrace', mlra='17,18')
+str(soils)
+
+s <- fetchOSD(soils$series)
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s)
+
+```
+
+
+```{r fig.width=10, fig.height=6}
+
+soils <- OSDquery(taxonomic_class = 'duri:* & calc:*', mlra = '28B')
+
+s <- fetchOSD(soils$series)
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s)
+
+```
+
+```{r fig.width=10, fig.height=6}
+
+soils <- OSDquery(geog_assoc_soils = 'musick')
+
+
+s <- fetchOSD(soils$series, extended = TRUE)
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s$SPC)
+
+kable(s$mtnpos, digits = 2)
+# kable(s$pmorigin)
+```
+
+
+
+# A Classic Catena
+
+![](https://casoilresource.lawr.ucdavis.edu/ncss_block_diagrams/GA-2011-05-31-02.png)
+Diagram showing relationship of dominant soils in Lloyd-Davidson association (Soil Survey of Morgan County, Georgia; 1965).
+
+```{r fig.width=10, fig.height=6, echo=FALSE}
+soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
+
+# get morphology + extended summaries
+s <- fetchOSD(soils, extended = TRUE)
+```
+
+```{r fig.width=12, fig.height=5, echo=FALSE}
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
+```
+
+```{r fig.width=10, fig.height=6, echo=FALSE}
+par(mar=c(0,0,2,1))
+plot(s$SPC, plot.order=res$order)
+title('Hydrologic Ordering via Hillslope Position Proportions')
+```
+
+```{r fig.width=12, fig.height=5, echo=FALSE}
+res <- vizGeomorphicComponent(s$geomcomp)
+print(res$fig)
+```
+
+```{r fig.width=10, fig.height=6, echo=FALSE}
+par(mar=c(0,0,2,1))
+plot(s$SPC, plot.order=res$order)
+title('Hydrologic Ordering via Geomorphic Component Proportions')
+```
+
+```{r fig.width=10, fig.height=6, echo=FALSE}
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s$SPC, scaling.factor = 0.02)
+```
+
+Code.
+```{r, eval=FALSE}
+soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
+
+# get morphology + extended summaries
+s <- fetchOSD(soils, extended = TRUE)
+
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
+
+par(mar=c(0,0,2,1))
+plot(s$SPC, plot.order=res$order)
+title('Hydrologic Ordering via Hillslope Position Proportions')
+
+res <- vizGeomorphicComponent(s$geomcomp)
+print(res$fig)
+
+par(mar=c(0,0,2,1))
+plot(s$SPC, plot.order=res$order)
+title('Hydrologic Ordering via Geomorphic Component Proportions')
+
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s$SPC)
+```
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
