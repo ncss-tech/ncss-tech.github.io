@@ -20,6 +20,8 @@ options(width=100, stringsAsFactors=FALSE)
 
 # Introduction
 
+This tutorial covers some of the new functionality in `soilDB` related to searching the USDA-NRCS Official (soil) Series Descriptions (OSDs) and working with summaries compiled by soil series name. Source data are the latest SSURGO snapshot (2018-10-01) and [*parsed*](https://github.com/dylanbeaudette/parse-osd) [OSD records](https://soilseries.sc.egov.usda.gov/) as of 2018-10-01. These data were developed to support various components of [SoilWeb](http://casoilresource.lawr.ucdavis.edu/soilweb/), including [SoilWeb Gmaps](https://casoilresource.lawr.ucdavis.edu/gmap/), [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/), and [Series Data Explorer](https://casoilresource.lawr.ucdavis.edu/sde/?series=davidson).
+
 
 ## Installation
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
@@ -36,30 +38,72 @@ devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_de
 ```
 
 
-## An Official (soil) Series Description
+## Setup
+This tutorial can be used as a stand-alone demonstration of the functionality provided by `fetchOSD` and `OSDquery`, or as a template for your own project. Copy any paste blocks of code *sequentially* into your own script if you would like to follow-along.
 
-[SDE](https://casoilresource.lawr.ucdavis.edu/sde/?series=davidson)
-[Conventional interface](https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DAVIDSON.html)
-
-
-[SEE](https://casoilresource.lawr.ucdavis.edu/see/#davidson)
-
-
-# Basic Soil Morphology and Taxonomic Data
-
-```{r fig.width=10, fig.height=6}
+First, you will need to load some packages. Be sure to install these if missing, and install the latest versions of `soilDB` and `sharpshootR` as much of this tutorial depends on recent updates.
+```{r eval=TRUE}
 library(soilDB)
 library(sharpshootR)
 library(dendextend)
 library(lattice)
-
-
-soils <- c('amador', 'pentz', 'pardee', 'auburn', 'loafercreek', 'millvilla')
-s <- fetchOSD(soils)
-
-par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, max.depth = 120, scaling.factor = 0.025)
 ```
+
+
+# The Soil Series Concept
+
+
+
+## An Official (soil) Series Description
+
+<iframe id="osd-frame" src="https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DAVIDSON.html" width="90%" height="400px">
+</iframe>
+
+
+
+# Examples
+
+
+## Getting Basic Soil Morphology and Taxonomic Data
+
+The `fetchOSD` function provides an interface to the parsed OSD records, hosted by SoilWeb. These records contain a combination of horizon-level and site-level attributes, returned as a `SoilProfileCollection` object. Site-level attributers include: latest taxonomic data from the SC database and an acreage estimate. Horizon-level attributes include horizon depths (cm), designations, moist/dry colors, pH, and texture. The original horizon narrative is also included. Moist soil colors are converted by default to sRGB values suitable for on-screen display.
+```{r fig.width=8, fig.height=8}
+# case insensitive
+soils <- c('amador', 'pentz', 'pardee', 'auburn', 'loafercreek', 'millvilla')
+
+# moist colors are converted from Munsell -> sRGB by default
+s <- fetchOSD(soils)
+# also convert dry colors
+s.dry <- fetchOSD(soils, colorState = 'dry')
+
+par(mar=c(1,0,2,1), mfrow=c(2,1))
+plot(s) ; title('Moist Colors')
+plot(s.dry) ; title('Dry Colors')
+```
+
+The `SoilTaxonomyDendrogram` function from `sharpshootR` package knows how to use elements from the soil classification to build a unique layout of profile sketches.
+```{r}
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s, scaling.factor = 0.015)
+```
+
+A closer look at the object returned by `fetchKSSL`.
+```{r eval=FALSE}
+str(s)
+siteNames(s)
+horizonNames(s)
+```
+
+
+### Important Assumptions and Limitations
+
+Here are the narratives associated with the first profile in the collection. Regular expression was used to extract specific morphologic data. Some data may be missing or incorrect due to formatting errors, inconcsistencies, or typos. Many of the OSDs were converted from papers copies via OCR.
+
+<div style="font-size: 80%; padding: 10px; border-style: solid; border-width: 1px; border-color: grey;">
+```{r echo=FALSE, results='asis'}
+cat(s[1, ]$narrative, sep = '\n\n')
+```
+</div>
 
 
 ## Extended Summaries
@@ -69,18 +113,15 @@ s <- fetchOSD(soils, extended = TRUE)
 
 # note additional data, packed into a list
 str(s, 1)
-
-par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, scaling.factor = 0.015)
 ```
 
 
 ```{r echo=FALSE}
-kable_styling(kable(s$hillpos, format='html', digits = 2), font_size = 10)
-kable_styling(kable(s$geomcomp, format='html', digits = 2), font_size = 10)
-kable_styling(kable(s$pmkind, format='html'), font_size = 10)
-kable_styling(kable(s$pmorigin, format='html'), font_size = 10)
-kable_styling(kable(s$mlra, format='html'), font_size = 9)
+kable_styling(kable(s$hillpos, format='html', digits = 2), font_size = 10, full_width = FALSE)
+kable_styling(kable(s$geomcomp, format='html', digits = 2), font_size = 10, full_width = FALSE)
+kable_styling(kable(s$pmkind, format='html'), font_size = 10, full_width = FALSE)
+kable_styling(kable(s$pmorigin, format='html'), font_size = 10, full_width = FALSE)
+kable_styling(kable(s$mlra, format='html'), font_size = 9, full_width = FALSE)
 ```
 
 ## Vizualization of Proportions
