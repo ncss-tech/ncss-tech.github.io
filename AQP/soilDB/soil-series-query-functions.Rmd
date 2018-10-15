@@ -116,6 +116,9 @@ str(s, 1)
 ```
 
 
+https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_054252
+
+
 ```{r echo=FALSE}
 kable_styling(kable(s$hillpos, format='html', digits = 2), font_size = 10, full_width = FALSE)
 kable_styling(kable(s$geomcomp, format='html', digits = 2), font_size = 10, full_width = FALSE)
