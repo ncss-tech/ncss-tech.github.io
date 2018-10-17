@@ -86,7 +86,7 @@ The following examples can be readily adapted to your own needs by copying/pasti
 
 ## Getting Basic Soil Morphology and Taxonomic Data
 
-The `fetchOSD` function provides an interface to the parsed OSD records, hosted by SoilWeb. These records contain a combination of horizon-level and site-level attributes, returned as a `SoilProfileCollection` object. Site-level attributers include: latest taxonomic data from the SC database and an acreage estimate. Horizon-level attributes include horizon depths (cm), designations, moist/dry colors, pH, and texture. The original horizon narrative is also included. Moist soil colors are converted by default to sRGB values suitable for on-screen display.
+The `fetchOSD` function provides an interface to the parsed OSD records, hosted by SoilWeb. These records contain a combination of horizon-level and site-level attributes, returned as a `SoilProfileCollection` object. Site-level attributes include: latest taxonomic data from the SC database and an acreage estimate. Horizon-level attributes include horizon depths (cm), designations, moist/dry colors, pH, and texture. The original horizon narrative is also included. Moist soil colors are converted by default to sRGB values suitable for on-screen display.
 ```{r fig.width=8, fig.height=8}
 # a vector of named soil series
 # the search is case insensitive
@@ -103,7 +103,7 @@ plot(s) ; title('Moist Colors')
 plot(s.dry) ; title('Dry Colors')
 ```
 
-The `SoilTaxonomyDendrogram` function from `sharpshootR` package knows how to use elements from the soil classification (order/suborder/great group/subgroup) to build a unique layout of profile sketches. The dissimmilarity matrix is computed using Gower's distance metric for nominal-scale data.
+The `SoilTaxonomyDendrogram` function from `sharpshootR` package knows how to use elements from the soil classification (order/suborder/great group/subgroup) to build a unique layout of profile sketches. The dissimilarity matrix is computed using Gower's distance metric for nominal-scale data.
 ```{r}
 par(mar=c(0,0,1,1))
 SoilTaxonomyDendrogram(s, scaling.factor = 0.015)
@@ -138,6 +138,7 @@ kable_styling(kable(horizons(s[1, ])[, 2:15], format = 'html'), font_size = 10)
 
 
 ## Extended Summaries
+
 ```{r fig.width=10, fig.height=6}
 soils <- c('argonaut', 'auburn', 'vleck', 'zook')
 s <- fetchOSD(soils, extended = TRUE)
