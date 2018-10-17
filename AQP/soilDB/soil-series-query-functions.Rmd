@@ -23,7 +23,34 @@ options(width=100, stringsAsFactors=FALSE)
 This tutorial covers some of the new functionality in `soilDB` related to searching the USDA-NRCS Official (soil) Series Descriptions (OSDs) and working with summaries compiled by soil series name. Source data are the latest SSURGO snapshot (2018-10-01) and [*parsed*](https://github.com/dylanbeaudette/parse-osd) [OSD records](https://soilseries.sc.egov.usda.gov/) as of 2018-10-01. These data were developed to support various components of [SoilWeb](http://casoilresource.lawr.ucdavis.edu/soilweb/), including [SoilWeb Gmaps](https://casoilresource.lawr.ucdavis.edu/gmap/), [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/), and [Series Data Explorer](https://casoilresource.lawr.ucdavis.edu/sde/?series=davidson).
 
 
-## Installation
+# The Soil Series Concept
+
+*[Excerpt from the Soil Survey Manual](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_054254#soil_id)*
+
+<div style="padding: 15px;">
+The series represents a three-dimensional soil body having a unique combination of properties that distinguish it from neighboring series. The soil series concept was developed more than 100 years ago and somewhat followed the logic of the series as used to describe sediments in the geologic cross-section. Like the geologic formation, the soil series has served as the fundamental mapping concept. In geology, strata closely related in terms of their properties and qualities were members of a series in the sedimentary record. Initially, the soil series did not conform to a specific taxonomic class nor property class limits but rather to the predominant properties and qualities of the soil landscape, climate, and setting in which the soil occurred.
+
+Today, the soil series category is the lowest level and the most homogeneous category in the U.S. system of taxonomy. As a class, a series is a group of soils or polypedons that have horizons similar in arrangement and in differentiating characteristics. The soils of a series have a relatively narrow range in sets of properties. Although part of Soil Taxonomy, soil series are not recorded in it.
+</div>
+
+*Soil Science Division Staff. 2017. Soil survey manual. C. Ditzler, K. Scheffe, and H.C. Monger (eds.). USDA Handbook 18. Government Printing Office, Washington, D.C.*
+
+## An Official (soil) Series Description
+
+The [Official Series Descriptions](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/class/data/?cid=nrcs142p2_053586) (OSD) contain definitions and relevant information on all soil series. The narrative style of the OSD makes it possible for specialists and non-specialists to extract relevant details. For example, a soil scientist may consult a number of OSDs to determine if a new set of samples can be allocated to an existing soil series. A farmer might use the "typical pedon" narrative and drainage class description when considering the purchase of a new parcel. 
+
+The OSDs are stored as text files with a [standardized format](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_054254#records). Deviations from the standard format, changes through time, local variation in style, and typos (manual and / or OCR-related) aren't an issue for human readers but have complicated the analysis by machine for decades. There are plans in place for a structured database that would ultimately be used to generate the OSD narrative. Until that time, there are only a couple ways in which the OSD data can be searched:
+
+   * as indexed / queried by links to the the [Soil Classification database](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_053587)
+   * [full text searching of the parsed OSD database](http://soilmap2-1.lawr.ucdavis.edu/osd-search/)
+
+As an example, here is the OSD for the Davidson soil series.
+<iframe id="osd-frame" src="https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DAVIDSON.html" width="90%" height="400px">
+</iframe>
+
+
+
+# Setup
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # stable packages from CRAN
@@ -38,7 +65,7 @@ devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_de
 ```
 
 
-## Setup
+## Using this Tutorial
 This tutorial can be used as a stand-alone demonstration of the functionality provided by `fetchOSD` and `OSDquery`, or as a template for your own project. Copy any paste blocks of code *sequentially* into your own script if you would like to follow-along.
 
 First, you will need to load some packages. Be sure to install these if missing, and install the latest versions of `soilDB` and `sharpshootR` as much of this tutorial depends on recent updates.
@@ -50,25 +77,19 @@ library(lattice)
 ```
 
 
-# The Soil Series Concept
-
-
-
-## An Official (soil) Series Description
-
-<iframe id="osd-frame" src="https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DAVIDSON.html" width="90%" height="400px">
-</iframe>
 
 
 
 # Examples
 
+The following examples can be readily adapted to your own needs by copying/pasting the code chunks into a new R script.
 
 ## Getting Basic Soil Morphology and Taxonomic Data
 
 The `fetchOSD` function provides an interface to the parsed OSD records, hosted by SoilWeb. These records contain a combination of horizon-level and site-level attributes, returned as a `SoilProfileCollection` object. Site-level attributers include: latest taxonomic data from the SC database and an acreage estimate. Horizon-level attributes include horizon depths (cm), designations, moist/dry colors, pH, and texture. The original horizon narrative is also included. Moist soil colors are converted by default to sRGB values suitable for on-screen display.
 ```{r fig.width=8, fig.height=8}
-# case insensitive
+# a vector of named soil series
+# the search is case insensitive
 soils <- c('amador', 'pentz', 'pardee', 'auburn', 'loafercreek', 'millvilla')
 
 # moist colors are converted from Munsell -> sRGB by default
@@ -76,34 +97,44 @@ s <- fetchOSD(soils)
 # also convert dry colors
 s.dry <- fetchOSD(soils, colorState = 'dry')
 
+# quickly compare moist to dry colors
 par(mar=c(1,0,2,1), mfrow=c(2,1))
 plot(s) ; title('Moist Colors')
 plot(s.dry) ; title('Dry Colors')
 ```
 
-The `SoilTaxonomyDendrogram` function from `sharpshootR` package knows how to use elements from the soil classification to build a unique layout of profile sketches.
+The `SoilTaxonomyDendrogram` function from `sharpshootR` package knows how to use elements from the soil classification (order/suborder/great group/subgroup) to build a unique layout of profile sketches. The dissimmilarity matrix is computed using Gower's distance metric for nominal-scale data.
 ```{r}
 par(mar=c(0,0,1,1))
 SoilTaxonomyDendrogram(s, scaling.factor = 0.015)
 ```
 
-A closer look at the object returned by `fetchKSSL`.
+Take a closer look at the object returned by `fetchKSSL`. Consult the [`SoilProfileCollection` reference](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) for details on the internal structure of `s` and relevant methods.
 ```{r eval=FALSE}
+# internal structure, note that this is an S4 object with slots
 str(s)
+# site-level attribute names
 siteNames(s)
+# horizon-level attribute names
 horizonNames(s)
 ```
 
 
 ### Important Assumptions and Limitations
 
-Here are the narratives associated with the first profile in the collection. Regular expression was used to extract specific morphologic data. Some data may be missing or incorrect due to formatting errors, inconcsistencies, or typos. Many of the OSDs were converted from papers copies via OCR.
+Here are the narratives associated with the first profile in the collection. Regular expression was used to extract specific morphologic data. Some data may be missing or incorrect due to formatting errors, inconcsistencies, or typos. Many of the OSDs were converted from paper copies via OCR.
 
 <div style="font-size: 80%; padding: 10px; border-style: solid; border-width: 1px; border-color: grey;">
 ```{r echo=FALSE, results='asis'}
 cat(s[1, ]$narrative, sep = '\n\n')
 ```
 </div>
+
+<br>
+Here are the data elements extracted from the narratives above. Depths are always converted to cm. Note that not all of the morphologic data have been recovered.
+```{r echo=FALSE}
+kable_styling(kable(horizons(s[1, ])[, 2:15], format = 'html'), font_size = 10)
+```
 
 
 ## Extended Summaries
@@ -146,7 +177,7 @@ print(res$fig)
 ```{r fig.width=10, fig.height=6}
 
 soils <- OSDquery(brief_narrative = 'andesite', mlra = '18')
-head(soils)
+kable(head(soils))
 
 s <- fetchOSD(soils$series)
 
