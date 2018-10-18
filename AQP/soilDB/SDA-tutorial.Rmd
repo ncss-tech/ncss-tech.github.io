@@ -26,7 +26,7 @@ Spatial queries can be included in SQL statements submitted to SDA as long as th
 
 The `soilDB` library for R provides a helper function (`SDA_query()`) for submitting queries to SDA, processing the result, and reformatting the results into a rectangular table (a `data.frame`). Most of the work required to use the `SDA_query()` function will be writing SQL to describe the columns you would like returned and how the data should be filtered and possibly grouped. 
 
-Follow along with the blocks of code below by copying / pasting into a new R "script" document. Each block of command can be run by pasting into the R console, or by "stepping through" lines of code by moving the cursor to the top of a block (in the R script panel) and repeatedly pressing ctrl + enter.
+Follow along with the blocks of code below by copying / pasting into a new R "script" document. Each block of command can be run by pasting into the R console, or by "stepping through" lines of code by moving the cursor to the top of a block (in the R script panel) and repeatedly pressing ctrl + enter. Note that `knittr:kable` is used to create cleaner output in the tutorial and isn't required while following along.
 
 If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
 
@@ -94,7 +94,7 @@ Are there any survey areas that haven't been updated since Jan 1, 2010?
 SDA_query("SELECT areasymbol, saverest FROM sacatalog WHERE saverest < '01/01/2010'")
 ```
 
-What is the most recently updates survey in CA?
+What is the most recently updated survey in CA?
 ```{r SDA-one-liner-3}
 SDA_query("SELECT areasymbol, saverest FROM sacatalog WHERE areasymbol LIKE 'CA%' ORDER BY saverest DESC")[1, ]
 ```
@@ -110,7 +110,7 @@ WHERE mukey = '461958'"
 res <- SDA_query(q)
 
 # check
-head(res)
+kable(head(res))
 ```
 
 Get a list of map units that contain "Amador" as minor component. Note that this type of query requires explicit exclusion of STATSGO records.
@@ -130,7 +130,7 @@ AND majcompflag = 'No'"
 res <- SDA_query(q)
 
 # check
-head(res)
+kable(head(res))
 
 # optionally save the results to CSV file
 # write.csv(res, file='path-to-file.csv', row.names=FALSE)
@@ -150,7 +150,7 @@ WHERE legend.areasymbol = 'CA113'"
 res <- SDA_query(q)
 
 # check
-head(res)
+kable(head(res))
 ```
 
 Cross tabulate the occurrence of components named "Auburn" and "Dunstone" with survey areasymbol. Note that this type of query requires explicit exclusion of STATSGO records.
@@ -180,7 +180,8 @@ WHERE mukey IN (
 SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('point(-121.77100 37.368402)')
 )"
 
-SDA_query(q)
+res <- SDA_query(q)
+kable(res)
 ```
 
 Get the map names and mukey values for a 1000m buffer around a manually-defined point (-121.77100 37.368402). A 1000m buffer applied to geographic coordinates will require several spatial transformations. First, the query point needs to be initialized in a geographic coordinate system with WGS84 datum. Next, the point is transformed to a planar coordinate system with units in meters; the [NLCD](http://www.mrlc.gov/index.php) [coordinate reference system](http://spatialreference.org/ref/sr-org/6630/) works well for points within the continental US. After computing a buffer in planar coordinates, the resulting polygon is converted back to geographic coordinates--this is what SDA is expecting.
@@ -204,7 +205,7 @@ SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('", p.wkt, "')
 )")
 
 res <- SDA_query(q)
-head(res)
+kable(head(res))
 ```
 
 
@@ -252,7 +253,7 @@ q <- paste0("SELECT mukey, cokey, compname, comppct_r
 res <- SDA_query(q)
 
 # check
-head(res)
+kable(head(res))
 ```
 
 
@@ -263,14 +264,18 @@ The first function `SDA_make_spatial_query()` will convert a single `Spatial*` (
 ```{r sda-spatial-query-helper-functions-examples-1, results='hide'}
 # the query point is in geographic coordinates with WGS84 datum
 p <- SpatialPoints(cbind(-121.77100, 37.368402), proj4string = CRS('+proj=longlat +datum=WGS84'))
-SDA_make_spatial_query(p)
+
+res <- SDA_make_spatial_query(p)
+kable(res)
 ```
 
 The second function `SDA_query_features()` will iterate over the features of a `Spatial*` (Points, Lines, Polygons) object, send a query to SDA, and return a set of the results as a `data.frame` object. This time, our example set of 2 points will also have some fake pedons IDs.
 ```{r sda-spatial-query-helper-functions-examples-2, results='hide'}
 # the query points are in geographic coordinates with WGS84 datum
 p <- SpatialPointsDataFrame(cbind(c(-121, -122), c(37, 37)), data=data.frame(pedon_id=1:2), proj4string = CRS('+proj=longlat +datum=WGS84'))
-SDA_query_features(p, id='pedon_id')
+
+res <- SDA_query_features(p, id='pedon_id')
+kable(res)
 ```
 
 
@@ -299,7 +304,7 @@ site(auburn) <- mu.data
 Check the results and plot the "Auburn" KSSL pedons, grouped by intersecting map unit key and coloring horizons according to clay content.
 ```{r sda-spatial-kssl-plot, fig.width=12, fig.height=5}
 # check results
-print(mu.data)
+kable(mu.data)
 
 # plot profiles, grouped by mukey
 # color horizons with clay content
