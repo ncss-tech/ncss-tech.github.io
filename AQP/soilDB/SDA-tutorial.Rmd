@@ -258,54 +258,75 @@ kable(head(res))
 
 
 # Queries Using Complex Spatial Filters
-The examples above illustrate how to perform SDA queries using a single spatial filter. Typically we need to perform these queries over a collection of points, lines or polygons. The `soilDB` package provides some helper functions for iterating over a collection of features (usually points). Note that spatial queries for more than 1000 features should probably be done using a local copy of the map unit polygons.
+The examples above illustrate how to perform SDA queries using a single spatial filter. Typically we need to perform these queries over a collection of points, lines or polygons. The `soilDB` package provides some helper functions for iterating over a collection of features (usually points).
 
-The first function `SDA_make_spatial_query()` will convert a single `Spatial*` (Points, Lines, Polygons) object to WKT and submit a spatial query to SDA, returning intersecting map unit keys and names. Let's try it using a `SpatialPoints` object with 1 feature.
-```{r sda-spatial-query-helper-functions-examples-1, results='hide'}
+
+TODO: document `SDA_query_features` vs. `SDA_spatialQuery`
+
+
+The function `SDA_spatialQuery()` will convert `Spatial*` (Points, Lines, Polygons) objects to WKT and submit a *GeometryCollection* to SDA. Depending on the argument `what`, the function will return intersecting map unit polygons and keys (`what=geom`) or just the mukey and map unit name (`what=mukey`). The latter mode is much faster than the former.
+
+An example based on a `SpatialPoints` object with 1 feature, asking for only tabular results.
+```{r}
 # the query point is in geographic coordinates with WGS84 datum
 p <- SpatialPoints(cbind(-121.77100, 37.368402), proj4string = CRS('+proj=longlat +datum=WGS84'))
 
-res <- SDA_make_spatial_query(p)
+# p is a spatial filter applied to a query against the map unit polygons
+# results contain intersecting map unit keys and names
+res <- SDA_spatialQuery(p, what = 'mukey')
 kable(res)
 ```
 
-The second function `SDA_query_features()` will iterate over the features of a `Spatial*` (Points, Lines, Polygons) object, send a query to SDA, and return a set of the results as a `data.frame` object. This time, our example set of 2 points will also have some fake pedons IDs.
-```{r sda-spatial-query-helper-functions-examples-2, results='hide'}
-# the query points are in geographic coordinates with WGS84 datum
-p <- SpatialPointsDataFrame(cbind(c(-121, -122), c(37, 37)), data=data.frame(pedon_id=1:2), proj4string = CRS('+proj=longlat +datum=WGS84'))
+Again with the same data, this time asking for spatial results.
+```{r}
+# results contain intersecting polygons and their map unit keys
+res <- SDA_spatialQuery(p, what = 'geom')
 
-res <- SDA_query_features(p, id='pedon_id')
-kable(res)
+# check graphically
+par(mar=c(1,1,1,1))
+plot(res)
+points(p, bg='royalblue', pch=21, cex=2)
+box()
 ```
 
+Some things to consider when using `SDA_spatialQuery()`:
 
-Let's apply the `SDA_query_features()` function to some real data; KSSL pedons correlated to "Auburn". Not all of these pedons have coordinates, so we will have to do some filtering first. See the in-line comments for details on each line of code.
+   * spatial filters must have a valid CRS defined
+   * spatial queries for more than 1000 features should probably be done using a local copy of the map unit polygons
+   * order is not preserved
+   * the number of resulting rows will not likely match the number of source rows
+   * results must be *joined* to the source data via spatial intersection, e.g. `sp::over()`
+
+
+Let's apply the `SDA_spatialQuery()` function to some real data; KSSL pedons correlated to "Auburn". Not all of these pedons have coordinates, so we will have to do some filtering first. See the in-line comments for details on each line of code.
 ```{r sda-spatial-kssl, results='hide'}
 # get KSSL pedons with taxonname = Auburn
-# coordinates will be NAD83 GCS
+# coordinates will be WGS84 GCS
 auburn <- fetchKSSL('auburn')
 # keep only those pedons with valid coordinates
 auburn <- subsetProfiles(auburn, s='!is.na(x) & !is.na(y)')
 # init spatial information
 coordinates(auburn) <- ~ x + y
 # define projection
-proj4string(auburn) <- '+proj=longlat +datum=NAD83'
+proj4string(auburn) <- '+proj=longlat +datum=WGS84'
 
 # extract "site data"
 auburn.sp <- as(auburn, 'SpatialPointsDataFrame')
-# perform SDA query on each "site", result is a data.frame
-mu.data <- SDA_query_features(auburn.sp, id='pedlabsampnum')
+
+# perform SDA query on collection of points
+mu.data <- SDA_spatialQuery(auburn.sp, what = 'geom')
+
+# use local spatial intersection to link source + SDA data
+auburn.sp$mukey <- over(auburn.sp, mu.data)$mukey
 
 # join results to original SoilProfileCollection using 'pedlabsampnum'
-site(auburn) <- mu.data
+# TODO: this is kind of clunky
+site(auburn) <- as.data.frame(auburn.sp)[, c('pedlabsampnum', 'mukey')]
 ```
 
 
 Check the results and plot the "Auburn" KSSL pedons, grouped by intersecting map unit key and coloring horizons according to clay content.
 ```{r sda-spatial-kssl-plot, fig.width=12, fig.height=5}
-# check results
-kable(mu.data)
-
 # plot profiles, grouped by mukey
 # color horizons with clay content
 par(mar=c(0,0,4,0))
@@ -315,80 +336,6 @@ mtext('user pedon ID', side=2, line=-1.5)
 mtext('mukey', side=3, line=-1, at = c(0,0), adj = 0)
 ```
 
-
-More examples pending...
-
-
-
-```{r sda-spatial-query-basics-3, eval=FALSE, echo=FALSE}
-## Get the map unit name and mukey that intersect from several points randomly located within MLRA 17. These points could also come from a SHP file of point locations.
-
-# MLRA boundaries, GCS NAD83
-mlra <- readOGR('L:/Geodata/Boundaries', layer='mlra_v42', stringsAsFactors = FALSE)
-
-# subset to MLRA 17
-mlra <- mlra[which(mlra$MLRARSYM == '17'), ]
-# generate 10 randomly located sample points
-s <- spsample(mlra, n = 10, type = 'stratified')
-
-# check
-plot(mlra)
-points(s, col='red')
-
-
-
-# check
-head(d)
-
-# optionally combine with sample point geometry
-# s.new <- SpatialPointsDataFrame(s, data=d)
-
-# optionally save to SHP
-# writeOGR(s.new, dsn='.', layer='sample-points', driver='ESRI Shapefile', overwrite_layer = TRUE)
-```
-
-```{r sda-spatial-query-via-raster, eval=FALSE, echo=FALSE}
-##
-## this is getting rather convoluted... 
-##
-
-
-# mean frost-free-days: NAD83 GCS
-r <- raster('E:/gis_data/prism/ffd_mean_800m.tif')
-# MLRA boundaries, NAD83 GCS 
-mlra <- readOGR('L:/Geodata/Boundaries', layer='mlra_v42', stringsAsFactors = FALSE)
-# subset to MLRA 15
-mlra <- mlra[which(mlra$MLRARSYM == '15'), ]
-# crop FFD to mlra 15 extent
-r <- crop(r, mlra)
-# extract 250 FFD contour
-# ffd.250 <- rasterToPolygons(r, fun=function(i) {i > 250}, dissolve=TRUE)
-
-# check: ok
-plot(r)
-plot(mlra, add=TRUE)
-plot(ffd.250, add=TRUE, col='red')
-
-# ... now what?
-
-# rasterize MLRA 15 using same grid as FFD
-mlra.r <- rasterize(mlra, r)
-# convert all non-NA values to 1
-mlra.r[!is.na(mlra.r)] <- 1
-
-# overlay FFD > 200 and MLRA 15 rasters
-x <- r + mlra.r
-# check: OK
-plot(x)
-
-# convert to points
-s <- rasterToPoints(x, spatial = TRUE)
-
-# query ?
-
-
-
-```
 
 ----------------------------
 This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
