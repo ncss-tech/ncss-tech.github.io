@@ -13,7 +13,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='subpixel'), tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 
 knit_hooks$set(htmlcap = function(before, options, envir) {
@@ -26,7 +26,7 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 
 You probably need to install some packages before this will work. Have a look at [this tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) to get setup.
 
-Lets get some interpretations that are relevant to MLRA 18 (Sierra Nevada Foothills) soils so that we can compare all components named [**Auburn**](https://soilseries.sc.egov.usda.gov/OSD_Docs/A/AUBURN.html) and [**Dunstone**](https://soilseries.sc.egov.usda.gov/OSD_Docs/D/DUNSTONE.html). Just for fun lets throw in a very different soil from MLRA 17 (San Joaquin Valley); [**Hanford**](https://soilseries.sc.egov.usda.gov/OSD_Docs/H/HANFORD.html).
+Lets get some interpretations that are relevant to MLRA 18 (Sierra Nevada Foothills) soils so that we can compare all components named [**Amador**](https://casoilresource.lawr.ucdavis.edu/sde/?series=amador) and [**Millvilla**](https://casoilresource.lawr.ucdavis.edu/sde/?series=millvilla). Just for fun lets throw in a very different soil from MLRA 17 (San Joaquin Valley); [**Hanford**](https://casoilresource.lawr.ucdavis.edu/sde/?series=hanford).
 
 Note that SDA has a 100,000 row limit, so we have to be a little clever when writing the queries. In this case, letting the database filter out NULL fuzzy ratings and the reasons for ratings.
 ```{r}
@@ -35,7 +35,7 @@ library(plyr)
 library(reshape2)
 library(lattice)
 
-# beware, there are hard limits (10k rows) on what can be returned by SDA
+# beware, there are hard limits (100k rows) on what can be returned by SDA
 q <- "SELECT component.cokey, compname, mrulename, interplr, interplrc
 FROM legend
 INNER JOIN mapunit ON mapunit.lkey = legend.lkey
@@ -44,36 +44,33 @@ INNER JOIN cointerp ON component.cokey = cointerp.cokey
 WHERE
 -- exclude STATSGO
 areasymbol != 'US'
-AND compname IN ('Auburn', 'Dunstone', 'Hanford')
+AND compname IN ('Millvilla', 'Amador', 'Hanford')
 AND seqnum = 0
 AND mrulename IN ('ENG - Construction Materials; Topsoil', 
 'ENG - Sewage Lagoons', 'ENG - Septic Tank Absorption Fields', 
 'ENG - Unpaved Local Roads and Streets', 
-'AGR - California Revised Storie Index (CA)', 
-'AGR - Pesticide Loss Potential-Leaching')
+'AGR - California Revised Storie Index (CA)')
 AND interplr IS NOT NULL;"
 
 # query and check
 x <- SDA_query(q)
-head(x)
+kable(head(x))
 ```
 
-OK, so how do the fuzzy numbers (`interplr` values) for these components compare? Box and whisker plots are the simplest, but sometimes density plots are helpful for viewing the complete distribution. Looks like Auburn and Dunstone are pretty similar, at least in terms of these interpretations.
-```{r, fig.width=8, fig.height=10}
+OK, so how do the fuzzy numbers (`interplr` values) for these components compare?
+```{r, fig.width=8, fig.height=8}
 # compute number of rules and soils
 n.soils <- length(unique(x$compname))
 n.rules <- length(unique(x$mrulename))
 
 # compare population with box-whisker plot
-bwplot(compname ~ interplr | mrulename, data=x, layout=c(1,n.rules))
-
-densityplot(~ interplr | mrulename, groups=compname, data=x, layout=c(1,n.rules), auto.key=list(points=FALSE, lines=TRUE, columns=n.soils), scales=list(y=list(relation='free')))
+bwplot(compname ~ interplr | mrulename, data=x, layout=c(1,n.rules), strip=strip.custom(bg=grey(0.8)))
 ```
 
 
 Those figures were useful, sometimes it is nice to see the median values for each interpretation (rows) and component (columns).
 ```{r}
-s <- ddply(x, c('mrulename', 'compname'), summarize, 
+s <- ddply(x, c('mrulename', 'compname'), plyr::summarize, 
            low=quantile(interplr, probs=0.05, na.rm=TRUE), 
            rv=quantile(interplr, probs=0.5, na.rm=TRUE), 
            high=quantile(interplr, probs=0.95, na.rm=TRUE))
@@ -104,10 +101,11 @@ Here is a crazy idea, what if we could sort a collection of soil series based on
  
  3. in aggregate, the collection of components named for a soil series will approximate the central tendency of that series
  
-Lets try it with a small set of MLRA 17, 18, and 22A soils. NULL ratings will confound interpretation of the results--there are no "AGR - Pesticide Loss Potential-Leaching" ratings for components named "Dunstone". I have tried to select a small set of relevant interpretations, but clearly there are many possibilities.
-```{r, fig.width=6, fig.height=5}
+Lets try it with a small set of MLRA 17, 18, and 22A soils. NULL ratings will confound interpretation of the results--there are no "AGR - Pesticide Loss Potential-Leaching" ratings for components named "Dunstone". I have tried to select a small set of relevant interpretations, but clearly there are many possibilities. Soil profile sketches ([derived from Official Series Descriptions](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html)) are used in the final figure. Note that these are not the same as the component data that were used to generate the interpretation-based similarity.
+```{r, fig.width=10, fig.height=6}
 library(cluster)
 library(ape)
+library(sharpshootR)
 
 # set list of soil series (component names)
 soil.list <- c('Pardee', 'Yolo', 'Capay', 'Aiken', 'Amador', 'Pentz', 'Sobrante',
@@ -142,20 +140,28 @@ x <- SDA_query(q)
 x.wide <- dcast(x, compname ~ mrulename, value.var = 'interplr_mean')
 knitr::kable(x.wide, digits = 3, caption="Mean Fuzzy Ratings for Select Soil Series")
 
+# set row names to uppercase compname
+# this will allow us to integrate with an SPC of OSD data later
+row.names(x.wide) <- toupper(x.wide$compname)
+
 # create distance matrix
+# leave out compname
 d <- daisy(x.wide[, -1])
 
 # cluster via divisive hierachical method
-h <- as.hclust(diana(d))
+# labels are recovered from row names -> distance matrix dimnames
+h <- diana(d)
 
-# transfer compname labels and convert to 'ape' class for plotting
-h$labels <- x.wide$compname
-h <- as.phylo(h)
+# fetch typical profiles from official series descriptions
+osds <- fetchOSD(soil.list)
 
-# plot as dendrogram
-par(mar=c(1,1,3,1))
-plot(h)
-title('Component Similarity via Select Interpretation Fuzzy Values')
+# magic happens here
+# hang profile sketches from interpretation-based clustering
+# may have to tinker with arguments to get figure right
+par(mar=c(2,1,2,1))
+plotProfileDendrogram(osds, clust = diana(d), scaling.factor = 0.008, max.depth=200, width = 0.2)
+title('Component Similarity via Interpretation Fuzzy Values')
+mtext('profile sketches from OSD', side = 1)
 ```
 
 Interesting. Discussion to be continued...
