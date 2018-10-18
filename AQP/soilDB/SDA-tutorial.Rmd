@@ -1,5 +1,5 @@
 ---
-title: "Soil Data Access (SDA2) Tutorial"
+title: "Soil Data Access (SDA) Tutorial"
 author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:

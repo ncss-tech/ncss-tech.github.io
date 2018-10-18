@@ -95,7 +95,7 @@ head(s@data)
 # map
 par(mar=c(0,0,0,0))
 map('county', 'California', xlim=c(-123.25, -118.75), ylim=c(36.5, 39))
-plot(s, add=TRUE)
+plot(s, add=TRUE, col='royalblue', border='royalblue')
 ```
 
 
