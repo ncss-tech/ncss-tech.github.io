@@ -1,0 +1,125 @@
+---
+title: "Investigating the Soil Taxonomy Family"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+---
+
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+```{r }
+library(soilDB)
+library(lattice)
+
+# get recent SC database
+tf <- tempfile()
+download.file('https://github.com/ncss-tech/SoilTaxonomy/raw/master/databases/SC-database.csv.gz', tf)
+x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
+
+# convenience function for getting KSSL data by soil series name
+getPedons <- function(x) {
+  suppressMessages(fetchKSSL(series=x))
+}
+
+# convenience function for getting OSDs associated with the same family as 's'
+# aka competing series
+# hack: SC db referenced outside function scope
+sameFamily <- function(s) {
+  idx <- which(x$soilseriesname == toupper(s))
+  cl <- x$taxclname[idx]
+  z <- x[which(x$taxclname == cl), ]
+  spc <- fetchOSD(z$soilseriesname)
+  return(spc)
+}
+
+
+# get competing series OSD data
+spc <- sameFamily('clarksville')
+
+# save some info for later
+fm.name <- unique(na.omit(spc$family))
+s.names <- unique(site(spc)$id)
+
+# plot
+par(mar=c(0,1,1,1))
+plot(spc)
+mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
+mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
+
+# get associated KSSL data for these series
+kssl.data <- lapply(s.names, getPedons)
+
+# some may not have any data, filter those out
+not.null <- which(! sapply(kssl.data, is.null))
+# combine into single SPC
+kssl.data <- do.call('rbind', kssl.data[not.null])
+
+# normalize soil series names
+for(i in s.names)
+  kssl.data$taxonname[grep(i, kssl.data$taxonname, ignore.case = TRUE)] <- toupper(i)
+
+# check normalization: OK
+table(kssl.data$taxonname)
+
+# aggregate over entire collection, marginal quantiles of select properties
+g.slab <- slab(kssl.data, ~ clay + estimated_ph_h2o + cec7 + bs82)
+levels(g.slab$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
+
+# define plotting style
+tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+
+xyplot(top ~ p.q50 | variable, data=g.slab, ylab='Depth', main=fm.name, sub='source: KSSL',
+       xlab='median bounded by 25th and 75th percentiles',
+       lower=g.slab$p.q25, upper=g.slab$p.q75, ylim=c(205,-5),
+       panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel=prepanel.depth_function,
+       cf=g.slab$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       par.settings=tps,
+       auto.key=list(columns=3, lines=TRUE, points=FALSE)
+)
+
+
+
+# compare a single profile to the group-level aggregate values
+a <- slab(kssl.data[which(kssl.data$taxonname == 'ROCKWOOD'), ], ~ clay + estimated_ph_h2o + cec7 + bs82)
+levels(a$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
+
+
+# manually update the group column
+a$group <- 'ROCKWOOD'
+# a$p.q25 <- NA
+# a$p.q75 <- NA
+g.slab$group <- 'ALL'
+
+# combine into a single data.frame:
+g <- rbind(g.slab, a)
+g$group <- factor(g$group)
+
+xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
+       xlab='median bounded by 25th and 75th percentiles',
+       lower=g$p.q25, upper=g$p.q75, ylim=c(205,-5),
+       panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel=prepanel.depth_function,
+       # cf=g$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       par.settings=tps,
+       auto.key=list(columns=2, lines=TRUE, points=FALSE)
+)
+```
