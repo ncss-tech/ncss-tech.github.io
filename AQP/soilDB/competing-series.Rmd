@@ -18,15 +18,21 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+This is rough outline for comparing data associated with a single soil series to all of the data associated with parent *family*. For example, compare the [Coulstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=Coulstone) series too all series in the *loamy-skeletal, siliceous, semiactive, mesic typic paleudults* family.
 
-```{r }
+First, lets take a look at where this family sits in relationship to the parent subgroup (typic paleudults).
+<iframe id="seriesTree-frame" src="https://soilmap2-1.lawr.ucdavis.edu/seriesTree/?series=Coulstone" width="100%" height="800px">
+</iframe>
+
+
+The comments + code are the real story here; I'll add a proper description as time permits.
+
+
+Load relevant packages and define some helper functions.
+```{r fig.width=8, fig.height=6}
+# you will need the latest version of soilDB
 library(soilDB)
 library(lattice)
-
-# get recent SC database
-tf <- tempfile()
-download.file('https://github.com/ncss-tech/SoilTaxonomy/raw/master/databases/SC-database.csv.gz', tf)
-x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
 
 # convenience function for getting KSSL data by soil series name
 getPedons <- function(x) {
@@ -43,21 +49,41 @@ sameFamily <- function(s) {
   spc <- fetchOSD(z$soilseriesname)
   return(spc)
 }
+```
 
 
+This is a nice opportunity to do something with a cached copy of the Soil Classification database. This and [other soil series related summaries are periodically extracted](https://github.com/ncss-tech/SoilTaxonomy).
+```{r fig.width=8, fig.height=6}
+# get recent SC database
+tf <- tempfile()
+download.file('https://github.com/ncss-tech/SoilTaxonomy/raw/master/databases/SC-database.csv.gz', tf)
+x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
+rm(tf)
+```
+
+
+Invoke `fetchOSD` for all series that share family-level classification with Coulstone There are better ways of doing this, but the code in this document is mostly for educational purposes.
+```{r fig.width=8, fig.height=6}
 # get competing series OSD data
-spc <- sameFamily('clarksville')
+spc <- sameFamily('Coulstone')
 
 # save some info for later
 fm.name <- unique(na.omit(spc$family))
 s.names <- unique(site(spc)$id)
+```
 
+Plot soil series in this family.
+```{r fig.width=8, fig.height=6}
 # plot
 par(mar=c(0,1,1,1))
 plot(spc)
 mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
+```
 
+
+Get KSSL data from these series via `fetchKSSL`.
+```{r fig.width=9, fig.height=6}
 # get associated KSSL data for these series
 kssl.data <- lapply(s.names, getPedons)
 
@@ -72,7 +98,11 @@ for(i in s.names)
 
 # check normalization: OK
 table(kssl.data$taxonname)
+```
 
+
+Aggregate over all data within this family via `slab`, and display median bounded by interquartile range.
+```{r fig.width=9, fig.height=6}
 # aggregate over entire collection, marginal quantiles of select properties
 g.slab <- slab(kssl.data, ~ clay + estimated_ph_h2o + cec7 + bs82)
 levels(g.slab$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
@@ -92,16 +122,18 @@ xyplot(top ~ p.q50 | variable, data=g.slab, ylab='Depth', main=fm.name, sub='sou
        par.settings=tps,
        auto.key=list(columns=3, lines=TRUE, points=FALSE)
 )
+```
 
 
-
+Aggregate just Coulstone data and compare with entire family. Note that Coulstone records make up about 30% of the data within this family.
+```{r fig.width=9, fig.height=6}
 # compare a single profile to the group-level aggregate values
-a <- slab(kssl.data[which(kssl.data$taxonname == 'ROCKWOOD'), ], ~ clay + estimated_ph_h2o + cec7 + bs82)
+a <- slab(kssl.data[which(kssl.data$taxonname == 'COULSTONE'), ], ~ clay + estimated_ph_h2o + cec7 + bs82)
 levels(a$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
 
 
 # manually update the group column
-a$group <- 'ROCKWOOD'
+a$group <- 'COULSTONE'
 # a$p.q25 <- NA
 # a$p.q75 <- NA
 g.slab$group <- 'ALL'
@@ -111,7 +143,7 @@ g <- rbind(g.slab, a)
 g$group <- factor(g$group)
 
 xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
-       xlab='median bounded by 25th and 75th percentiles',
+       xlab='median bounded by 25th and 75th percentiles', sub='source: KSSL' ,
        lower=g$p.q25, upper=g$p.q75, ylim=c(205,-5),
        panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
        prepanel=prepanel.depth_function,
@@ -123,3 +155,8 @@ xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
        auto.key=list(columns=2, lines=TRUE, points=FALSE)
 )
 ```
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
