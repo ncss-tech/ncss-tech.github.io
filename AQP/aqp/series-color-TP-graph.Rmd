@@ -98,10 +98,11 @@ plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "s
 ```
 
 
-Simulate moist color sequences using Markov chains derived from transition probability matrix.
+Simulate moist color sequences using Markov chains derived from transition probability matrix. Weight the TP matrix (and MC?) by working from 1cm slices. Does this make sense?
 ```{r fig.width=8, fig.height=5}
 # re-make TP matrix, this time including terminal loops
-tp.loops <- hzTransitionProbabilities(s, name="color", loopTerminalStates = TRUE)
+s.slices <- slice(s, 0:150 ~ .)
+tp.loops <- hzTransitionProbabilities(s.slices, name="color", loopTerminalStates = TRUE)
 
 # init new markovchain from TP matrix
 mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
@@ -110,24 +111,32 @@ mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.l
 sort(table(h$color[grep('^A', h$hzn_desgn)]), decreasing = TRUE)
 
 # simulate 30 sequences, starting with the most common A horizon moist color
-munsell.sequence <- replicate(30, rmarkovchain(n = 10, object = mc, include.t0 = TRUE, t0 = "7.5YR 3/2"))
+munsell.sequence <- replicate(30, rmarkovchain(n = 150, object = mc, include.t0 = TRUE, t0 = "7.5YR 3/2"))
 
 # convert to plot-able colors
 col.sequence <- apply(munsell.sequence, 2, parseMunsell)
 
 # visualize
 par(mar=c(1,0,3,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(11, 1), xlim=c(1, 30))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(160, 1), xlim=c(1, 30))
 
 # vectorized functions are the best
-rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence)
+rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA)
 ```
 
 
-Additional ideas...
-```{r}
-conditionalDistribution(mc, '7.5YR 3/2')
-mostLikelyHzSequence(mc, t0 = "7.5YR 3/2")
+Add most likely sequence.
+```{r fig.width=8, fig.height=5}
+ml <- mostLikelyHzSequence(mc, t0 = "7.5YR 3/2")
+
+par(mar=c(1,0,3,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(160, 1), xlim=c(1, 32))
+
+# vectorized functions are the best
+rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA)
+
+# stretch most likely sequence... this isn't quite right
+rect(xleft=31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * seq_along(ml) + 0.5, col = parseMunsell(ml))
 ```
 
 
