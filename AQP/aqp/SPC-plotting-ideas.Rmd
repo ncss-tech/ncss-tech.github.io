@@ -35,10 +35,10 @@ x <- loafercreek[1:10, ]
 par(mar=c(1,1,2,1))
 
 # profile sketches
-plot(x, label='pedon_id')
+plot(x, label='pedon_id', id.style='side')
 
 # group profiles by hillslope position
-groupedProfilePlot(x, 'hillslopeprof', label='pedon_id')
+groupedProfilePlot(x, 'hillslopeprof', label='pedon_id', id.style='side')
 
 # extract site data so that we can annotate wit PSCS depths
 s <- site(x)

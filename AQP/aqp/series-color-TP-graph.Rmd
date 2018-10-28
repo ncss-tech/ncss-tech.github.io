@@ -1,37 +1,26 @@
 ---
+title: "Soil Color Transition Probability"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
-  html_vignette:
+  html_document:
     mathjax: null
     jquery: null
     smart: no
+    keep_md: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr, quietly = TRUE)
-library(printr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=TRUE)
-options(width=100, stringsAsFactors=FALSE)
-
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
 
-Soil Color Transition Probability
-=======================================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
-
-Details pending...
+A soil color / transition probability (TP) matrix experiment. Transition probabilities are computed in horizon depth order, starting from the top of each profile. The TP matrix can be used to investigate likely sequences and end-points, or, to simulate sequences using Markov chains.
 
 
-Use pedon data associated with the Pierre soil series.
+Use pedon data associated with the [Holland](https://casoilresource.lawr.ucdavis.edu/sde/?series=holland) soil series.
 ```{r}
 library(soilDB)
 library(sharpshootR)
@@ -40,8 +29,8 @@ library(plyr)
 library(reshape2)
 library(markovchain)
 
-# get lab / morphologic data for the Pierre soil series
-x <- fetchKSSL(series='pierre', returnMorphologicData = TRUE)
+# get lab / morphologic data
+x <- fetchKSSL(series='holland', returnMorphologicData = TRUE)
 
 # extract pedons into SoilProfileCollection
 s <- x$SPC
@@ -50,7 +39,7 @@ s <- x$SPC
 h <- horizons(s)
 
 # simplify color data: 1 row / horizon, from morphologic data tables
-x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum')
+x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
 
 # merge color data into SPC
 h <- join(h, x.colors, by='labsampnum', type='left', match='first')
@@ -66,34 +55,27 @@ horizons(s) <- h
 ```
 
 
-Alternate data source.
-```{r, eval=FALSE}
-# load AQP sample dataset 5
-data(sp5)
-s <- sp5
-
-# convert soil color to sRGB
-s.rgb <- t(col2rgb(s$soil_color))
-s.rgb <- s.rgb / 255
-
-# convert soil color to closest Munsell chip
-s.munsell <- rgb2munsell(horizons(s)[, c('R25', 'G25', 'B25')])
-
-s$color <- paste0(s.munsell$hue, ' ', s.munsell$value, '/', s.munsell$chroma)
-
-s$moist_soil_color <- s$soil_color
+Moist color changes with depth.
+```{r fig.width=8, fig.height=5}
+par(mar=c(0,0,2,0))
+plot(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4)
+mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 ```
 
 
+Compute depth-wise transition probability matrix for moist colors. Visualize as a graph organized by communities.
 ```{r, fig.width=9, fig.height=9}
 # generate TP matrix from horizon moist colors
-tp <- hzTransitionProbabilities(s, "color", loopTerminalStates = FALSE)
+tp <- hzTransitionProbabilities(s, name="color", loopTerminalStates = FALSE)
 
 # greate graph object
 par(mar = c(1, 1, 1, 1))
 g <- plotSoilRelationGraph(tp, graph.mode = "directed", vertex.scaling.factor=2, edge.arrow.size = 0.5, edge.scaling.factor = 2.5, vertex.label.cex = 0.75, vertex.label.family = "sans")
+```
 
 
+Visualize as graph with vertices colored according to soil color.
+```{r, fig.width=9, fig.height=9}
 # join Munsell color notation to graph nodes
 d <- data.frame(color=V(g)$name, stringsAsFactors = FALSE)
 d <- join(d, horizons(s), by = 'color', type='left', match='first')
@@ -114,4 +96,96 @@ par(mar=c(0,0,1,0), bg=grey(0.85))
 set.seed(1010101)
 plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "sans", vertex.label.font=2, edge.color='black')
 ```
+
+
+Simulate moist color sequences using Markov chains derived from transition probability matrix.
+```{r fig.width=8, fig.height=5}
+# re-make TP matrix, this time including terminal loops
+tp.loops <- hzTransitionProbabilities(s, name="color", loopTerminalStates = TRUE)
+
+# init new markovchain from TP matrix
+mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
+
+# investigate the most common surface horizon colors
+sort(table(h$color[grep('^A', h$hzn_desgn)]), decreasing = TRUE)
+
+# simulate 30 sequences, starting with the most common A horizon moist color
+munsell.sequence <- replicate(30, rmarkovchain(n = 10, object = mc, include.t0 = TRUE, t0 = "7.5YR 3/2"))
+
+# convert to plot-able colors
+col.sequence <- apply(munsell.sequence, 2, parseMunsell)
+
+# visualize
+par(mar=c(1,0,3,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(11, 1), xlim=c(1, 30))
+
+# vectorized functions are the best
+rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence)
+```
+
+
+Additional ideas...
+```{r}
+conditionalDistribution(mc, '7.5YR 3/2')
+mostLikelyHzSequence(mc, t0 = "7.5YR 3/2")
+```
+
+
+
+Do it again, this time for a soil series with a lot of data: [Clarksville](https://casoilresource.lawr.ucdavis.edu/sde/?series=clarksville).
+```{r}
+# get lab / morphologic data
+x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE)
+
+# extract pedons into SoilProfileCollection
+s <- x$SPC
+
+# extract horizon data from SPC
+h <- horizons(s)
+
+# simplify color data: 1 row / horizon, from morphologic data tables
+x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
+
+# merge color data into SPC
+h <- join(h, x.colors, by='labsampnum', type='left', match='first')
+
+# remove horizons that are missing moist colors
+h <- subset(h, h$m_hue != '' & ! is.na(h$m_hue) & ! is.na(h$m_value) & ! is.na(h$m_chroma))
+
+# re-assemble Munsell color notation for moist color
+h$color <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
+
+# pack horizon data back into SPC
+horizons(s) <- h
+
+tp.loops <- hzTransitionProbabilities(s, name="color", loopTerminalStates = TRUE)
+
+# init new markovchain from TP matrix
+mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
+
+# simulate 30 sequences, starting with the most common A horizon moist color
+munsell.sequence <- replicate(30, rmarkovchain(n = 10, object = mc, include.t0 = TRUE, t0 = "10YR 4/2"))
+
+# convert to plot-able colors
+col.sequence <- apply(munsell.sequence, 2, parseMunsell)
+```
+
+Clarksville moist soil colors.
+```{r fig.width=10, fig.height=5}
+par(mar=c(0,0,2,0))
+plot(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4, divide.hz=FALSE)
+mtext('KSSL data correllated to Clarksville series', at=0.5, adj = 0)
+```
+
+Simulated sequence of moist soil colors, starting from *10YR 4/2*.
+```{r fig.width=8, fig.height=5}
+par(mar=c(1,0,3,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(11, 1), xlim=c(1, 30))
+
+rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence)
+```
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 

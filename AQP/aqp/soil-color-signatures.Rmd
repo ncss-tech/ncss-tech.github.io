@@ -11,7 +11,6 @@ output:
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-# setup
 library(knitr)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
@@ -25,6 +24,7 @@ Pending.
 
  * integrate ideas from [colordistance package](https://cran.r-project.org/web/packages/colordistance/vignettes/colordistance-introduction.html)
  * what is appropriate rescaling of L?
+ * use metric color distances via [farver package](https://github.com/thomasp85/farver)
 
 # Examples
 Source colors are in sRGB (D65) colorspace, as converted from Munsell notation using `aqp::munsell2rgb()`.
