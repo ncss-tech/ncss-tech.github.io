@@ -28,6 +28,8 @@ library(igraph)
 library(plyr)
 library(reshape2)
 library(markovchain)
+library(RColorBrewer)
+library(scales)
 
 # get lab / morphologic data
 x <- fetchKSSL(series='holland', returnMorphologicData = TRUE)
@@ -73,6 +75,29 @@ par(mar = c(1, 1, 1, 1))
 g <- plotSoilRelationGraph(tp, graph.mode = "directed", vertex.scaling.factor=2, edge.arrow.size = 0.5, edge.scaling.factor = 2.5, vertex.label.cex = 0.75, vertex.label.family = "sans")
 ```
 
+Sketch profiles using same colors as community colors in network graph.
+```{r fig.width=8, fig.height=5}
+# get clustering vector and colors names from graph
+cl <- data.frame(color=V(g)$name, cluster=V(g)$cluster, stringsAsFactors = FALSE)
+
+# join with SPC
+# note that we have to extract / join / splice
+h <- horizons(s)
+h <- join(h, cl, by='color')
+horizons(s) <- h
+
+# hack re-recreate colors used by plotSoilRelationGraph
+# good reminder to return more from that function...
+cols <- colorRampPalette(brewer.pal(n = 9, name = "Set1"))(max(cl$cluster))
+s$cluster_color <- alpha(cols[s$cluster], 0.65)
+
+# profile sketches, colors match communities in graph above
+par(mar=c(0,0,1,0))
+plot(s, color='cluster_color', print.id=FALSE, name='hzn_desgn')
+mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
+```
+
+
 
 Visualize as graph with vertices colored according to soil color.
 ```{r, fig.width=9, fig.height=9}
@@ -98,7 +123,7 @@ plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "s
 ```
 
 
-Simulate moist color sequences using Markov chains derived from transition probability matrix. Weight the TP matrix (and MC?) by working from 1cm slices. Does this make sense?
+Simulate moist color sequences using Markov chains derived from transition probability matrix. Weight the TP matrix (and MC?) by working from 1cm slices. Does this make sense? Probably not.
 ```{r fig.width=8, fig.height=5}
 # re-make TP matrix, this time including terminal loops
 s.slices <- slice(s, 0:150 ~ .)
