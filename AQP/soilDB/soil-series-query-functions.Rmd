@@ -152,16 +152,17 @@ str(s, 1)
 
 https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_054252
 
-
+Take a peek at the new extended summaries.
 ```{r echo=FALSE}
 kable_styling(kable(s$hillpos, format='html', digits = 2), font_size = 10, full_width = FALSE)
 kable_styling(kable(s$geomcomp, format='html', digits = 2), font_size = 10, full_width = FALSE)
 kable_styling(kable(s$pmkind, format='html'), font_size = 10, full_width = FALSE)
 kable_styling(kable(s$pmorigin, format='html'), font_size = 10, full_width = FALSE)
 kable_styling(kable(s$mlra, format='html'), font_size = 9, full_width = FALSE)
+kable_styling(kable(s$climate[1:10, ], format='html', digits = 2), font_size = 9, full_width = FALSE)
 ```
 
-## Climate Summaries
+### Climate Summaries
 ```{r fig.width=12, fig.height=5}
 # remove light colors
 cols <- brewer.pal(9, 'Set1') 
