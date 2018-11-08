@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="date" content="2018-04-09" />
+<meta name="date" content="2018-11-08" />
 
 <title>Setup an ODBC Connection to the Local NASIS Database</title>
 
@@ -68,7 +68,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 <h1 class="title toc-ignore">Setup an ODBC Connection to the Local NASIS Database</h1>
-<h4 class="date"><em>2018-04-09</em></h4>
+<h4 class="date"><em>2018-11-08</em></h4>
 
 
 
@@ -106,7 +106,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>You will need to install a couple of packages before R is able to read data from the local NASIS database. This only has to be done once, usually the first time you open RStudio on your machine. Open RStudio (start menu, search for RStudio) and copy and paste the following lines into the R console. Press the enter key and wait: R will automatically download and install these packages. If this is the first time you have installed packages, you may notice that many more than the following two packages are being installed. This is normal-- the <code>RODBC</code> and <code>soilDB</code> packages depend on <a href="http://mran.revolutionanalytics.com/packagedata/graphs/soilDB.png">many other related packages</a>, which must be installed first.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install packages (only first time)</span>
 <span class="kw">install.packages</span>(<span class="st">&quot;RODBC&quot;</span>, <span class="dt">dep=</span><span class="ot">TRUE</span>) <span class="co"># stable version from CRAN + dependencies</span>
-<span class="kw">install.packages</span>(<span class="st">&quot;soilDB&quot;</span>, <span class="dt">dep=</span><span class="ot">TRUE</span>) <span class="co"># stable version from CRAN + dependencies</span></code></pre></div>
+<span class="kw">install.packages</span>(<span class="st">&quot;soilDB&quot;</span>, <span class="dt">dep=</span><span class="ot">TRUE</span>) <span class="co"># stable version from CRAN + dependencies</span>
+remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ncss-tech/soilDB&quot;</span>, <span class="dt">dependencies=</span><span class="ot">FALSE</span>, <span class="dt">upgrade=</span><span class="ot">FALSE</span>, <span class="dt">build=</span><span class="ot">FALSE</span>) <span class="co"># latest version, required for Windows 10</span></code></pre></div>
 </div>
 <div id="an-example-r-session" class="section level2">
 <h2>An example R session</h2>
@@ -119,7 +120,7 @@ fp &lt;-<span class="st"> </span><span class="kw">fetchNASIS</span>(<span class=
 
 <span class="co"># make sketches of the first 10 pedons:</span>
 <span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))
-<span class="kw">plot</span>(fp[<span class="dv">1</span>:<span class="dv">10</span>, ], <span class="dt">name=</span><span class="st">'hzname'</span>, <span class="dt">label=</span><span class="st">'taxonname'</span>)</code></pre></div>
+<span class="kw">plot</span>(fp[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, ], <span class="dt">name=</span><span class="st">'hzname'</span>, <span class="dt">label=</span><span class="st">'taxonname'</span>)</code></pre></div>
 <p>Good job, that wasn't so hard. Now is a good time to check out <a href="http://ncss-tech.github.io/AQP/">some of the tutorials on the AQP website</a>. Details on loading NASIS data into R can be found in <a href="http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html">this tutorial</a>.</p>
 </div>
 

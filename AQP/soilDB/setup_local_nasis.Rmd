@@ -40,6 +40,7 @@ You will need to install a couple of packages before R is able to read data from
 # install packages (only first time)
 install.packages("RODBC", dep=TRUE) # stable version from CRAN + dependencies
 install.packages("soilDB", dep=TRUE) # stable version from CRAN + dependencies
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE) # latest version, required for Windows 10
 ```
 
 
