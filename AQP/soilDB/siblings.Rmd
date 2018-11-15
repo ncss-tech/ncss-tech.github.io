@@ -1,0 +1,69 @@
+---
+title: "Soil Series Co-Occurrence Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+---
+  
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+Recreate functionality of previous API.
+```{r, fig.width=10}
+library(soilDB)
+library(sharpshootR)
+
+# new function as of 2.2-8
+# get sibling data for Amador soil series via SoilWeb
+s <- siblings('amador', component.data = TRUE)
+
+str(s)
+
+# convert into adjacency matrix
+m <- component.adj.matrix(s$sib.data[s$sib.data$compkind == 'Series', ], mu = 'mukey', co = 'compname', wt = 'comppct_r')
+
+# plot network diagram, with Amador soil highlighted
+par(mar=c(1,1,1,1))
+plotSoilRelationGraph(m, s='Amador')
+
+# get basic OSD data for queried series and siblings
+s.list <- c(s$sib$series[1], s$sib$sibling)
+h <- fetchOSD(s.list)
+
+# plot dendrogram + profiles
+SoilTaxonomyDendrogram(h)
+```
+
+
+Recursive sibling lookup.
+```{r eval=FALSE}
+## yikes the raw data need to be cleaned up... too much data
+s <- siblings('amador', component.data = TRUE, recursive = TRUE)
+
+# convert into adjacency matrix
+m <- component.adj.matrix(s$second.sib.data[s$second.sib.data$compkind == 'Series', ], mu = 'mukey', co = 'compname', wt = 'comppct_r')
+
+# plot network diagram, with Amador soil highlighted
+plotSoilRelationGraph(m, s='Amador')
+
+
+# fetch and convert data into an SPC
+h <- fetchOSD(c(s$sib$series[1], unique(s$second.sib$sibling)))
+
+# plot dendrogram + profiles
+SoilTaxonomyDendrogram(h)
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
