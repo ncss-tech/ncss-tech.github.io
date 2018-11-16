@@ -151,6 +151,11 @@ str(s, 1)
 ```
 
 
+Competing soil series are those series that share a family-level classification. For example, the soil series competing with [Cecil](https://casoilresource.lawr.ucdavis.edu/sde/?series=cecil) would have a family level classification of *fine, kaolinitic, thermic typic kanhapludults*. These data are sourced from the current snapshot of the Soil Classification database via SoilWeb.
+```{r echo=FALSE}
+kable_styling(kable(s$competing[which(s$competing$series == 'CECIL'), ], format='html', digits = 2), font_size = 10, full_width = FALSE)
+```
+
 
 
 Hillslope position (1D) and geomorphic component (2D) probabilities have been estimated by series by dividing the number of components assigned the each hillslope position or geomorphic component by the total number of components. The total number of components and Shannon entropy are also included in the summary.
@@ -266,26 +271,39 @@ kable(head(s$sib.data))
 Example co-occurence networks for the **Amador** series and siblings.
 ```{r fig.width=10, fig.height=6}
 # subset to components that are correlated to a soil series
-s.sub <- s$sib.data[s$sib.data$compkind == 'Series', ]
+idx <- which(s$sib.data$compkind == 'Series' & !is.na(s$sib.data$comppct_r))
+s.sub <- s$sib.data[idx, ]
 
 # convert into adjacency matrix
 m <- component.adj.matrix(s.sub, mu = 'mukey', co = 'compname', wt = 'comppct_r')
 
 # plot network diagram, with Amador soil highlighted
-par(mar=c(1,1,1,1), mfcol=c(1,2))
-plotSoilRelationGraph(m, s='Amador')
+par(mar=c(0.5,0.5,0.5,0.5), mfcol=c(1,2))
+plotSoilRelationGraph(m, s='Amador', vertex.scaling.factor=2, edge.transparency=0.75, edge.col=grey(0.85), edge.highlight.col='black', vertex.label.family='sans')
 plotSoilRelationGraph(m, s='Amador', plot.style='dendrogram', type='unrooted', use.edge.length=FALSE)
+```
+
+```{r fig.width=10, fig.height=6}
+par(mar=c(0.5,0.5,0.5,0.5), mfcol=c(1,2))
+plotSoilRelationGraph(m, s='Amador', plot.style='dendrogram', type='phylogram')
+plotSoilRelationGraph(m, s='Amador', plot.style='dendrogram', type='cladogram')
+```
+
+```{r fig.width=10, fig.height=6}
+par(mar=c(0.5,0.5,0.5,0.5), mfcol=c(1,2))
+plotSoilRelationGraph(m, s='Amador', plot.style='dendrogram', type='radial')
+plotSoilRelationGraph(m, s='Amador', plot.style='dendrogram', type='fan')
 ```
 
 ## Cousins
 
 *Finish this*
-```{r fig.width=10, fig.height=10}
+```{r fig.width=20, fig.height=20}
 # takes a while to run, there will be duplicates in counsins here
-s <- siblings('amador', component.data = TRUE, recursive = TRUE)
+s <- siblings('amador', component.data = TRUE, cousins = TRUE)
 
 # combine sibling + cousin data, remove duplicates
-d <- unique(rbind(s$sib.data, s$second.sib.data))
+d <- unique(rbind(s$sib.data, s$cousin.data))
 
 # subset to components that are correlated to a soil series
 d <- d[which(d$compkind == 'Series'), ]
@@ -293,9 +311,8 @@ d <- d[which(d$compkind == 'Series'), ]
 # convert into adjacency matrix
 m <- component.adj.matrix(d, mu = 'mukey', co = 'compname', wt = 'comppct_r')
 
-# plot network diagram, with Amador soil highlighted
 par(mar=c(1,1,1,1))
-plotSoilRelationGraph(m, s='Amador', spanning.tree = 'max')
+plotSoilRelationGraph(m, s='Amador', vertex.scaling.factor=1, edge.transparency=0.25, edge.col=grey(0.5), edge.highlight.col='black', vertex.label.family='sans', spanning.tree = 'max')
 ```
 
 

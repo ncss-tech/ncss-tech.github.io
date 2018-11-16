@@ -45,20 +45,27 @@ SoilTaxonomyDendrogram(h)
 ```
 
 
-Recursive sibling lookup.
+Cousin lookup.
 ```{r eval=FALSE}
-## yikes the raw data need to be cleaned up... too much data
-s <- siblings('amador', component.data = TRUE, recursive = TRUE)
+# takes a while to run, there will be duplicates in counsins here
+s <- siblings('amador', component.data = TRUE, cousins = TRUE)
+
+# combine sibling + cousin data, remove duplicates
+d <- unique(rbind(s$sib.data, s$cousin.data))
+
+# subset to components that are correlated to a soil series
+d <- d[which(d$compkind == 'Series'), ]
 
 # convert into adjacency matrix
-m <- component.adj.matrix(s$second.sib.data[s$second.sib.data$compkind == 'Series', ], mu = 'mukey', co = 'compname', wt = 'comppct_r')
+m <- component.adj.matrix(d, mu = 'mukey', co = 'compname', wt = 'comppct_r')
 
 # plot network diagram, with Amador soil highlighted
+par(mar=c(1,1,1,1))
 plotSoilRelationGraph(m, s='Amador')
 
 
 # fetch and convert data into an SPC
-h <- fetchOSD(c(s$sib$series[1], unique(s$second.sib$sibling)))
+h <- fetchOSD(c(s$sib$series[1], unique(s$cousins$sibling)))
 
 # plot dendrogram + profiles
 SoilTaxonomyDendrogram(h)
