@@ -18,6 +18,14 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+
+TODO: 
+
+   * write definitions
+   * demonstrate major/minor siblings
+   * extend with joint area calculation
+
+
 Recreate functionality of previous API.
 ```{r, fig.width=10}
 library(soilDB)
@@ -25,6 +33,7 @@ library(sharpshootR)
 
 # new function as of 2.2-8
 # get sibling data for Amador soil series via SoilWeb
+# note that sib$sib may contain duplicates, based on major/minor component status
 s <- siblings('amador', component.data = TRUE)
 
 str(s)
@@ -35,13 +44,39 @@ m <- component.adj.matrix(s$sib.data[s$sib.data$compkind == 'Series', ], mu = 'm
 # plot network diagram, with Amador soil highlighted
 par(mar=c(1,1,1,1))
 plotSoilRelationGraph(m, s='Amador')
+```
+
+
+Sibling type and counts.
+```{r}
+kable_styling(kable(s$sib, format = 'html'), full_width = FALSE, font_size = 10)
+```
+
+Combine counts for major/minor siblings.
+```{r eval=FALSE}
+plyr::ddply(s$sib, c('series', 'sibling'), .fun=plyr::summarise, n=sum(n))
+```
+
+Split sibling lists and get basic morphology from OSDs.
+```{r}
+idx <- which(s$sib$majcompflag)
+major.siblings <- c(s$sib$series[1], s$sib$sibling[idx])
+all.siblings <- unique(c(s$sib$series[1], s$sib$sibling))
 
 # get basic OSD data for queried series and siblings
-s.list <- c(s$sib$series[1], s$sib$sibling)
-h <- fetchOSD(s.list)
+h.major <- fetchOSD(major.siblings)
+h.all <- fetchOSD(all.siblings)
+```
 
-# plot dendrogram + profiles
-SoilTaxonomyDendrogram(h)
+
+Siblings that are major components.
+```{r fig.width=7}
+SoilTaxonomyDendrogram(h.major)
+```
+
+All siblings.
+```{r fig.width=10}
+SoilTaxonomyDendrogram(h.all)
 ```
 
 

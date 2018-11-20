@@ -243,6 +243,8 @@ print(res$fig)
 
 ## Siblings
 
+TODO: document major/minor siblings.
+
 Get sibling data for [**Amador**](https://casoilresource.lawr.ucdavis.edu/sde/?series=amador) soil series via SoilWeb.
 ```{r}
 # new function as of 2.2-8, single soil series at a time
@@ -256,7 +258,7 @@ kable_styling(kable(s$sib, format = 'html'), full_width = FALSE)
 
 ```{r fig.width=10, fig.height=6}
 # get basic OSD data for queried series and siblings
-s.list <- c(s$sib$series[1], s$sib$sibling)
+s.list <- unique(c(s$sib$series[1], s$sib$sibling))
 h <- fetchOSD(s.list)
 
 # plot dendrogram + profiles
@@ -265,7 +267,7 @@ SoilTaxonomyDendrogram(h)
 
 Component data for the siblings of **Amador**. These can be used to generate a [co-occurence network](http://ncss-tech.github.io/AQP/sharpshootR/component-relation-graph.html).
 ```{r}
-kable(head(s$sib.data))
+kable_styling(kable(head(s$sib.data), format = 'html'), full_width = FALSE)
 ```
 
 Example co-occurence networks for the **Amador** series and siblings.
@@ -321,7 +323,7 @@ plotSoilRelationGraph(m, s='Amador', vertex.scaling.factor=1, edge.transparency=
 ```{r fig.width=10, fig.height=6}
 
 soils <- OSDquery(brief_narrative = 'andesite', mlra = '18')
-kable(head(soils))
+kable_styling(kable(head(soils), format = 'html'), full_width = FALSE)
 
 s <- fetchOSD(soils$series)
 
@@ -364,7 +366,7 @@ s <- fetchOSD(soils$series, extended = TRUE)
 par(mar=c(0,0,1,1))
 SoilTaxonomyDendrogram(s$SPC)
 
-kable(s$mtnpos, digits = 2)
+kable_styling(kable(s$mtnpos, digits = 2, format = 'html'), full_width = FALSE)
 # kable(s$pmorigin)
 ```
 
