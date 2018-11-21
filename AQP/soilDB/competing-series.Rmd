@@ -1,5 +1,5 @@
 ---
-title: "Investigating the Soil Taxonomy Family"
+title: "Competing Soil Series"
 author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
@@ -18,21 +18,28 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-This is rough outline for comparing data associated with a single soil series to all of the data associated with parent *family*. For example, compare the [Drummer](https://casoilresource.lawr.ucdavis.edu/sde/?series=Drummer) series to all series in the *fine-silty, mixed, superactive, mesic typic endoaquolls* family.
+This is rough outline for evalutating potential differences between soil series within the same family, e.g. competing series. For this example, start the process by loading data within the same family as the [Drummer](https://casoilresource.lawr.ucdavis.edu/sde/?series=Drummer) series; *fine-silty, mixed, superactive, mesic typic endoaquolls*.
 
-First, lets take a look at where this family sits in relationship to the parent subgroup (typic endoaquolls).
-<iframe id="seriesTree-frame" src="https://soilmap2-1.lawr.ucdavis.edu/seriesTree/?series=Drummer" width="100%" height="800px">
-</iframe>
+Why do this?
+
+   * reviewing the criteria for competing soil series is problematic when OSDs haven't been updated
+   * this process should be less subjective and as quantitative as possible
+   * the "Competing Series" section of the OSD can be made more informative via graphics
+   * there is usually more to the story than single "difference"
+   
 
 
-The comments + code are the real story here; I'll add a proper description as time permits.
-
+## Setup
 
 Load relevant packages and define some helper functions.
 ```{r fig.width=9, fig.height=6}
 # you will need the latest version of soilDB
 library(soilDB)
-library(lattice)
+library(sharpshootR)
+library(latticeExtra)
+library(reshape2)
+library(cluster)
+library(ape)
 
 # convenience function for getting KSSL data by soil series name
 getPedons <- function(x) {
@@ -40,23 +47,32 @@ getPedons <- function(x) {
 }
 ```
 
+## Get Data
 
-Get **extended** summaries for the Drummer soil series. As of `soilDB` 2.3 this includes a list of "competing" soil series.
+Get *extended* summaries for the Drummer soil series. As of `soilDB` 2.3 this includes a list of "competing" soil series.
 ```{r}
-s <- fetchOSD('Drummer', extended = TRUE)
+soil <- 'DRUMMER'
+s <- fetchOSD(soil, extended = TRUE)
 ```
 
-Invoke `fetchOSD` for all series that share family-level classification with Drummer.
+Get extended summaries for Drummer and competing series.
 ```{r}
 # get competing series OSD data
-spc <- fetchOSD(c('DRUMMER', s$competing$competing))
+spc <- fetchOSD(c(soil, s$competing$competing))
 
-# save some info for later
+# this will only work for established series, e.g. those that have been "mapped" somewhere
+idx <- which(spc$series_status == 'established')
+spc <- spc[idx, ]
+
+# save family taxa and set of series names for later
 fm.name <- unique(na.omit(spc$family))
 s.names <- unique(site(spc)$id)
 ```
 
-Plot soil series in this family.
+
+### First Look
+
+Plot sketches of the soils in this family, data are from OSDs via SoilWeb.
 ```{r fig.width=12, fig.height=6}
 # plot
 par(mar=c(0,1,1,1))
@@ -65,6 +81,75 @@ mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
 ```
 
+
+## Climate Summaries
+
+Compare [annual climate summaries](https://ncss-tech.github.io/AQP/soilDB/series-climate-summary-eval.html) using divisive hierarchical clustering of median values.
+```{r}
+# get OSD + extended summaries for all competing series
+s.competing.data <- fetchOSD(s.names, extended = TRUE)
+
+# make a copy of the annual climate data
+s.ca <- s.competing.data$climate.annual
+
+# widen for clustering of medians
+s.ca.wide <- dcast(s.ca, series ~ climate_var, value.var = 'q50')
+# save row names for labeling later
+row.names(s.ca.wide) <- s.ca.wide$series
+
+# re-order based on divisive hierarchical clustering of medians
+# keep cluster pkg class for dendrogram + profile sketches
+s.ca.d <- diana(daisy(s.ca.wide[, -1], stand = TRUE))
+# convert to hclust class for ordering of series in climate summaries
+s.ca.h <- as.hclust(s.ca.d)
+s.ca$series <- factor(s.ca$series, levels=s.ca.h$labels[s.ca.h$order])
+```
+
+Vizualize pair-wise distances using a dendrogram and profile sketches. What do the two main groupings tell us about this family?
+```{r fig.width=12, fig.height=6}
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s.competing.data$SPC, clust = s.ca.d, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
+```
+
+Evaluate individual climate variables using select percentiles. Soil series labels are sorted according to divisive hierarchical clustering. The two main groupings are clearly visible in those climate varibles linked to mean annual air temperature.
+```{r fig.width=12, fig.height=8}
+segplot(series ~ q05 + q95 | factor(climate_var), centers=q50, data=s.ca, main=fm.name, draw.bands=FALSE, segments.fun=panel.arrows, ends='both', angle=90, length=1, unit='mm', scales=list(y=list(alternating=3), x=list(relation='free')), as.table=TRUE, col='RoyalBlue', strip=strip.custom(bg=grey(0.85), par.strip.text=list(cex=0.7)), xlab='5th-25th-50th-75th-95th Percentiles', panel=function(x, y, z, q25=s.ca$q25, q75=s.ca$q75, subscripts, ...) {
+  # basic plot
+  panel.grid(h=FALSE, v=-1, col='grey', lty=3)
+  panel.abline(h=1:length(unique(s.ca$series)), col='grey', lty=3)
+  panel.segplot(x, y, z, subscripts=subscripts, ...)
+  
+  # add interquartile range
+  q25 <- q25[subscripts]
+  q75 <- q75[subscripts]
+  zz <- z[subscripts]
+  panel.rect(xleft=q25, xright=q75, ybottom=as.numeric(zz) - 0.025, ytop=as.numeric(zz) + 0.025, border='RoyalBlue', col='RoyalBlue')
+})
+```
+
+## Geomorphic Summaries
+
+Compare hillslope position.
+```{r fig.width=12, fig.height=5, echo=FALSE}
+res <- vizHillslopePosition(s.competing.data$hillpos)
+print(res$fig)
+```
+
+Compare geomorphic component.
+```{r fig.width=12, fig.height=5, echo=FALSE}
+res <- vizGeomorphicComponent(s.competing.data$geomcomp)
+print(res$fig)
+```
+
+
+## MLRA and Parent Material Summaries
+TODO
+
+## Investigate Spatial Patterns
+TODO
+
+## KSSL Data
 
 Get KSSL data from these series via `fetchKSSL`.
 ```{r}
@@ -79,17 +164,19 @@ kssl.data <- do.call('rbind', kssl.data[not.null])
 # normalize soil series names
 for(i in s.names)
   kssl.data$taxonname[grep(i, kssl.data$taxonname, ignore.case = TRUE)] <- toupper(i)
+```
 
-# check normalization: OK
-table(kssl.data$taxonname)
+Tabulate number of KSSL pedons / series name.
+```{r}
+kable_styling(kable(table(kssl.data$taxonname), format = 'html'), full_width = FALSE)
 ```
 
 
-Aggregate over all data within this family via `slab`, and display median bounded by interquartile range.
+Aggregate over all data within this family via `slab`, and display median bounded by inter-quartile range.
 ```{r fig.width=10, fig.height=6}
 # aggregate over entire collection, marginal quantiles of select properties
-g.slab <- slab(kssl.data, ~ clay + estimated_ph_h2o + cec7 + bs82)
-levels(g.slab$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
+g.slab <- slab(kssl.data, ~ clay + sand + estimated_ph_h2o + cec7 + bs82)
+levels(g.slab$variable) <- c('Clay (%)', 'Sand (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
 
 # define plotting style
 tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
@@ -102,7 +189,7 @@ xyplot(top ~ p.q50 | variable, data=g.slab, ylab='Depth', main=fm.name, sub='sou
        cf=g.slab$contributing_fraction,
        par.strip.text=list(cex=0.8),
        strip=strip.custom(bg=grey(0.85)),
-       layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       layout=c(5,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
        par.settings=tps,
        auto.key=list(columns=3, lines=TRUE, points=FALSE)
 )
@@ -112,12 +199,12 @@ xyplot(top ~ p.q50 | variable, data=g.slab, ylab='Depth', main=fm.name, sub='sou
 Aggregate just Drummer data and compare with entire family. Note that Drummer records make up about 20% of the data within this family.
 ```{r fig.width=10, fig.height=6}
 # compare a single profile to the group-level aggregate values
-a <- slab(kssl.data[which(kssl.data$taxonname == 'DRUMMER'), ], ~ clay + estimated_ph_h2o + cec7 + bs82)
-levels(a$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
+a <- slab(kssl.data[which(kssl.data$taxonname == soil), ], ~ clay + sand + estimated_ph_h2o + cec7 + bs82)
+levels(a$variable) <- c('Clay (%)', 'Sand (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
 
 
 # manually update the group column
-a$group <- 'DRUMMER'
+a$group <- soil
 # a$p.q25 <- NA
 # a$p.q75 <- NA
 g.slab$group <- 'ALL'
@@ -134,7 +221,7 @@ xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
        # cf=g$contributing_fraction,
        par.strip.text=list(cex=0.8),
        strip=strip.custom(bg=grey(0.85)),
-       layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       layout=c(5,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
        par.settings=tps,
        auto.key=list(columns=2, lines=TRUE, points=FALSE)
 )
