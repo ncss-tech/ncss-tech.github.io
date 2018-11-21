@@ -37,9 +37,13 @@ Load relevant packages and define some helper functions.
 library(soilDB)
 library(sharpshootR)
 library(latticeExtra)
+library(RColorBrewer)
 library(reshape2)
 library(cluster)
 library(ape)
+library(scales)
+library(maps)
+
 
 # convenience function for getting KSSL data by soil series name
 getPedons <- function(x) {
@@ -75,7 +79,7 @@ s.names <- unique(site(spc)$id)
 Plot sketches of the soils in this family, data are from OSDs via SoilWeb.
 ```{r fig.width=12, fig.height=6}
 # plot
-par(mar=c(0,1,1,1))
+par(mar=c(0.25,0,1,1))
 plot(spc)
 mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
@@ -143,11 +147,87 @@ print(res$fig)
 ```
 
 
+## Color Signatures
+
+Develop a [color signature](https://ncss-tech.github.io/AQP/aqp/soil-color-signatures.html) for this family.
+```{r}
+# extract a local copy of the SPC
+spc <- s.competing.data$SPC
+
+# convert moist Munsell colors -> sRGB
+s.rgb <- munsell2rgb(spc$hue, spc$value, spc$chroma, return_triplets = TRUE)
+
+# copy over to hz-level attributes
+spc$r <- s.rgb$r
+spc$g <- s.rgb$g
+spc$b <- s.rgb$b
+
+# get color signature for each series
+pig <- soilColorSignature(spc, RescaleLightnessBy = 5, method = 'pam', pam.k = 3)
+
+# move row names over for distance matrix
+row.names(pig) <- pig[, 1]
+d <- daisy(pig[, -1])
+dd <- diana(d)
+```
+
+Hang profile sketches from divisive hierarchical clustering of soil color signatures.
+```{r fig.width=12, fig.height=5}
+par(mar=c(1,0,1,1))
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.15, cex.names=0.45)
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
+```
+
+
 ## MLRA and Parent Material Summaries
-TODO
+
+This needs more work.
+
+### Parent Material
+Quickly tabulate parent material kind.
+```{r}
+kable(sort(table(s.competing.data$pmkind$pmkind), decreasing = TRUE), format = 'html')
+```
+
+Quickly tabulate parent material origin.
+```{r}
+kable(sort(table(s.competing.data$pmorigin$pmorigin), decreasing = TRUE), format = 'html')
+```
+
+### MLRA
+Summarize acreage by MLRA.
+```{r eval=FALSE}
+plyr::ddply(s.competing.data$mlra, 'mlra', .fun=plyr::summarize, total_ac=sum(area_ac))
+```
+
 
 ## Investigate Spatial Patterns
-TODO
+Finish this
+
+Make a rough sketch of the [joint extent of the series](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) in this family.
+```{r fig.width=8, fig.height=6, results='hide'}
+# define some nice colors
+cols <- brewer.pal('Set1', n=3)
+
+## TODO: split into groups identified above
+# cutree(s.ca.h, 2)
+
+# get list of extents
+l <- lapply(unique(spc$id), seriesExtent)
+
+# map of CONUS
+par(mar=c(1 ,1,1,1))
+map('state')
+
+# rough estimation of joint density via transparency  / overlay
+lapply(l, function(i) {
+  plot(i, border=NA, col=alpha(cols[2], 0.33), add=TRUE)
+  })
+
+# finish map
+box()
+title(main=fm.name, line=1.25)
+```
 
 ## KSSL Data
 
