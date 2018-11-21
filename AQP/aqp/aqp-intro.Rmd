@@ -37,6 +37,7 @@ In this tutorial we will use some sample data included with the `aqp` package, b
 ```{r creation}
 # load required packages, you may have to install these if missing:
 # install.packages('aqp', dep=TRUE)
+# remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 library(aqp)
 library(Hmisc)
 library(lattice)
@@ -256,74 +257,78 @@ all.equal(profile_id(s), site(s)[[idname(s)]])
 # Plotting SoilProfileCollection Objects
 The `plot()` method for `SoilProfileCollection` objects generates sketches of profiles within the collection based on horizon boundaries, vertically aligned to an integer sequence from 1 to the number of profiles. Horizon names are automatically extracted from a horizon-level attribute `name` (if present), or via an alternate attributed given as an argument: `name='column.name'`. Horizon colors are automatically generated from the horizon-level attribute `soil_color`, or any other attribute of **R**-compatible color description given as an argument: `color='column.name'`. This function is highly customizable, therefore, it is prudent to consult `help(plotSPC)` from time to time. Soil colors in Munsell notation can be converted to **R**-compatible colors via `munsell2rgb()`.
 
+## Making Adjustments
+The `explainPlotSPC()` function is helpful for adjusting some of the more obscure arguments to `plotSPC()`.
 
-The following function demonstrates some of the more advanced useage of `plotSPC()`.
-```{r}
-explainPlotSPC <- function(x, ...) {
-  plot(x, ...)
-
-  # get last plot parameters
-  lsp <- get('last_spc_plot', envir=aqp.env)
-  
-  # get max depth by profile
-  max.depths <- profileApply(x, max)
-  
-  # re-order max depths
-  max.depths <- max.depths[lsp$plot.order]
-  
-  # apply y-offset and scaling factor
-  scaled.max.depths <- lsp$y.offset + (lsp$scaling.factor * max.depths)
-  scaled.depth.axis <- lsp$y.offset + (lsp$scaling.factor * pretty(1:max(x)))
-  
-  # inspect plotting area, very simple to overlay graphical elements
-  segments(x0 = 1:length(x), x1=1:length(x), y0=lsp$max.depth, y1=scaled.max.depths, lty=3, lwd=2, col='darkgreen')
-  
-  # profiles are centered at integers, from 1 to length(obj)
-  axis(1, line=0, at=1:lsp$n, cex.axis=0.75, font=4, col='darkgreen', col.axis='darkgreen', lwd=2)
-  mtext('canvas x-coordinate', side=1, line=2, font=4, col='darkgreen')
-  
-  # y-axis is based on profile depths
-  axis(2, line=-1, at=scaled.depth.axis, cex.axis=0.75, font=4, las=1, col='blue', col.axis='blue', lwd=2)
-  mtext('canvas y-coordinate', side=2, line=1, font=4, col='blue')
-  
-  # plotting order
-  text(x=1:length(x), y=-10, labels=lsp$plot.order, col='darkred', font=4, cex=0.75)
-  mtext('original profile index', side=3, line=-1, font=4, col='darkred')
-  
-  invisible(lsp)
-}
+A basic plot with debugging information overlayed.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+explainPlotSPC(sp4, name='name')
 ```
 
-
-```{r plotting, fig.height=4, fig.width=8}
-par(mar=c(4,4,2,2))
-
-# basic plot
-explainPlotSPC(sp4, name='name')
-
-# move soil surface at 0cm "down" 5cm
+Move soil surface at 0cm "down" 5cm.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', y.offset=5)
+```
 
-# scale depths by 50%
+Move soil surface at 0cm "up" 10cm; useful for sketches of shallow profiles.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+explainPlotSPC(sp4, name='name', y.offset=-10)
+```
+
+Scale depths by 50%.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', scaling.factor=0.5)
+```
 
-# reverse plot ordering
+A graphical explanation of how profiles are re-arranged via `plot.order` argument.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', plot.order=length(sp4):1)
+```
 
-# leave room for an additional 2 profile sketches
+Leave room for an additional 2 profile sketches.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', n=length(sp4) + 2)
 ```
 
 
-
-
+## Thematic Sketches
 
 Horizon-level attributes can be symbolized with color, in this case using the horizon-level attribute "clay":
-```{r plotting-with-color, fig.height=4, fig.width=8}
+```{r fig.height=4, fig.width=8}
 # plot again, this time using new colors
 par(mar=c(0,0,3,0)) # tighter figure margins
-plot(sp4, name='name', color='clay')
+plot(sp4, name='name', color='clay', col.label='Clay Content (%)')
 ```
+
+Use a different set of colors.
+```{r fig.height=4, fig.width=8}
+# plot again, this time using new colors
+par(mar=c(0,0,3,0)) # tighter figure margins
+plot(sp4, name='name', color='clay', col.palette=viridis::viridis(10), col.label='Clay Content (%)')
+```
+
+Categorical properties can also be used to make a thematic sketch. Colors are interpolated when there are more classes than colors provided by `col.palette`.
+```{r fig.height=4, fig.width=8}
+par(mar=c(0,0,3,0)) # tighter figure margins
+plot(sp4, name='name', color='name', col.palette=RColorBrewer::brewer.pal(5, 'Set1'), col.label='Original Horizon Name')
+```
+
+Try with [generalized horizon labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html).
+```{r fig.height=4, fig.width=8}
+par(mar=c(0,0,3,0)) # tighter figure margins
+
+# generalize horizon names into 3 groups
+sp4$genhz <- generalize.hz(sp4$name, new = c('A', 'AB', 'Bt'), pat=c('A[0-9]?', 'AB', '^Bt'))
+
+plot(sp4, name='name', color='genhz', col.palette=RColorBrewer::brewer.pal(3, 'Spectral'), col.label='Generalized Horizon Name')
+```
+
 
 Horizon-level attributes that represent a volume fraction (e.g. coarse-fragment percentage) can be added to an existing figure:
 ```{r plotting-vol-fraction, fig.height=4, fig.width=8}
