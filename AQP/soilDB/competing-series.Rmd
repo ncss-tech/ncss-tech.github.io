@@ -178,55 +178,70 @@ plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, 
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ```
 
+## Morphologic Differences
 
-## MLRA and Parent Material Summaries
+There isn't much morphological data available in the parsed OSD data delivered by `fetchOSD`, apart from:
 
-This needs more work.
+   * horizon depths and designations
+   * texture class
+   * pH (reaction) class
+   * moist/dry matrix color
 
-### Parent Material
-Quickly tabulate parent material kind.
+We can add indicators of soil moisture dynamics and potential stratification with a little regular expression applied to horizon designations.
 ```{r}
-kable(sort(table(s.competing.data$pmkind$pmkind), decreasing = TRUE), format = 'html')
+# flag horizons with significant gleying
+spc$gley <- factor(grepl('g', spc$hzname))
+
+# flag discontinuities ~ stratifcation or abrupt change in parent material origin
+spc$discontinuity <- factor(grepl('^[0-9]', spc$hzname))
 ```
 
-Quickly tabulate parent material origin.
+Thematic profile sketches illustrate the main differences. Horizon designations are ommitted to highlight major differences within the family.
+```{r fig.width=10, fig.height=4}
+par(mar=c(0,0,3,1))
+plot(spc, color='gley', col.label='Gleyed Horizons', name='')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
+
+plot(spc, color='discontinuity', col.label='Discontinuity', name='')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
+
+plot(spc, color='texture_class', col.label='Texture Class', name='')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
+
+plot(spc, color='pH_class', col.label='pH Class', name='')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
+```
+
+It is possible to quantitatively compare how these qualitative (and categorical) data vary with depth using `aqp::profile_compare`. [This algorithm](http://ncss-tech.github.io/AQP/presentations/AQP-num_soil_classification.pdf) evaulates pair-wise distance between profiles along 1-cm intervals. The resulting [distance matrix can be visualized using various ordination or clustering-based approaches](http://ncss-tech.github.io/stats_for_soil_survey/chapters/5_clustering_and_ordination/chapter-content.html). Divisive hierarchical clustering generates reasonable dendrograms, from which we can "hang" some profile sketches.
+
 ```{r}
-kable(sort(table(s.competing.data$pmorigin$pmorigin), decreasing = TRUE), format = 'html')
+# compute pair-wise distances using 4 morphologic indicators
+pd <- profile_compare(spc, vars=c('texture_class', 'pH_class', 'gley', 'discontinuity'), max_d=200, k=0)
+# divising hierarchical clustering of the distance matrix
+dd <- diana(pd)
 ```
 
-### MLRA
-Summarize acreage by MLRA.
-```{r eval=FALSE}
-plyr::ddply(s.competing.data$mlra, 'mlra', .fun=plyr::summarize, total_ac=sum(area_ac))
+Sketches made from moist colors, arranged according to select indices of morphology as extracted from the OSDs.
+```{r fig.width=10, fig.height=6} 
+par(mar=c(1,0,1,1))
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45)
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ```
 
+Thematic sketches, arranged according to select indices of morphology as extracted from the OSDs. Trends are obvious.
+```{r fig.width=10, fig.height=6} 
+par(mar=c(1,0,3,1))
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='texture_class', col.label='Texture Class')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
-## Investigate Spatial Patterns
-Finish this
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='pH_class', col.label='pH Class')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
-Make a rough sketch of the [joint extent of the series](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) in this family.
-```{r fig.width=8, fig.height=6, results='hide'}
-# define some nice colors
-cols <- brewer.pal('Set1', n=3)
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='gley', col.label='Gleyed Horizons')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
-## TODO: split into groups identified above
-# cutree(s.ca.h, 2)
-
-# get list of extents
-l <- lapply(unique(spc$id), seriesExtent)
-
-# map of CONUS
-par(mar=c(1 ,1,1,1))
-map('state')
-
-# rough estimation of joint density via transparency  / overlay
-lapply(l, function(i) {
-  plot(i, border=NA, col=alpha(cols[2], 0.33), add=TRUE)
-  })
-
-# finish map
-box()
-title(main=fm.name, line=1.25)
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='discontinuity', col.label='Discontinuity')
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ```
 
 ## KSSL Data
@@ -306,6 +321,58 @@ xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
        auto.key=list(columns=2, lines=TRUE, points=FALSE)
 )
 ```
+
+## Investigate Spatial Patterns
+Finish this
+
+Make a rough sketch of the [joint extent of the series](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) in this family.
+```{r fig.width=8, fig.height=6, results='hide'}
+# define some nice colors
+cols <- brewer.pal('Set1', n=3)
+
+## TODO: split into groups identified above
+# cutree(s.ca.h, 2)
+
+# get list of extents
+l <- lapply(unique(spc$id), seriesExtent)
+
+# map of CONUS
+par(mar=c(1 ,1,1,1))
+map('state')
+
+# rough estimation of joint density via transparency  / overlay
+lapply(l, function(i) {
+  plot(i, border=NA, col=alpha(cols[2], 0.33), add=TRUE)
+  })
+
+# finish map
+box()
+title(main=fm.name, line=1.25)
+```
+
+
+
+## MLRA and Parent Material Summaries
+
+This needs more work.
+
+### Parent Material
+Quickly tabulate parent material kind.
+```{r}
+kable(sort(table(s.competing.data$pmkind$pmkind), decreasing = TRUE), format = 'html')
+```
+
+Quickly tabulate parent material origin.
+```{r}
+kable(sort(table(s.competing.data$pmorigin$pmorigin), decreasing = TRUE), format = 'html')
+```
+
+### MLRA
+Summarize acreage by MLRA.
+```{r eval=FALSE}
+plyr::ddply(s.competing.data$mlra, 'mlra', .fun=plyr::summarize, total_ac=sum(area_ac))
+```
+
 
 
 ----------------------------
