@@ -18,15 +18,20 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+## Prologue
+
+The soil series concept is a practical grouping of soil/landscape patches that require a unique set of management / conservation practices. The revision of old, establishment of new, and correlation among series requires data. A consistent set of data promotes consistency in the definition and use of series concepts. There are over 24,000 soil series in the US. Do we need them all? Do we need more? Which ones need work? How do we keep track of data and specific exemplars used to define the series? These are all questions that USDA-NRCS soil scientists struggle with. A more clearly defined soil series concept directly impacts our ability to communicate a "package" of soil / landscape parameters to other scientists and, most importantly, to those who work with the soil. Soil survey is much more than making maps and little sketches. It is a systematic catalog of our best attempt at figuring out how soils vary on the landscape, so that we can make the best use of the soil resource. Why this matters is not, but should be obvious: food, fiber, fuel.
+
+## Practical Matters
+
 This is rough outline for evalutating potential differences between soil series within the same family, e.g. competing series. For this example, start the process by loading data within the same family as the [Drummer](https://casoilresource.lawr.ucdavis.edu/sde/?series=Drummer) series; *fine-silty, mixed, superactive, mesic typic endoaquolls*.
 
-Why do this?
+Why would a soil scientist do this?
 
    * reviewing the criteria for competing soil series is problematic when OSDs haven't been updated
    * this process should be less subjective and as quantitative as possible
    * the "Competing Series" section of the OSD can be made more informative via graphics
-   * there is usually more to the story than single "difference"
-   
+   * there is usually more to the story than a single "difference" between series
 
 
 ## Setup
