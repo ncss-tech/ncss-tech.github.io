@@ -60,7 +60,7 @@ library(RColorBrewer)
 
 ## Estimates from a single point per map unit polygon
 
-Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981–2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimates from a single sample from within each map unit polygon, weighted by $log(polygon\ area * component\ percentage)$.
+Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981--2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimated from a single sample from within each map unit polygon, weighted by $log(polygon\ area * component\ percentage)$.
 
 ```{r fig.width=10, fig.height=6}
 soils <- c('argonaut', 'pierre', 'zook', 'cecil')

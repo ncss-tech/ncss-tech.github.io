@@ -175,7 +175,7 @@ A rough approximation of MLRA membership has been computed by taking the interse
 kable_styling(kable(s$mlra[1:5, ], format='html'), font_size = 9, full_width = FALSE)
 ```
 
-Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981–2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimates from a single sample from within each map unit polygon, weighted by $log(polygon\ area * component\ percentage)$.
+Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981--2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimates from a single sample from within each map unit polygon, weighted by $log(polygon\ area * component\ percentage)$.
 ```{r echo=FALSE}
 kable_styling(kable(s$climate.annual[1:8, ], format='html', digits = 2), font_size = 9, full_width = FALSE)
 kable_styling(kable(s$climate.monthly[c(1:3, 13:15), ], format='html', digits = 2), font_size = 9, full_width = FALSE)
