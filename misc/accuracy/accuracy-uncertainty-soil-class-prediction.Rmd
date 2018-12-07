@@ -71,7 +71,7 @@ ss$example <- factor(ss$example)
 
 
 # uncertainty metrics
-cols <- wes_palette("Zissou")[c(1, 5)]
+cols <- wes_palette("Zissou1")[c(1, 5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
 
 p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
@@ -149,6 +149,11 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 # Background
 
 This document is an attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by @Rossiter2017.
+
+This [article](http://www.fharrell.com/post/classification/) does a fine job of summarizing the major differences between *classification* and *prediction*. Most of the modeling frameworks we will be using or evaluating generate predictions in the form of probabilities (prediction). At some point the stack of probabilities will be converted into a single map depicting the most likely class at each pixel (classification). The iterative assessment of model performance (e.g. accuracy and uncertainty) should happen as part of the *prediction* phase via metrics such as the Brier score and Shannon entropy. An evaluation of the final *classification* is helpful for communicating accuracy to a wider audience (e.g. percent correctly classified) but should not be the primary means of optimizing model performance.
+
+
+![](prediction-classification.png)
 
 ## Status Quo
 The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
@@ -353,7 +358,7 @@ n.seq <- 2:100
 H <- sapply(n.seq, function(i) shannonEntropy(rep(1/i, times=i), b = 2))
 d <- data.frame(n=n.seq, H=H)
 
-cols <- wes_palette("Zissou")[c(1, 5)]
+cols <- wes_palette("Zissou1")[c(1, 5)]
 
 xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Theoretical Limits\nEqual Class Probability', panel=function(...) {
   panel.xyplot(..., type=c('l', 'g'))
@@ -370,7 +375,7 @@ l <- lapply(n.seq, function(i) simulatePredictions(1, alpha=c(rep(1, times=i))))
 stats <- ldply(l, function(i) i$stats)
 stats <- data.frame(n=n.seq, stats)
 
-cols <- wes_palette("Zissou")[c(1,5)]
+cols <- wes_palette("Zissou1")[c(1,5)]
 
 xyplot(Shannon.H + CI ~ n, data=stats, main='Simulated Limits\nApprox. Equal Probabilities', xlab='Number of Classes', ylab='Uncertainty Metric', scales=list(x=list(tick.number=10)), type=c('b', 'g'), ylim=c(0, 5), par.settings=list(superpose.symbol=list(col=cols, pch=16, cex=1), superpose.line=list(col=cols, lwd=2)), auto.key=list(columns=2, lines=TRUE, points=FALSE))
 ```
@@ -472,7 +477,7 @@ hist(apply(x, 1, max), main='Max Probability per Pixel', xlab='', las=1)
 ```
 
 ```{r fig.width=6, fig.height=6}
-cols <- wes_palette("Zissou")[c(1,5)]
+cols <- wes_palette("Zissou1")[c(1,5)]
 tps <- list(superpose.symbol=list(col=cols, pch=16, cex=0.85, alpha=0.125))
 trellis.par.set(tps)
 
@@ -507,7 +512,7 @@ densityplot( ~ value , groups=variable, data=m, subset= value > 0.001,
 
 ```{r fig.width=6, fig.height=4}
 # uncertainty metrics
-cols <- wes_palette("Zissou")[c(1,5)]
+cols <- wes_palette("Zissou1")[c(1,5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85), superpose.symbol=list(col=cols, lwd=2, alpha=0.85))
 
 densityplot( ~ data, groups=which, data=g, as.table=TRUE, plot.points=FALSE, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
