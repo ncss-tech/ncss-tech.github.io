@@ -22,6 +22,7 @@ A soil color / transition probability (TP) matrix experiment. Transition probabi
 
 Use pedon data associated with the [Holland](https://casoilresource.lawr.ucdavis.edu/sde/?series=holland) soil series.
 ```{r}
+library(aqp)
 library(soilDB)
 library(sharpshootR)
 library(igraph)
@@ -191,7 +192,23 @@ h$color <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
 
 # pack horizon data back into SPC
 horizons(s) <- h
+```
 
+Clarksville moist soil colors.
+```{r fig.width=10, fig.height=5}
+par(mar=c(0,0,2,0))
+plot(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4, divide.hz=FALSE)
+mtext('KSSL data correllated to Clarksville series', at=0.5, adj = 0)
+```
+
+```{r fig.width=8, fig.height=8}
+previewColors(s$moist_soil_color)
+mtext('KSSL data correllated to Clarksville series: moist colors.', at=0.5, adj = 0)
+```
+
+
+```{r}
+# init TP matrix
 tp.loops <- hzTransitionProbabilities(s, name="color", loopTerminalStates = TRUE)
 
 # init new markovchain from TP matrix
@@ -204,13 +221,6 @@ munsell.sequence <- replicate(30, rmarkovchain(n = 10, object = mc, include.t0 =
 col.sequence <- apply(munsell.sequence, 2, parseMunsell)
 ```
 
-Clarksville moist soil colors.
-```{r fig.width=10, fig.height=5}
-par(mar=c(0,0,2,0))
-plot(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4, divide.hz=FALSE)
-mtext('KSSL data correllated to Clarksville series', at=0.5, adj = 0)
-```
-
 Simulated sequence of moist soil colors, starting from *10YR 4/2*.
 ```{r fig.width=8, fig.height=5}
 par(mar=c(1,0,3,0))
@@ -218,6 +228,9 @@ plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(11, 1), xlim=c(1, 30))
 
 rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence)
 ```
+
+
+
 
 
 ----------------------------
