@@ -80,7 +80,7 @@ While the methods outlined in this document can be applied to any collection of 
 data(loafercreek, package = 'soilDB')
 # graphical check
 par(mar=c(0,0,0,4))
-plot(loafercreek, name='', print.id=FALSE, cex.names=0.8, axis.line.offset=-1, max.depth=100)
+plot(loafercreek, name='', print.id=FALSE, cex.names=0.8, axis.line.offset=-1, max.depth=100, divide.hz=FALSE)
 ```
 
 
@@ -165,42 +165,51 @@ aggregateColorPlot(aggregateColor(sp3, 'genhz'))
 
 ## Soil Color Signatures
 
-![](soil-series-color-signature.png)
+```{r agg-color-additional-examples-1, fig.width=10, fig.height=6}
+## get data from NASIS or similar source
+# f <- soilDB::fetchNASIS(rmHzErrors = TRUE)
 
-```{r agg-color-additional-examples-1, eval=FALSE}
-# get data from NASIS or similar source
-f <- fetchNASIS(rmHzErrors = TRUE)
+# # filter out select series
+# soils <- c('ahwahnee', 'auberry', 'musick', 'holland', 'shaver', 'chaix', 'canisrocks')
+# 
+# # extract these soils and normalize taxonname
+# f.sub <- f[grep(paste0(soils, collapse = '|'), f$taxonname, ignore.case = TRUE), ]
+# for(x in soils) {
+#   f.sub$taxonname[grep(x, f.sub$taxonname, ignore.case = TRUE)] <- x
+# }
+# # reset levels to order specified above
+# f.sub$taxonname <- factor(f.sub$taxonname, levels=soils)
+# 
+# # re-name for cached copy
+# sierra_transect <- f.sub
+# diorite <- f[grep('diorite', f$bedrckkind, ignore.case = TRUE), ]
+# 
+# save(sierra_transect, diorite, file='cached-pedons-agg-color-example.rda')
+# 
 
-# an ordered set of series names
-soils <- c('ahwahnee', 'auberry', 'musick', 'holland', 'shaver', 'chaix', 'canisrocks')
 
-# extract these soils and normalize taxonname
-f.sub <- f[grep(paste0(soils, collapse = '|'), f$taxonname, ignore.case = TRUE), ]
-for(x in soils) {
-  f.sub$taxonname[grep(x, f.sub$taxonname, ignore.case = TRUE)] <- x
-}
-# reset levels to order specified above
-f.sub$taxonname <- factor(f.sub$taxonname, levels=soils)
+load('cached-pedons-agg-color-example.rda')
 
 par(mar=c(4.5,5,4.5,0))
-aggregateColorPlot(aggregateColor(f.sub, 'taxonname'), label.cex=0.65, main='Soil Color Signatures', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
+aggregateColorPlot(aggregateColor(sierra_transect, 'taxonname'), label.cex=0.65, main='Soil Color Signatures', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
+
+par(mar=c(4.5,5,4.5,0))
+aggregateColorPlot(aggregateColor(sierra_transect, 'taxonname', k=8), label.cex=0.65, main='Soil Color Signatures', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
 ```
 
 
 ## Many Soils Associated with Common Bedrock
 
-![](soils-formed-diorite.png)
-
-```{r agg-color-additional-examples-2, eval=FALSE}
+```{r agg-color-additional-examples-2, fig.width=10, fig.height=6}
 # geology + depth slices
-f.sub <- f[grep('diorite', f$bedrock_kind, ignore.case = TRUE), ]
-f.sub <- slice(f.sub, c(5, 10, 15, 25, 50, 100, 150) ~ soil_color)
+
+diorite <- slice(diorite, c(5, 10, 15, 25, 50, 100, 150) ~ soil_color)
 
 # make fake label
-f.sub$slice <- paste0(f.sub$hzdept, ' cm')
-f.sub$slice <- factor(f.sub$slice, levels=guessGenHzLevels(f.sub, 'slice')$levels)
+diorite$slice <- paste0(diorite$hzdept, ' cm')
+diorite$slice <- factor(diorite$slice, levels=guessGenHzLevels(diorite, 'slice')$levels)
 
-aggregateColorPlot(aggregateColor(f.sub, 'slice'), label.cex=0.65, main='Soils Formed on "Diorite"')
+aggregateColorPlot(aggregateColor(diorite, 'slice'), label.cex=0.65, main='Soils Formed on "Diorite"')
 ```
 
 
