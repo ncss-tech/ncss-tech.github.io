@@ -36,38 +36,40 @@ devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_depende
 
 # Quick Example: getting lab characterization (KSSL) and basic morphology (NASIS)
 KSSL and NASIS data are from the September 2018 snapshot. Details pending.
-```{r fig.width=10, fig.height=6}
+```{r}
+library(aqp)
 library(soilDB)
 library(plyr)
 library(reshape2)
 
 # get lab and morphologic data
-s <- fetchKSSL(series='auburn', returnMorphologicData = TRUE)
+# simplify colors to 1 color (moist and dry) per horizon via mixing
+# see ?mix_and_clean_colors for details.
+s <- fetchKSSL(series='auburn', returnMorphologicData = TRUE, simplifyColors = TRUE)
 
+# extract pedons into SoilProfileCollection
+pedons <- s$SPC
+```
+
+
+```{r}
 # the result is a list, check it out
 str(s, 2)
 
 # check out the "raw" morphologic data:
 lapply(s$morph, head)
+```
 
 
-# extract pedons into SoilProfileCollection
-pedons <- s$SPC
-
-# simplify color data
-# note that both horizon ID and color "percentage" must be specified
-s.colors <- simplifyColorData(s$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
-
-# merge color data into SPC
-h <- horizons(pedons)
-h <- join(h, s.colors, by='labsampnum', type='left', match='first')
-horizons(pedons) <- h
-
+```{r fig.width=10, fig.height=6}
 # check
 par(mar=c(0,0,0,0))
 plot(pedons, color='moist_soil_color', print.id=FALSE, name='hzn_desgn')
+```
 
 
+Simplification of fragment data is still a manual process.
+```{r fig.width=10, fig.height=6}
 # simplify fragment data
 s.frags <- simplfyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
