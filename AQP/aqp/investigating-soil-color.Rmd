@@ -26,29 +26,43 @@ library(latticeExtra)
 ```
 
 
-Do it again, this time for a soil series with a lot of data: [Clarksville](https://casoilresource.lawr.ucdavis.edu/sde/?series=clarksville).
+## Topics
+
+  1. photos
+  2. box photos
+  3. aqp sketches vis `plotSPC()` and future `singleProfileSketch()`
+  4. `previewColors()`
+  5. `colorQuantiles()`
+  6. binning of soil profile photos via `colordist` package
+  7. `soilColorSignature()`
+  8. color mixing `mix_and_clean_colors()`
+  9. color RIC vis color book presentation
+  10. colors in context with common soil pigments
+  11. colors in context with full CIELAB space
+  12. examples of exotic colors: sulphides, manganese, etc.
+  13. poorly drained soils, reduced iron color ranges, gley pages
+  14. color by drainage class
+
+
+[Clarksville](https://casoilresource.lawr.ucdavis.edu/sde/?series=clarksville).
 ```{r}
 # get lab / morphologic data
-x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE)
+# simplify colors
+x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE, simplifyColors = TRUE)
 
 # extract pedons into SoilProfileCollection
 s <- x$SPC
-
-# extract horizon data from SPC
-h <- horizons(s)
-
-# simplify color data: 1 row / horizon, from morphologic data tables
-x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
-
-# merge color data into SPC
-h <- join(h, x.colors, by='labsampnum', type='left', match='first')
-horizons(s) <- h
 
 # genhz
 s$genhz <- generalize.hz(s$hzn_desgn, c('A', 'E', 'Bt', '2Bt', '3Bt'), pat=c('A', 'E', '^Bt', '2B', '3B'), non.matching.code = NA)
 s$genhz <- factor(s$genhz, levels = guessGenHzLevels(s, "genhz")$levels)
 
 table(s$genhz, useNA = 'always')
+```
+
+```{r fig.width=5, fig.height=5, fig.align='center'}
+previewColors(s$moist_soil_color, method = 'MDS', pt.cex = 1.5)
+title('Clarksville Soil Colors')
 ```
 
 ```{r fig.width=5, fig.height=5, fig.align='center'}
@@ -67,7 +81,7 @@ previewColors(s$moist_soil_color, border.col = NA)
 title('Clarksville Soil Colors')
 ```
 
-This isn't quite right, proportions should be computed by `genhz`.
+Prepare for color book style representation.
 ```{r fig.width=8, fig.height=4}
 # remove horizons that are missing moist colors
 h <- horizons(s)
@@ -78,8 +92,10 @@ h <- h[idx, ]
 h$m_munsell <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
 h$m_hue <- factor(h$m_hue, levels = c('10Y', '2.5Y', '10YR', '7.5YR', '5YR', '2.5YR'))
 h$m_hue <- factor(h$m_hue)
+```
 
-
+Not quite right...
+```{r eval=FALSE}
 xyplot(m_value ~ m_chroma | m_hue, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), xlab='Chroma', ylab='Value', layout=c(length(levels(h$m_hue)),1), strip=strip.custom(bg=grey(0.85)), panel=function(x, y, subscripts=subscripts, ...) {
   
   p.data <- data.frame(x=x, y=y, col=h$moist_soil_color[subscripts], m=h$m_munsell[subscripts], stringsAsFactors = FALSE)
@@ -94,7 +110,8 @@ xyplot(m_value ~ m_chroma | m_hue, as.table=TRUE, data=h, subscripts = TRUE, xli
 })
 ```
 
-```{r fig.width=8, fig.height=7}
+Not quite right...
+```{r eval=FALSE, fig.width=8, fig.height=7}
 pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), xlab='Chroma', ylab='Value', subset=genhz != 'not-used', panel=function(x, y, subscripts=subscripts, ...) {
   
   p.data <- data.frame(x=x, y=y, col=h$moist_soil_color[subscripts], m=h$m_munsell[subscripts], stringsAsFactors = FALSE)
@@ -111,9 +128,9 @@ pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscrip
 useOuterStrips(pp, strip=strip.custom(bg=grey(0.85)), strip.left = strip.custom(bg=grey(0.85)))
 ```
 
-
+Color book style range for colors, frequency is inversely proportional to transparency.
 ```{r fig.width=8, fig.height=7}
-pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), xlab='Chroma', ylab='Value', subset=genhz != 'not-used', panel=function(x, y, subscripts=subscripts, ...) {
+pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), main='Clarksville Moist Colors', xlab='Chroma', ylab='Value', subset=genhz != 'not-used', panel=function(x, y, subscripts=subscripts, ...) {
   
   p.data <- data.frame(x=x, y=y, col=h$moist_soil_color[subscripts], m=h$m_munsell[subscripts], stringsAsFactors = FALSE)
   tab <- prop.table(table(p.data$m, useNA = 'always'))
@@ -144,13 +161,13 @@ aggregateColorPlot(a.reduced, label.cex = 0.65, main = "Clarksville Moist Colors
 ```
 
 
-```{r fig.width=5, fig.height=7}
+```{r fig.width=5, fig.height=7.5}
 x <- colorQuantiles(na.omit(s$moist_soil_color))
 plotColorQuantiles(x)
 ```
 
 
-```{r fig.width=5, fig.height=7}
+```{r fig.width=5, fig.height=7.5}
 h.by.genhz <- split(s$moist_soil_color, f = s$genhz)
 
 l <- lapply(h.by.genhz, function(i) {
@@ -171,6 +188,6 @@ m.data <- do.call('rbind', lapply(l, function(i) i$marginal))
 ```
 
 ----------------------------
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
 
