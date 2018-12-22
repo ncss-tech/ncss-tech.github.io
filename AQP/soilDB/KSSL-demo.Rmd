@@ -29,8 +29,8 @@ install.packages('reshape2', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 
 # latest versions from GitHub
-devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
-devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 
