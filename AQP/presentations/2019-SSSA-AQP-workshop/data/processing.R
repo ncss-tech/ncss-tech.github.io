@@ -1,5 +1,6 @@
 
 library(aqp)
+library(soilDB)
 library(sharpshootR)
 
 x.g <- read.csv('dahlgren-granitics.csv', stringsAsFactors=FALSE)
@@ -20,7 +21,9 @@ x.g$HzD <- hzDistinctnessCodeToOffset(substr(x.g$hz_boundary, 0, 1))
 
 x.g$transect <- rep('granite', times=length(x.g))
 x.a$transect <- rep('andesite', times=length(x.a))
-g <- rbind(x.g, x.a)
+
+
+g <- union(list(x.g, x.a))
 
 g$Fe_o_to_Fe_d <- g$Fe_o / g$Fe_d
 
@@ -54,3 +57,33 @@ plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.
 plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='BS', col.label='Base Saturation (%)')
 plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='Fe_o', col.label='Oxalate-Fe (g/kg)')
 dev.off()
+
+
+
+data(mineralKing)
+
+m.order <- order(mineralKing$elev_field)
+
+par(mar=c(1,1,2,1))
+
+groupedProfilePlot(mineralKing, groups='taxonname', print.id=FALSE)
+
+par(mfcol=c(1, 3))
+plot(mineralKing, name='hzname', plot.order=m.order, label='taxonname')
+axis(1, at=1:length(mineralKing), labels=mineralKing$elev_field[m.order], line=-2)
+
+
+plot(x.g, name='name', plot.order=g.new.order, hz.distinctness.offset='HzD')
+axis(1, at=1:length(x.g), labels=x.g$elev[g.new.order], line=-2)
+
+plot(x.a, name='name', plot.order=a.new.order)
+axis(1, at=1:length(x.a), labels=x.a$elev[a.new.order], line=-2)
+
+
+g <- union(list(g, mineralKing))
+
+g$elev <- ifelse(is.na(g$elev), g$elev_field, g$elev)
+g$taxonname <- ifelse(is.na(site(g)$taxonname), site(g)$id, site(g)$taxonname)
+
+par(mar=c(1,1,2,1))
+plot(g, label='taxonname', plot.order=order(g$elev))
