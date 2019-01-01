@@ -2,28 +2,53 @@
 library(aqp)
 library(soilDB)
 library(sharpshootR)
+library(raster)
 
 x.g <- read.csv('dahlgren-granitics.csv', stringsAsFactors=FALSE)
 x.a <- read.csv(file='rasmussen-andisitic-lahar.csv', stringsAsFactors=FALSE)
+x.as.site <- read.csv(file='rasmussen-andisitic-lahar-site.csv', stringsAsFactors=FALSE)
 
 x.g$soil_color <- with(x.g, munsell2rgb(hue, value, chroma))
 x.a$soil_color <- with(x.a, munsell2rgb(hue, value, chroma))
 
 depths(x.g) <- id ~ top + bottom
 site(x.g) <- ~ elev + MAAT + MAP + geo + x + y
-# coordinates(x.g) <- ~ x + y
-# proj4string(x.g) <- '+proj=longlat +datum=NAD83'
+
  
 depths(x.a) <- id ~ top + bottom
 site(x.a) <- ~ elev + precip + MAP + MAT + veg + Fe_d_to_Fe_t
-
-x.g$HzD <- hzDistinctnessCodeToOffset(substr(x.g$hz_boundary, 0, 1))
-
-x.g$transect <- rep('granite', times=length(x.g))
-x.a$transect <- rep('andesite', times=length(x.a))
+site(x.a) <- x.as.site
 
 
-g <- union(list(x.g, x.a))
+data(mineralKing)
+
+
+coordinates(x.g) <- ~ x + y
+proj4string(x.g) <- '+proj=longlat +datum=NAD83'
+
+coordinates(x.a) <- ~ x + y
+proj4string(x.a) <- '+proj=longlat +datum=NAD83'
+
+coordinates(mineralKing) <- ~ x + y
+proj4string(mineralKing) <- '+proj=longlat +datum=NAD83'
+
+
+x.g$transect <- rep('Granite', times=length(x.g))
+x.a$transect <- rep('Andesite', times=length(x.a))
+mineralKing$transect <- rep('Mineral King', times=length(mineralKing))
+
+
+# x.g$HzD <- hzDistinctnessCodeToOffset(substr(x.g$hz_boundary, 0, 1))
+
+g <- aqp::union(list(x.g, x.a, mineralKing))
+
+## prepare GIS data 
+# source('prepare-GIS-data.R')
+## 
+
+gis.data <- read.csv('transect-GIS-data.csv', stringsAsFactors = FALSE)
+site(g) <- gis.data
+
 
 g$Fe_o_to_Fe_d <- g$Fe_o / g$Fe_d
 
@@ -60,7 +85,7 @@ dev.off()
 
 
 
-data(mineralKing)
+
 
 m.order <- order(mineralKing$elev_field)
 
