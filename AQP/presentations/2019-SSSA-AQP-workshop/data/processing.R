@@ -121,7 +121,16 @@ axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
 plot(granite, color='Fe_d', plot.order=granite.elev.order)
 axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
 
+
 ## TODO redness index
+## RI as described in Barron and Torrent, 1986
+lab.data <- as.data.frame(convertColor(cbind(pedons$m_r, pedons$m_g, pedons$m_b), from = 'sRGB', to = 'Lab', from.ref.white = 'D65', clip = FALSE))
+pedons$RI <- with(lab.data, (a.x * sqrt((a.x^2 + b^2 )) * 10^10 ) / (b * L^6) )
+pedons$ln_RI <- log(pedons$RI)
+
+hist(pedons$ln_RI)
+
+plot(sample(pedons, 25), color='ln_RI')
 
  
 
