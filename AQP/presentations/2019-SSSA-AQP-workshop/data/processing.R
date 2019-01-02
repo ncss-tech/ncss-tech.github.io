@@ -1,58 +1,147 @@
-
+# need these packages
 library(aqp)
 library(soilDB)
 library(sharpshootR)
-library(raster)
+library(latticeExtra)
+library(sp)
 
-x.g <- read.csv('dahlgren-granitics.csv', stringsAsFactors=FALSE)
-x.a <- read.csv(file='rasmussen-andisitic-lahar.csv', stringsAsFactors=FALSE)
-x.as.site <- read.csv(file='rasmussen-andisitic-lahar-site.csv', stringsAsFactors=FALSE)
+## load Mineral King transect, these are pedons from NASIS
+data(mineralKing, package = 'soilDB')
 
-x.g$soil_color <- with(x.g, munsell2rgb(hue, value, chroma))
-x.a$soil_color <- with(x.a, munsell2rgb(hue, value, chroma))
+## load original Sierra Transect (central Sierra, granite) data from CSV
+granite <- read.csv('dahlgren-granitics.csv', stringsAsFactors=FALSE)
 
-depths(x.g) <- id ~ top + bottom
-site(x.g) <- ~ elev + MAAT + MAP + geo + x + y
+## load parallel Merhten formation transect from CSV
+# note that there are two files
+andesite <- read.csv(file='rasmussen-andisitic-lahar.csv', stringsAsFactors=FALSE)
+andesites.site <- read.csv(file='rasmussen-andisitic-lahar-site.csv', stringsAsFactors=FALSE)
 
- 
-depths(x.a) <- id ~ top + bottom
-site(x.a) <- ~ elev + precip + MAP + MAT + veg + Fe_d_to_Fe_t
-site(x.a) <- x.as.site
-
-
-data(mineralKing)
+# convert Munsell notation into R colors (sRGB)
+granite$soil_color <- with(granite, munsell2rgb(hue, value, chroma))
+andesite$soil_color <- with(andesite, munsell2rgb(hue, value, chroma))
 
 
-coordinates(x.g) <- ~ x + y
-proj4string(x.g) <- '+proj=longlat +datum=NAD83'
+## init SoilProfileCollection for granite transect
+depths(granite) <- id ~ top + bottom
+# transfer site level attributes
+site(granite) <- ~ elev + MAAT + MAP + geo + x + y
 
-coordinates(x.a) <- ~ x + y
-proj4string(x.a) <- '+proj=longlat +datum=NAD83'
+
+## init SoilProfileCollection for andesite transect
+depths(andesite) <- id ~ top + bottom
+# transfer site level attributes
+site(andesite) <- ~ elev + precip + MAP + MAT + veg + Fe_d_to_Fe_t
+# join coordinates via `id`
+site(andesite) <- andesites.site
+
+
+
+## init spatial data from coordinates
+coordinates(granite) <- ~ x + y
+proj4string(granite) <- '+proj=longlat +datum=NAD83'
+
+coordinates(andesite) <- ~ x + y
+proj4string(andesite) <- '+proj=longlat +datum=NAD83'
 
 coordinates(mineralKing) <- ~ x + y
 proj4string(mineralKing) <- '+proj=longlat +datum=NAD83'
 
 
-x.g$transect <- rep('Granite', times=length(x.g))
-x.a$transect <- rep('Andesite', times=length(x.a))
+## label transects via site-level attribute
+granite$transect <- rep('Granite', times=length(granite))
+andesite$transect <- rep('Andesite', times=length(andesite))
 mineralKing$transect <- rep('Mineral King', times=length(mineralKing))
 
 
-# x.g$HzD <- hzDistinctnessCodeToOffset(substr(x.g$hz_boundary, 0, 1))
-
-g <- aqp::union(list(x.g, x.a, mineralKing))
+## union into single SPC, note that attribute names may not be the same
+g <- aqp::union(list(granite, andesite, mineralKing))
 
 ## prepare GIS data 
 # source('prepare-GIS-data.R')
 ## 
 
+## load and merge sampled raster data
 gis.data <- read.csv('transect-GIS-data.csv', stringsAsFactors = FALSE)
 site(g) <- gis.data
 
 
+## check
+
+
+## normalize some names
+
+# connotative name, IDs from transects, taxonname from NASIS data
+g$soil_name <- ifelse(is.na(g$taxonname), profile_id(g), g$taxonname)
+
+# horizon designations
+g$name <- ifelse(is.na(g$name), g$hzname, g$name)
+
+g$elev <- ifelse(is.na(g$elev), g$elev_field, g$elev)
+
+
+plot(g, label='soil_name')
+plot(g, label='soil_name', color='clay')
+
+plot(g, label='soil_name', plot.order=order(g$elev))
+
+groupedProfilePlot(g, groups='transect')
+
+## compute some idices if possible
 g$Fe_o_to_Fe_d <- g$Fe_o / g$Fe_d
 
-intersect(horizonNames(x.a), horizonNames(x.g))
+plot(g, label='soil_name', color='Fe_o_to_Fe_d')
+
+
+## investigate Granite transect 
+str(granite, 2)
+granite
+
+# sketches
+par(mar=c(1,0,1,1))
+plot(granite)
+
+# order along elevation
+granite.elev.order <- order(granite$elev)
+
+par(mar=c(1,0,1,1))
+plot(granite, name='name', plot.order=granite.elev.order)
+axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
+
+par(mar=c(1,0,3,1))
+plot(granite, color='clay', plot.order=granite.elev.order)
+axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
+
+plot(granite, color='BS', plot.order=granite.elev.order)
+axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
+
+plot(granite, color='Fe_d', plot.order=granite.elev.order)
+axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
+
+## TODO redness index
+
+ 
+
+plotTransect(g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', label='soil_name')
+
+plotTransect(g, 'rain_fraction_mean_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', label='soil_name')
+
+plotTransect(g, 'effective_precipitation_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+
+
+plotTransect(g[which(g$transect == 'Granite'), ], 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+
+plotTransect(g[which(g$transect == 'Andesite'), ], 'effective_precipitation_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+
+plotTransect(g[which(g$transect == 'Mineral King'), ], 'effective_precipitation_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+
+
+# granite$HzD <- hzDistinctnessCodeToOffset(substr(granite$hz_boundary, 0, 1))
+
+
+
+
+
+intersect(horizonNames(andesite), horizonNames(granite))
 
 par(mar=c(0,0,3,0))
 plot(g, plot.order=order(g$elev))
@@ -64,25 +153,67 @@ plot(g, plot.order=order(g$elev), color='Fe_o_to_Fe_d')
 
 groupedProfilePlot(g, groups = 'transect', group.name.offset = -15)
 
-g.new.order <- order(x.g$elev)
-a.new.order <- order(x.a$elev)
+g.new.order <- order(granite$elev)
+a.new.order <- order(andesite$elev)
 
 par(mfcol=c(1, 2))
-plot(x.g, name='name', plot.order=g.new.order, hz.distinctness.offset='HzD')
-axis(1, at=1:length(x.g), labels=x.g$elev[g.new.order], line=-2)
+plot(granite, name='name', plot.order=g.new.order, hz.distinctness.offset='HzD')
+axis(1, at=1:length(granite), labels=granite$elev[g.new.order], line=-2)
 
-plot(x.a, name='name', plot.order=a.new.order)
-axis(1, at=1:length(x.a), labels=x.a$elev[a.new.order], line=-2)
+plot(andesite, name='name', plot.order=a.new.order)
+axis(1, at=1:length(andesite), labels=andesite$elev[a.new.order], line=-2)
 
 pdf(file='RAD-transect.pdf', width=11, height=7)
 par(mar=c(3.5,3.5,3,1))
-plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)')
-plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='clay', col.label='Clay (%)')
-plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='sand', col.label='Sand (%)')
-plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='BS', col.label='Base Saturation (%)')
-plotTransect(x.g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='Fe_o', col.label='Oxalate-Fe (g/kg)')
+plotTransect(granite, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)')
+plotTransect(granite, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='clay', col.label='Clay (%)')
+plotTransect(granite, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='sand', col.label='Sand (%)')
+plotTransect(granite, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='BS', col.label='Base Saturation (%)')
+plotTransect(granite, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', color='Fe_o', col.label='Oxalate-Fe (g/kg)')
 dev.off()
 
+
+
+## soil color stuff
+previewColors(g$soil_color)
+plotColorQuantiles(colorQuantiles(g$soil_color))
+
+# extract sRGB coords
+
+# color signature
+pig <- soilColorSignature(g)
+
+# aggregate soil colors
+a <- aggregateColor(g, groups='transect', k = 6)
+aggregateColorPlot(a)
+
+
+
+## bring in KSSL data by series name
+
+## bring in KSSL data by BBOX
+
+## slab / slice / glom
+
+## viz aggregate data
+
+## new functions by Andrew
+
+profileApply(g, getArgillicBounds, hzdesgn='name', attr='clay', simplify = FALSE)
+
+
+## networks?
+
+## pair-wise distances
+
+
+
+## low-level stuff
+explainPlotSPC(g)
+
+plot(g, color='hzID')
+
+## combine original + slice + slab
 
 
 
@@ -98,11 +229,11 @@ plot(mineralKing, name='hzname', plot.order=m.order, label='taxonname')
 axis(1, at=1:length(mineralKing), labels=mineralKing$elev_field[m.order], line=-2)
 
 
-plot(x.g, name='name', plot.order=g.new.order, hz.distinctness.offset='HzD')
-axis(1, at=1:length(x.g), labels=x.g$elev[g.new.order], line=-2)
+plot(granite, name='name', plot.order=g.new.order, hz.distinctness.offset='HzD')
+axis(1, at=1:length(granite), labels=granite$elev[g.new.order], line=-2)
 
-plot(x.a, name='name', plot.order=a.new.order)
-axis(1, at=1:length(x.a), labels=x.a$elev[a.new.order], line=-2)
+plot(andesite, name='name', plot.order=a.new.order)
+axis(1, at=1:length(andesite), labels=andesite$elev[a.new.order], line=-2)
 
 
 g <- union(list(g, mineralKing))
