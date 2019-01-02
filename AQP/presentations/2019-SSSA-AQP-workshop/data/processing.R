@@ -68,6 +68,9 @@ site(g) <- gis.data
 ## check
 
 
+## re-level factors
+g$transect <- factor(g$transect, levels=c('Mineral King', 'Granite', 'Andesite'))
+
 ## normalize some names
 
 # connotative name, IDs from transects, taxonname from NASIS data
@@ -84,7 +87,8 @@ plot(g, label='soil_name', color='clay')
 
 plot(g, label='soil_name', plot.order=order(g$elev))
 
-groupedProfilePlot(g, groups='transect')
+par(mar=c(0,0,2,1))
+groupedProfilePlot(g, groups='transect', label='soil_name')
 
 ## compute some idices if possible
 g$Fe_o_to_Fe_d <- g$Fe_o / g$Fe_d
