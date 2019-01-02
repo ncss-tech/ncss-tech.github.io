@@ -1,0 +1,143 @@
+---
+title: "2019 SSSA AQP Workshop"
+author: D.E. Beaudette
+date: "`r Sys.Date()`"
+output:
+  html_vignette
+---
+
+
+
+# Announcement
+
+Join us for a [workshop from 3-5pm Sunday January 6th](https://scisoc.confex.com/scisoc/2019sssa/meetingapp.cgi/Session/18472) where we will review the Algorithms for Quantitative Pedology (AQP) suite of R packages for soil data retrieval, analysis, and visualization. Bring your computer, ideally with the latest versions of [R](https://cran.r-project.org/) and [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed ahead of time. 
+
+
+# Background
+
+The Algorithms for Quantitative Pedology (AQP) project was started in 2009 to organize a loosely-related set of concepts and source code on the topic of soil profile visualization, aggregation, and classification into an R package. Over the past 8 years, the project has grown into a suite of related R packages that enhance and simplify the quantitative analysis of soil profile data. Central to the AQP project is a new vocabulary of specialized functions and data structures that can accommodate the inherent complexity of soil profile information; freeing the scientist to focus on ideas rather than boilerplate data processing tasks. These functions and data structures have been extensively tested and documented, applied to projects involving hundreds of thousands of soil profiles, and deeply integrated into widely used tools such as SoilWeb. Components of the AQP project currently serve an important role in routine data analysis within the USDA-NRCS Soil Survey program. The AQP suite of R packages offer a convenient platform for bridging the gap between pedometric theory and practice.
+
+
+# Goals
+
+   * getting the AQP suite of packages installed and review development process / [GitHub](http://ncss-tech.github.io/AQP/)
+   * review example data and `SoilProfileCollection` objects
+   * retrieving data from USDA-NRCS soil and climate databases
+   * make pretty graphics to show your friends and family
+   * perform some realistic examples
+   * time-permitting, attempt something new and excited on the fly
+   * debate the merits of [key methods / assumptions](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
+   * answer questions and provide ideas for post-workshop training
+
+
+# Workshop Outline
+
+   * 15 minutes: overview of the AQP project, related packages (what/why)
+   * 45 minutes: worked examples with discussion of methods / interpretation (how)\
+   * 5 minute break
+   * 55 minutes: Q&A, detailed discussion of methods, assistance with applying to own data or running some of the many tutorials
+
+
+# Preparation
+
+Install [R](https://cran.r-project.org/) and [RStudio](https://www.rstudio.com/products/rstudio/download/#download).
+
+Consider reviewing some of the material in the [SoilProfilecollection tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) before the workshop. If you are new to the R language then consider reviewing some background material on R syntax and concepts. [Spatial Data Science with R](http://rspatial.org/) is one of my favorites.
+
+
+## Assemble Your Own Data
+
+Any tabular format is fine as long as profiles can be uniquely identified by some kind of label, and horizon top/bottom depths are specified. CSV files are the simplest to work with, but it is possible to extract data from just about any tabular format. 
+
+Here is an example of data that are "ready to go":
+
+|id             |name | top| bottom|   K|   Mg|   Ca| CEC_7| ex_Ca_to_Mg| sand| silt| clay|   CF|
+|:--------------|:----|---:|------:|---:|----:|----:|-----:|-----------:|----:|----:|----:|----:|
+|colusa         |A    |   0|      3| 0.3| 25.7|  9.0|  23.0|        0.35|   46|   33|   21| 0.12|
+|colusa         |ABt  |   3|      8| 0.2| 23.7|  5.6|  21.4|        0.23|   42|   31|   27| 0.27|
+|colusa         |Bt1  |   8|     30| 0.1| 23.2|  1.9|  23.7|        0.08|   40|   28|   32| 0.27|
+|colusa         |Bt2  |  30|     42| 0.1| 44.3|  0.3|  43.0|        0.01|   27|   18|   55| 0.16|
+|glenn          |A    |   0|      9| 0.2| 21.9|  4.4|  18.8|        0.20|   54|   20|   25| 0.55|
+|glenn          |Bt   |   9|     34| 0.3| 18.9|  4.5|  27.5|        0.20|   49|   18|   34| 0.84|
+|kings          |A    |   0|      4| 0.2| 12.1|  1.4|  23.7|        0.58|   43|   55|    3| 0.50|
+|kings          |Bt1  |   4|     13| 0.6| 12.1|  7.0|  18.0|        0.51|   36|   49|   15| 0.75|
+|kings          |Bt2  |  13|     40| 0.8| 17.7|  4.4|  20.0|        0.25|   27|   45|   27| 0.67|
+|napa           |A    |   0|      6| 0.4| 16.4| 24.1|  31.1|        1.47|   43|   42|   15| 0.02|
+|napa           |Bt   |   6|     20| 0.1| 16.2| 21.5|  27.9|        1.32|   54|   29|   17| 0.07|
+
+
+Soil color data should be encoded using the Munsell system within a single column ("10YR 3/4") or split across three columns (hue,value,chroma). For example:
+
+|id | top| bottom|  clay|   cec|   ph|    tc|hue   | value| chroma|
+|:--|---:|------:|-----:|-----:|----:|-----:|:-----|-----:|------:|
+|1  |   0|      8| 17.78| 27.85| 5.62| 5.977|10YR  |     5|      3|
+|1  |   8|     23| 19.41| 14.19| 5.41| 1.314|10YR  |     6|      4|
+|1  |  23|     42| 21.27| 14.48| 5.41| 1.193|10YR  |     6|      4|
+|1  |  42|     52| 22.06| 12.62| 5.62| 0.552|7.5YR |     6|      6|
+|1  |  52|     80| 20.03| 11.68| 5.85| 0.321|7.5YR |     6|      5|
+|2  |   0|      5| 17.70| 21.79| 5.58| 3.963|5YR   |     4|      4|
+
+
+
+
+## Install Required Packages
+
+Copy the following code (all at once or in pieces) into a **new R session**. This will install all of the packages that we will be using in this workshop. It is important to do this **before** the workshop so that the limited internet access isn't saturated by 30 machines trying to download ~ 100Mb of data. This process should take about 10 minutes. 
+```{r, eval=FALSE}
+# helper fuction for installing required packages from CRAN
+# a simple check is done to see if each is already installed
+# p: vector of package names
+# up: logical- upgrade installed packages?
+ipkCRAN <- function(p, up){
+  if (up) {
+    install.packages(p, dependencies = TRUE)
+  } else {
+    new.pkg <- p[! (p %in% installed.packages()[, "Package"])]
+    if (length(new.pkg) > 0) {
+      message('installing packages from CRAN...')
+      install.packages(new.pkg, dependencies = TRUE)
+    }
+  }
+}
+
+
+## list of packages
+packages <- c(
+  # soil
+  "aqp", "soilDB", "sharpshootR", "soiltexture",
+  # gis
+  "sp", "raster", "rgdal",
+  # data management
+  "devtools", "Hmisc", "RODBC", "circular", "DT", "remotes", "Gmedian", "farver",
+  # graphics
+  "latticeExtra", "Cairo", "maps", "plotrix",
+  # modeling
+  "car", "rms", "vegan", "ape",
+  # sampling
+  "clhs"
+  )
+
+## install packages, upgrading as needed
+ipkCRAN(packages, up=TRUE)
+```
+
+## Install Latest AQP Suite of Packages
+
+These are often in a state of flux so the CRAN version may be several months out of date.
+```{r, eval=FALSE}
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+```
+
+
+Finally, check to see that your AQP suite of packages are the most recent. 
+```{r, message=FALSE, warning=FALSE}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+sessionInfo()
+```
+
+
