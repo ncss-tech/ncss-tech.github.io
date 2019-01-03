@@ -60,24 +60,41 @@ s$genhz <- factor(s$genhz, levels = guessGenHzLevels(s, "genhz")$levels)
 table(s$genhz, useNA = 'always')
 ```
 
+MDS representation of unique colors, based on CIE2000 distances.
 ```{r fig.width=5, fig.height=5, fig.align='center'}
 previewColors(s$moist_soil_color, method = 'MDS', pt.cex = 1.5)
 title('Clarksville Soil Colors')
 ```
 
+Arrange colors in a grid, based on CIE2000 distances.
 ```{r fig.width=5, fig.height=5, fig.align='center'}
 previewColors(s$moist_soil_color)
 title('Clarksville Soil Colors')
 ```
 
-
+White borders.
 ```{r fig.width=5, fig.height=5, fig.align='center'}
 previewColors(s$moist_soil_color, border.col = 'white')
 title('Clarksville Soil Colors')
 ```
 
+No borders.
 ```{r fig.width=5, fig.height=5, fig.align='center'}
 previewColors(s$moist_soil_color, border.col = NA)
+title('Clarksville Soil Colors')
+```
+
+Order colors by horizon top depth.
+```{r fig.width=5, fig.height=5, fig.align='center'}
+no.na.idx <- which(!is.na(s$moist_soil_color))
+previewColors(s$moist_soil_color[no.na.idx], method = 'manual', col.order = order(s$hzn_top[no.na.idx]), border.col = NA)
+title('Clarksville Soil Colors')
+```
+
+Order colors by generalized horizon.
+```{r fig.width=5, fig.height=5, fig.align='center'}
+no.na.idx <- which(!is.na(s$moist_soil_color))
+previewColors(s$moist_soil_color[no.na.idx], method = 'manual', col.order = order(s$genhz[no.na.idx]), border.col = NA)
 title('Clarksville Soil Colors')
 ```
 
