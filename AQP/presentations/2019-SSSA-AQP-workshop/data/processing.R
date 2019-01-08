@@ -4,6 +4,7 @@ library(soilDB)
 library(sharpshootR)
 library(latticeExtra)
 library(sp)
+library(cluster)
 
 ## load Mineral King transect, these are pedons from NASIS
 data(mineralKing, package = 'soilDB')
@@ -16,9 +17,34 @@ granite <- read.csv('dahlgren-granitics.csv', stringsAsFactors=FALSE)
 andesite <- read.csv(file='rasmussen-andisitic-lahar.csv', stringsAsFactors=FALSE)
 andesites.site <- read.csv(file='rasmussen-andisitic-lahar-site.csv', stringsAsFactors=FALSE)
 
+
+# what did we just do here?
+head(granite)
+head(andesite)
+head(andesites.site)
+
 # convert Munsell notation into R colors (sRGB)
 granite$soil_color <- with(granite, munsell2rgb(hue, value, chroma))
 andesite$soil_color <- with(andesite, munsell2rgb(hue, value, chroma))
+
+# pause and think about color conversion
+# split into columns
+munsell2rgb('5YR', 4, 3)
+munsell2rgb('5YR', 4, 3, return_triplets=TRUE)
+
+# parsing of standard notation
+parseMunsell('10YR 4/1')
+parseMunsell('10YR 4/1', convertColors = FALSE)
+parseMunsell('10YR 4/1', return_triplets=TRUE)
+
+# how does it work?
+data(munsell)
+m <- subset(munsell, subset=hue %in% c('10YR', '7.5YR', '5YR') & value < 8 & chroma < 8)
+head(m)
+
+# convert to HEX notation / preview
+m.cols <- rgb(m[, c('r', 'g', 'b')])
+previewColors(m.cols)
 
 
 ## init SoilProfileCollection for granite transect
@@ -34,6 +60,9 @@ site(andesite) <- ~ elev + precip + MAP + MAT + veg + Fe_d_to_Fe_t
 # join coordinates via `id`
 site(andesite) <- andesites.site
 
+# what did we just make?
+str(granite, 2)
+
 
 
 ## init spatial data from coordinates
@@ -46,6 +75,10 @@ proj4string(andesite) <- '+proj=longlat +datum=NAD83'
 coordinates(mineralKing) <- ~ x + y
 proj4string(mineralKing) <- '+proj=longlat +datum=NAD83'
 
+# check
+str(granite)
+
+
 
 ## label transects via site-level attribute
 granite$transect <- rep('Granite', times=length(granite))
@@ -55,6 +88,11 @@ mineralKing$transect <- rep('Mineral King', times=length(mineralKing))
 
 ## union into single SPC, note that attribute names may not be the same
 g <- aqp::union(list(granite, andesite, mineralKing))
+
+# quick check, note issues related to union
+plot(g)
+
+
 
 ## prepare GIS data 
 # source('prepare-GIS-data.R')
@@ -122,17 +160,24 @@ plot(granite, color='Fe_d', plot.order=granite.elev.order)
 axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
 
 
-## TODO redness index
-## RI as described in Barron and Torrent, 1986
-lab.data <- as.data.frame(convertColor(cbind(pedons$m_r, pedons$m_g, pedons$m_b), from = 'sRGB', to = 'Lab', from.ref.white = 'D65', clip = FALSE))
-pedons$RI <- with(lab.data, (a.x * sqrt((a.x^2 + b^2 )) * 10^10 ) / (b * L^6) )
-pedons$ln_RI <- log(pedons$RI)
+## convert soil color to sRGB
+# note: must keep track of NA as the conversion will result in 'white'
+na.idx <- which(is.na(g$soil_color))
+# scale to {0,1}
+g.rgb <- t(col2rgb(g$soil_color)) / 255
 
-hist(pedons$ln_RI)
+# insert NA
+g.rgb[na.idx, ] <- cbind(NA, NA, NA)
 
-plot(sample(pedons, 25), color='ln_RI')
+head(g.rgb)
 
- 
+# save back to SPC
+g$r <- g.rgb[, 1]
+g$g <- g.rgb[, 2]
+g$b <- g.rgb[, 3]
+
+
+
 
 plotTransect(g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', label='soil_name')
 
@@ -187,40 +232,6 @@ dev.off()
 
 
 
-## soil color stuff
-previewColors(g$soil_color)
-plotColorQuantiles(colorQuantiles(g$soil_color))
-
-# extract sRGB coords
-
-# color signature
-pig <- soilColorSignature(g)
-
-# aggregate soil colors
-a <- aggregateColor(g, groups='transect', k = 6)
-aggregateColorPlot(a)
-
-
-
-## bring in KSSL data by series name
-
-## bring in KSSL data by BBOX
-
-## slab / slice / glom
-
-## viz aggregate data
-
-## new functions by Andrew
-
-profileApply(g, getArgillicBounds, hzdesgn='name', attr='clay', simplify = FALSE)
-
-
-## networks?
-
-## pair-wise distances
-
-
-
 ## low-level stuff
 explainPlotSPC(g)
 
@@ -256,3 +267,68 @@ g$taxonname <- ifelse(is.na(site(g)$taxonname), site(g)$id, site(g)$taxonname)
 
 par(mar=c(1,1,2,1))
 plot(g, label='taxonname', plot.order=order(g$elev))
+
+
+
+
+
+
+
+## soil color stuff
+previewColors(g$soil_color)
+plotColorQuantiles(colorQuantiles(g$soil_color))
+
+# extract sRGB coords
+
+# color signature
+pig <- soilColorSignature(g, RescaleLightnessBy = 5, method = 'pam', pam.k = 3)
+
+# move row names over for distance matrix
+row.names(pig) <- pig[, 1]
+d <- daisy(pig[, -1])
+dd <- diana(d)
+
+par(mar=c(1,1,1,1))
+plotProfileDendrogram(g, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.15, cex.names=0.45)
+
+plotProfileDendrogram(g, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.15, cex.names=0.45, label='taxonname')
+
+
+# aggregate soil colors
+a <- aggregateColor(g, groups='transect', k = 6)
+aggregateColorPlot(a)
+
+
+
+## bring in KSSL data by series name
+
+## bring in KSSL data by BBOX
+
+## slab / slice / glom
+
+## viz aggregate data
+
+## new functions by Andrew
+
+profileApply(g, getArgillicBounds, hzdesgn='name', attr='clay', simplify = FALSE)
+
+
+## networks?
+
+## pair-wise distances
+
+
+
+
+
+# ## RI as described in Barron and Torrent, 1986
+# convert to CIE LAB
+# g.lab <- data.frame(convertColor(g.rgb, from = 'sRGB', to = 'Lab', from.ref.white = 'D65', clip = FALSE))
+# g$RI <- with(g.lab, (a.x * sqrt((a.x^2 + b^2 )) * 10^10 ) / (b * L^6) )
+# g$ln_RI <- log(g$RI)
+# 
+# hist(g$ln_RI)
+# 
+# plot(g, color='ln_RI')
+# 
+
