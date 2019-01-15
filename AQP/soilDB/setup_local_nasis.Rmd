@@ -1,5 +1,5 @@
 ---
-title: "Setup an ODBC Connection to the Local NASIS Database"
+title: "Setup ODBC Connection to Local NASIS"
 date: "`r Sys.Date()`"
 output:
   html_vignette:
@@ -10,52 +10,68 @@ output:
 ---
 
 ## Introduction
-This document describes how setup an ODBC link between a local NASIS database and **R**, so that pedon and DMU records can be queried with the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package.
-
+This document describes how to setup an ODBC link between **R** and the local NASIS database. See [Chapter 2](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html) from the Statistics for Soil Scientists training for a demonstration.
 
 ## Open the ODBC Data Source Administrator
-1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. Select the 64bit ODBC application if you are using Windows 10.
+1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. Select the 64bit ODBC application if you are using Windows 10. It should look like this:
+
+![](odbc-01.png)
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
   + Select the "SQL Server" driver. (64bit if prompted for a choice)
-  + Name the data source `nasis_local`, the data source description is optional.
-  + The server location is `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the [full name of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name). It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the "My Computer" icon and then clicking on the "Properties" tab. On Windows 10, you can access your computer name by opening the "System" control panel. It will look something like: `CASONORA00L354`. When finished click "Next".
   
-3. Choose the second option: "SQL Server authentication...", **don't try and re-type these, just copy/paste*
+  
+![](odbc-02.png)
+  
+  + Name the data source `nasis_local`, the data source description is optional.
+  
+  + The server name is in the format `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the [full name of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name). It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the "My Computer" icon and then clicking on the "Properties" tab. On Windows 10, you can access your computer name by opening the "System" control panel. It will look something like: `CASONORA00L354`. When finished click "Next".
+
+![](odbc-03.png)
+
+3. Choose the second option: "SQL Server authentication..." <br>**don't try and re-type these, just copy/paste**
   + login: `NASISSQLRO` 
   + Windows 7 password: `nasisRe@d0n1y`
   + Windows 10 password: `nasisRe@d0n1y365`
-  
+
+![](odbc-04.png)
+
 4. On the next screen, select "Nasis-local" as the default data base.
+
+![](odbc-05.png)
 
 5. Click "Next" and then "Finish" the finalize the connection.
 
 6. Close the ODBC control panel by clicking on 'OK'
 
 
-## Install Required Packages
-You will need to install a couple of packages before R is able to read data from the local NASIS database. This only has to be done once, usually the first time you open RStudio on your machine. Open RStudio (start menu, search for RStudio) and copy and paste the following lines into the R console. Press the enter key and wait: R will automatically download and install these packages. If this is the first time you have installed packages, you may notice that many more than the following two packages are being installed. This is normal-- the `RODBC` and `soilDB` packages depend on [many other related packages](http://mran.revolutionanalytics.com/packagedata/graphs/soilDB.png), which must be installed first.
+## Optionally Install Required Packages
+You will need to install the `RODBC` and `soilDB` packages if not present. You can check by trying to load either of these packages at the console. Or, install using the commands below if you are unsure.
 
 ```{r install-packages, eval=FALSE}
-# install packages (only first time)
-install.packages("RODBC", dep=TRUE) # stable version from CRAN + dependencies
-install.packages("soilDB", dep=TRUE) # stable version from CRAN + dependencies
-remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE) # latest version, required for Windows 10
+# stable version from CRAN + dependencies
+install.packages("RODBC", dep=TRUE)
+
+# stable version from CRAN + dependencies
+install.packages("soilDB", dep=TRUE)
+
+# latest version, required for Windows 10
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
 
 ## An example R session
-After installing the above packages, add some sites/pedons into the selected set and try loading them into your R session.
+After installing the above packages, add some *sites+pedons* or *components* into the selected set and try loading them into your R session.
 ```{r example, eval=FALSE}
 # load required libraries
 library(soilDB)
 
 # fetch all pedons from the selected set in local NASIS database
-fp <- fetchNASIS(from='pedons')
+x <- fetchNASIS(from='pedons')
 
-# make sketches of the first 10 pedons:
+# make sketches of the first 10 pedons
 par(mar=c(0,0,0,0))
-plot(fp[1:10, ], name='hzname', label='taxonname')
+plot(x[1:pmin(length(x), 10), ], name='hzname', label='taxonname')
 ```
 
 Good job, that wasn't so hard. Now is a good time to check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/). Details on loading NASIS data into R can be found in [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
