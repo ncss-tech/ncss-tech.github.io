@@ -239,6 +239,13 @@ for(i in names(pp)) {
 ```
 
 
+## H-Measure
+
+   * https://rviews.rstudio.com/2019/01/17/roc-curves/
+   * https://www.hmeasure.net/
+   * https://cran.r-project.org/web/packages/hmeasure/vignettes/hmeasure.pdf
+   
+
 
 ## Brier Scores
 
