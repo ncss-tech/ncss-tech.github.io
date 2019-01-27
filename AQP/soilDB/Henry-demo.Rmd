@@ -58,6 +58,7 @@ and optionally filtered by:
     + "waterlevel": water level time series
  
 and aggregated to the following granularity:
+
  * "hour" (houly data are returned if available)
  * "day" (MAST and mean summer/winter temperatures are automatically computed)
  * "week"
