@@ -29,9 +29,9 @@ The _Loafercreek_ series concept might fit the range in characteristics of the d
 
 ## Loafercreek's siblings
 
-Loafercreek's siblings are the soils that geographically occupy the same landscapes and parent materials, and often are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of "similar soils" to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping assoccated with a particular soil name does not necessarily reflect modern series concepts for that same name.
+Loafercreek's siblings are the soils that geographically occupy the same landscapes and parent materials, and often are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of "similar soils" to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping associated with a particular soil name does not necessarily reflect modern series concepts for that same series name.
 
-Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. In CA630, the shallow metavolcanic soils with argillic horizons (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine PSC soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
+Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. In CA630, the shallow metavolcanic soils with argillic horizons (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
 
 
 ## This demo
@@ -217,7 +217,7 @@ hz.match <- '' # match all horizons
 
 KSSL data show a substantial amount of dithionite-citrate extractable (pedogenic) iron for _Loafercreek_ [all taxon kinds; n=`r length(k)` profiles, h=`r sum(!is.na(k$fe_dith))` horizons with non-NA Fe-d]. The median Fe-d for _Loafercreek_ KSSL data is `r round(median(k$fe_dith[grepl(k$hzn_desgn, pattern = hz.match)], na.rm = T), 2)`%, with a minimum of `r round(min(k$fe_dith[grepl(k$hzn_desgn, pattern = hz.match)], na.rm = T), 2)`% and maximum of `r round(max(k$fe_dith[grepl(k$hzn_desgn, pattern = hz.match)], na.rm = T), 2)`%, by mass. These are somewhat crude statistics, as summarizing across all horizons in the SPC obscures between-pedon variation and/or covariance with depth. Regardless, these values are relatively high.
 
-Check for yourself. use `soilDB::fetchKSSL()` to make a SPC of the lab pedons correlated to _Loafercreek_. Or, you can get KSSL pedons for any other taxonname, MLRA or rectangular bounding box. What other attributes are available from KSSL?
+Check for yourself. Use `soilDB::fetchKSSL()` to make a SPC of the lab pedons correlated to _Loafercreek_. Or, you can get KSSL pedons for any other taxonname, MLRA or rectangular bounding box. What other attributes are available from KSSL?
 
 ```{r, eval=FALSE}
 # use the `series` argument to specify taxonname. or use `mlra` or `bbox`
@@ -268,7 +268,7 @@ Looks good. These `SpatialPoints` are safe to `spTransform()` (e.g. to UTM).
 
 Note that it is _not_ good practice to use the `@` (slots) to _edit_ data. But they are available for inspection. Generally slots are for internal use only by S4 objects. They have special functions (like `coordinates()` and `proj4string()`) designed to access/alter them.
 
-You can get a separate _SpatialPointsDataFrame_ (with just the site-level data) from an SPC using the below code. Note that you should NOT us `site()` as that would return an ordinary _data.frame_ without the _SpatialPoints_ slot found in `loafercreek`.
+You can get a separate _SpatialPointsDataFrame_ (with just the site-level data) from an SPC using the below code. Note that you should NOT use `site()` as that would return an ordinary _data.frame_ without the _SpatialPoints_ slot found in `loafercreek`.
 
 ```{r}
 class(loafercreek)
@@ -297,7 +297,7 @@ You can build-your-own _SoilProfileCollection_ by reading site/horizon data from
 Horizon data is related to site data via site ID column (`id`). For most applications it is expected each unique site ID has a set of non-overlapping top and bottom depths: `top` and `bottom` in this case. Site and horizon IDs can be accessed from an SPC using `profile_id()` and `hzID()`. The column names used for storing those IDs are accessible with `idname()` and `hzidname()`.
 
 ```{r}
-## make 10 site ids `id` each witih site-level attributes `di` and `mlra`
+## make 10 site ids `id` each witin site-level attributes `di` and `mlra`
 your.site.data <- data.frame(id = 1:10, di = 10 - 0:9, mlra = "18") 
 head(your.site.data)
 
@@ -371,7 +371,7 @@ __Arguments__
 
 Here, we use an _aqp_ function `estimateSoilDepth()` to demonstrate how `profileApply()` works.
 
-`estimateSoilDepth()` uses a REGular EXpression (regex pattern) to match horizon designations of a certain pattern, and returns the top depth of the first horizon matching said pattern. 
+`estimateSoilDepth()` uses a REGular EXpression (regex pattern) to match horizon designations of a certain pattern, and returns the top depth of the first horizon matching a given pattern. 
 
 The default settings are designed for bedrock restrictions, so the pattern matches horizon designations Cr, R or Cd. 
 
@@ -452,13 +452,13 @@ estimateSoilDepth(deep.one)
 estimateSoilDepth(deep.one, no.contact.depth = 100, no.contact.assigned = NA)
 ```
 
-Perhaps we need to make a `motherlode` dataset to go along with `gopheridge` and `loafercreek` in _soilDB_. Or better yet `mvosnf` for all metavolcanic soils in the Sierra Nevada Foothills :)
+Perhaps we need to make a `motherlode` dataset to go along with `gopheridge` and `loafercreek` in _soilDB_. Or better yet a `mvosnf` dataset for all metavolcanic soils in the Sierra Nevada Foothills :)
 
 ### Modifying default arguments for new analyses
 
 Simple additions to the `estimateSoilDepth()` default pattern would be duripan `p = 'qm'` or carbonates`p = 'k'`. But 'depth' doesn't have to be a 'root-restriction' depth. 
 
-By changing the default settings of  `estimateSoilDepth()` you can calculate many "depth-to-_X_" involving a _character_ orcategorical variables other than horizon designation (`hzname`). 
+By changing the default settings of  `estimateSoilDepth()` you can calculate many "depth-to-_X_" features involving a _character_ or categorical variables that are contained within horizon designations (`hzname`). 
 
 The likelihood of observing _X_ soil property varies as a function of depth for different groups of soils (e.g. a series or other mapping/taxonomic unit). Say _X_ is a gypsic horizon, or the top of a spodic horizon, or the depth to an abrupt textural change. 
 
@@ -466,7 +466,7 @@ When you calculate the depth to that property for a set of soil observations, yo
 
 More "similar" sets of soils might be expected to have less variation in the depth to an "important" characteristic. When evaluating taxonomic placement and correlation decisions, as well as for novel interpretive uses, it may be useful to know something about the variation in "depth-to-X" within a group of of soils.
 
-Your analysis should always consider that for individual profiles you have possibility of _X_ event not occuring at any depth. Also, you may have insufficient data to determine whether _X_ event occured.
+Your analysis should always consider that for individual profiles you have the possibility of _X_ event not occuring at any depth. Also, you may have insufficient data to determine whether _X_ event occured.
 
 Here are some other examples that aren't applicable to `loafercreek`:
 
@@ -504,7 +504,7 @@ The `depth.to.contact` variable we created above is a _numeric_ vector of depths
 
 The `loafercreek` dataset already has a variable called `bedrckdepth` in the `loafercreek@site` table. We want to replace it with the new values. The code would be the same if `bedrckdepth` were new.
 
-*Tip:* To _remove_ an attribute from a _data.frame_, set it to `NULL`.
+*Tip:* To _remove_ an attribute from a _data.frame_, set it to `NULL` using the assign arrow <- `NULL`.
 
 Access `loafercreek` site attribute `bedrckdepth` using `$` and set the value to `depth.to.contact` with `<-`.
 
@@ -599,14 +599,14 @@ _What other definitions of "redness" can you come up with?_
 
 We are going to make a cut at 40 cm provisionally, based on the two "peaks" in the density plot. Our hypothesis was that soils shallow to red hues would have a different morphology (we will look at clay content). This break coincides with the data and our working hypothesis. We could have just said 50 cm from the outset without looking to see if that was a relevant break for our data.
 
-Subset `sub1` is created using _aqp_ function `subsetProfiles()`. It consists of soils where `depth.to.5YR` is less than or equal to 40 cm. `s` is an expression (charcter string) to evaluate for a variable in the `loafercreek@site` table. Another argument, `h`, not specified in this case, does the same thing but matches a horizon-level attribute.
+Subset `sub1` is created using _aqp_ function `subsetProfiles()`. It consists of soils where `depth.to.5YR` is less than or equal to 40 cm. `s` is an expression (character string) to evaluate for a variable in the `loafercreek@site` table. Another argument, `h`, not specified in this case, does the same thing but matches a horizon-level attribute in `loafercreek@horizons`.
 
 ```{r}
 sub1 <- subsetProfiles(loafercreek, s = 'depth.to.5YR <= 40')
 nrow(site(sub1))
 ```
 
-The less than 40 cm group looks pretty good. Not too many gaps in the data, and our criteria our are met. And we have `r nrow(site(sub1))` pedons in the group.
+The less than 40 cm group looks pretty good. Not too many gaps in the data, and our criteria are met. And we have `r nrow(site(sub1))` pedons in the group.
 
 ```{r}
 plotSPC(sub1, max.depth=100, print.id = FALSE, 
@@ -739,9 +739,9 @@ The `NA` values are a __problem__ for our grouping variables.
 
 We want to use as many of the pedon descriptions as we can in this (_hypothetical_) classification based on depth to "redness". 
 
-SPCs and SPC-related functions (as do many other R functions) require no `NA` in grouping / index variables or will give warnings. This is a valid thing to do, as systematic exclusion of data is not a statistically sound practice. If there are large numbers of pedons we can't accomodate, it is highly questionable whether it is an appropriate analysis to attempt with the data we have. 
+SPCs and SPC-related functions (as do many other R functions) require no `NA` in grouping / index variables or will give warnings. This is a valid thing to do, as systematic exclusion of data is not a statistically sound practice. If there are large numbers of pedons we can't accomodate, it becomes highly questionable whether it is an appropriate analysis to attempt with the data we have. 
 
-_Just because some grouping scheme you came up with describes the pedons you like, doesn't mean you can apply it to the ones it doesn't work for or you can't know it works for_
+_Just because some grouping scheme you came up with describes the pedons you like, doesn't mean you can apply it to the ones it doesn't work for or that it will be broadly applicable to other sets of soil profiles._
 
 ***
 
@@ -849,7 +849,7 @@ temp.regime.C <- fahrenheit_to_celsius(temp.regime.F)
 temp.regime.C
 ```
 
-Lets apply functions to soils. This function defined below calculates the profile maximum clay content. It is designed for use with `profileApply()`.
+Let's apply functions to soils. This function defined below calculates the profile maximum clay content. It is designed for use with `profileApply()`.
 
 The argument `p` is an _individual pedon_. `profileApply()` iterates over the `loafercreek` profiles one-by-one, passing them to the function `profileMaxClay()` for evaluation.
 
@@ -870,7 +870,7 @@ profileMaxClay <- function(p) {
 
 Let's apply `profileMaxClay()` to all profiles in `loafercreek` and look at the distribution of the results.
 
-We find that our profile maximum clay contents span the  fine-loamy clay contents (18-35%), with substantial numbers higher than that. 
+We find that our profile maximum clay contents span the  fine-loamy clay contents (18-35%), with quite a few of them being higher than that range (>35% clay).
 
 ```{r}
 # calculate the max clay content in all profiles
@@ -896,7 +896,7 @@ _Calculate the minimum Ksat for all components in your SPC (using `profileApply(
 
 ### Comparing Density Distributions based on "Redness"
 
-We sill make a plot of `maxclay` probabiliy density distribution for our different groups.
+We will make a plot of `maxclay` probability density distribution for our different groups.
 
  * `loafercreek` (All pedons)
  
@@ -957,7 +957,7 @@ summary(loafercreek$redness.class)
 
 Let's make a linear regression model to predict the site-level attribute we made in the previous example (`loafercreek$maxclay`.
 
-We want to predict profile `maxclay` from the clay content of the second mineral horizon. Maybe we don't like digging that much. Or we are interested in what the typical clay increase is from transitional horizon/upper argillic to profile maximum.
+We want to predict profile `maxclay` from the clay content of the second mineral horizon. Maybe we don't like digging that much. Say what! Soil Scientists that don't like digging?! Or we are interested in what the typical clay increase is from transitional horizon/upper argillic to profile maximum.
 
 ### Linear Regression & Prediction
 
@@ -994,9 +994,9 @@ lin.model <- lm(loafercreek$maxclay ~ second.horizon.clay)
 plot(lin.model) 
 ```
 
-The stripes in the residuals come from common clay content percentages. 
+The stripes or lineations in the residuals come from common clay content percentages. 
 
-You generally don't see banding of residuals in lab data due to higher precision and less textural triangle bias. In field clay contents, we will often see rounder numbers offset from major breaks and relatively less "on the line" like 18, 27, 35, 40. 
+You generally don't see banding of residuals in lab data due to higher precision and less textural triangle bias. In field clay contents, we will often see rounder numbers offset from major breaks and relatively less falling "on the line" or on a break such as 18, 27, 35, 40 percent clay. 
 
 We can take a brief aside to investigate this phenomenon. We will convert clay contents into a categorical variable and tabulate what our most common values are.
 
@@ -1039,13 +1039,13 @@ lin.model.inf <- lm.influence(lin.model)
 ```
 
 Now we plot top 5% influential observations based on quantiles of influence measures `sigma`.
-Note that we are using `names()` -- for `lm.influence()` output the `names` attribute contains the index in terms of input dataframe. We need to do this because here can be (is) an offset in length of `lm.influence()` output and the number of rows of input due to `NA` observations. 
+Note that we are using `names()` -- for `lm.influence()` output of the `names` attribute contains the index in terms of input dataframe. We need to do this because there can be (is) an offset in length of `lm.influence()` output and the number of rows of input due to `NA` observations. 
 
 ```{r}
 influential.idx <- which(lin.model.inf$sigma < quantile(lin.model.inf$sigma, probs=0.05))
 influential.idx.plotlm <- c(16,17,31,32,77) # for example these are IDs from the plot.lm output
 
-# combine some ids we picked that wanted to check, with the ones determined from lm.influence()
+# combine some ids we picked that we want to check, with the ones determined from lm.influence()
 to.plot <- unique(c(names(influential.idx), influential.idx.plotlm))
 
 plotSPC(loafercreek[to.plot], color='clay', print.id=F, axis.line.offset=0)
@@ -1138,7 +1138,7 @@ The angle of the prediction lines relative to 1:1 (slope of 1) might suggest tha
 
 But also, there are several high `maxclay` observations that all had fairly high `second.horizon.clay` content that are apparently "ignored" by the model. Obviously the model didn't choose to ignore them.
 
-Note how narrow the confidence interval is near the center of the data cluster, and how the prediction interval is neccesarily large. The most extreme are outside the range. Visually, the red lines appear wider than the cluster of most of the data and iit is hard to tell if the slope is anything other than 1:1. Non-conforming observations have the effect of broadening the prediction interval and exacerbating deviation from normality, but do not seem to affect the slope as much.
+Note how narrow the confidence interval is near the center of the data cluster, and how the prediction interval is neccesarily large. The most extreme are outside the range. Visually, the red lines appear wider than the cluster of most of the data and it is hard to tell if the slope is anything other than 1:1. Non-conforming observations have the effect of broadening the prediction interval and exacerbating deviation from normality, but do not seem to affect the slope as much.
 
 Because we violated some assumptions required for a simple linear regression model, the confidence and prediction intervals are not trustworthy.
 
@@ -1146,7 +1146,7 @@ The fairly dramatic difference between the confidence and prediction intervals i
 
 That is, we can relatively precisely say where the center of the data cloud is depending on second horizon clay... but we can't be nearly as sure what a specific unknown max clay content will be given a second horizon clay. This is because there is substantial variation in individual profile's  relationships between second horizon clay and profile maximum clay.
 
-### Depth-covariance and aut-ocorrelation
+### Depth-covariance and auto-correlation
 
 The depth covariance and auto-correlation of properties is an important issue in soils. Soil scientists know that each soil observation is unique. 
 
@@ -1160,7 +1160,7 @@ In practice better predictor(s), robust regression methods, mixed models, carefu
 
 The coefficient for the intercept term is `r round(coef(lin.model)[1], 2)`. So, this model says: for a hypothetical profile with `0`% clay in the second horizon, the maximum clay content would be about `r round(coef(lin.model)[1])`%. 
 
-For each unit (1%) increase in `second.horizon.clay` it predicts an increase in `loafercreek$maxclay` of `r round(1 / coef(lin.model)[2], 2)`, that is,  `r round(100 / coef(lin.model)[2])-100`% relative. 
+For each unit (1%) increase in `second.horizon.clay` it predicts an increase in `loafercreek$maxclay` of `r round(1 / coef(lin.model)[2], 2)`, that is a,  `r round(100 / coef(lin.model)[2])-100`% relative increase. 
 
 The relative increase calculated from the slope coefficient `r round(coef(lin.model)[2], 2)`. But the 95% confidence interval for that coefficient is `r round(confint(lin.model,'second.horizon.clay'),3)`. So it could be more or less sloping than 1:1.
 
@@ -1213,7 +1213,7 @@ Robust regression (and other robust statistics) is a way to estimate the influen
 ##### __Exercise__
 _Repeat the linear regression analysis above, only using a depth-weighted average clay content (you choose _`tdepth` _and_ `bdepth` _)_ ___instead of___ _the second horizon._
 
-_Write your own depth-weighted-average function, or you can use the below function written using_ `aqp::slice()`. _Inspect the regression model to the same way we did for second horizon data._ _
+_Write your own depth-weighted-average function, or you can use the below function written using_ `aqp::slice()`. _Inspect the regression model the same way we did for second horizon data._
 
 ```{r eval=FALSE}
 # we will use this function again later.
@@ -1294,7 +1294,7 @@ names(applied.result)
 str(applied.result)
 ```
 
-Check if a `peiid` from `names` attribute is in a list of other `peiid`s (e.g. from `loafercreek`). 
+Check if a `peiid` from `names` attribute is in a list of other `peiid` values (e.g. from `loafercreek`). 
 
 What site index matches the result `peiid`? What horizon index(es)?
 
@@ -1350,7 +1350,7 @@ str(as.numeric(a.list)) # create an UNnamed numeric vector from list
 
 ## Wrapper functions
 
-If the function you are trying to `profileApply()` work for a few single well-behaved pedons, your problems may related to source data -- edge cases, errors, things you didn't plan for.
+If the function you are trying to `profileApply()` work for a few single well-behaved pedons, your problems may be related to source data -- edge cases, errors, things you didn't plan for.
 
 If it is a function you have designed, add a bit of code to print out the ID so you can know if `profileApply()` is failing on a particular pedon. 
 
@@ -1403,7 +1403,7 @@ dwt.mean.wrap <- function(x, na.threshold, attr, ...) {
     #we will not omit it, just flag it so we have the ID
   }
   
-  # we used x and attr to maxe the above output, but depth.weighted.average()
+  # we used x and attr to max the above output, but depth.weighted.average()
   # also gets tdepth and bdepth from call to profileApply(), passed on with  `...`
   return(depth.weighted.average(x, attr, ...))
   # then we return the result
@@ -1525,7 +1525,7 @@ loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='A')] <- 'A'
 # if starts with B, and has a t, it goes in Bt group
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^B.*t.*')] <- 'Bt'
 
-#if it starts with BC (wiht or without t) its in the "lower gradational to bedrock group" BCt
+#if it starts with BC (with or without t) its in the "lower gradational to bedrock group" BCt
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^BC')] <- 'BCt'
 
 #any start with C? [no]
@@ -1553,9 +1553,9 @@ aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color',
                                   loafercreek[loafercreek$redness.class == 'GT40'], k = 3), print.n.hz = TRUE)
 ```
 
-In addition to the 5YR hue, the `LT40` group has 6 chroma represented at somewhat higher proportions. There is not a huge amount of difference between 6/4 or 5/4 chips on the 5YR and 7.5YR pages. Thus, there is not a huge amount of difference between these groups when their colors are looked at in aggregaTe. The raw color plots show more detail (without the `PAM`-based mixing and `k = 3` argument to `aggregateColor()`), but more or less tell the same story.
+In addition to the 5YR hue, the `LT40` group has 6 chroma represented at somewhat higher proportions. There is not a huge amount of difference between 6/4 or 5/4 chips on the 5YR and 7.5YR pages. Thus, there is not a huge amount of difference between these groups when their colors are looked at in aggregate. The raw color plots show more detail (without the `PAM`-based mixing and `k = 3` argument to `aggregateColor()`), but more or less tell the same story.
 
-However, even though we didnt find a difference more than the result of our arbitrary split, applying a calculation "Depth to 5YR hue", we had the opportunity to explore the natural variability within a group of related soils as well as the gaps in our data.
+However, even though we didn't find a difference more than the result of our arbitrary split, applying a calculation "Depth to 5YR hue", we had the opportunity to explore the natural variability within a group of related soils as well as the gaps in our data.
 
 Lets investigate how these "redness" groups, however intermingled they may be, to see if they have different clay contents.
 
@@ -1584,7 +1584,7 @@ With `slab()` default function you are calculating quantiles across all pedons `
 Aggregating _slices_ in _slabs_ approximates the central tendency and variance of arbitrary numeric soil properties _over depth_, by accounting for the between pedon variation. That is, _slabs_ are a way of aggregating slices. 
 
 The simplest case that is the least aggregated is when the slabs are 1
-cm thick, like the slices. `slice()` can return a SPC or you can just get the sliced data (`just.the.data=TRUE`), and can be a return a 1cm slice or an arbitrary range of slices.
+cm thick, like the slices. `slice()` can return a SPC or you can just get the sliced data (`just.the.data=TRUE`), and can be returned as a 1cm slice or an arbitrary range of slices.
 
 We used `slice()` earlier in a function `depth.weighted.average()` to calculate, _you guessed it_, a depth-weighted average (for arbitrary depths and numeric _horizon-level_ attributes). It is an optional exercise for the reader to prove that function matches the output of an arithmetic depth-weighted average using the horizon depths and clay data "directly" (i.e. no `slice()`). 
 
@@ -1641,7 +1641,7 @@ names(df) <- c("redness.class","maxclay.q50")
 df
 ```
 
-A `r round(df[1,2] - df[2,2], 1)`% clay difference in the estimated maxima using the slab-wise median (50th percentile). The maxima of the slab-wise median values much smaller than we calculated from the raw horizon data. That might be expected of a statistical summary of several pedons across depth. It might be more appropriate to compare to a more extreme quantile [which?] for `maxclay` difference comparison.
+A `r round(df[1,2] - df[2,2], 1)`% clay difference in the estimated maxima using the slab-wise median (50th percentile). The maxima of the slab-wise median values are much smaller than we calculated from the raw horizon data. That might be expected of a statistical summary of several pedons across depth. It might be more appropriate to compare to a more extreme quantile [which?] for `maxclay` difference comparison.
 
 What might be more interesting than peak median clay content is the differences in the 5th to 95th percentile interval across depth in our different groups. Remember 10% of the data fall outside of that range for each 5 cm thick depth slab. The groups have similar numbers of observations, and overall relatively similar morphology, but the LT40 group appears to have more variation within it, especially in the higher clay content direction. This not being reflected in the median suggests it may be only a handful of observations influencing the pattern.
 
@@ -1701,7 +1701,7 @@ Recently code was added to _aqp_ to calculate the upper and lower boundary of th
 
 This is a high-level function that makes use of multiple lower level functions to apply the PSCS key from _Keys to Soil Taxonomy_. It requires machinery for the identification of argillic horizons, O horizons, plow layers etc. It also needs to be able to deal with regional differences in description styles, data entry guidelines and ambiguities in data population relative to taxonomic criteria.
 
-There is still no handling of some "unusual" soils (well unusual in that they would be a huge amount of effort to cover a minute fraction of observations) e.g. grossarenic subgroups, strongly contrasting etc. Some of these can be done. Others might be more effort than it is worth unless they are needed and will rely on some sort of an external flag like a record in the taxonomic history table. 
+There is still no handling of some "unusual" soils (well, unusual in that they would be a huge amount of effort to cover a minute fraction of observations) e.g. grossarenic subgroups, strongly contrasting etc. Some of these can be done. Others might be more effort than it is worth unless they are needed and will rely on some sort of an external flag like a record in the taxonomic history table. 
 
 If someone has a specific need for additional functionality, and has a dataset to use test with, the author would be willing to explore implementation of any of these more complex criteria.
 
