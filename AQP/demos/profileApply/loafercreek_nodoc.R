@@ -165,11 +165,11 @@ quantile(depth.to.contact, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.
 bad.peiid <- c("542129") 
 
 #SPC with just the "bad" pedon (this one isn't that bad)
-deep.one <- loafercreek[site(loafercreek)$peiid %in% bad.peiid]
+deep.one <- loafercreek[site(loafercreek)$peiid %in% bad.peiid, ]
 nrow(site(deep.one))
 
 #the inverse, loafercreek without the "bad" one
-loafernew <-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid)]
+loafernew <-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid), ]
 nrow(site(loafernew))
 
 ## ------------------------------------------------------------------------

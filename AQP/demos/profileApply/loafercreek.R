@@ -21,7 +21,7 @@
 #' 
 #' Areas of soils _conceptually related_ to _Loafercreek_ have been mapped primarily as [Auburn](https://casoilresource.lawr.ucdavis.edu/sde/?series=auburn) in the Sierra Nevada Foothills. 
 #' 
-#' Many areas of Auburn soils, and related soils on similar landforms, are outside the range of the family (12th edition taxonomy) of the series. Auburn soils were historically mapped as _Ruptic-Lithic Xerochrepts_. Reading old manuscript cdescriptions of map units modeled after the old series concepts hows that their definition spans, at a minimum, shallow to moderately deep depth classes, likely with deeper inclusions. 
+#' Many areas of Auburn soils, and related soils on similar landforms, are outside the range of the family (12th edition taxonomy) of the series. Auburn soils were historically mapped as _Ruptic-Lithic Xerochrepts_. Reading soil survey manuscript descriptions of map units modeled after the old series concepts shows that their definition spans, at a minimum, shallow to moderately deep depth classes, likely with deeper inclusions. 
 #' 
 #' The _Loafercreek_ series concept might fit the range in characteristics of the deeper (moderately deep) areas within Auburn mapunits. We will study some of the soils similar to Loafercreek to understand its _range in characteristics_.
 #' 
@@ -29,7 +29,7 @@
 #' 
 #' ## Loafercreek's siblings
 #' 
-#' Loafercreek's siblings are the soils that geographically occupy the same landscapes and parent materials, and ften are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of "similar soils" to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping assoccated with a particular soil name does not necessarily reflect modern series concepts for that same name.
+#' Loafercreek's siblings are the soils that geographically occupy the same landscapes and parent materials, and often are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of "similar soils" to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping assoccated with a particular soil name does not necessarily reflect modern series concepts for that same name.
 #' 
 #' Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. In CA630, the shallow metavolcanic soils with argillic horizons (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine PSC soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
 #' 
@@ -42,9 +42,9 @@
 #' 
 #' *You can use this [R script](loafercreek_nodoc.R) version of the demo document to avoid having to copy and paste all the code. This will allow you to focus on interpreting the output. [This](loafercreek.R) version has all of the text as comments.*
 #' 
-#' Readers are encouraged to run all of the code in their own IDE/text editor/console. Also, you are encouraged to use `?function.name` whenever you encounter a `function()` you do not recognize.
+#' Readers are encouraged to run all of the code in their own IDE/text editor/console. Also, you are encouraged to use `?function.name` to view R manual pages whenever you encounter a `function()` you do not recognize.
 #' 
-#' You can get the latest development versions of aqp, soilDB and sharpshootR using `devtools` package:
+#' You can get the latest development versions of *aqp*, *soilDB* and *sharpshootR* using *devtools* package:
 #' 
 ## ----eval=FALSE----------------------------------------------------------
 ## # install devtools if needed
@@ -430,11 +430,11 @@ quantile(depth.to.contact, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.
 bad.peiid <- c("542129") 
 
 #SPC with just the "bad" pedon (this one isn't that bad)
-deep.one <- loafercreek[site(loafercreek)$peiid %in% bad.peiid]
+deep.one <- loafercreek[site(loafercreek)$peiid %in% bad.peiid, ]
 nrow(site(deep.one))
 
 #the inverse, loafercreek without the "bad" one
-loafernew <-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid)]
+loafernew <-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid), ]
 nrow(site(loafernew))
 
 #' 
@@ -1501,13 +1501,13 @@ round(c(loafercreek.depth.summary / n.obs) * 100, digits = 1)
 #' 
 #' Scaled data (default) is a _list_ of colors and their weights (proportion within the horizons of that designation). 
 #' 
-#' Aggregate data is a _data.frame_ of mixed colors. Mixed colors are calculated for all observations in a group (in this case a horizon designation). To mix, Munsell color is converted to LAB coordinates, which are clustered into user-specified `k` groups using Partitioning Around Medoids, and back transforming the medoid LAB color to Munsell chips. 
+#' Aggregate data is a _data.frame_ of representataive colors. Munsell color is converted to LAB coordinates, which are clustered into user-specified `k` groups using Partitioning Around Medoids. Then the weight of all of the observations in the cluster is assigned to the the medoid LAB color back-transformed to nearest Munsell chip. 
 #' 
-#' The math behind the color mixing is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.
+#' The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.
 #' 
 #' `aggregateColorPlot()` is a special plotting function designed to use the results of `aggregateColor()`. We set the option to display the number of horizons contributing dry color data to each group.
 #' 
-#'   But first, we will create a new grouping variable for horizons, based on their _generalized_ (correlated) master designation which is loaded in `genhz` (from Pedon Horizon Component Layer ID in NASIS).
+#' But first, we will create a new grouping variable for horizons, based on their _generalized_ (correlated) master designation which is loaded in `genhz` (from Pedon Horizon Component Layer ID in NASIS).
 #' 
 #' We could do this analysis from `hzname` but the field horizon designation has more variation (lithologic discontinuities, different soil scientists horizonation styles). That variation would require more creative regular expression patterns. It may be useful to some analyses but we are making very general groups here so `genhz` (component layer ID in NASIS) will do just fine and will be a bit more consistent for this demonstration.
 #' 

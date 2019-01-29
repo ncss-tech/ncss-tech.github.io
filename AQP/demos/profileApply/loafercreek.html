@@ -227,12 +227,12 @@ div.tocify {
 <p>The Loafercreek series was established in Butte county (<em>CA612</em>) and now is mapped in Calaveras and Tuolumne (<em>CA630</em>) as well as small portions of Mariposa and Stanislaus Counties (<em>CA630</em> join with <em>CA649</em> and <em>CA644</em>).</p>
 <p>The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks such as andesite, basalt or gabbro. The metavolcanic rocks in this area were recognized by miners during the gold rush to form distinctive tombstone-like outcrops.</p>
 <p>Areas of soils <em>conceptually related</em> to <em>Loafercreek</em> have been mapped primarily as <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=auburn">Auburn</a> in the Sierra Nevada Foothills.</p>
-<p>Many areas of Auburn soils, and related soils on similar landforms, are outside the range of the family (12th edition taxonomy) of the series. Auburn soils were historically mapped as <em>Ruptic-Lithic Xerochrepts</em>. Reading old manuscript cdescriptions of map units modeled after the old series concepts hows that their definition spans, at a minimum, shallow to moderately deep depth classes, likely with deeper inclusions.</p>
+<p>Many areas of Auburn soils, and related soils on similar landforms, are outside the range of the family (12th edition taxonomy) of the series. Auburn soils were historically mapped as <em>Ruptic-Lithic Xerochrepts</em>. Reading soil survey manuscript descriptions of map units modeled after the old series concepts shows that their definition spans, at a minimum, shallow to moderately deep depth classes, likely with deeper inclusions.</p>
 <p>The <em>Loafercreek</em> series concept might fit the range in characteristics of the deeper (moderately deep) areas within Auburn mapunits. We will study some of the soils similar to Loafercreek to understand its <em>range in characteristics</em>.</p>
 <hr />
 <div id="loafercreeks-siblings" class="section level2">
 <h2><span class="header-section-number">1.1</span> Loafercreek’s siblings</h2>
-<p>Loafercreek’s siblings are the soils that geographically occupy the same landscapes and parent materials, and ften are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of “similar soils” to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping assoccated with a particular soil name does not necessarily reflect modern series concepts for that same name.</p>
+<p>Loafercreek’s siblings are the soils that geographically occupy the same landscapes and parent materials, and often are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of “similar soils” to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping assoccated with a particular soil name does not necessarily reflect modern series concepts for that same name.</p>
 <p>Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. In CA630, the shallow metavolcanic soils with argillic horizons (Ultic Haploxeralfs) are the <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza">Bonanza</a> and <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone">Dunstone</a> series. Fine PSC soils are similar to the <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut">Argonaut</a> concept. Skeletal PSC soils are <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak">Jasperpeak</a> (shallow, Lithic Haploxeralfs) and <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge">Gopheridge</a> (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode">Motherlode</a>.</p>
 </div>
 <div id="this-demo" class="section level2">
@@ -444,13 +444,13 @@ head(your.site.data)</code></pre>
 ## horizon designation and 5 random horizon level attributes (p1, p2...)
 your.spc &lt;- do.call('rbind', lapply(your.site.data[['id']], random_profile)) 
 head(your.spc)</code></pre>
-<pre><code>##   id top bottom name        p1        p2         p3        p4        p5
-## 1  1   0     16   H1 -9.078400  4.320242   3.371798  9.952454 18.645617
-## 2  1  16     44   H2 -3.648455 18.601801  -6.603894 27.220973  7.960521
-## 3  1  44     55   H3 -3.730901 18.202732 -12.983510 34.274025 12.905006
-## 4  1  55     79   H4  4.631530 14.098233 -16.618709 52.999911  8.222992
-## 5  1  79     96   H5 -1.048135  9.031654  -8.599807 55.271374 -5.004908
-## 6  1  96    123   H6 -3.037362  2.137168   5.604765 61.177761 -1.132901</code></pre>
+<pre><code>##   id top bottom name        p1        p2        p3          p4         p5
+## 1  1   0     13   H1  3.757188  7.348520  9.531968   3.9114120  -7.388809
+## 2  1  13     32   H2 10.150794  6.219369  7.968953  -6.9618850   1.064936
+## 3  1  32     44   H3  9.271874 -9.352715  9.897909 -21.8499110  -7.999176
+## 4  1  44     56   H4  2.154242  2.998837 -4.689250 -12.2059333 -12.129422
+## 5  2   0     27   H1 10.151942  3.691026  6.606810  -2.4106599 -10.016153
+## 6  2  27     54   H2  4.734124  4.365258 19.760257   0.6304171  -7.396225</code></pre>
 <pre class="r"><code>## or read your data from file. 
 # your.spc &lt;- read.csv(&quot;your.horizon.data.csv&quot;)
 
@@ -463,16 +463,16 @@ site(your.spc) &lt;- merge(site(your.spc), your.site.data, by=&quot;id&quot;)
 your.spc</code></pre>
 <pre><code>## Object of class SoilProfileCollection
 ## Number of profiles: 10
-## Depth range: 53-124 cm
+## Depth range: 40-129 cm
 ## 
 ## Horizon attributes:
-##   id top bottom name        p1        p2         p3        p4        p5
-## 1  1   0     16   H1 -9.078400  4.320242   3.371798  9.952454 18.645617
-## 2  1  16     44   H2 -3.648455 18.601801  -6.603894 27.220973  7.960521
-## 3  1  44     55   H3 -3.730901 18.202732 -12.983510 34.274025 12.905006
-## 4  1  55     79   H4  4.631530 14.098233 -16.618709 52.999911  8.222992
-## 5  1  79     96   H5 -1.048135  9.031654  -8.599807 55.271374 -5.004908
-## 6  1  96    123   H6 -3.037362  2.137168   5.604765 61.177761 -1.132901
+##   id top bottom name        p1        p2        p3          p4         p5
+## 1  1   0     13   H1  3.757188  7.348520  9.531968   3.9114120  -7.388809
+## 2  1  13     32   H2 10.150794  6.219369  7.968953  -6.9618850   1.064936
+## 3  1  32     44   H3  9.271874 -9.352715  9.897909 -21.8499110  -7.999176
+## 4  1  44     56   H4  2.154242  2.998837 -4.689250 -12.2059333 -12.129422
+## 5  2   0     27   H1 10.151942  3.691026  6.606810  -2.4106599 -10.016153
+## 6  2  27     54   H2  4.734124  4.365258 19.760257   0.6304171  -7.396225
 ##   hzID
 ## 1    1
 ## 2    2
@@ -569,11 +569,11 @@ plot(density(depth.to.contact, na.rm = TRUE))</code></pre>
 <pre class="r"><code>bad.peiid &lt;- c(&quot;542129&quot;) 
 
 #SPC with just the &quot;bad&quot; pedon (this one isn't that bad)
-deep.one &lt;- loafercreek[site(loafercreek)$peiid %in% bad.peiid]
+deep.one &lt;- loafercreek[site(loafercreek)$peiid %in% bad.peiid, ]
 nrow(site(deep.one))</code></pre>
 <pre><code>## [1] 1</code></pre>
 <pre class="r"><code>#the inverse, loafercreek without the &quot;bad&quot; one
-loafernew &lt;-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid)]
+loafernew &lt;-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid), ]
 nrow(site(loafernew))</code></pre>
 <pre><code>## [1] 105</code></pre>
 <p>You can clearly see the “deep” observation in the <code>loafercreek$bedrckdepth</code> <code>density()</code> plots above. You also may have noticed <code>148</code> was the sole value above the 99th percentile when we looked at quantiles.</p>
@@ -1380,8 +1380,8 @@ loafercreek.depth.summary &lt;- summary(sdc$depth.class)</code></pre>
 <h2><span class="header-section-number">5.2</span> <code>aggregateColor()</code></h2>
 <p>We can use the <code>aggregateColor()</code> function to summarize the colors in a SPC by horizon designation. It returns a two element list containing scaled and aggregate data.</p>
 <p>Scaled data (default) is a <em>list</em> of colors and their weights (proportion within the horizons of that designation).</p>
-<p>Aggregate data is a <em>data.frame</em> of mixed colors. Mixed colors are calculated for all observations in a group (in this case a horizon designation). To mix, Munsell color is converted to LAB coordinates, which are clustered into user-specified <code>k</code> groups using Partitioning Around Medoids, and back transforming the medoid LAB color to Munsell chips.</p>
-<p>The math behind the color mixing is beyond the scope of this demo, but the result when specifying k in a call to <code>aggregateColor()</code> is that you get back <code>k</code> different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.</p>
+<p>Aggregate data is a <em>data.frame</em> of representataive colors. Munsell color is converted to LAB coordinates, which are clustered into user-specified <code>k</code> groups using Partitioning Around Medoids. Then the weight of all of the observations in the cluster is assigned to the the medoid LAB color back-transformed to nearest Munsell chip.</p>
+<p>The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to <code>aggregateColor()</code> is that you get back <code>k</code> different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.</p>
 <p><code>aggregateColorPlot()</code> is a special plotting function designed to use the results of <code>aggregateColor()</code>. We set the option to display the number of horizons contributing dry color data to each group.</p>
 <p>But first, we will create a new grouping variable for horizons, based on their <em>generalized</em> (correlated) master designation which is loaded in <code>genhz</code> (from Pedon Horizon Component Layer ID in NASIS).</p>
 <p>We could do this analysis from <code>hzname</code> but the field horizon designation has more variation (lithologic discontinuities, different soil scientists horizonation styles). That variation would require more creative regular expression patterns. It may be useful to some analyses but we are making very general groups here so <code>genhz</code> (component layer ID in NASIS) will do just fine and will be a bit more consistent for this demonstration.</p>
