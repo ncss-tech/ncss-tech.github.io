@@ -71,7 +71,7 @@ plot(pedons, color='moist_soil_color', print.id=FALSE, name='hzn_desgn')
 Simplification of fragment data is still a manual process.
 ```{r fig.width=10, fig.height=6}
 # simplify fragment data
-s.frags <- simplfyFragmentData(s$morph$phfrags, id.var='labsampnum')
+s.frags <- simplifyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
 # merge fragment data into SPC
 h <- horizons(pedons)
@@ -86,7 +86,7 @@ addVolumeFraction(pedons, 'total_frags_pct', pch=1, cex.min=0.25, cex.max = 0.5)
 ```
 
 ## Fragment Volume >= 100%
-There are cases where errors in the source data (NASIS `Pedon Horizon Fragments` table) suggest coarse fragment volume > 100%. As of `soilDB` 2.0.2 and `aqp` 1.15.4, the `simplfyFragmentData()` function will report such errors and the `addVolumeFraction()` function will fail gracefully by truncating fragment volume at 100%.
+There are cases where errors in the source data (NASIS `Pedon Horizon Fragments` table) suggest coarse fragment volume > 100%. As of `soilDB` 2.0.2 and `aqp` 1.15.4, the `simplifyFragmentData()` function will report such errors and the `addVolumeFraction()` function will fail gracefully by truncating fragment volume at 100%.
 
 Give it a try with an example (thanks to Brian Gardner for finding it).
 ```{r fig.width=6, fig.height=4, warning=TRUE}
@@ -97,7 +97,7 @@ s <- fetchKSSL(series='kettenbach', returnMorphologicData = TRUE)
 pedons <- s$SPC
 
 # simplify fragment data
-s.frags <- simplfyFragmentData(s$morph$phfrags, id.var='labsampnum')
+s.frags <- simplifyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
 # merge fragment data into SPC
 h <- horizons(pedons)
@@ -115,7 +115,7 @@ addVolumeFraction(pedons, 'total_frags_pct', pch=1, cex.min=0.25, cex.max = 0.5)
 ```
 
 
-Check the original fragment data, based on the warnings issued by `simplfyFragmentData()`. Looks like multiple versions of the same data were accidentally entered. Errors like this can be corrected in NASIS, but may require assistance from the regional staff depending on KSSL pedon ownership. `fetchKSSL()` is based on a snapshot of NASIS and LIMS data, therefore corrections may not be available until after the next release cycle.
+Check the original fragment data, based on the warnings issued by `simplifyFragmentData()`. Looks like multiple versions of the same data were accidentally entered. Errors like this can be corrected in NASIS, but may require assistance from the regional staff depending on KSSL pedon ownership. `fetchKSSL()` is based on a snapshot of NASIS and LIMS data, therefore corrections may not be available until after the next release cycle.
 ```{r}
 # identify and print affected rows
 idx <- which(s$morph$phfrags$labsampnum %in% c('82P02200', '82P02204'))
