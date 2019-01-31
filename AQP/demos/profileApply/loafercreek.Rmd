@@ -15,23 +15,37 @@ output:
 
 The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series (_fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs_) is comprised of soils on foothills underlain by vertically-bedded metavolcanic rock. They are moderately deep (50 to 100cm) to a paralithic contact. 
 
+![A photo of a Loafercreek soil profile. NASIS UserpedonID: 09BAH008](images/loafercreek-09BAH008.jpg)
+
 The Loafercreek series was established in Butte county (_CA612_) and now is mapped in Calaveras and Tuolumne (_CA630_) as well as small portions of Mariposa and Stanislaus Counties (_CA630_ join with _CA649_ and _CA644_).
 
-The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks such as andesite, basalt or gabbro. The metavolcanic rocks in this area were recognized by miners during the gold rush to form distinctive tombstone-like outcrops. 
+The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks compositionally similar to andesiteor basalt o. These metamorphosed marine volcanics are closely associated with sedimentary rocks. 
+
+The metavolcanic rocks in this area were recognized by miners during the gold rush to form distinctive "tombstone"-like outcrops. 
+
+![Thermic metavolcanic foothills landscape photo](images/CA630_keystonequad_rushingmtn_tower6.JPG)
 
 Areas of soils _conceptually related_ to _Loafercreek_ have been mapped primarily as [Auburn](https://casoilresource.lawr.ucdavis.edu/sde/?series=auburn) in the Sierra Nevada Foothills. 
 
 Many areas of Auburn soils, and related soils on similar landforms, are outside the range of the family (12th edition taxonomy) of the series. Auburn soils were historically mapped as _Ruptic-Lithic Xerochrepts_. Reading soil survey manuscript descriptions of map units modeled after the old series concepts shows that their definition spans, at a minimum, shallow to moderately deep depth classes, likely with deeper inclusions. 
 
-The _Loafercreek_ series concept might fit the range in characteristics of the deeper (moderately deep) areas within Auburn mapunits. We will study some of the soils similar to Loafercreek to understand its _range in characteristics_.
+The _Loafercreek_ series concept might fit the range in characteristics of the deeper (moderately deep) areas within Auburn mapunits. 
+
+In this demo we will study some of the soils similar to Loafercreek to start to see how we can use R to summarize a _range in characteristics_ for a soil.
 
 ***
 
 ## Loafercreek's siblings
 
-Loafercreek's siblings are the soils that geographically occupy the same landscapes and parent materials, and often are components in the same mapunits. In some mapunits sibling soils are explicitly part of a component range due to inclusion of "similar soils" to the named component, or implied by bracketing of strongly contrasting components. In many other cases, mapping associated with a particular soil name does not necessarily reflect modern series concepts for that same series name.
+Loafercreek's siblings are the soils that geographically occupy the same landscapes and parent materials -- often they are components in the same mapunits. 
 
-Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. In CA630, the shallow metavolcanic soils with argillic horizons (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
+In some mapunits, if not named, sibling soils are explicitly part of a component range due to inclusion of "similar soils" to a named component. Alternately, they can be implied by "bracketing" of dissimilar components. 
+
+Sometimes mapping associated with a particular soil name does not necessarily reflect modern series concepts for that same series name.
+
+For instance, Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. But its taxonomy and the mapping conventions have changed over time (40-50 years) since much of the land in the Sierra Nevada foothills was initially mapped.
+
+In CA630, the shallow metavolcanic soils _with argillic horizons_ (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
 
 
 ## This demo
@@ -1520,14 +1534,15 @@ The density plot we made with `estimateSoilDepth()` and the categorical summary 
 
 We can use the `aggregateColor()` function to summarize the colors in a SPC by horizon designation. It returns a two element list containing _scaled_ and _aggregate_ data. 
 
-Scaled data (default) is a _list_ of colors and their weights (proportion or number of horizons with that designation). 
-When you specify `k` you get aggregate color data. Aggregate data is a _data.frame_ of "representataive" colors. Munsell colors are converted to LAB color space. In LAB space, mathematical operations assessing color similarity are more feasible. 
+_Scaled_ data (default) is a _list_ of colors and their weights (proportion or number of horizons with that designation). 
+
+When you specify the argument `k` you get _aggregate_ color data. Aggregate data is a _data.frame_ of "representative" colors. Munsell colors are converted to LAB color space. In LAB space, mathematical operations using color data are more feasible than they are using Munsell notation.
 
 LAB colors are clustered into user-specified `k` groups using Partitioning Around Medoids. For each group, th medoid LAB color is back-transformed to nearest Munsell chip and returned. Then the weight of all of the observations in the cluster is assigned to that chip. The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.
 
 `aggregateColorPlot()` is a special plotting function designed to use the results of `aggregateColor()`. We set the option to display the number of horizons contributing dry color data to each group.
 
-But first, we will create a new grouping variable for horizons. We will make it from the _generalized_ (correlated) master designation which is loaded in `loafercreek$genhz` (from Pedon Horizon Component Layer ID in NASIS).
+But first, we will create a _new_ grouping variable for horizons. We will make it from the _generalized_ (correlated) master designation which is loaded in `loafercreek$genhz` (from Pedon Horizon Component Layer ID in NASIS).
 
 Instead of `genhz`, we could do this analysis from `hzname`. However, the field horizon designation (`hzname`) has more variation (lithologic discontinuities, different soil scientists horizonation styles). That extra variation would require us to devlop more complicated regular expression patterns to match horizon labels to groups. 
 
@@ -1565,9 +1580,9 @@ Show all colors in the set, grouped by our extra-generalized horizons.
 aggregateColorPlot(aggregateColor(groups='extragenhz', col ='dry_soil_color', loafercreek), print.n.hz = TRUE)
 ```
 
-Use the code below to show the three "best" Munsell chips for each extra-generalized horizon label in the SPC. 
+Use the code below to show three "best" Munsell chips for each extra-generalized horizon label in the SPC. 
 
-The "best"" chips are determined after converting Munsell to LAB color coordinates, clustering (i.e. grouping similar colors together) and converting cluster medoids back to Munsell notation. 
+The "best" chips are determined after converting Munsell to LAB color coordinates, clustering (i.e. grouping similar colors together) and converting cluster medoids back to Munsell notation. 
 
 This method accounts for a lot of the scatter in the source data: reducing the full data to a set number of "different" colors. For a given dataset, larger the value of `k` the more similar the medoid colors will be to one another. That is, as you increase `k` each color cluster will partition less variation.
 
@@ -1615,7 +1630,14 @@ We used `slice()` earlier in `depth.weighted.average()` to calculate a depth-wei
 
 The simplest `slab` (the least aggregated) uses the default 1 cm thick structure. By default the `slab.structure` is set to bands of 1 cm vertical thickness (`slab.structure=1`). which is the same thickness as `slice()`. 
 
-In this demo, we set `slab` structure (constant thickness) to 5 cm. This was to increase the amount of depth-wise aggregation _and_ the amount of data contributing to each 5 cm slab. Using this setup, five 1 cm thick slices will contribute to each slab _from each profile_. The slabs will be 5 cm increments from the minimum top depth to the maximum bottom depth in the SPC. Data from _all_ profiles will contribute to each slab (if non-NA).
+```{r}
+# inspect the first few records in the slab we just made
+head(loaf.slab)
+```
+
+In this demo, we set `slab` structure (constant thickness) to 5 cm. This was to increase the amount of depth-wise aggregation _and_ the amount of data contributing (`loaf.slab$contributing_fraction`) to each 5 cm slab. 
+
+Using the above setup, five 1 cm thick slices will contribute to each slab _from each profile_. The slabs will be 5 cm increments starting from the minimum top depth to the maximum bottom depth in the entire SPC. Data from _all_ profiles will contribute to each slab (if non-NA).
 
 Note: `slab()` and `slice()` are much faster and require less memory if input data are either _numeric_ or _character_.
 
@@ -1623,9 +1645,11 @@ Note: `slab()` and `slice()` are much faster and require less memory if input da
 
 ___Example: ___ _Loafercreek slab-wise clay lattice plot demo_
 
-In soils that end at a paralithic/lithic contact, like _Loafercreek_, or with descriptions to varying bottom depths, the contributing fraction drops as you exceed the bottom depth of the "shallowest" pedons in the set. 
+#### Data contributing to a slab
 
-That is, there are good and not so good reasons why the contributing fraction (% of profiles) for a particular slab isn't 100%. 
+There are good and _not so good_ reasons why the contributing fraction (% of profiles) for a particular slab isn't 100%. 
+
+In soils that end at a paralithic/lithic contact, like _Loafercreek_, or with descriptions to varying bottom depths, the contributing fraction drops as you exceed the bottom depth of the "shallowest" pedons in the set. 
 
 It is OK that the contributing fraction drops off when non-soil layers (i.e. bedrock) are summarized. It is _less OK_ when the contributing fraction drops because the description stopped before the end of the series control section or because data are missing for a soil horizon when they could have been recorded. __Always describe the entire series control section.__ 
 
@@ -1644,6 +1668,8 @@ loaf.slab.sub <- loaf.slab[loaf.slab$contributing_fraction >= 0.25,]
 # note the data.frame is in long format not wide format
 head(loaf.slab.sub)
 ```
+
+#### Visualizing slab-wise soil profile data
 
 Load the `lattice` package, and create an XY plot of the slab-wise median and interquartile range as a function of depth.
 
@@ -1674,26 +1700,40 @@ names(df) <- c("redness.class","maxclay.q50")
 df
 ```
 
-A `r round(df[1,2] - df[2,2], 1)`% clay difference in the estimated maxima using the slab-wise median (50th percentile). The maxima of the slab-wise median values are much smaller than we calculated from the raw horizon data. That might be expected of a statistical summary of several pedons across depth. It might be more appropriate to compare to a more extreme quantile [which?] for `maxclay` difference comparison.
+A `r round(df[1,2] - df[2,2], 1)`% clay difference in the estimated maxima using the slab-wise median (50th percentile). The clay content maxima of the _slab-wise median_ values are smaller than we calculate from the raw maximum clay content data (see below code). 
 
-What might be more interesting than peak median clay content is the differences in the 5th to 95th percentile interval across depth in our different groups. Remember 10% of the data fall outside of that range for each 5 cm thick depth slab. The groups have similar numbers of observations, and overall relatively similar morphology, but the LT40 group appears to have more variation within it, especially in the higher clay content direction. This not being reflected in the median suggests it may be only a handful of observations influencing the pattern.
+That might be expected of a statistical summary of several pedons across depth, in that the estimate you get is more smoothed out. In this case, comparing the slab wise median to the absolute maximum clay might not be totally fair. It might be more appropriate to compare to a more extreme quantile [which?] for `maxclay` difference.
 
-_Quantile-based summaries of results_
+More interesting than _peak median clay content_ is the _differences in 5th to 95th percentile intervals across depth_ in our different groups. 
 
-We will use quantiles to summarize the distribution of `maxclay` for our three different redness groups
+Remember 10% of the data fall outside of the 5th-95th percentile range for each 5 cm thick depth slab. The groups have similar numbers of observations, and overall relatively similar morphology, but the LT40 group appears to have more variation within it, especially in the higher clay content direction. This not being reflected in the median suggests it may be only a handful of observations influencing the pattern.
+
+#### Quantile-based summaries of unslabbed results
+
+We will use quantiles to summarize the distribution of `maxclay` for our three different redness groups and compare these values to the smoothed slab-wise quantiles derived above.
 
 ```{r}
 aggregate(loafercreek$maxclay, by=list(loafercreek$redness.class),
   FUN=quantile, na.rm = TRUE, probs = c(0,0.05,0.25,0.5,0.75,0.95,1))
 ```
 
-The median calculated without considering horizon thickness (like we did with `slice()` and `slab()`) shows more dramatic differences than are shown in the above lattice plot. That is, when calculating max clay, a horizon with 60% clay that is 3 cm thick counts just as much as one 50cm thick, no matter what depth.
+The _median_ we calculate above for each group using aggregate() is not considering horizon thickness. These medians show larger differences between groups than we found in the slab-wise analysis. This make sense, because all obseravations have equal weight in the above aggregate call, whereas slab effectively weights them based on their depths relative to the user defined slab structure.
+
+Think of it this way: when calculating max clay for a profile... a horizon with 60% clay that is 3 cm thick counts just as much as a horizon that is 50cm thick. 
+
+However, a 3 cm thick contribution to a 5cm thick slab will only be about half of the contributing data from that pedon to that slab, or _maybe two_ slabs depending on the depths of the horizon. Whereas a 50cm thick horizon will occupy most of _at least 10_ 5 cm thick slabs. 
+
+Despite apparent differences in the median, the ranges of the groups are quite similar overall, in terms of textural classes.
 
 Most of these pedons, but not all, fall within the fine-loamy particle size family range of 18-35% clay in the particle size control section. All methods we used to look at clay maximum suggest slight differences in group composition, but not so much meaningful differences given the precision of typical field clay content estimates.
 
 On one hand, this is to be expected since we started with a relatively constrained group of pedons (fine-loamy, mod. deep, with argillic, all from same area). On the other hand, the pedons in some ways spill outside of that neat little parenthetical box.
 
-There appears to be more variation within the `LT40` group. The variation is probably not pronounced enough to affect use and management in these areas, but it might be worth investigating that group further to see if there are other commonalities in where they occur on the landscape, if they have other unique soil forming factors and/or if they have been adequately sampled.
+There appears to be more variation within the `LT40` group (evidenced by the wide gray bars in the `lattice` plot). 
+
+The variation is probably not pronounced or predictable enough to affect use and management in these areas (dominantly rangeland). 
+
+In practice, it might be worth investigating the pedons in that group further to see if there are commonalities in where they occur on the landscape, if they have other unique soil forming factors and/or if they have been adequately sampled.
 
  * Sequel? spatial comparison of clay content and color groups in _Loafercreek_
 
