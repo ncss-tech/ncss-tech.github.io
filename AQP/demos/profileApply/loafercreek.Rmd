@@ -1,8 +1,8 @@
 ---
 title: "Loafercreek - profileApply() demo"
-subtitle: 'v0.2.1 - last updated 2019/01/24'
+subtitle: 'v0.2.2 - last updated 2019/01/30'
 author: "Andrew Brown; andrew.g.brown@ca.usda.gov"
-version: "0.2.1"
+version: "0.2.2"
 output:
   html_document:
     toc: true
@@ -1039,7 +1039,7 @@ lin.model.inf <- lm.influence(lin.model)
 ```
 
 Now we plot top 5% influential observations based on quantiles of influence measures `sigma`.
-Note that we are using `names()` -- for `lm.influence()` output of the `names` attribute contains the index in terms of input dataframe. We need to do this because there can be (is) an offset in length of `lm.influence()` output and the number of rows of input due to `NA` observations. 
+Note that we are using `names()` -- for `lm.influence()` output of the `names` attribute contains the index in terms of input dataframe. We need to do this because there can be an offset in length of `lm.influence()` output and the number of rows of input due to `NA` observations. 
 
 ```{r}
 influential.idx <- which(lin.model.inf$sigma < quantile(lin.model.inf$sigma, probs=0.05))
@@ -1051,7 +1051,9 @@ to.plot <- unique(c(names(influential.idx), influential.idx.plotlm))
 plotSPC(loafercreek[to.plot], color='clay', print.id=F, axis.line.offset=0)
 ```
 
-Note that several heavy textured ones are described with lithologic disontinuities. There are also several pedons with low second horizon clay content (10-15%) and relatively heavier subsurface textures that result in a high max clay, and a high relative increase in clay. Perhaps this phenomenon is under-recognized in Loafercreek? Or these are a different soil type?
+Note that several heavy textured pedons are described with lithologic disontinuities. There are also several pedons with low second horizon clay content (10-15%) and relatively heavier subsurface textures that result in a high _relative_ increase in clay. 
+
+Perhaps this phenomenon (lithologic discontinuities) is under-recognized in Loafercreek? Or there is a different explanation? Let's see if the influential pedons have anything more mundane in common...
 
 ```{r}
 # check who described them >:)
@@ -1060,9 +1062,9 @@ summary(factor(loafercreek[to.plot]$describer))
 
 They are mostly described by the same person (Robert "Bob" Vobora AKA RJV). 
 
-We know that Bob described more than just a few of the soils in this dataset. 
+We know that Bob described more than just a few of the soils in this dataset, so we trust his judgement overall.
 
-To be precise, he described `r sum(grepl(loafercreek$describer, pattern="Vobora|RJV"))` of `r length(loafercreek)` profiles in `loafercreek`. All of them are under "Bob Vobora", but we use a regular expression to check for his last name or initials to count his pedons, just in case.
+To be precise, he described `r sum(grepl(loafercreek$describer, pattern="Vobora|RJV"))` of `r length(loafercreek)` profiles in `loafercreek`. All of them are under describer name "Bob Vobora", but we use a regular expression to check for his last name OR initials to count his pedons, just in case.
 
 ```{r, eval = FALSE}
 sum(grepl(loafercreek$describer, pattern="Vobora|RJV"))
@@ -1132,29 +1134,41 @@ abline(0, 1, lwd = 1, lty = 3)
 
 Both plots suggest the model isn't terribly useful for _specific_ predictions. The former plot demonstrates what we already know about these soils in a graphical/semiquantiative manner. Adding the confidence and prediction interval clearly shows how this model would likely perform for prediction (relatively poorly).
 
-The confidence interval tells you where we think the mean maximum clay value is (for a particular second horizon clay content), the prediction interval tells you where you expect future observations to fall. The places where those past two statements seem especially "bad" relative to the black dots (data) are major deviations from normality.
-
-The angle of the prediction lines relative to 1:1 (slope of 1) might suggest that the relative increase in clay decreases as your second horizon clay goes up, which makes sense. These aren't Fine PSC soils so second horizon clay contents above 35% will be rare. 
-
-But also, there are several high `maxclay` observations that all had fairly high `second.horizon.clay` content that are apparently "ignored" by the model. Obviously the model didn't choose to ignore them.
-
-Note how narrow the confidence interval is near the center of the data cluster, and how the prediction interval is neccesarily large. The most extreme are outside the range. Visually, the red lines appear wider than the cluster of most of the data and it is hard to tell if the slope is anything other than 1:1. Non-conforming observations have the effect of broadening the prediction interval and exacerbating deviation from normality, but do not seem to affect the slope as much.
-
 Because we violated some assumptions required for a simple linear regression model, the confidence and prediction intervals are not trustworthy.
 
-The fairly dramatic difference between the confidence and prediction intervals is reflective of the general scatter in the data, influential observations and the depth covariance of clay content.
+Despite that, conceptually, the confidence and prediction intervals tell you something.
 
-That is, we can relatively precisely say where the center of the data cloud is depending on second horizon clay... but we can't be nearly as sure what a specific unknown max clay content will be given a second horizon clay. This is because there is substantial variation in individual profile's  relationships between second horizon clay and profile maximum clay.
+The _confidence interval_ tells you where we think the mean maximum clay value is (for a particular second horizon clay content). The _prediction interval_ tells you where you expect future observations to fall. 
+
+The places where those past two statements seem especially "bad" relative to the black dots (data) are major deviations from normality (an assumption that is part of the linear model).
+
+The angle of the prediction lines relative to 1:1 (slope of 1) might suggest that the relative increase in clay decreases as your second horizon clay goes up, which makes sense. These aren't Fine PSC soils so second horizon clay contents above 35% will be rare, and it makes sense that there would be some natural limits on the maximum clay contents.
+
+But also, there are several high `maxclay` observations that all had fairly high `second.horizon.clay` content that are apparently "ignored" by the model. Obviously the model didn't _choose_ to ignore them, but they deviate noticably from the estimated intervals and bulk of the data.
+
+The fairly dramatic difference between the confidence and prediction intervals is reflective of the general scatter in the data, influential observations and the depth covariance of clay content. Note how narrow the _confidence_ interval is near the _center_ of the data cluster and how the _prediction_ interval is neccesarily large. The most extreme data are outside the prediction range. And MOST of the data is outside the confidence range.
+
+Visually, the red lines appear wider than most of the data and it is hard to tell if the slope is anything other than 1:1. Non-conforming observations have the effect of broadening the prediction interval and exacerbating deviation from normality, but do not seem to affect the slope as much.
+
+Using this graph, we can relatively precisely say where the center of the data cloud is depending on second horizon clay. But we can't be nearly as sure what a _specific_ unknown max clay content will be given the second horizon clay from that profile. This is because there is substantial variation in individual profile relationships between second horizon clay and profile maximum clay.
 
 ### Depth-covariance and auto-correlation
 
-The depth covariance and auto-correlation of properties is an important issue in soils. Soil scientists know that each soil observation is unique. 
+The depth covariance and auto-correlation of properties is an important issue in soils. Soil scientists know and appreciate that each soil observation is unique; but capturing that reality with quantitative data, an equation or a model is challenging.
 
-The depth-specifics of individual profiles is not captured with our predictor which is essentially using `mineral.horizon.index == 2`. Profiles have unique horizon thicknesses and boundaries, and numerous other challenging to quantify/scale-dependent properties causing certain individuals to have e.g. overall heavier textures. 
+The depth-specific variations of individual profiles are not captured with our predictor `second.horizon.clay`. It essentially is using `mineral.horizon.index == 2`. We know that profiles have unique horizon thicknesses and boundaries, and have numerous other challenging to quantify/scale-dependent attributes that can cause certain individuals to have, for example, heavier textures. 
 
-Mixed linear models are a way of dealing with this sort of problem (allowing for independent intercepts and slopes for individuals or groups) but are outside the scope of this demo.
+Mixed models are a way of dealing with this sort of problem (allowing for independent intercepts and slopes for individuals or groups) but are outside the scope of this demo.
 
-In practice better predictor(s), robust regression methods, mixed models, careful review of input data and stratification should be considered. 
+In practice, when developing a model for a soil property you may want to use:
+
+ * more/better predictor(s) (ideally, even _easier_ to obtain than the second horizon clay content. Also, something that helps capture _individual_ variations/site properties that contribute to observed max clay)
+ 
+ * robust regression methods
+ 
+ * mixed models
+ 
+ * careful review or different grouping(s) of the input data
 
 ### Model coefficients
 
@@ -1162,18 +1176,23 @@ The coefficient for the intercept term is `r round(coef(lin.model)[1], 2)`. So, 
 
 For each unit (1%) increase in `second.horizon.clay` it predicts an increase in `loafercreek$maxclay` of `r round(1 / coef(lin.model)[2], 2)`, that is a,  `r round(100 / coef(lin.model)[2])-100`% relative increase. 
 
-The relative increase calculated from the slope coefficient `r round(coef(lin.model)[2], 2)`. But the 95% confidence interval for that coefficient is `r round(confint(lin.model,'second.horizon.clay'),3)`. So it could be more or less sloping than 1:1.
+The relative increase calculated from the slope coefficient `r round(coef(lin.model)[2], 2)`. But the 95% confidence interval for that coefficient is `r round(confint(lin.model,'second.horizon.clay'),3)`. So, that means the coefficientt could be more or less sloping than a slope of 1 (1:1 line). 
+
+```{r}
+summary(lin.model)
+```
+
+Looking at the analysis of variance type output, the slope coefficient is highly statistically significant (p-value << 0.05), but that only tells you that the slope is non-zero. We know there should be some non-zero relationship between second horizon clay and max clay
 
 How does that _wide_ confidence range for the mean slope coefficient translate into uncertainty in our linear model predictions? 
 
 ### "Typical" conditions and uncertainty
 
-Lets make a maximum clay prediction for a more realistic level of our predictort: the median from the second mineral horizon of each profile in `loafercreek`: `r round(median(second.horizon.clay, na.rm=T),1)`%.
+Lets make a maximum clay prediction for a more realistic level of our predictor: the median from the second mineral horizon of each profile in `loafercreek`: `r round(median(second.horizon.clay, na.rm=T),1)`%.
 
-Use the below code to calculate the median second horizon clay content, then find the confidence and prediction intervals at that level of the predictor. 
+Use the below code to calculate the median second horizon clay content, then estimate confidence and prediction intervals  given `x = median(second.horizon.clay)`.
 
-`fit` is the prediction for profile max clay (mean), `lwr` and `upr` are the lower and upper (95%) bounds for `prediction` and `confidence` interval of the mean, respectively.
-
+`fit` is the prediction for profile max clay (mean), `lwr` and `upr` are the lower and upper (95%) bounds for `prediction` and `confidence` interval of the mean, respectively. These intervals are 
 ```{r}
 hz2median <- data.frame(second.horizon.clay = round(median(second.horizon.clay, na.rm = TRUE), 1))
 res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median, 
@@ -1184,19 +1203,21 @@ res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median,
 
 Given the median second horizon clay content as our predictor (point on _x-axis_), and based on the model slope and intercept, we the expected value (mean) maximum clay content predicted is `r round(res[1])`% , with a confidence interval of `r round(res[5])` to `r round(res[6])`%. 
 
-The confidence interval is just the range for the MEAN. 
+Again, the confidence interval is just the range for the _MEAN_ of the prediction.
 
-We can expect random future maximum clay values to fall in the prediction interval of `r round(res[2])` to `r round(res[3])`%. So, our model is not very useful for prediction. 
+We can expect random future maximum clay values, in general, to fall in the broader _prediction_ interval of `r round(res[2])` to `r round(res[3])`%. So, our model is _not_ very useful for prediction. 
 
-The plot visually confirms what we already knew about these soils (they have a clay increase at some depth). The observed data suggest we should be suspiscious of the portion of the interval that would suggest maximum clay content less than the second horizon clay content.  
+The plot visually confirms what we already knew about these soils (they have a clay increase at some depth). 
+
+The observed data suggest we should be suspiscious of the portion of the interval that would suggest maximum clay content less than the second horizon clay content, but the scatter in the data prevents our model from getting more specific.
 
 ### Stratification
 
-Another thing to consider in interpretation of these results is the possibility that there is not enough spread in clay contents in `loafercreek` (which contains mostly fine-loamy soils) to get a model that accurately reflects the conditions operating in finer textured soils. 
+Another thing to consider in interpretation of these results is the possibility that there is not enough spread in clay contents in `loafercreek` (which contains mostly fine-loamy soils) to get a model that accurately reflects the conditions operating in finer-textured soils. 
 
 That is: `loafercreek` is just a subset of the CA630 pedon data. Some of those high max. clays are one-off heavy textures that might be inherently hard to predict (especially with our single predictor that has some shortcomings) or even due to observer errors.
 
-If you are trying to make predictions about the landscape, you should try to develop a model that can accomodate the natural variation of soils within that landscape. Limiting analyses to subsets of observations (say, based on properties that are not very important for use and management) may obscure important trends within the full data set.
+If you are trying to make predictions about the landscape, you should try to develop a model that can accomodate the natural variation of all or most soils within that landscape. Limiting analyses to subsets of observations may obscure important trends within the full data set. This can especially be the case if the subsets have little to do with the reality of arrangement of soils in the landscape and/or meaningful management differences.
 
 ### Influential observations
 
@@ -1497,21 +1518,24 @@ The density plot we made with `estimateSoilDepth()` and the categorical summary 
 
 ## `aggregateColor()`
 
-We can use the `aggregateColor()` function to summarize the colors in a SPC by horizon designation. It returns a two element list containing scaled and aggregate data. 
+We can use the `aggregateColor()` function to summarize the colors in a SPC by horizon designation. It returns a two element list containing _scaled_ and _aggregate_ data. 
 
-Scaled data (default) is a _list_ of colors and their weights (proportion within the horizons of that designation). 
+Scaled data (default) is a _list_ of colors and their weights (proportion or number of horizons with that designation). 
+When you specify `k` you get aggregate color data. Aggregate data is a _data.frame_ of "representataive" colors. Munsell colors are converted to LAB color space. In LAB space, mathematical operations assessing color similarity are more feasible. 
 
-Aggregate data is a _data.frame_ of representataive colors. Munsell color is converted to LAB coordinates, which are clustered into user-specified `k` groups using Partitioning Around Medoids. Then the weight of all of the observations in the cluster is assigned to the the medoid LAB color back-transformed to nearest Munsell chip. 
-
-The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.
+LAB colors are clustered into user-specified `k` groups using Partitioning Around Medoids. For each group, th medoid LAB color is back-transformed to nearest Munsell chip and returned. Then the weight of all of the observations in the cluster is assigned to that chip. The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.
 
 `aggregateColorPlot()` is a special plotting function designed to use the results of `aggregateColor()`. We set the option to display the number of horizons contributing dry color data to each group.
 
-But first, we will create a new grouping variable for horizons, based on their _generalized_ (correlated) master designation which is loaded in `genhz` (from Pedon Horizon Component Layer ID in NASIS).
+But first, we will create a new grouping variable for horizons. We will make it from the _generalized_ (correlated) master designation which is loaded in `loafercreek$genhz` (from Pedon Horizon Component Layer ID in NASIS).
 
-We could do this analysis from `hzname` but the field horizon designation has more variation (lithologic discontinuities, different soil scientists horizonation styles). That variation would require more creative regular expression patterns. It may be useful to some analyses but we are making very general groups here so `genhz` (component layer ID in NASIS) will do just fine and will be a bit more consistent for this demonstration.
+Instead of `genhz`, we could do this analysis from `hzname`. However, the field horizon designation (`hzname`) has more variation (lithologic discontinuities, different soil scientists horizonation styles). That extra variation would require us to devlop more complicated regular expression patterns to match horizon labels to groups. 
 
-For this demo I wanted to keep the regex patterns very simple -- mainly seeking less subdivision of the argillic horizon in our new variable compared to `genhz`. We make some general rules for what is an A horizon, what is transitional, what is argillic, what is lower gradational and bedrock.
+We want very general groups here so `genhz` (component layer ID in NASIS) will do just fine.
+
+For this demo I wanted to keep the horizon grouping very simple. Even simpler than `genhz` itself. Mainly, we are seeking less subdivision of the argillic horizon and more consistent use of upper and lower transitional horizon labels.
+
+We make some general rules for what is an A horizon, what is transitional, what is argillic, what is lower gradational and bedrock and save the groupings in a new variable `extragenhz`.
 
 ```{r}
 #copy generalized horizon labels (component layer ID)
@@ -1535,13 +1559,17 @@ loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='Cr|R|Cd')] <- 'Cr'
 ```
 
-Show all colors in the set, grouped by our super-generalized horizons.
+Show all colors in the set, grouped by our extra-generalized horizons.
 
 ```{r fig.height=6}
 aggregateColorPlot(aggregateColor(groups='extragenhz', col ='dry_soil_color', loafercreek), print.n.hz = TRUE)
 ```
 
-Show three dominant nearest Munsell chips based after mixing in LAB color coordinates and converting back to Munsell notation. This accounts for a lot of the scatter in the source data. 
+Use the code below to show the three "best" Munsell chips for each extra-generalized horizon label in the SPC. 
+
+The "best"" chips are determined after converting Munsell to LAB color coordinates, clustering (i.e. grouping similar colors together) and converting cluster medoids back to Munsell notation. 
+
+This method accounts for a lot of the scatter in the source data: reducing the full data to a set number of "different" colors. For a given dataset, larger the value of `k` the more similar the medoid colors will be to one another. That is, as you increase `k` each color cluster will partition less variation.
 
 ```{r fig.height=6}
 aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
@@ -1561,12 +1589,13 @@ Lets investigate how these "redness" groups, however intermingled they may be, t
 
 ## `slab()` and `slice()`
 
-The _aqp_ `slab()` function smooths out the between-pedon variation within a SPC to give depth-wise quantile estimates for numeric properties.
+The _aqp_ `slab()` function takes constant-thickness slices from multiple pedons and aggregates them using a function (`slab.fun`). This has the effect of "smoothing out"" the between-pedon variation to give depth-wise quantile estimates for properties within a SPC.
 
-Multiple continuous variables OR a single categorical (factor) variable (in this case `redness.class`) can be aggregated within a call to `slab()`. Slab returns the results of  running arbitrary functions on groups of slices. Here we expand the default `slab()` function `slab.fun` to include the mean.
+Multiple continuous variables OR a single categorical (factor) variable (in this case `redness.class`) can be aggregated within a call to `slab()`. Slab returns the results of  running arbitrary functions on groups of slices. 
+
+Below we expand the default `slab()` function `slab.fun=aqp:::.slab.fun.numeric.default` to include the mean with a user-defined function `slab.default.plus.mean()`.
 
 ```{r}
-# 
 slab.default.plus.mean <- function(value) {
   # make a named numeric vector containing the mean of value
   the.mean <- mean(value, na.rm=TRUE)
@@ -1576,17 +1605,17 @@ slab.default.plus.mean <- function(value) {
   return(c(aqp:::.slab.fun.numeric.default(value), the.mean))
 }
 
+# slab loafercreek SPC using user-defined slab.fun; summarize clay content by redness class (in 5cm depth "slabs")
 loaf.slab <- slab(loafercreek, redness.class ~ clay, slab.fun=slab.default.plus.mean, slab.structure=5)
 ```
 
-With `slab()` default function you are calculating quantiles across all pedons `slice()`-d into constant-depth (_thin,_ _relative to horizons_). By default the `slab.structure` is set to bands of 1 cm vertical thickness., same as slices (default argument: `slab.structure=1`). We set it to 5 cm, to smooth out our results somewhat and increase the amount of data contributing to each 5 cm slab. 
+When you use `slab`, profiles are first `slice()`-d into constant-depth (_thin,_ _relative to horizons_) sections.
 
-Aggregating _slices_ in _slabs_ approximates the central tendency and variance of arbitrary numeric soil properties _over depth_, by accounting for the between pedon variation. That is, _slabs_ are a way of aggregating slices. 
+We used `slice()` earlier in `depth.weighted.average()` to calculate a depth-weighted average. `slice()` returns a SPC (useful for plotting) or just the sliced data (`just.the.data=TRUE`) in a data frame. 
 
-The simplest case that is the least aggregated is when the slabs are 1
-cm thick, like the slices. `slice()` can return a SPC or you can just get the sliced data (`just.the.data=TRUE`), and can be returned as a 1cm slice or an arbitrary range of slices.
+The simplest `slab` (the least aggregated) uses the default 1 cm thick structure. By default the `slab.structure` is set to bands of 1 cm vertical thickness (`slab.structure=1`). which is the same thickness as `slice()`. 
 
-We used `slice()` earlier in a function `depth.weighted.average()` to calculate, _you guessed it_, a depth-weighted average (for arbitrary depths and numeric _horizon-level_ attributes). It is an optional exercise for the reader to prove that function matches the output of an arithmetic depth-weighted average using the horizon depths and clay data "directly" (i.e. no `slice()`). 
+In this demo, we set `slab` structure (constant thickness) to 5 cm. This was to increase the amount of depth-wise aggregation _and_ the amount of data contributing to each 5 cm slab. Using this setup, five 1 cm thick slices will contribute to each slab _from each profile_. The slabs will be 5 cm increments from the minimum top depth to the maximum bottom depth in the SPC. Data from _all_ profiles will contribute to each slab (if non-NA).
 
 Note: `slab()` and `slice()` are much faster and require less memory if input data are either _numeric_ or _character_.
 
@@ -1596,11 +1625,15 @@ ___Example: ___ _Loafercreek slab-wise clay lattice plot demo_
 
 In soils that end at a paralithic/lithic contact, like _Loafercreek_, or with descriptions to varying bottom depths, the contributing fraction drops as you exceed the bottom depth of the "shallowest" pedons in the set. 
 
-That is, there are good (and not so good) reasons why the contributing fraction isn't 100%. Always describe the entire series control section :)
+That is, there are good and not so good reasons why the contributing fraction (% of profiles) for a particular slab isn't 100%. 
+
+It is OK that the contributing fraction drops off when non-soil layers (i.e. bedrock) are summarized. It is _less OK_ when the contributing fraction drops because the description stopped before the end of the series control section or because data are missing for a soil horizon when they could have been recorded. __Always describe the entire series control section.__ 
 
 The decrease in contributing fraction is partly due to missing data for clay content (O horizons, bedrock, and true missing data). 
 
-The quantiles estimated from very small portions of data tend to be unstable relative to the rest of the profile. Therefore, we exclude the depth range in `loaf.slab` where the `contributing_fraction` of pedons is less than 25% (`0.25`). 
+Quantiles estimated from very small proportions of data tend to be unstable relative to the rest of the profile. 
+
+Therefore, we take a subset (the depth range) of `loaf.slab` where the `contributing_fraction` of pedons is greater than 25% (`0.25`). 
 
 ```{r}
 # excluding slabs with contributing fraction < 25% for quantile stability; 
