@@ -11,7 +11,7 @@
 
 <meta name="author" content="D.E. Beaudette" />
 
-<meta name="date" content="2018-09-24" />
+<meta name="date" content="2019-01-30" />
 
 <title>Mixing Soil Colors</title>
 
@@ -98,6 +98,9 @@ img {
 button.code-folding-btn:focus {
   outline: none;
 }
+summary {
+  display: list-item;
+}
 </style>
 
 
@@ -105,14 +108,74 @@ button.code-folding-btn:focus {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -124,7 +187,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Mixing Soil Colors</h1>
 <h4 class="author"><em>D.E. Beaudette</em></h4>
-<h4 class="date"><em>2018-09-24</em></h4>
+<h4 class="date"><em>2019-01-30</em></h4>
 
 </div>
 
@@ -178,8 +241,8 @@ simplifyColorData(x, id.var='id')</code></pre>
   text(max(x.vals)+0.5, y.vals[1], '=', cex=2, lwd=2)
   
   # mix in both color spaces
-  mixed.lab &lt;- mix_and_clean_colors(x, colorSpace = 'LAB')
-  mixed.srgb &lt;- mix_and_clean_colors(x, colorSpace = 'sRGB')
+  mixed.lab &lt;- mix_and_clean_colors(x, colorSpace = 'LAB', backTransform = TRUE)
+  mixed.srgb &lt;- mix_and_clean_colors(x, colorSpace = 'sRGB', backTransform = TRUE)
   
   # add mixed colors
   points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=5, pch=15)
@@ -196,7 +259,7 @@ par(mar=c(1,1,1,1))
 mixColorDemo(x)</code></pre>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAHgCAMAAABTizf0AAAAsVBMVEUAAAAAADoAAGYADVEAOjoAOmYAOpAAZmYAZrYNAAAogf86AAA6OgA6Ojo6OmY6OpA6ZpA6ZrY6kNthQhhmAABmOgBmOjpmkJBmkLZmtttmtv97VCh7VSiQOgCQZjqQtpCQttuQtv+Q2/+XdjGmbka2ZgC2Zjq2kDq2kJC22/+2//+8UQ28///bkDrbtmbbtpDb29vb2//b////tmb/vFH/25D/27b/29v//7b//9v///8YPa5AAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAUBUlEQVR4nO3da2Mbd1rGYQU2pWC2tCFdWkOy2YK7ZEHJEtMQ6/t/MOZ8kBVXvkeN5y9d14vWkWWPHmv002k0s9kBENk89QUAKJWAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQEFCAkoAAhAQUICShASEABQgIKEBJQgJCAAoQKCeg/n8hTz3GE/ziRp57j1/37iTz1HEf41xN51EL/7UR+o7/JeRDQtRFQARXQYgjo2giogApoMQR0bQRUQAW0GAK6NgIqoAJaDAFdGwEVUAEthoCujYAKqIAWQ0DXRkAFVECLIaBrI6ACKqDFENC1EVABFdBiCOjaCKiACmgxBHRtBFRABbQYAro2AiqgAloMAV0bARVQAS2GgK6NgAqogBZDQNdGQAVUQIshoGsjoAIqoMUQ0LURUAEV0GII6NoIqIAKaDEEdG0EVEAFtBgCujYCKqACWgwBXRsBFVABLYaA5v737zeVfzjp71xpQH+5qke9PunvFFABLZ+A5gR0GQEV0OIJaE5AlxFQAS2egOYEdBkBFdDiCWhOQJcRUAEtnoDmBHQZARXQ4gloTkCXWU9At5uHvFi+AAE9VwKaE9BlBFRAiyegOQFdRkAFtHgCmhPQZQRUQIsnoDkBXUZABbR4ApoT0GUEVECLJ6A5AV1mPQH9zQnouRLQx/mvBx+r/O1/Lx91NQF9+GHZVx8WL0BABbR4Avo4AiqgAQE9VwL6OAIqoAEBPVcC+jgCKqABAT1XAvo4AiqgAQE9VwKa8y78MgIqoMUT0JyALrOegNoOVEBDApoT0GUEVECLJ6A5AV1GQAW0eAKaE9BlBFRAiyegOQFdRkAFtHgCmhPQZQRUQIsnoDkBXWY9Af3NCei5EtCcgC4joAJaPAHNCegyAiqgxRPQnIAuI6ACWjwBzQnoMgIqoMUT0JyALiOgAlo8AV2bVQb0NyGgAlo8AV0bARVQAS2GgK6NgAqogBZDQNdGQAVUQIshoGsjoAIqoMUQ0LURUAEV0GII6NoIqIAKaDEEdG0EVEAFtBgCujYCKqACWgwBXRsBFVABLYaAro2ACqiAFkNA10ZABVRAiyGgayOgAiqgxRDQtRFQARXQYgjo2giogApoMQR0bQRUQAW0GAK6NgIqoAJaDAFdGwEVUAEthoCujYAKqIAWo5CAAqyPgAKEBBQgJKAAoZUH9NPLr7uvPr7ebDbfvq2+utk8+6n//rb+uj1oee13332Y/fj77zebZz98GH7ZVx+q/7Rn/Zu/fJkJHmNy2Y4fcm+gZsjd3c/V2Z+/+cKX/2jv/1BdL82VOXho9gPnaf+5+lEXrr+1X66++tD/suPW3ydZ6KVaeUBvNt260F2F9VpQfdlfu9VacL2brAt7V/G2Pe35X/pzvxjPvMZ1YXLZjh9yb6DZkC+++AhH+bm9dM+uJ6c9NPuB87T/XP2oy9bf2t2rybmPW3+fZKGXatUBvbvZdOtCfY2+3X1sr9fq6nzRn1p/+5er/op9f9WvO7vm9Gc/VvfCL/vTtvWadDs9x8pML9uxQ+4PVA9Z3Vqev93d/Xn66G1FbjfN9fJqdnt8aPZD59kVMOrC9bdRPQjoW3bc+vskC71caw7ox+oJeHfNdVd3dXO53o3P67btTXBcF6Zf1vfEL6an3b2qV4qblT5Wqc0u25FD7g3UDLntVv91zlrdgpuL1V2ZnYdmP3ie9Y+6dP1tTxhadtz6+yQLvWArDujtZvPdu25d2A7/r6/Ju+FO9bo+cbICfHp5/5HIp5ftt5snI3ev1vhQpTW/bEcOuTdQPWT1k9e/+YXNDRd/erN8cPaD51n9qKdYf6t//7F/OfKo9fdJFnrJ1hzQ52+G5w433e3ktr1nbJ+P3Mzvadvv33+ZpvuZ9slIVdM/VvfRz9e4QuxdtuOG3Puh9mltGa9VTQP64OyHz7P2UU+x/lZ/ouH9nKPW3ydZ6CVbcUBr3bowPNDor9j6ecjt+GZC98Xdu/sv5+zedXe5d6/qcw2vna/wOcn+ZTtqyPkPNUPWf6R6+4O1vjXdmT3weXD2g+cpYtSF62+dvv5Hjl9/n2Shl6qMgA63tfH1zM3fDS+hTd9QfL73gORms3n2p+5cXze/sH5h/f9er/FNh/3LdtSQ8x9qhqxuAa8LWOG3wxsVu1+Z/eB5ihh12frb/FjfsuPX3ydZ6KUqNKDN9d/fb042aftxb5O2u9e/v2re861/1fVuN3nTYX3vK967bMcMOf+hZshqfd9892F39/NmvS8QNu/FT26OD85+8DxFjLps/W1e4+hbdvz6+yQLvVSlBnT6Bm17Yr0py4+Hfsf79jn8zez54O304c/KjJft+CG7H2qGvO0fj615hb+9mm0GOpx8aPaD5yli1EXr77bb3qir19Hr75Ms9FKVEdB7L+fMrsx+Bdl+5mFIcwc6fjxj9jNrNF62RwzZfL8dcnhst+Iht595Onhw9kPnKWPUJetvd3L3I49Yf59koZeqjIDuv6G4O7guzD6vNtF8/3benTWvCw8G9IghJ0/ZVjpk9ZT7My+nHR3QMkZdsv5uxxcpq7M+Yv19koVeqkICOt+krf3O/XXh08vpE7nJPXD9AevmPMNpK3w2cuCyPWLI5qw30y2nVzlko7rQe2/2PTz7ofOUMeqS9Xfeskesv0+y0EtVSEDnH6pov3N/XahfErsef/hmuCf+utvxxHBa/2mYVbl/2Y4fsvmhvSHX+sLg3c39G+KDsx84TyGjLlp/++/WZ3zM+vskC71UhQS0fswyfKy3+86BdeFu9vnqX666d2ib7TJeTE77+P0a94tw/7IdPWT7Q5Mhv337wPPkJ7Y98EDmwdkPnKeQURetv/132w8QHb/+PslCL1UhAe23uhhvJgfXhd2wy4TGu/a5SP0+47b/ye45yipvb/cu2zFDTn5oGPK220bl+otc7Efq9422abep6R7ePDR7r7hRF66/3Un1GR+z/j7JQi9VKQGd7Nqw/86hdWHvJfGP/X4n230ijKcd2AXiGuxftuOHrH9oOuTr6rbzzWyHm6txO77MNgnoQ7MPSht16frbfrc646PW3ydZ6KVaeUAB1ktAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUIBQaQHtdvH689V4KNvpHhPuqq//qf1yOBzB7Ur31PNr2lHrg/Y++6HbjcOZjjoceWc8hMSZTrprh723a/fJDpGGnVX97ofJcd3iRe0tpf/d445B7t7/oT75mzcfTr34i1BYQPsDObTXcbPOddd4sz+Zu1fPfvr4sjvYy7CHmf31qAz9AREb7Q7cz3TU8TY67Bb5TCfddcPeC2h1NY93ItN9wu8WTHqvfdNDGfe/9N1wWvunPd3iL0NZAW13kV1dx8/fNgcU/KnZHexXw15jmx15tUcwmBwPqz24dWHaUX+5qndm+rE96sKZjtrv97zeU/24K+BznHQ3Xq3zKn16+ewf+9p96u4r6qPJNiOmkw5/18G42P531+V+Xj/2vKue6TQFPdniL0RZAd3uHab6xd5xC5pTuqPeTnZxeFPgnmDbUW/aR9ntkGc66rZLx8fvN5tDB6M4n0l3/bD7Aa2m244PvsdjbbRfhZNu7z35nu1EuTv65vDSwV378P9ki78QRQW0vU8djnHVmB05qzkOYXNbm91vFngnOn/40K7V5zlqP+ntZvPdu0OHQzubSXfDsPsBre4jJgd5G5/Mt19lk/Z/1+bV5G/e7OaLbQ8aX92Uxl9dffft6RZ/KYoKaP88brr2zY7d2j1Y+XrvlZv6VbQvekGX286OstA9/jrLUftJb5+/OXxA3rOZdDcMuxfQumbDEdvG1bs/nns26bCo8f2CyWLbh5fzy/HXUy7+UpQU0O6arK/Y+r3p5l34ybGLm+NYdy+X9YfD6mxLO5zgfKV9d1UPeZ6jzia9HQ7/eN38+6wm3Y3D7gX0tj0Ge9ur6YuQ3YDJpP2iqifmH+r3C2a9vHvXvsC53dx7cHmixV+MkgLaXf/VmvZ6uFdtn4r03+zfsL17tf8aU2HPQuZHrNk8+9PuXEedtaS78Oc56W4cdh7Q9v6iH3ryNvh4hOfHTzq8jNxtydC++T++C99s13FzP40nWvzFKCmg3X10fVCy9nDF1Uoxv601mwx++7Y6S/V45fvmbJNvFmRy9K+717+/ag4sep6jzo4ddzCg5zLpbhx2ftG7f930ww8F+3bBpN2i6kMbvxkXNGwH+uP4Nmx7rvERyUkWfzFKCmj3hOO2v2+s17i921qrPpxg/eyvfxVn72XTAuw9t3p/df++olX8qLNJDwe0Vfyku3HYeZKG9bp7zNh976+vNwsm7Rd1O9kovrs/+nNzf1w7GNCTLP5iFBnQyc1r/nJZp96C+KbdAqb95nCLLMX+i1P1llvnOeqhgJ7npLvPBLSv16Y9uP2Yq+HPkEw6/F3rtwu6h5P9Yreb7hfPV7ObWUCXLf5iFBjQYe1rvpi9YduqN+BoX0PfDu9sFrYK7Af0fEc9FNDznHT3mYBOXplsPyYyfK8/+6KAViX8zz+0W9gOi+0PBD9/JLwX0EWLvxgFBrTdvHrX3bxmmwz257ve7d/WCnsSsr33UKwa4CxHPRjQs5x095mADp9fbZ9aHSxY/hR++Of0I/ifXg7r1+RdpM8HtLg/9JdTUkBvh08g9Y9TxnvVoard5/3mt7XpU8EiXM6oh95EOs9Jd4ffRBqHrL7afw6dT9otava+/7jY2+5J/OSTSPUHhk+3+ItRUkDHlaF+U/bu5/6z8M+Hj0032h1OzF4uK25DjMmo7QYHZzvqoc2YznPS3eHNmG6H/XpUk1XzDgWrxu++WrAZU7tXgfp3TZ/C1ycPL4c+f/M/zT6ZNvMHwMsWfzFKCuiwzfXt1fiae/8S0vAyTffJs9kbtge2d1u3YdR33Z5ymrdNz3HUQxvSn+eku+mG9OP7Rjdjnm7bDfOG7z27bk9PJt1f1N4Hj4aHnt17TJtNt33YiRZ/MUoK6PiS2MfX1Wrxzdv+H5th15G7cd8HH8dNBvc3wS7AOGr9yODbMx51+jmX8bHOOU66u/f5ysq/XI17dmg+mj7ukLMfP5u0/7s2t5V2j7Lzj2f0907vXzf7A/2h32bpNIu/FEUF9P4Ouo5T4HOQyxn1cibdhcNmk6Z/1xMt/lIUFdADe+g6Sok75LqcUS9n0l027Ml2Z5cp8w/9pZQV0Oxetcj9cV3OqJcz6S4a9nQ7VI4U+of+UsoKaHaEljIPSnA5o17OpLtk2NMd0iNS6h/6CyksoMnVWephsS5n1MuZdPf4YU94ULlEuX/oL6O0gAKshoAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEDo/wHTAy0W6di7bgAAAABJRU5ErkJggg==" width="672" /></p>
 <hr />
-<p>This document is based on <code>aqp</code> version 1.16-3 and <code>soilDB</code> version 2.2-4.</p>
+<p>This document is based on <code>aqp</code> version 1.17 and <code>soilDB</code> version 2.3.6.</p>
 </div>
 
 
