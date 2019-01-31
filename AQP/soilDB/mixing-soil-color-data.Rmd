@@ -70,8 +70,8 @@ mixColorDemo <- function(x) {
   text(max(x.vals)+0.5, y.vals[1], '=', cex=2, lwd=2)
   
   # mix in both color spaces
-  mixed.lab <- mix_and_clean_colors(x, colorSpace = 'LAB')
-  mixed.srgb <- mix_and_clean_colors(x, colorSpace = 'sRGB')
+  mixed.lab <- mix_and_clean_colors(x, colorSpace = 'LAB', backTransform = TRUE)
+  mixed.srgb <- mix_and_clean_colors(x, colorSpace = 'sRGB', backTransform = TRUE)
   
   # add mixed colors
   points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=5, pch=15)
