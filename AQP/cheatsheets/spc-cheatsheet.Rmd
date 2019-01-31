@@ -1,0 +1,249 @@
+---
+title: "Pedon Data with R Cheatsheet"
+subtitle: 'v0.1.0 - last updated 2019/01/31'
+author: "Andrew Brown; andrew.g.brown@ca.usda.gov"
+version: "0.1.0"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+# Pedon Data with R Cheatsheet
+
+This "cheatsheet" provides explanation of some of the most common workflows and techniques you will need when using the _aqp_ __SoilProfileCollection__ object to hold soil profile (pedon) data.
+
+To get this document as an .R file [click here](spc-cheatsheet.R).
+
+## NCSS-Tech (Soil-related) Packages
+
+With `install.packages()` you can get the "stable" versions of _aqp_, _soilDB_ and _sharpshootR_ off of the official R package repository (CRAN) .
+
+```{r, eval=F, warning=F, message=F}
+install.packages(c("aqp","soilDB","sharpshootR"))
+```
+
+You can get the latest "development" versions of ncss-tech packages from GitHub. 
+
+```{r, eval=F, warning=F, message=F}
+# install.packages("devtools") # if needed
+devtools::install_github(repo = 'ncss-tech/aqp', dependencies = FALSE, build = FALSE)
+devtools::install_github(repo = 'ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
+devtools::install_github(repo = 'ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
+```
+
+Note that _soilReports_ package (containing, for instance, the mapunit comparison report) is ONLY available __FROM GitHub__.
+
+```{r, eval=F, warning=F, message=F}
+devtools::install_github(repo = 'ncss-tech/soilReports', dependencies = FALSE, build = FALSE)
+```
+
+After installing, load the packages with `library()` to use them in your R environment.
+
+```{r, eval=T, warning=F, message=F}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+library(soilReports)
+```
+
+# SoilProfileCollection
+
+## SPC from soilDB sample dataset
+
+Load one of the sample (NASIS) datasets from _soilDB_ package
+
+```{r, eval=F, warning=F, message=F}
+data("loafercreek")
+```
+
+## SPCs from NASIS
+
+Get data from NASIS (requires ODBC connection to local NASIS db)
+
+```{r, eval=F, warning=F, message=F}
+fetchNASIS() # default argument of fetchNASIS() gets pedons
+fetchNASIS_pedons()
+fetchNASIS_components()
+```
+
+## SPCs from Kellog Soil Survey Lab database
+
+KSSL Data by taxon name 
+```{r, eval=F, warning=F, message=F}
+fetchKSSL(series = "SomeTaxonName")
+```
+
+KSSL Data by MLRA (overlap of site coordinates with MLRA shapefile)
+```{r, eval=F, warning=F, message=F}
+fetchKSSL(mlra = "15")
+```
+
+KSSL Data by rectangular bounding box (specified in longitude and latitude)
+```{r, eval=F, warning=F, message=F}
+fetchKSSL(bbox = c(-119, 37, -120, 38))
+```
+
+## SPCs from Soil Classification database
+
+Create an SPC containing OSDs from Soil Classification (SC) database (an input vector of series names is provided).
+
+```{r, eval=F, warning=F, message=F}
+your.spc <- fetchOSD(soils = c("Holland", "Musick"))
+```
+
+Summarize climatic/physiographic/component attribute breakdown and get morphologic data using argument `extended=TRUE`.
+
+```{r, eval=F, warning=F, message=F}
+your.extended.list <- fetchOSD(soils = "Holland", extended = TRUE) 
+
+#the SPC can be found in the SPC attribute when extended=TRUE
+your.extended.list$SPC
+```
+
+# Accessing SPCs
+
+Get site _data.frame_ from `loafercreek` SPC.
+
+```{r, eval=F, warning=F, message=F}
+site(loafercreek)
+```
+
+Get horizon _data.frame_ from `loafercreek` SPC.
+ 
+```{r, eval=F, warning=F, message=F}
+horizons(loafercreek)
+```
+
+Create a subset SPC based on a site-level attribute using`subsetProfiles()` and argument `s` containing an expression to evaluate. Here we write an expression to select all profiles that have a field-measured slope gradient _less than 8 percent_.
+
+```{r, eval=F, warning=F, message=F}
+sub1 <- subsetProfiles(loafercreek, s='slope_field < 8')
+```
+
+Create a subset SPC based on a horizon-level attribute using`subsetProfiles()` and argument `h` containing an expression to evaluate. Here we write an expression select all profiles that have _one or more horizons_ with clay content greater than 35 percent.
+
+```{r, eval=F, warning=F, message=F}
+sub2 <- subsetProfiles(loafercreek, h = 'clay > 35')
+```
+
+Create a subset SPC based on a list of userpedonIDs
+
+```{r, eval=F, warning=F, message=F}
+# make a list using c() to concatenate a set of character strings
+your.list <- c("07SKC016","10MJE016","10CKS034","S2000CA007012","06SMM013" )
+```
+
+Create a true/false (logical) vector by checking each userpedonID in `loafercreek` to see if it matches one in `your.list`. Note that the length of the vector `matches.your.list` equals `nrow(site(loafercreek))`.
+
+```{r, eval=F, warning=F, message=F}
+matches.your.list <- site(loafercreek)$pedon_id %in% your.list 
+```
+
+Get just the positions (index) where the logical vector `matches.your.list` is `TRUE` using `which()`
+
+```{r, eval=F, warning=F, message=F}
+your.matching.indices <- which(matches.your.list)
+```
+
+Create a new SPC `loafercreek.subset` that is the subset corresponding to your "matching" indices. 
+
+Use the _data.frame_-like bracket notation `spc[site.index, horizon.index]` to access the sites corresponding to your indexes.
+
+```{r, eval=F, warning=F, message=F}
+loafercreek.subset <- loafercreek[your.matching.indices, ]
+```
+
+# Editing SPCs
+
+Add site data to the SPC based on common site id `id`
+
+```{r, eval=F, warning=F, message=F}
+site(your.spc) <- merge(site(your.spc), your.site.data, by = "id")
+```
+
+Add horizon data to the SPC based on common horizon id `hzid`
+
+```{r, eval=F, warning=F, message=F}
+horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid")
+```
+
+# Combining SPCs
+
+Load _another_ SPC to combine with `loafercreek`
+
+```{r, eval=T, warning=F, message=F}
+data("loafercreek")
+data("gopheridge")
+```
+
+Make a `list()` of SPCs, and combine them with `union()`
+
+```{r, eval=F, warning=F, message=F}
+loafergopher <- union(list(loafercreek, gopheridge))
+```
+
+# Plotting SPCs
+
+Make a plot of first 10 profiles in `loafercreek`. `plot(your.spc)` is an alias (shorthand) for `plotSPC()`
+
+```{r, eval=F, warning=F, message=F}
+plot(loafercreek[1:10, ], label = "pedon_id")
+```
+
+Make a plot of first 10 profiles in `loafercreek`, this time grouped by _taxonname_. 
+
+```{r, eval=T, warning=F, message=F}
+groupedProfilePlot(loafercreek[1:10, ], groups = "taxonname", 
+                  label = "pedon_id", id.style="side",
+                  axis.line.offset = -1.5, y.offset=25)
+```
+
+To make this plot "nice" we set the default label position style to "side" and label with the the `pedon_id` (_NASIS userpedonID_) instead of `peiid` (_NASIS pedon record id_). 
+
+We adjust the depth axis offset (units of "profile index" - the _x_ dimension) to the right. This is done so the axis does not plot on top of the horizon designations of the farthest profile to the right.
+
+Also, we set the vertical (_y_ dimension) offset of top of profiles (specified using depth units, _centimeters_ in this case) so the top of the profiles/y-axis do not overlap the group labels containing the _taxonname_.
+
+There are _many, many more_ plotting options that can be found in the helpfiles. See `?plotSPC` and `?groupedProfilePlot`.
+
+# Making Spatial SPCs
+
+## Set coordinates and reference system for NASIS-derived pedon
+
+Set coordinates to be NASIS standard decimal degrees longitude `x_std` and latitude `y_std`. You provide the right hand side of a formula that describes how to promote the SPC to spatial with `coordinates()`.
+
+```{r, eval=F, warning=F, message=F}
+coordinates(loafercreek) <- ~ x_std + y_std
+```
+
+You need to set the [_initially blank_] coordinate reference system (CRS) to the NASIS standard (WGS84 decimal degrees). We use a string representation of the coordinate reference system called the "proj4string" to specify what want.
+
+```{r, eval=F, warning=F, message=F}
+proj4string(loafercreek) <- '+proj=longlat +datum=WGS84'
+```
+
+If you specify _longitude_ first (`x_std`) in your formula to `coordinates()`, use `longlat` in your proj4string. Otherwise use `latlong`. 
+
+If your coordinates are in a different system (e.g. projected in UTM) you will need to specify e.g. UTM zone in the `proj4string()` you supply. Check out `?proj4string` for more info on how to use other CRSs.
+
+## Working with spatial data
+
+Create a _SpatialPointsDataFrame_ from SPC (contains just __SITE__-level data)
+
+```{r, eval=F, warning=F, message=F}
+loafercreek.spdf <- as(loafercreek, 'SpatialPointsDataFrame')
+```
+
+Plot site locations in _SpatialPointsDataFrame_
+
+```{r, eval=F, warning=F, message=F}
+plot(loafercreek.spdf)
+```
+
+Write _SpatialPointsDataFrame_ derived from an SPC to a shapefile (_do not use '.shp' extension in `layer` argument that specifies the file name_)
+
+```{r, eval=F, warning=F, message=F}
+rgdal::writeOGR(obj = loafercreek.spdf, layer = 'output.shapefile.name', driver = 'ESRI Shapefile')
+```
