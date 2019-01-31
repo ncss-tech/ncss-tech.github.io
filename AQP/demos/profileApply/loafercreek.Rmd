@@ -1,8 +1,8 @@
 ---
 title: "Loafercreek - profileApply() demo"
-subtitle: 'v0.2.2 - last updated 2019/01/30'
+subtitle: 'v0.2.3 - last updated 2019/01/31'
 author: "Andrew Brown; andrew.g.brown@ca.usda.gov"
-version: "0.2.2"
+version: "0.2.3"
 output:
   html_document:
     toc: true
