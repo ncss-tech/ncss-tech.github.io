@@ -1,41 +1,26 @@
-## ----eval=FALSE----------------------------------------------------------
 ## # install devtools if needed
 ## # install.packages("devtools")
 ## devtools::install_github('ncss-tech/aqp', dependencies = FALSE, build = FALSE)
 ## devtools::install_github('ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
 ## devtools::install_github('ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
-
-## ---- message=FALSE, warning=FALSE---------------------------------------
 library(soilDB)
 library(sharpshootR)
 
 data("loafercreek")
-
-## ---- eval=FALSE---------------------------------------------------------
 ## # access the cly attribute from the horizons data frame
 ## horizons(spc)$clay
 ## 
 ## #add new site data by merging a data frame on site ID
 ## site(spc) <- merge(site(spc), new.site.data, by="uniquesiteid")
-
-## ------------------------------------------------------------------------
 my.sub.set <- loafercreek[3:6, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
 
 plotSPC(my.sub.set, alt.label = 'pedon_id', alt.label.col = "#ffff00")
-
-## ------------------------------------------------------------------------
 nrow(site(loafercreek))
-
-## ------------------------------------------------------------------------
 nrow(horizons(loafercreek))
-
-## ------------------------------------------------------------------------
 max(horizons(loafercreek)$clay, na.rm = TRUE)
-
-## ----eval=FALSE----------------------------------------------------------
 ## a <- c(TRUE, FALSE, TRUE)
 ## b <- c(FALSE, TRUE, FALSE)
 ## 
@@ -58,8 +43,6 @@ max(horizons(loafercreek)$clay, na.rm = TRUE)
 ## (TRUE & NA) != (FALSE & NA)
 ## (FALSE | NA) | (TRUE | NA)
 ## (TRUE | NA) & (FALSE & NA)
-
-## ---- message=FALSE, warning=FALSE---------------------------------------
 library(soilDB)
 series.names <- c("Argonaut", "Auburn", "Bonanza", "Dunstone", 
                   "Exchequer", "Gopheridge", "Jasperpeak", 
@@ -68,12 +51,8 @@ series.names <- c("Argonaut", "Auburn", "Bonanza", "Dunstone",
 osds <- fetchOSD(soils = series.names, extended = TRUE)
 
 plotSPC(osds$SPC)
-
-## ---- message=FALSE, echo=FALSE------------------------------------------
 k <- fetchKSSL("loafercreek")
 hz.match <- '' # match all horizons
-
-## ---- eval=FALSE---------------------------------------------------------
 ## # use the `series` argument to specify taxonname. or use `mlra` or `bbox`
 ## # ?fetchKSSL for details
 ## k <- fetchKSSL(series = "loafercreek")
@@ -87,22 +66,12 @@ hz.match <- '' # match all horizons
 ## median(k$fe_dith, na.rm = TRUE)
 ## min(k$fe_dith, na.rm = TRUE)
 ## max(k$fe_dith, na.rm = TRUE)
-
-## ------------------------------------------------------------------------
 # set spatial coordinates to create a Spatial object
 coordinates(loafercreek) <- ~ x_std + y_std
-
-## ------------------------------------------------------------------------
 loafercreek@sp
-
-## ------------------------------------------------------------------------
 #when you set the proj4string, be sure it matches the formula & data you sent to coordinates()
 proj4string(loafercreek) <- '+proj=longlat +datum=WGS84'
-
-## ------------------------------------------------------------------------
 loafercreek@sp
-
-## ------------------------------------------------------------------------
 class(loafercreek)
 
 loafercreek.spdf <- as(loafercreek, 'SpatialPointsDataFrame')
@@ -111,13 +80,9 @@ loafercreek.spdf <- as(loafercreek, 'SpatialPointsDataFrame')
 ## loafercreek.spdf <- as(site(loafercreek), 'SpatialPointsDataFrame')
 
 class(loafercreek.spdf)
-
-## ------------------------------------------------------------------------
 plot(loafercreek.spdf, main = "Loafercreek Pedon Locations", pch = 19, cex = 0.5)
 maps::map(database = 'county', regions = 'CA', add = TRUE)
-
-## ------------------------------------------------------------------------
-## make 10 site ids `id` each witih site-level attributes `di` and `mlra`
+## make 10 site ids `id` each witin site-level attributes `di` and `mlra`
 your.site.data <- data.frame(id = 1:10, di = 10 - 0:9, mlra = "18") 
 head(your.site.data)
 
@@ -147,21 +112,11 @@ horizonDepths(your.spc)
 
 head(profile_id(your.spc)) #unique site/profile ids
 head(hzID(your.spc)) #unique horizon ids (assigned at time of SPC creation)
-
-## ---- eval=FALSE---------------------------------------------------------
 ## profileApply(object, FUN, simplify=TRUE, ...)
-
-## ------------------------------------------------------------------------
 depth.to.contact <- profileApply(loafercreek, estimateSoilDepth)
-
-## ------------------------------------------------------------------------
 #look at a density (continuous frequency) plot; depth on x axis
 plot(density(depth.to.contact, na.rm = TRUE))
-
-## ------------------------------------------------------------------------
 quantile(depth.to.contact, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
-
-## ------------------------------------------------------------------------
 bad.peiid <- c("542129") 
 
 #SPC with just the "bad" pedon (this one isn't that bad)
@@ -171,49 +126,29 @@ nrow(site(deep.one))
 #the inverse, loafercreek without the "bad" one
 loafernew <-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid), ]
 nrow(site(loafernew))
-
-## ------------------------------------------------------------------------
 estimateSoilDepth(deep.one)
 
 estimateSoilDepth(deep.one, no.contact.depth = 100, no.contact.assigned = NA)
-
-## ------------------------------------------------------------------------
 #plot difference "stored v.s. calculated"
 plot(loafercreek$bedrckdepth ~ depth.to.contact, xlim = c(0,200), ylim = c(0,200))
 
 #add a 1:1 line with intercept 0 and slope 1
 abline(0, 1)
-
-## ------------------------------------------------------------------------
 loafercreek$bedrckdepth <- depth.to.contact
-
-## ------------------------------------------------------------------------
 # create new variable with clay proportion, calculated from %
 loafercreek$new.hz.level.variable <- loafercreek$clay / 100 
-
-## ------------------------------------------------------------------------
 loafercreek$depth.to.5YR <- profileApply(loafercreek, FUN = estimateSoilDepth, 
                                          name = 'd_hue', p = '^5YR|^2\\.5YR')
 
 plot(main = "Distribution of depth to 5YR or 2.5YR dry hue in Loafercreek", 
      density(loafercreek$depth.to.5YR, na.rm = TRUE, from = 0, to = 100))
-
-## ------------------------------------------------------------------------
 loafercreek$depth.to.5YR
-
-## ------------------------------------------------------------------------
 loafercreek$depth.to.5YR[loafercreek$depth.to.5YR >= loafercreek$bedrckdepth] <- Inf
-
-## ------------------------------------------------------------------------
 sub1 <- subsetProfiles(loafercreek, s = 'depth.to.5YR <= 40')
 nrow(site(sub1))
-
-## ------------------------------------------------------------------------
 plotSPC(sub1, max.depth=100, print.id = FALSE, 
         axis.line.offset=-0.5, name = '', 
         width = 0.4, color = 'd_hue')
-
-## ------------------------------------------------------------------------
 # create a logical vector of `peiids` in `loafercreek` that are IN sub1, then invert it with NOT (!)
 not.in.sub1 <- !(site(loafercreek)$peiid %in% site(sub1)$peiid)
 
@@ -221,53 +156,33 @@ not.in.sub1 <- !(site(loafercreek)$peiid %in% site(sub1)$peiid)
 sub2 <- loafercreek[not.in.sub1,]
 
 nrow(site(sub2))
-
-## ------------------------------------------------------------------------
 # make SPC plot cut off at 100, hide IDs and make it clear which have data
 plotSPC(sub2, max.depth=100, print.id = FALSE, 
         axis.line.offset=-0.5, name = '', 
         width = 0.4, color = 'd_hue')
 
 nrow(site(sub2))
-
-## ------------------------------------------------------------------------
 loafercreek$red.shallow <- (loafercreek$depth.to.5YR <= 40)
-
-## ---- eval=FALSE---------------------------------------------------------
 ## sum(is.na(loafercreek$depth.to.5YR))
 ## 
 ## nrow(site(loafercreek))
-
-## ------------------------------------------------------------------------
 all.na  <- profileApply(loafercreek, 
                         function(p) {
                           return(all(is.na(p$d_hue))) 
                         } )
 
 loafercreek$red.shallow[all.na] <- NA
-
-## ------------------------------------------------------------------------
 summary(loafercreek$red.shallow)
-
-## ---- eval=FALSE---------------------------------------------------------
 ## plot(loafercreek[!is.na(loafercreek$red.shallow) & !(loafercreek$red.shallow)], color='d_hue')`
-
-## ---- eval=FALSE---------------------------------------------------------
 ## plot(loafercreek[!loafercreek$red.shallow], color = 'd_hue')`
-
-## ------------------------------------------------------------------------
 plotSPC(loafercreek[is.na(loafercreek$red.shallow),], 
      color = 'd_hue', max.depth=100, 
      print.id = FALSE, name = '', axis.line.offset=-0.5)
-
-## ------------------------------------------------------------------------
 groupedProfilePlot(loafercreek[!is.na(loafercreek$red.shallow)],
                    groups = 'red.shallow', color = 'd_hue', max.depth=100, 
                    print.id = FALSE, name = '', , 
                    width = 0.45)
                    # NOTE: GPPs DO allow NA in the grouping variable; plots as '<missing>'
-
-## ------------------------------------------------------------------------
 # make some labels
 #loafercreek$red.shallow :  TRUE  FALSE   NA
 redness.classes <-       c("LT40","GT40","NODATA")
@@ -282,14 +197,10 @@ red.shallow.nax[is.na(red.shallow.nax)] <- 2
 loafercreek$redness.class <- factor(red.shallow.nax, 
                                     levels = c(1,0,2), 
                                     labels = redness.classes)
-
-## ------------------------------------------------------------------------
 groupedProfilePlot(loafercreek, max.depth=100,
                    groups = 'redness.class', color = 'd_hue', 
                    print.id = FALSE, name = '', axis.line.offset=-0.5, 
                    width = 0.45)
-
-## ------------------------------------------------------------------------
 # your input `tempF` is a numeric vector in degrees fahrenheit
 fahrenheit_to_celsius <- function(temp_F) {
   
@@ -299,8 +210,6 @@ fahrenheit_to_celsius <- function(temp_F) {
   # return output, a numeric vector in degrees C
   return(temp_C)
 }
-
-## ------------------------------------------------------------------------
 # a numeric vector in degrees fahrenheit; e.g. Soil Temperature Regime breaks
 temp.regime.F <- c(46.4, 59, 71.6)
 
@@ -308,8 +217,6 @@ temp.regime.F <- c(46.4, 59, 71.6)
 temp.regime.C <- fahrenheit_to_celsius(temp.regime.F)
 
 temp.regime.C
-
-## ------------------------------------------------------------------------
 profileMaxClay <- function(p) {
     # access the numeric vector `clay` from the horizons data.frame
     d <- horizons(p)$clay
@@ -321,13 +228,9 @@ profileMaxClay <- function(p) {
     # calculate the maximum value in `d`, omitting NA
     return(max(d, na.rm = TRUE))
 }
-
-## ------------------------------------------------------------------------
 # calculate the max clay content in all profiles
 loafercreek$maxclay <- profileApply(loafercreek, profileMaxClay)
 plot(density(loafercreek$maxclay, na.rm=T))
-
-## ------------------------------------------------------------------------
 # compare groups versus full set. Empty plot.
 plot(density(loafercreek$maxclay, na.rm = TRUE), 
      type="n", xlim = c(0, 60), ylim = c(0, 0.1), 
@@ -358,16 +261,10 @@ apply(plot.params, MARGIN=1, FUN=function(c) {
 legend(x = 45, y = 0.1025, cex = 0.9,
        legend = plot.params$labels, col = plot.params$line.color, 
        lwd = 2, lty = plot.params$lty)
-
-## ------------------------------------------------------------------------
 summary(loafercreek$redness.class)
-
-## ---- echo=F-------------------------------------------------------------
 # TODO: aqp bug that this creates SPDF intermediate? 
 # final result is numeric vector of second horizon clay contents
 second.horizon.clay <- loafercreek[,2]$clay 
-
-## ------------------------------------------------------------------------
 # Define a function to calculate the second mineral horizon clay content
 # We could use the bracket notation for selecting horizons (`spc[,index]`) to get the second.
 # But then we wouldnt be able to skip O horizons
@@ -385,12 +282,8 @@ second.horizon.clay <- profileApply(loafercreek, function(p) {
 # fit a linear model with lm(); 
 ## (y) maxclay as a function of (x) second horizon clay
 lin.model <- lm(loafercreek$maxclay ~ second.horizon.clay)
-
-## ------------------------------------------------------------------------
 # check assumptions
 plot(lin.model) 
-
-## ------------------------------------------------------------------------
 #turn numeric vector into factor
 clay.factor <- factor(loafercreek$clay)
 
@@ -405,39 +298,25 @@ clay.df <- clay.df[order(clay.df$times.observed, decreasing= TRUE),]
 
 #print the first 6 (most common) field clay contents in loafercreek
 head(clay.df)
-
-## ------------------------------------------------------------------------
 plot(density(resid(lin.model)))
 
 shapiro.test(resid(lin.model))
-
-## ------------------------------------------------------------------------
 # calculate some linear model influence measures
 lin.model.inf <- lm.influence(lin.model)
-
-## ------------------------------------------------------------------------
 influential.idx <- which(lin.model.inf$sigma < quantile(lin.model.inf$sigma, probs=0.05))
 influential.idx.plotlm <- c(16,17,31,32,77) # for example these are IDs from the plot.lm output
 
-# combine some ids we picked that wanted to check, with the ones determined from lm.influence()
+# combine some ids we picked that we want to check, with the ones determined from lm.influence()
 to.plot <- unique(c(names(influential.idx), influential.idx.plotlm))
 
 plotSPC(loafercreek[to.plot], color='clay', print.id=F, axis.line.offset=0)
-
-## ------------------------------------------------------------------------
 # check who described them >:)
 summary(factor(loafercreek[to.plot]$describer))
-
-## ---- eval = FALSE-------------------------------------------------------
 ## sum(grepl(loafercreek$describer, pattern="Vobora|RJV"))
 ## 
 ## length(loafercreek)
-
-## ------------------------------------------------------------------------
 # somewhat promising?
 summary(lin.model)
-
-## ------------------------------------------------------------------------
 # inspect
 plot(loafercreek$maxclay ~ second.horizon.clay, 
      xlab = "Second Horizon Clay, %", ylab="Maximum Profile Clay Content, %",
@@ -446,8 +325,6 @@ plot(loafercreek$maxclay ~ second.horizon.clay,
 
 # add 1:1 line for reference; helps when the plot is not square or different axes
 abline(0, 1, lwd = 1, lty = 3)
-
-## ------------------------------------------------------------------------
 # recreate above plot
 plot(loafercreek$maxclay ~ second.horizon.clay, 
      xlab = "Second Horizon Clay, %", ylab="Maximum Profile Clay Content, %",
@@ -471,15 +348,12 @@ lines(clayrange, prediction[,3], col="RED", lwd=2) #prediction interval, ubound
 
 # add 1:1 line for reference; helps when the plot is not square or different axes
 abline(0, 1, lwd = 1, lty = 3)
-
-## ------------------------------------------------------------------------
+summary(lin.model)
 hz2median <- data.frame(second.horizon.clay = round(median(second.horizon.clay, na.rm = TRUE), 1))
 res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median, 
                                    interval = c("prediction")), 2)), 
         conf=as.data.frame(round(predict(lin.model, newdata = hz2median, 
                                    interval = c("confidence")),2)))
-
-## ----eval=FALSE----------------------------------------------------------
 ## # we will use this function again later.
 ## depth.weighted.average <- function(spc, tdepth, bdepth, attr, ...) {
 ##   #expand `attr` in formula
@@ -487,15 +361,9 @@ res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median,
 ##   # calculate a depth-weighted average using aqp::slice()
 ##   return(mean(slice(spc, custom.formula, just.the.data=TRUE)[[attr]], na.rm = TRUE))
 ## }
-
-## ----eval=FALSE----------------------------------------------------------
 ## loafercreek$dwt.mean.10to40 <- profileApply(loafercreek, FUN=depth.weighted.average,
 ##                                             tdepth=10, bdepth=40, attr='clay')
-
-## ---- eval=FALSE---------------------------------------------------------
 ## profileApply(object, FUN, simplify=TRUE, ...)
-
-## ------------------------------------------------------------------------
 # create an SPC with just one pedon (try different ones)
 just.one <- loafercreek[1]
 
@@ -504,16 +372,10 @@ the.result
 
 applied.result <- profileApply(just.one, estimateSoilDepth)
 applied.result
-
-## ------------------------------------------------------------------------
 (the.result == applied.result)
-
-## ------------------------------------------------------------------------
 names(applied.result)
 
 str(applied.result)
-
-## ------------------------------------------------------------------------
 # logical vector length of left hand side (1)
 # "is left hand side character vector IN right hand side character vector?"
 names(applied.result) %in% loafercreek$peiid
@@ -526,15 +388,11 @@ which(site(loafercreek)$peiid %in% names(applied.result))
 # So we get several horizon indexes, all matching peiid and belonging to the first site
 # NB This may or may NOT be what you expect/want!
 which(loafercreek$peiid %in% names(applied.result))
-
-## ------------------------------------------------------------------------
 numeric.vector <- profileApply(loafercreek, estimateSoilDepth)
 
 head(numeric.vector, 3) # named numeric vector, names are peiid
 class(numeric.vector)   # numeric
 typeof(numeric.vector)  # double precision numeric
-
-## ------------------------------------------------------------------------
 a.list <- profileApply(loafercreek, estimateSoilDepth, simplify = FALSE)
 
 head(a.list, 3)     # a named list, names are peiid
@@ -545,8 +403,6 @@ typeof(a.list[[1]]) # the first element of this list is numeric (integer)
 str(unlist(a.list)) # create a named numeric vector from list (since all are numeric)
 
 str(as.numeric(a.list)) # create an UNnamed numeric vector from list
-
-## ------------------------------------------------------------------------
 depth.weighted.average <- function(spc, tdepth, bdepth, attr, ...) {
   #expand `attr` in formula
   custom.formula <- formula(paste0(tdepth,":",bdepth," ~ ", paste0(attr, collapse=" + ")))
@@ -555,8 +411,6 @@ depth.weighted.average <- function(spc, tdepth, bdepth, attr, ...) {
   return(mean(slice(spc, custom.formula, just.the.data=TRUE)[[attr]],
               na.rm = TRUE))
 }
-
-## ------------------------------------------------------------------------
 #dwt.mean.wrap()
 # x - a SoilProfileCollection; usually single-profile from profileApply()
 # na.threshold - specifies the proportion (by number of records) of NA for warning 
@@ -582,13 +436,11 @@ dwt.mean.wrap <- function(x, na.threshold, attr, ...) {
     #we will not omit it, just flag it so we have the ID
   }
   
-  # we used x and attr to maxe the above output, but depth.weighted.average()
+  # we used x and attr to max the above output, but depth.weighted.average()
   # also gets tdepth and bdepth from call to profileApply(), passed on with  `...`
   return(depth.weighted.average(x, attr, ...))
   # then we return the result
 }
-
-## ------------------------------------------------------------------------
 
 wrapper.test <- profileApply(loafercreek, 
                              dwt.mean.wrap, 
@@ -603,25 +455,13 @@ plot(density(wrapper.test, na.rm=TRUE),
      main = "25-75cm depth-weighted average clay content\nall `loafercreek` pedons")
 
 sum(is.na(wrapper.test))
-
-## ------------------------------------------------------------------------
 sdc <- getSoilDepthClass(loafercreek)
-
-## ------------------------------------------------------------------------
 head(sdc, 3)
-
-## ------------------------------------------------------------------------
 n.obs <- nrow(site(loafercreek))
 names(n.obs) <- "total"
 loafercreek.depth.summary <- summary(sdc$depth.class)
-
-## ------------------------------------------------------------------------
 c(loafercreek.depth.summary, n.obs)
-
-## ------------------------------------------------------------------------
 round(c(loafercreek.depth.summary / n.obs) * 100, digits = 1)
-
-## ------------------------------------------------------------------------
 #copy generalized horizon labels (component layer ID)
 loafercreek$extragenhz <- loafercreek$genhz
 
@@ -633,7 +473,7 @@ loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='A')] <- 'A'
 # if starts with B, and has a t, it goes in Bt group
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^B.*t.*')] <- 'Bt'
 
-#if it starts with BC (wiht or without t) its in the "lower gradational to bedrock group" BCt
+#if it starts with BC (with or without t) its in the "lower gradational to bedrock group" BCt
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^BC')] <- 'BCt'
 
 #any start with C? [no]
@@ -641,20 +481,11 @@ loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
 
 # bedrock colors - usually weird and rarely populated
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='Cr|R|Cd')] <- 'Cr'
-
-## ----fig.height=6--------------------------------------------------------
 aggregateColorPlot(aggregateColor(groups='extragenhz', col ='dry_soil_color', loafercreek), print.n.hz = TRUE)
-
-## ----fig.height=6--------------------------------------------------------
 aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
                                   loafercreek[loafercreek$redness.class == 'LT40'], k = 3), print.n.hz = TRUE)
-
-## ----fig.height=6--------------------------------------------------------
 aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
                                   loafercreek[loafercreek$redness.class == 'GT40'], k = 3), print.n.hz = TRUE)
-
-## ------------------------------------------------------------------------
-# 
 slab.default.plus.mean <- function(value) {
   # make a named numeric vector containing the mean of value
   the.mean <- mean(value, na.rm=TRUE)
@@ -664,9 +495,10 @@ slab.default.plus.mean <- function(value) {
   return(c(aqp:::.slab.fun.numeric.default(value), the.mean))
 }
 
+# slab loafercreek SPC using user-defined slab.fun; summarize clay content by redness class (in 5cm depth "slabs")
 loaf.slab <- slab(loafercreek, redness.class ~ clay, slab.fun=slab.default.plus.mean, slab.structure=5)
-
-## ------------------------------------------------------------------------
+# inspect the first few records in the slab we just made
+head(loaf.slab)
 # excluding slabs with contributing fraction < 25% for quantile stability; 
 # this cutoff is not a hard rule and depend on the data.
 loaf.slab.sub <- loaf.slab[loaf.slab$contributing_fraction >= 0.25,]
@@ -674,8 +506,6 @@ loaf.slab.sub <- loaf.slab[loaf.slab$contributing_fraction >= 0.25,]
 # check out the slab contents (variable, group, summary stats, hz depths, contributing fraction)
 # note the data.frame is in long format not wide format
 head(loaf.slab.sub)
-
-## ------------------------------------------------------------------------
 # install.packages("lattice") #if needed
 library(lattice)
 # make lattice xy plot
@@ -691,17 +521,11 @@ xyplot(top ~ p.q50 | redness.class, data = loaf.slab.sub,
        cf = loaf.slab.sub$contributing_fraction,
        layout = c(3,1), scales = list(x = list(alternating = 1))
   )
-
-## ------------------------------------------------------------------------
 df <- aggregate(loaf.slab.sub$p.q50, by = list(loaf.slab.sub$redness.class), FUN = max, na.rm = T)
 names(df) <- c("redness.class","maxclay.q50")
 df
-
-## ------------------------------------------------------------------------
 aggregate(loafercreek$maxclay, by=list(loafercreek$redness.class),
   FUN=quantile, na.rm = TRUE, probs = c(0,0.05,0.25,0.5,0.75,0.95,1))
-
-## ---- eval = FALSE-------------------------------------------------------
 ## library(soilDB)
 ## data("loafercreek") # WARNING: resets any local R environment changes YOU MADE to `loafercreek`
 ## data("gopheridge")
@@ -717,19 +541,8 @@ aggregate(loafercreek$maxclay, by=list(loafercreek$redness.class),
 ##                    groups = "taxonname",
 ##                    group.name.offset = 0,
 ##                    group.name.cex = 0.5)
-
-## ------------------------------------------------------------------------
 #diagnostic horizon validation (dark surface, argillic)
-
-## ------------------------------------------------------------------------
 #particle size control section depths and weighted-average calculation
-
-## ------------------------------------------------------------------------
 #horizon-level validations and preparing SPC objects for analysis
-
-## ------------------------------------------------------------------------
 #do spatial example.. can we predict where the red/clayey ones are?
-
-## ------------------------------------------------------------------------
 #bring in the shallow and skeletal and deep data from the Loafercreek mapunits 
-

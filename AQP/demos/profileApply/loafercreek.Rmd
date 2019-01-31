@@ -19,7 +19,7 @@ The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercree
 
 The Loafercreek series was established in Butte county (_CA612_) and now is mapped in Calaveras and Tuolumne (_CA630_) as well as small portions of Mariposa and Stanislaus Counties (_CA630_ join with _CA649_ and _CA644_).
 
-The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks compositionally similar to andesiteor basalt o. These metamorphosed marine volcanics are closely associated with sedimentary rocks. 
+The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks (mostly basaltic in composition). These metamorphosed volcanics are closely associated with sedimentary rocks (Jurassic in age, and also of marine origin). 
 
 The metavolcanic rocks in this area were recognized by miners during the gold rush to form distinctive "tombstone"-like outcrops. 
 
@@ -70,11 +70,15 @@ devtools::install_github('ncss-tech/sharpshootR', dependencies = FALSE, build = 
 
 ## For reference
 
- * [Algorithms for Quantitative Pedology - Homepage & Tutorials](http://ncss-tech.github.io/AQP/)
+ * [Algorithms for Quantitative Pedology (aqp) home page](http://ncss-tech.github.io/AQP/)
  
- * [soilDB R package](http://ncss-tech.github.io/soilDB/)
+ * [aqp - manual](http://ncss-tech.github.io/aqp/docs/)
+ 
+ * [soilDB - soil database access](http://ncss-tech.github.io/soilDB/)
+ 
+ * [soilDB - manual](http://ncss-tech.github.io/soilDB/docs/)
 
-_NCSS-Tech Stats for Soil Survey_ - Chapter 2 - Lessons on Data Types
+_NCSS-Tech Stats for Soil Survey_ - Chapter 2 - Lessons on Data Types and Tabular Soil Data
 
  * [R Objects and Data Types](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_appendix_data_types.html)
  
