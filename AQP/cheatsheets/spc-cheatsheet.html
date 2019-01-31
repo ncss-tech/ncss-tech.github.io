@@ -257,22 +257,259 @@ library(soilReports)</code></pre>
 </div>
 <div id="spcs-from-nasis" class="section level2">
 <h2><span class="header-section-number">2.2</span> SPCs from NASIS</h2>
-<p>Get data from NASIS (requires ODBC connection to local NASIS db)</p>
+<p>Get data from NASIS (requires ODBC connection to local NASIS db). You can create SPCs from pedon (point data) or aggregated data (map unit components).</p>
 <pre class="r"><code>fetchNASIS() # default argument of fetchNASIS() gets pedons
 fetchNASIS_pedons()
 fetchNASIS_components()</code></pre>
 </div>
-<div id="spcs-from-kellog-soil-survey-lab-database" class="section level2">
-<h2><span class="header-section-number">2.3</span> SPCs from Kellog Soil Survey Lab database</h2>
+<div id="spcs-from-kellogg-soil-survey-lab-database" class="section level2">
+<h2><span class="header-section-number">2.3</span> SPCs from Kellogg Soil Survey Lab database</h2>
 <p>KSSL Data by taxon name</p>
-<pre class="r"><code>fetchKSSL(series = &quot;SomeTaxonName&quot;)</code></pre>
+<pre class="r"><code>fetchKSSL(series = &quot;Holland&quot;)</code></pre>
 <p>KSSL Data by MLRA (overlap of site coordinates with MLRA shapefile)</p>
 <pre class="r"><code>fetchKSSL(mlra = &quot;15&quot;)</code></pre>
 <p>KSSL Data by rectangular bounding box (specified in longitude and latitude)</p>
 <pre class="r"><code>fetchKSSL(bbox = c(-119, 37, -120, 38))</code></pre>
 </div>
+<div id="spcs-from-ssurgostatsgo-sda-components" class="section level2">
+<h2><span class="header-section-number">2.4</span> SPCs from SSURGO/STATSGO (SDA) components</h2>
+<p>Fetch component and component horizon information from Soil Data Access (interface to SSURGO/STATSGO) subject to a user-specified WHERE constraint.</p>
+<pre class="r"><code>fetchSDA_component(WHERE = &quot;compname = 'Mantree'&quot;)</code></pre>
+<pre><code>## Object of class SoilProfileCollection
+## Number of profiles: 4
+## Depth range: 175-175 cm
+## 
+## Horizon attributes:
+##   hzname hzdept_r hzdepb_r texture texcl fragvol_r sandtotal_l sandtotal_r
+## 1     Oi        0        2     spm  &lt;NA&gt;        NA          NA        35.0
+## 2     Oe        2        4     mpm  &lt;NA&gt;        NA          NA        35.0
+## 3      A        4       10 ashy-sl  &lt;NA&gt;         7          50        52.1
+## 4     BA       10       36  ashy-l  &lt;NA&gt;         7          45        51.1
+## 5    Bt1       36       59       l  &lt;NA&gt;         5          45        46.8
+## 6    Bt2       59       89       l  &lt;NA&gt;        13          45        48.1
+##   sandtotal_h silttotal_l silttotal_r silttotal_h claytotal_l claytotal_r
+## 1          NA          NA        50.0          NA           0        15.0
+## 2          NA          NA        50.0          NA           0        15.0
+## 3          55        30.6        38.6          41           9         9.3
+## 4          55        24.9        37.9          44          11        11.0
+## 5          65        18.6        35.6          39          16        17.6
+## 6          65        15.6        31.6          37          18        20.3
+##   claytotal_h om_l  om_r om_h dbthirdbar_l dbthirdbar_r dbthirdbar_h
+## 1          25 60.0 75.00   85         0.05         0.07         0.10
+## 2          25 40.0 50.00   60         0.10         0.15         0.20
+## 3          19  2.0  6.60    9         0.88         0.88         1.18
+## 4          27  0.5  1.66    2         0.99         0.99         1.23
+## 5          30  0.5  1.02    2         0.97         0.97         1.60
+## 6          30  0.5  0.52    2         1.44         1.44         1.57
+##   ksat_l ksat_r ksat_h awc_l awc_r awc_h lep_r sar_r ec_r cec7_r
+## 1  42.34     92 141.14  0.55  0.60  0.65    NA     0    0     NA
+## 2   4.23     23  42.34  0.45  0.50  0.55    NA     0    0     NA
+## 3   4.23      9  14.11  0.12  0.14  0.15   0.8     0    0   24.4
+## 4   4.23      9  14.11  0.12  0.14  0.16   1.6     0    0   17.1
+## 5   4.23      9  14.11  0.14  0.15  0.17   1.8     0    0   12.6
+## 6   4.23      9  14.11  0.14  0.15  0.17   1.6     0    0    8.8
+##   sumbases_r ph1to1h2o_l ph1to1h2o_r ph1to1h2o_h caco3_l caco3_r caco3_h
+## 1         NA         5.1         5.5         6.0       0       0       0
+## 2         NA         5.1         5.5         6.0       0       0       0
+## 3       13.7         5.6         6.2         6.5       0       0       0
+## 4        8.4         5.6         6.0         6.5       0       0       0
+## 5        8.5         5.6         5.8         6.5       0       0       0
+## 6        7.2         5.6         5.8         6.5       0       0       0
+##      cokey hzID
+## 1 16616296    1
+## 2 16616296    2
+## 3 16616296    3
+## 4 16616296    4
+## 5 16616296    5
+## 6 16616296    6
+## 
+## Sampling site attributes:
+##      cokey nationalmusym compname comppct_r compkind majcompflag
+## 1 16616296          &lt;NA&gt;     &lt;NA&gt;        NA     &lt;NA&gt;        &lt;NA&gt;
+## 2 17095519         2djcq  Mantree        70   Series         Yes
+## 3 17095526         2djcn  Mantree        70   Series         Yes
+## 4 17095733         2pbgf  Mantree        16   Series         Yes
+##   localphase slope_r   drainagecl elev_r aspectrep map_r airtempa_r
+## 1         NA      NA         &lt;NA&gt;     NA        NA    NA         NA
+## 2         NA       8 Well drained   1155        NA  1300         14
+## 3         NA      16 Well drained   1095        NA  1275         14
+## 4         NA      45 Well drained   1055        58  1245         13
+##   reannualprecip_r ffd_r earthcovkind1 earthcovkind2 erocl tfact  wei  weg
+## 1               NA    NA          &lt;NA&gt;          &lt;NA&gt;  &lt;NA&gt;    NA &lt;NA&gt; &lt;NA&gt;
+## 2               NA   210    Tree cover      Conifers  &lt;NA&gt;     5  134    2
+## 3               NA   210    Tree cover      Conifers  &lt;NA&gt;     5  134    2
+## 4               NA   200    Tree cover      Conifers  &lt;NA&gt;     5  134    2
+##   nirrcapcl nirrcapscl irrcapcl irrcapscl frostact hydgrp   corcon
+## 1      &lt;NA&gt;       &lt;NA&gt;     &lt;NA&gt;      &lt;NA&gt;     &lt;NA&gt;   &lt;NA&gt;     &lt;NA&gt;
+## 2         3          e        3         e     None      C Moderate
+## 3         4          e        4         e     None      C Moderate
+## 4         7          e        7         e     None      C Moderate
+##   corsteel                                   taxclname taxorder
+## 1     &lt;NA&gt;                                        &lt;NA&gt;     &lt;NA&gt;
+## 2 Moderate Fine-loamy, isotic, mesic Andic Palexeralfs Alfisols
+## 3 Moderate Fine-loamy, isotic, mesic Andic Palexeralfs Alfisols
+## 4 Moderate Fine-loamy, isotic, mesic Andic Palexeralfs Alfisols
+##   taxsuborder taxgrtgroup         taxsubgrp taxpartsize taxpartsizemod
+## 1        &lt;NA&gt;        &lt;NA&gt;              &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;
+## 2     Xeralfs Palexeralfs Andic Palexeralfs  fine-loamy       not used
+## 3     Xeralfs Palexeralfs Andic Palexeralfs  fine-loamy       not used
+## 4     Xeralfs Palexeralfs Andic Palexeralfs  fine-loamy       not used
+##   taxceactcl taxreaction taxtempcl taxmoistscl taxtempregime
+## 1       &lt;NA&gt;        &lt;NA&gt;      &lt;NA&gt;        &lt;NA&gt;          &lt;NA&gt;
+## 2   not used    not used     mesic       Typic         mesic
+## 3   not used    not used     mesic       Typic         mesic
+## 4   not used    not used     mesic       Typic         mesic
+##    soiltaxedition
+## 1            &lt;NA&gt;
+## 2 twelfth edition
+## 3 twelfth edition
+## 4 twelfth edition
+##                                                                     pmgroupname
+## 1                                                                          &lt;NA&gt;
+## 2 ashy colluvium derived from tuff breccia over residuum weathered from diorite
+## 3 ashy colluvium derived from tuff breccia over residuum weathered from diorite
+## 4 ashy colluvium derived from tuff breccia over residuum weathered from diorite
+##                    pmkind                  pmorigin landscape
+## 1                    &lt;NA&gt;                      &lt;NA&gt;      &lt;NA&gt;
+## 2 Colluvium over Residuum Tuff breccia over Diorite mountains
+## 3 Colluvium over Residuum Tuff breccia over Diorite mountains
+## 4 Colluvium over Residuum Tuff breccia over Diorite mountains
+##          landform geomfeatid existsonfeat          mntn hill trce flats
+## 1            &lt;NA&gt;         NA           NA          &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;  &lt;NA&gt;
+## 2 mountain slopes         NA           NA Mountainflank &lt;NA&gt; &lt;NA&gt;  &lt;NA&gt;
+## 3 mountain slopes         NA           NA Mountainflank &lt;NA&gt; &lt;NA&gt;  &lt;NA&gt;
+## 4 mountain slopes         NA           NA Mountainflank &lt;NA&gt; &lt;NA&gt;  &lt;NA&gt;
+##   shapeacross shapedown hillslopeprof slopeshape       geompos
+## 1        &lt;NA&gt;      &lt;NA&gt;          &lt;NA&gt;       &lt;NA&gt;          &lt;NA&gt;
+## 2     Concave    Linear     Backslope         LC Mountainflank
+## 3     Concave    Linear     Backslope         LC Mountainflank
+## 4     Concave    Linear     Backslope         LC Mountainflank</code></pre>
+<p>See the “SDA Query Help” page for information on database schema, table/column definitions, etc.</p>
+<p><a href="https://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx" class="uri">https://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx</a></p>
+<p>You can also evaluate <em>arbitrary</em> SDA queries (where you do all the joins to tables of interest <em>yourself</em>).</p>
+<pre class="r"><code>SDA_query(q = &quot;SELECT * FROM legend AS l 
+                INNER JOIN mapunit mu ON l.lkey = mu.lkey
+                INNER JOIN component co ON mu.mukey = co.mukey
+               WHERE areasymbol = 'CA630' AND compname = 'Mantree';&quot;)</code></pre>
+<pre><code>##                areatypename areasymbol
+## 1 Non-MLRA Soil Survey Area      CA630
+## 2 Non-MLRA Soil Survey Area      CA630
+## 3 Non-MLRA Soil Survey Area      CA630
+##                                                                              areaname
+## 1 Central Sierra Foothills Area, California, Parts of Calaveras and Tuolumne Counties
+## 2 Central Sierra Foothills Area, California, Parts of Calaveras and Tuolumne Counties
+## 3 Central Sierra Foothills Area, California, Parts of Calaveras and Tuolumne Counties
+##   areaacres mlraoffice               legenddesc ssastatus
+## 1    780536  Davis, CA Detailed Map Unit Legend        NA
+## 2    780536  Davis, CA Detailed Map Unit Legend        NA
+## 3    780536  Davis, CA Detailed Map Unit Legend        NA
+##                             mouagncyresp projectscale cordate
+## 1 Natural Resources Conservation Service        24000      NA
+## 2 Natural Resources Conservation Service        24000      NA
+## 3 Natural Resources Conservation Service        24000      NA
+##   ssurgoarchived legendsuituse legendcertstat  lkey tabularversion musym
+## 1             NA            NA             NA 14103              3  6039
+## 2             NA            NA             NA 14103              3  6043
+## 3             NA            NA             NA 14103              3  6041
+##                                                      muname       mukind
+## 1 Holland-Wukusick-Mantree complex, 30 to 60 percent slopes      Complex
+## 2          Mantree ashy sandy loam, 15 to 30 percent slopes Consociation
+## 3           Mantree ashy sandy loam, 3 to 15 percent slopes Consociation
+##   mustatus muacres mapunitlfw_l mapunitlfw_r mapunitlfw_h mapunitpfa_l
+## 1       NA    2560           NA           NA           NA           NA
+## 2       NA    1255           NA           NA           NA           NA
+## 3       NA     528           NA           NA           NA           NA
+##   mapunitpfa_r mapunitpfa_h          farmlndcl muhelcl muwathelcl
+## 1           NA           NA Not prime farmland      NA         NA
+## 2           NA           NA Not prime farmland      NA         NA
+## 3           NA           NA Not prime farmland      NA         NA
+##   muwndhelcl interpfocus invesintens iacornsr nhiforsoigrp nhspiagr
+## 1         NA          NA     Order 3       NA           NA       NA
+## 2         NA          NA     Order 3       NA           NA       NA
+## 3         NA          NA     Order 3       NA           NA       NA
+##   vtsepticsyscl mucertstat  lkey   mukey museq nationalmusym comppct_l
+## 1            NA         NA 14103 2482710    47         2pbgf        NA
+## 2            NA         NA 14103 2220271    49         2djcn        NA
+## 3            NA         NA 14103 2220273    48         2djcq        NA
+##   comppct_r comppct_h compname compkind majcompflag otherph localphase
+## 1        16        NA  Mantree   Series         Yes      NA         NA
+## 2        70        NA  Mantree   Series         Yes      NA         NA
+## 3        70        NA  Mantree   Series         Yes      NA         NA
+##   slope_l slope_r slope_h slopelenusle_l slopelenusle_r slopelenusle_h
+## 1      30      45      60             NA             NA             NA
+## 2      15      16      30             NA             NA             NA
+## 3       3       8      15             NA             NA             NA
+##   runoff tfact wei weg erocl earthcovkind1 earthcovkind2 hydricon
+## 1     NA     5 134   2    NA    Tree cover      Conifers       NA
+## 2     NA     5 134   2    NA    Tree cover      Conifers       NA
+## 3     NA     5 134   2    NA    Tree cover      Conifers       NA
+##   hydricrating   drainagecl elev_l elev_r elev_h aspectccwise aspectrep
+## 1           No Well drained    855   1055   1310          270        58
+## 2           No Well drained    960   1095   1165           NA        NA
+## 3           No Well drained   1055   1155   1180           NA        NA
+##   aspectcwise                   geomdesc albedodry_l albedodry_r
+## 1          90 mountain slopes, mountains          NA        0.23
+## 2          NA mountain slopes, mountains          NA        0.23
+## 3          NA mountain slopes, mountains          NA        0.23
+##   albedodry_h airtempa_l airtempa_r airtempa_h map_l map_r map_h
+## 1          NA         12         13         14  1125  1245  1290
+## 2          NA         13         14         14  1220  1275  1305
+## 3          NA         13         14         14  1255  1300  1310
+##   reannualprecip_l reannualprecip_r reannualprecip_h ffd_l ffd_r ffd_h
+## 1               NA               NA               NA   190   200   215
+## 2               NA               NA               NA   205   210   215
+## 3               NA               NA               NA   205   210   215
+##   nirrcapcl nirrcapscl nirrcapunit irrcapcl irrcapscl irrcapunit
+## 1         7          e          NA        7         e         NA
+## 2         4          e           1        4         e          1
+## 3         3          e           1        3         e          1
+##   cropprodindex constreeshrubgrp wndbrksuitgrp rsprod_l rsprod_r rsprod_h
+## 1            NA               NA            NA       NA       NA       NA
+## 2            NA               NA            NA       NA       NA       NA
+## 3            NA               NA            NA       NA       NA       NA
+##   foragesuitgrpid wlgrain wlgrass wlherbaceous wlshrub wlconiferous
+## 1              NA      NA      NA           NA      NA           NA
+## 2              NA      NA      NA           NA      NA           NA
+## 3              NA      NA      NA           NA      NA           NA
+##   wlhardwood wlwetplant wlshallowwat wlrangeland wlopenland wlwoodland
+## 1         NA         NA           NA          NA         NA         NA
+## 2         NA         NA           NA          NA         NA         NA
+## 3         NA         NA           NA          NA         NA         NA
+##   wlwetland soilslippot frostact initsub_l initsub_r initsub_h totalsub_l
+## 1        NA          NA     None         0         0         0          0
+## 2        NA          NA     None         0         0         0          0
+## 3        NA          NA     None         0         0         0          0
+##   totalsub_r totalsub_h hydgrp   corcon corsteel
+## 1          0          0      C Moderate Moderate
+## 2          0          0      C Moderate Moderate
+## 3          0          0      C Moderate Moderate
+##                                     taxclname taxorder taxsuborder
+## 1 Fine-loamy, isotic, mesic Andic Palexeralfs Alfisols     Xeralfs
+## 2 Fine-loamy, isotic, mesic Andic Palexeralfs Alfisols     Xeralfs
+## 3 Fine-loamy, isotic, mesic Andic Palexeralfs Alfisols     Xeralfs
+##   taxgrtgroup         taxsubgrp taxpartsize taxpartsizemod taxceactcl
+## 1 Palexeralfs Andic Palexeralfs  fine-loamy       not used   not used
+## 2 Palexeralfs Andic Palexeralfs  fine-loamy       not used   not used
+## 3 Palexeralfs Andic Palexeralfs  fine-loamy       not used   not used
+##   taxreaction taxtempcl taxmoistscl taxtempregime  soiltaxedition
+## 1    not used     mesic       Typic         mesic twelfth edition
+## 2    not used     mesic       Typic         mesic twelfth edition
+## 3    not used     mesic       Typic         mesic twelfth edition
+##   castorieindex flecolcomnum flhe flphe flsoilleachpot flsoirunoffpot
+## 1            NA           NA   NA    NA             NA             NA
+## 2            NA           NA   NA    NA             NA             NA
+## 3            NA           NA   NA    NA             NA             NA
+##   fltemik2use fltriumph2use indraingrp innitrateleachi misoimgmtgrp
+## 1         N/A           N/A         NA              NA           NA
+## 2         N/A           N/A         NA              NA           NA
+## 3         N/A           N/A         NA              NA           NA
+##   vasoimgtgrp   mukey    cokey
+## 1          NA 2482710 17095733
+## 2          NA 2220271 17095526
+## 3          NA 2220273 17095519</code></pre>
+</div>
 <div id="spcs-from-soil-classification-database" class="section level2">
-<h2><span class="header-section-number">2.4</span> SPCs from Soil Classification database</h2>
+<h2><span class="header-section-number">2.5</span> SPCs from Soil Classification database</h2>
 <p>Create an SPC containing OSDs from Soil Classification (SC) database (an input vector of series names is provided).</p>
 <pre class="r"><code>your.spc &lt;- fetchOSD(soils = c(&quot;Holland&quot;, &quot;Musick&quot;))</code></pre>
 <p>Summarize climatic/physiographic/component attribute breakdown and get morphologic data using argument <code>extended=TRUE</code>.</p>

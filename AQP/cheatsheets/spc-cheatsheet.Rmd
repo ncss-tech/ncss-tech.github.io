@@ -60,7 +60,7 @@ data("loafercreek")
 
 ## SPCs from NASIS
 
-Get data from NASIS (requires ODBC connection to local NASIS db)
+Get data from NASIS (requires ODBC connection to local NASIS db). You can create SPCs from pedon (point data) or aggregated data (map unit components).
 
 ```{r, eval=F, warning=F, message=F}
 fetchNASIS() # default argument of fetchNASIS() gets pedons
@@ -68,11 +68,11 @@ fetchNASIS_pedons()
 fetchNASIS_components()
 ```
 
-## SPCs from Kellog Soil Survey Lab database
+## SPCs from Kellogg Soil Survey Lab database
 
 KSSL Data by taxon name 
 ```{r, eval=F, warning=F, message=F}
-fetchKSSL(series = "SomeTaxonName")
+fetchKSSL(series = "Holland")
 ```
 
 KSSL Data by MLRA (overlap of site coordinates with MLRA shapefile)
@@ -83,6 +83,26 @@ fetchKSSL(mlra = "15")
 KSSL Data by rectangular bounding box (specified in longitude and latitude)
 ```{r, eval=F, warning=F, message=F}
 fetchKSSL(bbox = c(-119, 37, -120, 38))
+```
+
+## SPCs from SSURGO/STATSGO (SDA) components 
+
+Fetch component and component horizon information from Soil Data Access (interface to SSURGO/STATSGO) subject to a user-specified WHERE constraint.
+
+```{r, eval=T, warning=F, message=F}
+fetchSDA_component(WHERE = "compname = 'Mantree'")
+```
+
+See the "SDA Query Help" page for information on database schema, table/column definitions, etc.
+
+[https://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx](https://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx)
+
+You can also evaluate _arbitrary_ SDA queries (where you do all the joins to tables of interest _yourself_).
+```{r, eval=T, warning=F, message=F}
+SDA_query(q = "SELECT * FROM legend AS l 
+                INNER JOIN mapunit mu ON l.lkey = mu.lkey
+                INNER JOIN component co ON mu.mukey = co.mukey
+               WHERE areasymbol = 'CA630' AND compname = 'Mantree';")
 ```
 
 ## SPCs from Soil Classification database
