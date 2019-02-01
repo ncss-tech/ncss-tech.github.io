@@ -15,11 +15,11 @@ library(soilReports)
 ## fetchKSSL(series = "Holland")
 ## fetchKSSL(mlra = "15")
 ## fetchKSSL(bbox = c(-119, 37, -120, 38))
-fetchSDA_component(WHERE = "compname = 'Mantree'")
-SDA_query(q = "SELECT * FROM legend AS l 
-                INNER JOIN mapunit mu ON l.lkey = mu.lkey
-                INNER JOIN component co ON mu.mukey = co.mukey
-               WHERE areasymbol = 'CA630' AND compname = 'Mantree';")
+## fetchSDA_component(WHERE = "compname = 'Mantree'")
+## SDA_query(q = "SELECT * FROM legend AS l
+##                 INNER JOIN mapunit mu ON l.lkey = mu.lkey
+##                 INNER JOIN component co ON mu.mukey = co.mukey
+##                WHERE areasymbol = 'CA630' AND compname = 'Mantree';")
 ## your.spc <- fetchOSD(soils = c("Holland", "Musick"))
 ## your.extended.list <- fetchOSD(soils = "Holland", extended = TRUE)
 ## 
@@ -29,7 +29,6 @@ SDA_query(q = "SELECT * FROM legend AS l
 ## horizons(loafercreek)
 ## sub1 <- subsetProfiles(loafercreek, s='slope_field < 8')
 ## sub2 <- subsetProfiles(loafercreek, h = 'clay > 35')
-## # make a list using c() to concatenate a set of character strings
 ## your.list <- c("07SKC016","10MJE016","10CKS034","S2000CA007012","06SMM013" )
 ## matches.your.list <- site(loafercreek)$pedon_id %in% your.list
 ## your.matching.indices <- which(matches.your.list)

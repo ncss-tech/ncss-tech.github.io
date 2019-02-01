@@ -89,7 +89,7 @@ fetchKSSL(bbox = c(-119, 37, -120, 38))
 
 Fetch component and component horizon information from Soil Data Access (interface to SSURGO/STATSGO) subject to a user-specified WHERE constraint.
 
-```{r, eval=T, warning=F, message=F}
+```{r, eval=F, warning=F, message=F}
 fetchSDA_component(WHERE = "compname = 'Mantree'")
 ```
 
@@ -98,7 +98,7 @@ See the "SDA Query Help" page for information on database schema, table/column d
 [https://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx](https://sdmdataaccess.nrcs.usda.gov/QueryHelp.aspx)
 
 You can also evaluate _arbitrary_ SDA queries (where you do all the joins to tables of interest _yourself_).
-```{r, eval=T, warning=F, message=F}
+```{r, eval=F, warning=F, message=F}
 SDA_query(q = "SELECT * FROM legend AS l 
                 INNER JOIN mapunit mu ON l.lkey = mu.lkey
                 INNER JOIN component co ON mu.mukey = co.mukey
@@ -148,18 +148,22 @@ Create a subset SPC based on a horizon-level attribute using`subsetProfiles()` a
 sub2 <- subsetProfiles(loafercreek, h = 'clay > 35')
 ```
 
-Create a subset SPC based on a list of userpedonIDs
+## Create a subset SPC based on a list of userpedonIDs
 
+First, make a character vector (using `c()`) to concatenate a set of character strings (the userpedonIDs that you want).
 ```{r, eval=F, warning=F, message=F}
-# make a list using c() to concatenate a set of character strings
 your.list <- c("07SKC016","10MJE016","10CKS034","S2000CA007012","06SMM013" )
 ```
 
-Create a true/false (logical) vector by checking each userpedonID in `loafercreek` to see if it matches one in `your.list`. Note that the length of the vector `matches.your.list` equals `nrow(site(loafercreek))`.
+Create a `TRUE`/`FALSE` (logical) vector by checking each userpedonID in `loafercreek` to see if it matches one in `your.list`. 
 
 ```{r, eval=F, warning=F, message=F}
 matches.your.list <- site(loafercreek)$pedon_id %in% your.list 
 ```
+
+Note that the length of the vector `matches.your.list` equals `nrow(site(loafercreek))`, but the number of TRUE values in `matches.your.list` (`sum(matches.your.list)`) is equal to `length(your.list)`. 
+
+This is because all profile IDs in the list were found. If `sum(matches.your.list) < length(your.list)` some in the list were NOT found.
 
 Get just the positions (index) where the logical vector `matches.your.list` is `TRUE` using `which()`
 
@@ -169,7 +173,7 @@ your.matching.indices <- which(matches.your.list)
 
 Create a new SPC `loafercreek.subset` that is the subset corresponding to your "matching" indices. 
 
-Use the _data.frame_-like bracket notation `spc[site.index, horizon.index]` to access the sites corresponding to your indexes.
+Use the _data.frame_-like bracket notation `spc[site.index, horizon.index]` to access the sites corresponding to your matching userpedonIDs.
 
 ```{r, eval=F, warning=F, message=F}
 loafercreek.subset <- loafercreek[your.matching.indices, ]
@@ -177,13 +181,13 @@ loafercreek.subset <- loafercreek[your.matching.indices, ]
 
 # Editing SPCs
 
-Add site data to the SPC based on common site id `id`
+Add site data to the SPC based on common (unique) site id (for example: `id`)
 
 ```{r, eval=F, warning=F, message=F}
 site(your.spc) <- merge(site(your.spc), your.site.data, by = "id")
 ```
 
-Add horizon data to the SPC based on common horizon id `hzid`
+Add horizon data to the SPC based on common (unique) horizon id (for example: `hzid`)
 
 ```{r, eval=F, warning=F, message=F}
 horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid")
