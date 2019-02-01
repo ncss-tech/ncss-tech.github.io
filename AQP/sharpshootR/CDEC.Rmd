@@ -52,8 +52,8 @@ install.packages('RColorBrewer', dep=TRUE)
 install.packages('zoo', dep=TRUE)
 
 # get latest version from GitHub
-install.packages('devtools', dep=TRUE)
-devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+install.packages('remotes', dep=TRUE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 
@@ -116,8 +116,8 @@ soil.moist.sensors <- sensors$sensor[grep('soil moistr', sensors$sensor_details,
 
 Query the data. It might take a couple of seconds. Note that we are making two distinct requests, each for three sensors.
 ```{r}
-d.soil_temp <- CDECquery(id = stn, sensor = soil.temp.sensors, interval = 'E', start = '2017-09-15', end = '2018-09-15')
-d.soil_moist <- CDECquery(id = stn, sensor = soil.moist.sensors, interval = 'E', start = '2017-09-15', end = '2018-09-15')
+d.soil_temp <- CDECquery(id = stn, sensor = soil.temp.sensors, interval = 'E', start = '2017-09-15', end = '2019-09-15')
+d.soil_moist <- CDECquery(id = stn, sensor = soil.moist.sensors, interval = 'E', start = '2017-09-15', end = '2019-09-15')
 
 # quick check: nice!
 kable_styling(kable(head(d.soil_temp, 10), format = 'html'), font_size = 10)
@@ -166,20 +166,20 @@ xyplot(q50 ~ date | which, groups=sensor_type, data=a, type=c('g', 'l'), auto.ke
 
 ### Daily Precipitation
 
-Query the daily precipitation measurements spanning the 2017-2018 water year from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
+Query the daily precipitation measurements spanning the 2018-2019 water year from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
 
 ```{r, fig.height=5, fig.width=7}
 # get data, note sensor number
-x <- CDECquery(id='sor', sensor=45, interval='D', start='2017-09-01', end='2019-09-01')
+x <- CDECquery(id='sor', sensor=45, interval='D', start='2018-09-01', end='2019-09-01')
 
 # compute cumulative PPT
 # replace NA with 0 in cumulative calc
 x$cumulative <- cumsum(ifelse(is.na(x$value), 0, x$value))
 
 # plot
-xyplot(value ~ datetime, data=x, type=c('h', 'g'), scales=list(x=list(alternating=3, format="%b\n%Y", tick.number=20)), xlab='', ylab='Daily PPT (inches)', main='Sonora Ranger Station\nDaily Total Precipitation (inches)')
+xyplot(value ~ datetime, data=x, type=c('h', 'g'), scales=list(x=list(alternating=3, format="%b %d\n%Y", tick.number=10)), xlab='', ylab='Daily PPT (inches)', main='Sonora Ranger Station\nDaily Total Precipitation (inches)')
 
-xyplot(cumulative ~ datetime, data=x, type=c('s', 'g'), scales=list(x=list(alternating=3, format="%b\n%Y", tick.number=20)), xlab='', ylab='Cumulative PPT (inches)', main='Sonora Ranger Station\nCumulative Precipitation (inches)')
+xyplot(cumulative ~ datetime, data=x, type=c('s', 'g'), scales=list(x=list(alternating=3, format="%b %d\n%Y", tick.number=10)), xlab='', ylab='Cumulative PPT (inches)', main='Sonora Ranger Station\nCumulative Precipitation (inches)')
 
 # total
 sum(x$value, na.rm = TRUE)
@@ -198,7 +198,7 @@ bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in
 ### Visualization Ideas
 Query the entire record of daily precipitation measurements from New Hogan Lake ([NHG](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=NHG)).
 ```{r}
-x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2019-01-01')
+x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2020-01-01')
 summary(x$value)
 head(x)
 nrow(x)
@@ -260,10 +260,10 @@ plot(sn)
 ## Reservoir Levels
 ```{r, fig.width=11, fig.height=5}
 # get daily resevoir storage (ac. ft) from Pinecrest, New Melones, Lyons, and Don Pedro Reservoirs
-pinecrest <- CDECquery(id='swb', sensor=15, interval='D', start='2015-01-01', end='2019-01-01')
-new.melones <- CDECquery(id='nml', sensor=15, interval='D', start='2015-01-01', end='2019-01-01')
-lyons <- CDECquery(id='lys', sensor=15, interval='D', start='2015-01-01', end='2019-01-01')
-dp <- CDECquery(id='dnp', sensor=15, interval='D', start='2015-01-01', end='2019-01-01')
+pinecrest <- CDECquery(id='swb', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
+new.melones <- CDECquery(id='nml', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
+lyons <- CDECquery(id='lys', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
+dp <- CDECquery(id='dnp', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
 
 # compute storage capacity, based on published capacities
 pinecrest$capacity <- pinecrest$value / 18312 * 100
@@ -298,7 +298,7 @@ xyplot(capacity ~ datetime, groups=which, data=g, type='l',
 Investigate monthly levels and capacity of New Melones Reservoir.
 ```{r, fig.width=11, fig.height=5}
 # New Melones monthly data, retrieve as far back in time as possible 
-new.melones.monthly <- CDECquery(id='nml', sensor=15, interval='M', start='1900-01-01', end='2019-01-01')
+new.melones.monthly <- CDECquery(id='nml', sensor=15, interval='M', start='1900-01-01', end='2020-01-01')
 
 # convert to pct. capacity
 new.melones.monthly$capacity <- new.melones.monthly$value / 2400000 * 100
