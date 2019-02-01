@@ -1,22 +1,36 @@
+library(knitr, quietly = TRUE)
+opts_chunk$set(message = FALSE, 
+               warning = FALSE, 
+               background = '#F7F7F7', 
+               dpi = 100, 
+               fig.align = 'center', 
+               dev = 'png', 
+               dev.args = list(pointsize = 10, 
+                             type = 'cairo', 
+                             antialias = 'subpixel'), 
+               tidy = TRUE)
 ## # install devtools if needed
 ## # install.packages("devtools")
-## devtools::install_github('ncss-tech/aqp', dependencies = FALSE, build = FALSE)
-## devtools::install_github('ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
-## devtools::install_github('ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
+## devtools::install_github('ncss-tech/aqp',
+##                          dependencies = FALSE, build = FALSE)
+## devtools::install_github('ncss-tech/soilDB',
+##                          dependencies = FALSE, build = FALSE)
+## devtools::install_github('ncss-tech/sharpshootR',
+##                          dependencies = FALSE, build = FALSE)
 library(soilDB)
 library(sharpshootR)
 
 data("loafercreek")
-## # access the cly attribute from the horizons data frame
+## # access the clay attribute from the horizons data frame
 ## horizons(spc)$clay
 ## 
 ## #add new site data by LEFT JOIN on UNIQUE site ID (assumed to be present in both spc and new.site.data)
 ## site(spc) <- new.site.data
-my.sub.set <- loafercreek[3:6, ]
+my.sub.set <- loafercreek[4:8, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
-plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 1)
+plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 0.75)
 nrow(site(loafercreek))
 nrow(horizons(loafercreek))
 max(horizons(loafercreek)$clay, na.rm = TRUE)
@@ -62,27 +76,26 @@ hz.match <- '' # match all horizons
 ## # ?fetchKSSL for details
 ## k <- fetchKSSL(series = "loafercreek")
 ## 
-## #count the number of rows (records) in the `loafercreek@site` data.frame
+## # count the number of rows (records) in the `loafercreek@site` data.frame
 ## n.pedons <- nrow(site(k))
 ## 
 ## # here you would inspect the data
 ## 
-## #calculate some basic univariate summary statistics on _all_ horizons in the SPC
+## # calculate some basic univariate summary statistics
+## # on _all_ horizons in the SPC
 ## median(k$fe_dith, na.rm = TRUE)
 ## min(k$fe_dith, na.rm = TRUE)
 ## max(k$fe_dith, na.rm = TRUE)
 # set spatial coordinates to create a Spatial object
 coordinates(loafercreek) <- ~ x_std + y_std
 loafercreek@sp
-#when you set the proj4string, be sure it matches the formula & data you sent to coordinates()
+# when you set the proj4string, be sure it matches the formula 
+# and the system/format of the data you sent to coordinates() above
 proj4string(loafercreek) <- '+proj=longlat +datum=WGS84'
 loafercreek@sp
 class(loafercreek)
 
 loafercreek.spdf <- as(loafercreek, 'SpatialPointsDataFrame')
-
-# there is no method for coercing a data.frame to SPDF (you need spatial info)
-## loafercreek.spdf <- as(site(loafercreek), 'SpatialPointsDataFrame')
 
 class(loafercreek.spdf)
 plot(loafercreek.spdf, main = "Loafercreek Pedon Locations", pch = 19, cex = 0.5)
@@ -127,7 +140,9 @@ head(hzID(your.spc)) #unique horizon ids (assigned at time of SPC creation)
 depth.to.contact <- profileApply(loafercreek, estimateSoilDepth)
 #look at a density (continuous frequency) plot; depth on x axis
 plot(density(depth.to.contact, na.rm = TRUE))
-quantile(depth.to.contact, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
+quantile(depth.to.contact, 
+         probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), 
+         na.rm = TRUE)
 bad.peiid <- c("542129") 
 
 #SPC with just the "bad" pedon (this one isn't that bad)
@@ -361,10 +376,15 @@ lines(clayrange, prediction[,3], col="RED", lwd=2) #prediction interval, ubound
 abline(0, 1, lwd = 1, lty = 3)
 summary(lin.model)
 hz2median <- data.frame(second.horizon.clay = round(median(second.horizon.clay, na.rm = TRUE), 1))
-res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median, 
-                                   interval = c("prediction")), 2)), 
-        conf=as.data.frame(round(predict(lin.model, newdata = hz2median, 
-                                   interval = c("confidence")),2)))
+res <- cbind(pred = as.data.frame(round(predict(lin.model,
+                                              newdata = hz2median, 
+                                              interval = c("prediction")),
+                                      2)), 
+        conf = as.data.frame(round(predict(lin.model, 
+                                         newdata = hz2median, 
+                                         interval = c("confidence")),
+                                 2)))
+res
 ## # we will use this function again later.
 ## depth.weighted.average <- function(spc, tdepth, bdepth, attr, ...) {
 ##   #expand `attr` in formula
@@ -473,40 +493,60 @@ names(n.obs) <- "total"
 loafercreek.depth.summary <- summary(sdc$depth.class)
 c(loafercreek.depth.summary, n.obs)
 round(c(loafercreek.depth.summary / n.obs) * 100, digits = 1)
-#copy generalized horizon labels (component layer ID)
+#copy generalized horizon labels (NASIS component layer ID) to new variable
 loafercreek$extragenhz <- loafercreek$genhz
 
-#NOTE that the order of the following 5 statements is important (they can overwrite each other)
+# NOTE that the order of the following 5 statements is **important** 
+# (they can overwrite each other)
 
-#if it contains A it goes in the A group
+# if it contains A it goes in the A group
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='A')] <- 'A'
 
 # if starts with B, and has a t, it goes in Bt group
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^B.*t.*')] <- 'Bt'
 
-#if it starts with BC (with or without t) its in the "lower gradational to bedrock group" BCt
+# if it starts with BC (with or without t) its in the 
+# "lower gradational to bedrock group" BCt
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^BC')] <- 'BCt'
 
-#any start with C? [no]
+# any start with C? [no]
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
 
 # bedrock colors - usually weird and rarely populated
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='Cr|R|Cd')] <- 'Cr'
-aggregateColorPlot(aggregateColor(groups='extragenhz', col ='dry_soil_color', loafercreek), print.n.hz = TRUE)
-aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
-                                  loafercreek[loafercreek$redness.class == 'LT40'], k = 3), print.n.hz = TRUE)
-aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
-                                  loafercreek[loafercreek$redness.class == 'GT40'], k = 3), print.n.hz = TRUE)
+aggregateColorPlot(aggregateColor(groups='extragenhz', 
+                                  col ='dry_soil_color', 
+                                  loafercreek), 
+                   label.cex = 1,
+                   print.n.hz = TRUE)
+lt40.to.red <- loafercreek[loafercreek$redness.class == 'LT40', ]
+
+aggregateColorPlot(aggregateColor(groups='extragenhz', 
+                                  col='dry_soil_color', 
+                                  lt40.to.red, 
+                                  k = 3),  
+                   label.cex = 1,
+                   print.n.hz = TRUE)
+gt40.to.red <- loafercreek[loafercreek$redness.class == 'GT40', ]
+
+aggregateColorPlot(aggregateColor(groups='extragenhz', 
+                                  col='dry_soil_color', 
+                                  gt40.to.red, 
+                                  k = 3),  
+                   label.cex = 1,
+                   print.n.hz = TRUE)
 slab.default.plus.mean <- function(value) {
   # make a named numeric vector containing the mean of value
   the.mean <- mean(value, na.rm=TRUE)
   names(the.mean) <- "avg"
   
-  # combine mean with the .slab.fun.numeric.default used in the slab() function definition
+  # combine mean with the .slab.fun.numeric.default 
+  # used in the slab() function definition
   return(c(aqp:::.slab.fun.numeric.default(value), the.mean))
 }
 
-# slab loafercreek SPC using user-defined slab.fun; summarize clay content by redness class (in 5cm depth "slabs")
+# slab loafercreek SPC using user-defined slab.fun; 
+# summarize clay content by redness class (in 5cm depth "slabs")
 loaf.slab <- slab(loafercreek, redness.class ~ clay, slab.fun=slab.default.plus.mean, slab.structure=5)
 # inspect the first few records in the slab we just made
 head(loaf.slab)
