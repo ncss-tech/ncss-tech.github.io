@@ -56,7 +56,7 @@ Sometimes mapping associated with a particular soil name does not necessarily re
 
 For instance, Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. But its taxonomy and the mapping conventions have changed over time (40-50 years) since much of the land in the Sierra Nevada foothills was initially mapped.
 
-In CA630, the shallow metavolcanic soils _with argillic horizons_ (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
+In CA630, the shallow metavolcanic soils _with argillic horizons_ (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a _deep_ bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode) (fine-loamy) or [Gardellones](https://casoilresource.lawr.ucdavis.edu/sde/?series=gardellones) (loamy-skeletal).
 
 
 ## This demo
@@ -146,18 +146,25 @@ In practice, you are usually indexing either a site-level OR a horizon-level att
 We use the _data.frame_-like bracket notation to get a few profiles (by specifying a site-index) and plot them.
 
 ```{r}
-my.sub.set <- loafercreek[4:8, ]
+# get profiles #4, 5, 6, 7, 8, 9 and 10
+my.sub.set <- loafercreek[4:10, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
 ```
 
+Make a plot of just our subset. 
 
-Make a plot of just the subset. Put userpedonID labels on each profile (along left hand side) and make the label text larger (than default: `cex.id = 0.5`).
+Put userpedonID labels on each profile (along left hand side) and make the label text larger (than default: `cex.id = 0.5`).
 
 ````{r}
-plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 0.75)
+plotSPC(my.sub.set, label = 'pedon_id', 
+        id.style = "side", cex.id = 0.65)
 ```
+
+Setting the margins equal to zero (e.g. `par(mar=c(0,0,0,0))`) can sometimes help with displaying plots with either small (5 or less) or large (40+) numbers of profiles. This is a byproduct of some of the limitations of the base R graphics system.
+
+To get these SPC plots to look "nice" there are many other options for adjusting offsets for plots and axis positions, as well as labels, colors, legends, etc. that can be found under `?plotSPC()`.
 
 Now, we will take a look at the main parts of the `loafercreek` SPC.
 
@@ -188,7 +195,7 @@ _When using logical vectors as index variables it is less likely one of your pro
 
 You can also index using just the "positions" you want (e.g. `spc[c(2, 3, 10), ]` to get the second, third and tenth profile in an SPC). 
 
-You can convert a logical vector to a _vector of _positions where the logical vector is `TRUE`_ using the function `which()`.
+You can convert a logical vector to a vector of _positions where the logical vector is `TRUE`_ using the function `which()`.
 
 For instance:
 
@@ -250,13 +257,16 @@ is.na(a | NA)
 
 Here is an example showing a _SoilProfileCollection_ created using _soilDB_ function `fetchOSD()`. 
 
-A list of soil series (`series.names`) that are geographically or conceptually associated with metavolcanic rocks in the Sierra Nevada Foothills is supplied. The `extended` argument is set to `TRUE` to return a _SoilProfileCollection_ of type location descriptions parsed from the _Official Series Description_ (OSD).
+A list of soil series (`series.names`) that are geographically or conceptually associated with metavolcanic rocks in the Sierra Nevada Foothills is supplied.
+
+The `extended` argument is set to `TRUE` to return a _SoilProfileCollection_ of type location descriptions parsed from the _Official Series Description_ (OSD).
 
 ```{r, message=FALSE, warning=FALSE}
 library(soilDB)
 series.names <- c("Argonaut", "Auburn", "Bonanza", "Dunstone", 
-                  "Exchequer", "Gopheridge", "Jasperpeak", 
-                  "Loafercreek", "Motherlode", "Sobrante")
+                  "Exchequer", "Gardellones", "Gopheridge", 
+                  "Jasperpeak", "Loafercreek", "Motherlode", 
+                  "Sobrante")
 
 osds <- fetchOSD(soils = series.names, extended = TRUE)
 
@@ -1688,7 +1698,7 @@ aggregateColorPlot(aggregateColor(groups='extragenhz',
                    print.n.hz = TRUE)
 ```
 
-In addition to the 5YR hue, the `LT40` group has 6 chroma represented at somewhat higher proportions. There is not a huge amount of difference between 6/4 or 5/4 chips on the 5YR and 7.5YR pages. Thus, there is not a huge amount of difference between these groups when their colors are looked at in aggregate. The raw color plots show more detail (without the `PAM`-based mixing and `k = 3` argument to `aggregateColor()`), but more or less tell the same story.
+In addition to the 5YR hue, the `LT40` group has 6 chroma represented at somewhat higher proportions. The chips with same value/chroma are pretty s Thus, there is not a huge amount of difference between these groups when their colors are looked at in aggregate. The raw color plots show more detail (without the `PAM`-based mixing and `k = 3` argument to `aggregateColor()`), but more or less tell the same story.
 
 However, even though we didn't find a difference more than the result of our arbitrary split, applying a calculation "Depth to 5YR hue", we had the opportunity to explore the natural variability within a group of related soils as well as the gaps in our data.
 
@@ -1821,7 +1831,9 @@ Despite apparent differences in the median, the ranges of the groups are quite s
 
 Most of these pedons, but not all, fall within the fine-loamy particle size family range of 18-35% clay in the particle size control section. All methods we used to look at clay maximum suggest slight differences in group composition, but not so much meaningful differences given the precision of typical field clay content estimates.
 
-On one hand, this is to be expected since we started with a relatively constrained group of pedons (fine-loamy, mod. deep, with argillic, all from same area). On the other hand, the pedons in some ways spill outside of that neat little parenthetical box.
+On one hand, this is expected since we started with a relatively constrained group of pedons (_fine-loamy, mod. deep, with argillic, more or less from similar areas_). 
+
+On the other hand, the pedons spill outside of that neat parenthetical box.
 
 There appears to be more variation within the `LT40` group (evidenced by the wide gray bars in the `lattice` plot). 
 
@@ -1860,15 +1872,16 @@ groupedProfilePlot(loafergopher[c(1,8,123,140), ],
                    group.name.offset = 0,
                    group.name.cex = 0.5)
 ```
+
 ***
 
 # Future directions
 
-Recently code was added to _aqp_ to calculate the upper and lower boundary of the particle size control section using `estimatePSCS(pedon)`. It returns a vector of two numeric values corresponding to the upper and lower bound. These bounds can then be used for selecting horizon data, calculating weighted averages, etc.
+Recently code was added to _aqp_ to calculate the upper and lower boundary of the particle size control section using `estimatePSCS(pedon)`. This function returns two numeric values corresponding to the upper and lower bounds of the PSCS. These bounds can be used for selecting horizon data, calculating weighted averages over that interval, etc.
 
-This is a high-level function that makes use of multiple lower level functions to apply the PSCS key from _Keys to Soil Taxonomy_. It requires machinery for the identification of argillic horizons, O horizons, plow layers etc. It also needs to be able to deal with regional differences in description styles, data entry guidelines and ambiguities in data population relative to taxonomic criteria.
+`estimatePSCS()` is a high-level function (makes use of multiple lower level functions) to apply the PSCS key from _Keys to Soil Taxonomy_. It requires "machinery" for the identification of argillic horizons, O horizons, plow layers etc. It also needs to be able to deal with regional differences in description styles, data entry guidelines and ambiguities in data population relative to taxonomic criteria.
 
-There is still no handling of some "unusual" soils (well, unusual in that they would be a huge amount of effort to cover a minute fraction of observations) e.g. grossarenic subgroups, strongly contrasting etc. Some of these can be done. Others might be more effort than it is worth unless they are needed and will rely on some sort of an external flag like a record in the taxonomic history table. 
+There is still no handling of some "unusual" soils (well, unusual in that they would be a huge amount of effort to cover a minute fraction of observations) e.g. grossarenic subgroups, strongly contrasting etc. Some of these can be added if there is a need or interest. Others might be more effort than it is worth and will in all likelihood have to rely on some sort of an external flag (like a record in the taxonomic history table). 
 
 If someone has a specific need for additional functionality, and has a dataset to use test with, the author would be willing to explore implementation of any of these more complex criteria.
 

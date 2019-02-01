@@ -26,11 +26,13 @@ data("loafercreek")
 ## 
 ## #add new site data by LEFT JOIN on UNIQUE site ID (assumed to be present in both spc and new.site.data)
 ## site(spc) <- new.site.data
-my.sub.set <- loafercreek[4:8, ]
+# get profiles #4, 5, 6, 7, 8, 9 and 10
+my.sub.set <- loafercreek[4:10, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
-plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 0.75)
+plotSPC(my.sub.set, label = 'pedon_id', 
+        id.style = "side", cex.id = 0.65)
 nrow(site(loafercreek))
 nrow(horizons(loafercreek))
 max(horizons(loafercreek)$clay, na.rm = TRUE)
@@ -64,8 +66,9 @@ which(a) # to this
 ## (TRUE | NA) & (FALSE & NA)
 library(soilDB)
 series.names <- c("Argonaut", "Auburn", "Bonanza", "Dunstone", 
-                  "Exchequer", "Gopheridge", "Jasperpeak", 
-                  "Loafercreek", "Motherlode", "Sobrante")
+                  "Exchequer", "Gardellones", "Gopheridge", 
+                  "Jasperpeak", "Loafercreek", "Motherlode", 
+                  "Sobrante")
 
 osds <- fetchOSD(soils = series.names, extended = TRUE)
 
