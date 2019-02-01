@@ -298,8 +298,14 @@ your.extended.list$SPC</code></pre>
 <h1><span class="header-section-number">3</span> Accessing SPCs</h1>
 <p>Get site <em>data.frame</em> from <code>loafercreek</code> SPC.</p>
 <pre class="r"><code>site(loafercreek)</code></pre>
+<p>These are two equivalent expressions for finding the <strong>number of sites/profiles</strong> in an SPC.</p>
+<pre class="r"><code>nrow(site(loafercreek))
+length(loafercreek) # length(spc) is an alias for nrow(site(spc))</code></pre>
 <p>Get horizon <em>data.frame</em> from <code>loafercreek</code> SPC.</p>
 <pre class="r"><code>horizons(loafercreek)</code></pre>
+<p>These are two equivalent expressions for finding the <strong>number of horizons</strong> in an SPC.</p>
+<pre class="r"><code>nrow(horizons(loafercreek))
+nrow(loafercreek) # nrow(spc) is an alias for nrow(horizons(spc))</code></pre>
 <p>Create a subset SPC based on a site-level attribute using<code>subsetProfiles()</code> and argument <code>s</code> containing an expression to evaluate. Here we write an expression to select all profiles that have a field-measured slope gradient <em>less than 8 percent</em>.</p>
 <pre class="r"><code>sub1 &lt;- subsetProfiles(loafercreek, s='slope_field &lt; 8')</code></pre>
 <p>Create a subset SPC based on a horizon-level attribute using<code>subsetProfiles()</code> and argument <code>h</code> containing an expression to evaluate. Here we write an expression select all profiles that have <em>one or more horizons</em> with clay content greater than 35 percent.</p>
@@ -310,9 +316,9 @@ your.extended.list$SPC</code></pre>
 <pre class="r"><code>your.list &lt;- c(&quot;07SKC016&quot;,&quot;10MJE016&quot;,&quot;10CKS034&quot;,&quot;S2000CA007012&quot;,&quot;06SMM013&quot; )</code></pre>
 <p>Create a <code>TRUE</code>/<code>FALSE</code> (logical) vector by checking each userpedonID in <code>loafercreek</code> to see if it matches one in <code>your.list</code>.</p>
 <pre class="r"><code>matches.your.list &lt;- site(loafercreek)$pedon_id %in% your.list </code></pre>
-<p>Note that the length of the vector <code>matches.your.list</code> equals <code>nrow(site(loafercreek))</code>, but the number of TRUE values in <code>matches.your.list</code> (<code>sum(matches.your.list)</code>) is equal to <code>length(your.list)</code>.</p>
-<p>This is because all profile IDs in the list were found. If <code>sum(matches.your.list) &lt; length(your.list)</code> some in the list were NOT found.</p>
-<p>Get just the positions (index) where the logical vector <code>matches.your.list</code> is <code>TRUE</code> using <code>which()</code></p>
+<p>Note that the length of the vector <code>matches.your.list</code> equals <code>nrow(site(loafercreek))</code>.</p>
+<p>The number of <code>TRUE</code> values in <code>matches.your.list</code> (<code>sum(matches.your.list)</code>) is equal to <code>length(your.list)</code>. This is because all profile IDs in the list were found. If <code>sum(matches.your.list) &lt; length(your.list)</code> some in the list were NOT found.</p>
+<p>To get just the positions (index) where the logical vector <code>matches.your.list</code> is <code>TRUE</code> use <code>which()</code></p>
 <pre class="r"><code>your.matching.indices &lt;- which(matches.your.list)</code></pre>
 <p>Create a new SPC <code>loafercreek.subset</code> that is the subset corresponding to your “matching” indices.</p>
 <p>Use the <em>data.frame</em>-like bracket notation <code>spc[site.index, horizon.index]</code> to access the sites corresponding to your matching userpedonIDs.</p>
@@ -321,10 +327,22 @@ your.extended.list$SPC</code></pre>
 </div>
 <div id="editing-spcs" class="section level1">
 <h1><span class="header-section-number">4</span> Editing SPCs</h1>
-<p>Add site data to the SPC based on common (unique) site id (for example: <code>id</code>)</p>
-<pre class="r"><code>site(your.spc) &lt;- merge(site(your.spc), your.site.data, by = &quot;id&quot;)</code></pre>
-<p>Add horizon data to the SPC based on common (unique) horizon id (for example: <code>hzid</code>)</p>
-<pre class="r"><code>horizons(your.spc) &lt;- merge(horizons(your.spc), your.horizon.data, by = &quot;hzid&quot;)</code></pre>
+<p>Create a site or horizon-level variable.</p>
+<pre class="r"><code>loafercreek$foo &lt;- 1:nrow(site(loafercreek))
+
+loafercreek$foohz &lt;- 1:nrow(horizons(loafercreek))
+
+# note that this one causes an error. Test your understanding: why?
+horizons(loafercreek)$foohz2 &lt;- 1:nrow(site(loafercreek))</code></pre>
+<p>Create a site or horizon-level variable <em>without having replacement equal to number of sites/horizons</em> by explicitly calling <code>site()</code> or <code>horizons()</code>. Here since the replacement is length <code>1</code> it is set for all sites/horizons. This is the only way to set a site or horizon attribute that is not equal to the length of the respective <em>data.frame</em>.</p>
+<pre class="r"><code>site(loafercreek)$foo &lt;- 2
+horizons(loafercreek)$foo &lt;- 2</code></pre>
+<p>Add multiple attributes to the site data of a SPC based on common (unique) site id (for example: <code>id</code>). An SPC is smart enough to to <em>LEFT JOIN</em> on the shared unique site ID (must be present in new data data.frame <code>your.site.data</code>).</p>
+<p>This type of site level assignment results in an SPC with the unique site level attributes resulting from the join. Note we are assiging the new datato a call to <code>site()</code> on the SPC we are editing.</p>
+<pre class="r"><code>site(your.spc) &lt;- your.site.data</code></pre>
+<p>Adding horizon data to the SPC based on common (unique) horizon id (for example: <code>hzid</code>) is a little more complicated. You need to be careful when using direct replacement (like below) to make sure that you do not accidentally remove horizon records. Force all records from the original data to be retained by setting <code>all.x = TRUE</code></p>
+<pre class="r"><code>horizons(your.spc) &lt;- merge(horizons(your.spc), your.horizon.data, by = &quot;hzid&quot;, all.x=TRUE)</code></pre>
+<p>In the future, SPCs will allowq</p>
 </div>
 <div id="combining-spcs" class="section level1">
 <h1><span class="header-section-number">5</span> Combining SPCs</h1>

@@ -130,10 +130,22 @@ Get site _data.frame_ from `loafercreek` SPC.
 site(loafercreek)
 ```
 
+These are two equivalent expressions for finding the __number of sites/profiles__ in an SPC.
+```{r,eval=F, warning=F, message=F}
+nrow(site(loafercreek))
+length(loafercreek) # length(spc) is an alias for nrow(site(spc))
+```
+
 Get horizon _data.frame_ from `loafercreek` SPC.
  
 ```{r, eval=F, warning=F, message=F}
 horizons(loafercreek)
+```
+
+These are two equivalent expressions for finding the __number of horizons__ in an SPC.
+```{r,eval=F, warning=F, message=F}
+nrow(horizons(loafercreek))
+nrow(loafercreek) # nrow(spc) is an alias for nrow(horizons(spc))
 ```
 
 Create a subset SPC based on a site-level attribute using`subsetProfiles()` and argument `s` containing an expression to evaluate. Here we write an expression to select all profiles that have a field-measured slope gradient _less than 8 percent_.
@@ -161,11 +173,11 @@ Create a `TRUE`/`FALSE` (logical) vector by checking each userpedonID in `loafer
 matches.your.list <- site(loafercreek)$pedon_id %in% your.list 
 ```
 
-Note that the length of the vector `matches.your.list` equals `nrow(site(loafercreek))`, but the number of TRUE values in `matches.your.list` (`sum(matches.your.list)`) is equal to `length(your.list)`. 
+Note that the length of the vector `matches.your.list` equals `nrow(site(loafercreek))`. 
 
-This is because all profile IDs in the list were found. If `sum(matches.your.list) < length(your.list)` some in the list were NOT found.
+The number of `TRUE` values in `matches.your.list` (`sum(matches.your.list)`) is equal to `length(your.list)`. This is because all profile IDs in the list were found. If `sum(matches.your.list) < length(your.list)` some in the list were NOT found.
 
-Get just the positions (index) where the logical vector `matches.your.list` is `TRUE` using `which()`
+To get just the positions (index) where the logical vector `matches.your.list` is `TRUE` use `which()`
 
 ```{r, eval=F, warning=F, message=F}
 your.matching.indices <- which(matches.your.list)
@@ -181,17 +193,38 @@ loafercreek.subset <- loafercreek[your.matching.indices, ]
 
 # Editing SPCs
 
-Add site data to the SPC based on common (unique) site id (for example: `id`)
-
+Create a site or horizon-level variable.
 ```{r, eval=F, warning=F, message=F}
-site(your.spc) <- merge(site(your.spc), your.site.data, by = "id")
+loafercreek$foo <- 1:nrow(site(loafercreek))
+
+loafercreek$foohz <- 1:nrow(horizons(loafercreek))
+
+# note that this one causes an error. Test your understanding: why?
+horizons(loafercreek)$foohz2 <- 1:nrow(site(loafercreek))
 ```
 
-Add horizon data to the SPC based on common (unique) horizon id (for example: `hzid`)
+Create a site or horizon-level variable _without having replacement equal to number of sites/horizons_ by explicitly calling `site()` or `horizons()`. Here since the replacement is length `1` it is set for all sites/horizons. This is the only way to set a site or horizon attribute that is not equal to the length of the respective _data.frame_.
 
 ```{r, eval=F, warning=F, message=F}
-horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid")
+site(loafercreek)$foo <- 2
+horizons(loafercreek)$foo <- 2
 ```
+
+Add multiple attributes to the site data of a SPC based on common (unique) site id (for example: `id`). An SPC is smart enough to to _LEFT JOIN_ on the shared unique site ID (must be present in new data data.frame `your.site.data`). 
+
+This type of site level assignment results in an SPC with the unique site level attributes resulting from the join. Note we are assiging the new datato a call to `site()` on the SPC we are editing.
+
+```{r, eval=F, warning=F, message=F}
+site(your.spc) <- your.site.data
+```
+
+Adding horizon data to the SPC based on common (unique) horizon id (for example: `hzid`) is a little more complicated. You need to be careful when using direct replacement (like below) to make sure that you do not accidentally remove horizon records. Force all records from the original data to be retained by setting `all.x = TRUE`
+
+```{r, eval=F, warning=F, message=F}
+horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid", all.x=TRUE)
+```
+
+In the future, SPCs will allowq 
 
 # Combining SPCs
 

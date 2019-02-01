@@ -26,15 +26,27 @@ library(soilReports)
 ## #the SPC can be found in the SPC attribute when extended=TRUE
 ## your.extended.list$SPC
 ## site(loafercreek)
+## nrow(site(loafercreek))
+## length(loafercreek) # length(spc) is an alias for nrow(site(spc))
 ## horizons(loafercreek)
+## nrow(horizons(loafercreek))
+## nrow(loafercreek) # nrow(spc) is an alias for nrow(horizons(spc))
 ## sub1 <- subsetProfiles(loafercreek, s='slope_field < 8')
 ## sub2 <- subsetProfiles(loafercreek, h = 'clay > 35')
 ## your.list <- c("07SKC016","10MJE016","10CKS034","S2000CA007012","06SMM013" )
 ## matches.your.list <- site(loafercreek)$pedon_id %in% your.list
 ## your.matching.indices <- which(matches.your.list)
 ## loafercreek.subset <- loafercreek[your.matching.indices, ]
-## site(your.spc) <- merge(site(your.spc), your.site.data, by = "id")
-## horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid")
+## loafercreek$foo <- 1:nrow(site(loafercreek))
+## 
+## loafercreek$foohz <- 1:nrow(horizons(loafercreek))
+## 
+## # note that this one causes an error. Test your understanding: why?
+## horizons(loafercreek)$foohz2 <- 1:nrow(site(loafercreek))
+## site(loafercreek)$foo <- 2
+## horizons(loafercreek)$foo <- 2
+## site(your.spc) <- your.site.data
+## horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid", all.x=TRUE)
 data("loafercreek")
 data("gopheridge")
 ## loafergopher <- union(list(loafercreek, gopheridge))
