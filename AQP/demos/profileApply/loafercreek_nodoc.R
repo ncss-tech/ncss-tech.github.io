@@ -16,11 +16,15 @@ my.sub.set <- loafercreek[3:6, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
-
-plotSPC(my.sub.set, alt.label = 'pedon_id', alt.label.col = "#ffff00")
+plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 1)
 nrow(site(loafercreek))
 nrow(horizons(loafercreek))
 max(horizons(loafercreek)$clay, na.rm = TRUE)
+a <- c(TRUE, FALSE, FALSE, TRUE)
+
+a # compare this
+
+which(a) # to this
 ## a <- c(TRUE, FALSE, TRUE)
 ## b <- c(FALSE, TRUE, FALSE)
 ## 
@@ -39,6 +43,7 @@ max(horizons(loafercreek)$clay, na.rm = TRUE)
 ## 
 ## is.na(a)
 ## is.na(a & NA)
+## is.na(a | NA)
 ## 
 ## (TRUE & NA) != (FALSE & NA)
 ## (FALSE | NA) | (TRUE | NA)

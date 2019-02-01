@@ -15,7 +15,7 @@ output:
 
 The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series (_fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs_) is comprised of soils on foothills underlain by vertically-bedded metavolcanic rock. They are moderately deep (50 to 100cm) to a paralithic contact. 
 
-![A photo of a Loafercreek soil profile. NASIS UserpedonID: 09BAH008](images/loafercreek-09BAH008.jpg)
+![A typical photo of a Loafercreek soil profile. NASIS UserPedonID: 09BAH008](images/loafercreek-09BAH008.jpg)
 
 The Loafercreek series was established in Butte county (_CA612_) and now is mapped in Calaveras and Tuolumne (_CA630_) as well as small portions of Mariposa and Stanislaus Counties (_CA630_ join with _CA649_ and _CA644_).
 
@@ -23,7 +23,7 @@ The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rock
 
 The metavolcanic rocks in this area were recognized by miners during the gold rush to form distinctive "tombstone"-like outcrops. 
 
-![Thermic metavolcanic foothills landscape photo](images/CA630_keystonequad_rushingmtn_tower6.JPG)
+![Thermic metavolcanic foothills landscape - vantage from Rushing Hill Fire Tower near Keystone, CA](images/CA630_keystonequad_rushingmtn_tower6.JPG)
 
 Areas of soils _conceptually related_ to _Loafercreek_ have been mapped primarily as [Auburn](https://casoilresource.lawr.ucdavis.edu/sde/?series=auburn) in the Sierra Nevada Foothills. 
 
@@ -136,8 +136,13 @@ my.sub.set <- loafercreek[3:6, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
+```
 
-plotSPC(my.sub.set, alt.label = 'pedon_id', alt.label.col = "#ffff00")
+
+Make a plot of just the subset. Put userpedonID labels on each profile (along left hand side) and make the label text twice as large as default (`cex.id = 0.5`).
+
+````{r}
+plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 1)
 ```
 
 Now, we will take a look at the main parts of the `loafercreek` SPC.
@@ -160,25 +165,47 @@ max(horizons(loafercreek)$clay, na.rm = TRUE)
 You can see from the ratio of rows in `loafercreek@horizons` to rows in `loafercreek@site`, there is a _many:one_ relationship. _Many:one_ is the rule, not the exception, for many properties we describe in soil survey (geomorphology, color, structure, rock fragments etc) and encode in soil data structures. 
 
 ***
+#### Tip: Using logical vectors to index SPCs
 
-__Some comments on__ ___logical___ __(TRUE/FALSE) vectors...__
+Logical vectors are handy as indexes of `SoilProfileCollections` and various other R objects. A _logical expression_ is a piece of code that results in a _logical vector_.
 
-Logical vectors are handy as indexes of `SoilProfileCollections` and various other R objects!
+In particular, _logical vectors_ are nice since you can return `TRUE` or `FALSE` after evaluating an _expression_ on __EACH PROFILE__ in a SPC. That is, you have a vector of equal length to the number of sites in the SPC. This is an important "sanity check" for your analyses.
 
-Invert logicals (i.e. convert true to false; false to true) using the `!` (_NOT_) operator. 
+_When using logical vectors as index variables it is less likely one of your profiles will accidentally "fall through the cracks" during analysis. You also are less likely to introduce unintended "offsets" causing the "wrong" profiles to be selected when you index. Also, if you try to use a logical vector containing `NA` to index an SPC, you will (rightly) get an error._
 
-_logical_ comparison is (_equals_: `==`; _does not equal_: `!=`) between the values in the same index position. When making logical expressions, vectors should either be the _same_ length, or one of _n_-length and the other of length 1.
+You can also index using just the "positions" you want (e.g. `spc[c(2, 3, 10), ]` to get the second, third and tenth profile in an SPC). 
+
+You can convert a logical vector to a _vector of _positions where the logical vector is `TRUE`_ using the function `which()`.
+
+For instance:
+
+```{r}
+a <- c(TRUE, FALSE, FALSE, TRUE)
+
+a # compare this
+
+which(a) # to this
+```
+
+You can _invert_ logicals (take the opposite; `TRUE` to `FALSE` & `FALSE` to `TRUE`) using the exclamation mark `!` (_NOT_) operator. 
+
+_logical_ comparison (_equals_: `==`; _does not equal_: `!=`) is done between the values in the _same index position_ of two vectors being compared. T
+
+hat means that when making _logical expressions_, vectors should either be the _same_ length, or one of _n_-length and the other of length 1.
 
 You can also evaluate a logical expression using `&` (_AND_) and `|` (_OR_) operators. 
 
- * In order for the expression to return `TRUE`, _AND_ requires __both__ sides of the expression to be `TRUE`.
+ * In order for an expression to return `TRUE`, _AND_ requires __both__ sides of the expression to be `TRUE`.
  
- * Whereas _OR_ accepts __either__ (or both).
+ * Whereas _OR_ returns `TRUE` with __either__ or __both__ sides of the expression being `TRUE`.
 
 <details>
 <summary>
-_Mini exercise [CLICK HERE]:_ estimate result of the following logical expressions; check answers in your R console.
+_Test your understanding [CLICK HERE]:_ 
 </summary>
+
+Estimate the result of the following logical expressions; check answers in your R console.
+
 ```{r eval=FALSE}
 a <- c(TRUE, FALSE, TRUE)
 b <- c(FALSE, TRUE, FALSE)
@@ -198,6 +225,7 @@ any(b)
 
 is.na(a)
 is.na(a & NA)
+is.na(a | NA)
 
 (TRUE & NA) != (FALSE & NA)
 (FALSE | NA) | (TRUE | NA)
@@ -474,13 +502,13 @@ Perhaps we need to make a `motherlode` dataset to go along with `gopheridge` and
 
 ### Modifying default arguments for new analyses
 
-Simple additions to the `estimateSoilDepth()` default pattern would be duripan `p = 'qm'` or carbonates`p = 'k'`. But 'depth' doesn't have to be a 'root-restriction' depth. 
+Simple additions to the `estimateSoilDepth()` default pattern would be duripan `p = 'qm'` or carbonates`p = 'k'`. However, the 'soil depth' we are calculating doesn't have to be a 'root-restriction' depth or even part of a horizon designation. 
 
-By changing the default settings of  `estimateSoilDepth()` you can calculate many "depth-to-_X_" features involving a _character_ or categorical variables that are contained within horizon designations (`hzname`). 
+By changing the default settings of `estimateSoilDepth()` you can calculate many types of "depth-to-_X_ feature". In particular, `estimateSoilDepth()` works using text-based matching for any horizon-level _character_ or _categorical_ variable data (for example: horizon designation, structure group, cementation class).
 
 The likelihood of observing _X_ soil property varies as a function of depth for different groups of soils (e.g. a series or other mapping/taxonomic unit). Say _X_ is a gypsic horizon, or the top of a spodic horizon, or the depth to an abrupt textural change. 
 
-When you calculate the depth to that property for a set of soil observations, you can approximate the depth-distribution of probability of observing _X_ across depth. With sufficient data, `density()` plots are a rapid way of inspecting these sample distributions.
+When you calculate the depth to a particular property for a set of soil observations, you are approximate the depth-distribution of probability of observing _X_ across depth. With sufficient data, `density()` plots are a rapid way of inspecting these sample distributions.
 
 More "similar" sets of soils might be expected to have less variation in the depth to an "important" characteristic. When evaluating taxonomic placement and correlation decisions, as well as for novel interpretive uses, it may be useful to know something about the variation in "depth-to-X" within a group of of soils.
 
