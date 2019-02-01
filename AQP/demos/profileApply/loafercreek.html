@@ -307,8 +307,8 @@ data(&quot;loafercreek&quot;)</code></pre>
 <pre class="r"><code># access the cly attribute from the horizons data frame
 horizons(spc)$clay
 
-#add new site data by merging a data frame on site ID
-site(spc) &lt;- merge(site(spc), new.site.data, by=&quot;uniquesiteid&quot;)</code></pre>
+#add new site data by LEFT JOIN on UNIQUE site ID (assumed to be present in both spc and new.site.data)
+site(spc) &lt;- new.site.data</code></pre>
 <p>SPC data (sites, horizons) can also be accessed in ways similar to a base R <em>data.frame</em> via square bracket notation: <code>spc[your.site.index, your.horizon.index]</code>.</p>
 <p>In practice, you are usually indexing either a site-level OR a horizon-level attribute. You want to be aware of the length of any index you are using, and ensure you are getting what you expect, due to the flexibility built into the SPC data access methods.</p>
 <p>We use the <em>data.frame</em>-like bracket notation to get a few profiles (by specifying a site-index) and plot them.</p>
@@ -481,13 +481,20 @@ head(new.site.data)</code></pre>
 ## horizon designation and 5 random horizon level attributes (p1, p2...)
 your.spc &lt;- do.call('rbind', lapply(new.site.data[['id']], random_profile)) 
 head(your.spc)</code></pre>
-<pre><code>##   id top bottom name        p1        p2         p3          p4         p5
-## 1  1   0     18   H1  8.355960  4.668142   4.864520   2.9865289  -9.450279
-## 2  1  18     45   H2  4.484495  6.908954   4.690887  14.3013631 -15.075633
-## 3  1  45     75   H3 11.018670  7.220444   4.909557 -10.1099538  -5.040060
-## 4  1  75     81   H4 13.154455 -4.021044  -1.778100   0.1572341  -4.709110
-## 5  1  81     99   H5 19.107601 -3.848790  -6.747290  -2.2335992   4.403830
-## 6  1  99    109   H6  7.102663 10.295814 -17.358510   4.2132218   8.275743</code></pre>
+<pre><code>##   id top bottom name         p1        p2          p3         p4
+## 1  1   0     14   H1   2.756311 -3.381001  -9.6020313  -9.970113
+## 2  1  14     27   H2   7.724370  2.262056 -10.7352949  -4.639687
+## 3  1  27     38   H3   7.454139 16.880035  -0.9645957 -13.110971
+## 4  1  38     43   H4 -17.398208 17.499125   6.2010139 -23.234081
+## 5  1  43     60   H5 -12.033511 13.057551  -2.7165824 -30.987060
+## 6  2   0     18   H1  -8.751958 -4.058779   6.4416930   2.323562
+##           p5
+## 1  -3.000912
+## 2  -4.136426
+## 3  -3.163257
+## 4  -3.707997
+## 5 -12.447613
+## 6 -14.321768</code></pre>
 <pre class="r"><code>## or read your data from file. 
 # your.spc &lt;- read.csv(&quot;your.horizon.data.csv&quot;)
 

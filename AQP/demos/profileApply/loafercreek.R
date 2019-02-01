@@ -121,8 +121,8 @@ data("loafercreek")
 ## # access the cly attribute from the horizons data frame
 ## horizons(spc)$clay
 ## 
-## #add new site data by merging a data frame on site ID
-## site(spc) <- merge(site(spc), new.site.data, by="uniquesiteid")
+## #add new site data by LEFT JOIN on UNIQUE site ID (assumed to be present in both spc and new.site.data)
+## site(spc) <- new.site.data
 
 #' 
 #' SPC data (sites, horizons) can also be accessed in ways similar to a base R _data.frame_ via square bracket notation: `spc[your.site.index, your.horizon.index]`. 
