@@ -146,8 +146,8 @@ In practice, you are usually indexing either a site-level OR a horizon-level att
 We use the _data.frame_-like bracket notation to get a few profiles (by specifying a site-index) and plot them.
 
 ```{r}
-# get profiles #4, 5, 6, 7, 8, 9 and 10
-my.sub.set <- loafercreek[4:10, ]
+# get profiles #4, 5, 6, 7
+my.sub.set <- loafercreek[4:7, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
@@ -155,14 +155,15 @@ nrow(site(my.sub.set))
 
 Make a plot of just our subset. 
 
-Put userpedonID labels on each profile (along left hand side) and make the label text larger (than default: `cex.id = 0.5`).
+Put userpedonID labels on each profile (along left-hand side) and make the label text larger (than default: `cex.id = 0.5`).
 
-````{r}
+```{r}
 plotSPC(my.sub.set, label = 'pedon_id', 
-        id.style = "side", cex.id = 0.65)
+        id.style = "side", cex.id = 0.65,
+        x.idx.offset = 0.1)
 ```
 
-Setting the margins equal to zero (e.g. `par(mar=c(0,0,0,0))`) can sometimes help with displaying plots with either small (5 or less) or large (40+) numbers of profiles. This is a byproduct of some of the limitations of the base R graphics system.
+Setting the `x.idx.offset` (e.g. `x.idx.offset = 0.1`) can sometimes help with displaying plots with small numbers of profiles. This is a byproduct of some of the limitations of the base R graphics system.
 
 To get these SPC plots to look "nice" there are many other options for adjusting offsets for plots and axis positions, as well as labels, colors, legends, etc. that can be found under `?plotSPC()`.
 
@@ -1648,10 +1649,13 @@ loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^B.*t.*')] <- 'Bt'
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^BC')] <- 'BCt'
 
 # any start with C? [no]
-loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
+## loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
 
 # bedrock colors - usually weird and rarely populated
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='Cr|R|Cd')] <- 'Cr'
+
+loafercreek$extragenhz <-  factor(loafercreek$extragenhz,
+                                  levels = c('A','Bt','BCt','Cr'))
 ```
 
 Show all dry colors in the `loafercreek` SPC  -- grouped by our extra-generalized horizons `loafercreek$extragenhz`.

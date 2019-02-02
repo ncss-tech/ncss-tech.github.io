@@ -26,13 +26,14 @@ data("loafercreek")
 ## 
 ## #add new site data by LEFT JOIN on UNIQUE site ID (assumed to be present in both spc and new.site.data)
 ## site(spc) <- new.site.data
-# get profiles #4, 5, 6, 7, 8, 9 and 10
-my.sub.set <- loafercreek[4:10, ]
+# get profiles #4, 5, 6, 7
+my.sub.set <- loafercreek[4:7, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
 plotSPC(my.sub.set, label = 'pedon_id', 
-        id.style = "side", cex.id = 0.65)
+        id.style = "side", cex.id = 0.65,
+        x.idx.offset = 0.1)
 nrow(site(loafercreek))
 nrow(horizons(loafercreek))
 max(horizons(loafercreek)$clay, na.rm = TRUE)
@@ -513,10 +514,13 @@ loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^B.*t.*')] <- 'Bt'
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^BC')] <- 'BCt'
 
 # any start with C? [no]
-loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
+## loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
 
 # bedrock colors - usually weird and rarely populated
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='Cr|R|Cd')] <- 'Cr'
+
+loafercreek$extragenhz <-  factor(loafercreek$extragenhz,
+                                  levels = c('A','Bt','BCt','Cr'))
 aggregateColorPlot(aggregateColor(groups='extragenhz', 
                                   col ='dry_soil_color', 
                                   loafercreek), 
