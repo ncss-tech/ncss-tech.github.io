@@ -26,7 +26,7 @@ opts_chunk$set(message = FALSE,
 
 The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series (_fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs_) is comprised of soils on foothills underlain by vertically-bedded metavolcanic rock. They are moderately deep (50 to 100cm) to a paralithic contact. 
 
-![A typical photo of a Loafercreek soil profile. NASIS UserPedonID: 09BAH008](images/loafercreek-09BAH008.jpg)
+![A typical photo of a Loafercreek soil profile. NASIS user pedon ID: 09BAH008](images/loafercreek-09BAH008.jpg)
 
 The Loafercreek series was established in Butte county (_CA612_) and now is mapped in Calaveras and Tuolumne (_CA630_) as well as small portions of Mariposa and Stanislaus Counties (_CA630_ join with _CA649_ and _CA644_).
 
@@ -155,9 +155,14 @@ nrow(site(my.sub.set))
 
 Make a plot of just our subset. 
 
-Put userpedonID labels on each profile (along left-hand side) and make the label text larger (than default: `cex.id = 0.5`).
+Put user pedon ID labels on each profile (along left-hand side) and make the label text larger (than default: `cex.id = 0.5`). Note that we start the process by adjusting figure margins with `par()`.
 
 ```{r}
+# adjust margins, units are inches, bottom, left, top, right
+# you may have to tinker with these depending on the number of profiles and figure geometry
+par(mar=c(0, 0, 0, 1))
+
+# make sketches
 plotSPC(my.sub.set, label = 'pedon_id', 
         id.style = "side", cex.id = 0.65,
         x.idx.offset = 0.1)
@@ -271,6 +276,9 @@ series.names <- c("Argonaut", "Auburn", "Bonanza", "Dunstone",
 
 osds <- fetchOSD(soils = series.names, extended = TRUE)
 
+# adjust margins, units are inches, bottom, left, top, right
+# you may have to tinker with these depending on the number of profiles and figure geometry
+par(mar=c(0, 0, 0, 1))
 plotSPC(osds$SPC)
 ```
 
@@ -320,7 +328,7 @@ coordinates(loafercreek) <- ~ x_std + y_std
 Inspect the spatial slot.
 
 ```{r}
-loafercreek@sp
+slot(loafercreek, 'sp')
 ```
 
 Ok, so the spatial points are _in there_... but the coordinate reference system (CRS) is `NA`. 
@@ -334,7 +342,7 @@ proj4string(loafercreek) <- '+proj=longlat +datum=WGS84'
 ```
 
 ```{r}
-loafercreek@sp
+slot(loafercreek, 'sp')
 ```
 
 Looks good. These `SpatialPoints` are safe to `spTransform()` (e.g. to UTM).
@@ -359,8 +367,14 @@ Note that in the coercion call `as()` you should NOT use `site(loafercreek)` as 
 __Obligatory spatial plot__ 
 
 ```{r}
+# plot pedon locations as points
 plot(loafercreek.spdf, main = "Loafercreek Pedon Locations", pch = 19, cex = 0.5)
+
+# "add" county level maps from maps package
 maps::map(database = 'county', regions = 'CA', add = TRUE)
+
+# add a neatline
+box()
 ```
 
 Note that two pedons from _CA612_ are included (one is the type location), but clearly most of the pedons are clustered further south (in _CA630_).
@@ -412,17 +426,19 @@ head(hzID(your.spc)) #unique horizon ids (assigned at time of SPC creation)
 
 _soilDB_ provides a variety of ways to import soil data into SPCs.
 
- * `fetchOSD()` for getting profile information from series type locations.
+ * [`fetchOSD()`](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html) for getting profile information from series type locations.
  
- * `fetchKSSL()` for querying data from a snapshot of the Kellogg Soil Survey Laboratory database. 
+ * [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html) for querying data from a snapshot of the Kellogg Soil Survey Laboratory database. 
  
- * `fetchNASIS()` for accessing NASIS pedons and components via ODBC connection
+ * [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html) for accessing NASIS pedons and components via ODBC connection
  
- * `fetchSDA_component()` & `SDA_query()`  for SSURGO tabular _or spatial_ data via Soil Data Access (SDA).
+ * [`fetchSDA_component()`](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html) & [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)  for SSURGO tabular [_or spatial_](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html) data via Soil Data Access (SDA).
  
 Watch out for future NASIS, SDA and flat file specific modules. 
 
-The packages _aqp_ and _sharpshootR_ provide functions for interacting with and summarizing the contents of SPCs.
+The packages [_aqp_](http://ncss-tech.github.io/aqp/docs/) and [_sharpshootR_](http://ncss-tech.github.io/sharpshootR/docs/) provide functions for interacting with and summarizing the contents of SPCs.
+
+
 
 # Using `profileApply()`
 
@@ -432,7 +448,7 @@ The _aqp_ function `profileApply()` allows us to evaluate a function on each pro
 
 It emulates the base R `*apply` functionality (`apply`, `lapply`, `mapply` etc.); but instead of an array, list, or matrix, iterating over profiles within a SPC.
 
-_The number of results returned is equal to the number of sites in the SPC._ 
+_The number of results returned is equal to the number of profiles in the SPC._ 
 
 ___`profileApply()` - method in aqp for SoilProfileCollection objects___
 ```{r, eval=FALSE}
@@ -447,6 +463,7 @@ __Arguments__
  * `simplify` - _logical_, should the result _list_ be simplified to a _vector_? 
  
  * `...` - further arguments passsed to `FUN`
+
 
 ## Example: estimateSoilDepth()
 
@@ -641,8 +658,11 @@ The depth of the _first_ horizon with dry hue matching the pattern is returned f
 loafercreek$depth.to.5YR <- profileApply(loafercreek, FUN = estimateSoilDepth, 
                                          name = 'd_hue', p = '^5YR|^2\\.5YR')
 
-plot(main = "Distribution of depth to 5YR or 2.5YR dry hue in Loafercreek", 
-     density(loafercreek$depth.to.5YR, na.rm = TRUE, from = 0, to = 100))
+# kernel density estimate
+dens <- density(loafercreek$depth.to.5YR, na.rm = TRUE, from = 0, to = 100)
+
+# plot the result and modify title, y-axis text orientation
+plot(dens, main = "Distribution of depth to 5YR or 2.5YR dry hue in Loafercreek", las=1)
 ```
 
 Interesting. Typically, if you were summarizing a homogenous group, you would expect a unimodal distribution, even if not perfectly _normal_. This looks a bit bimodal... there might be two clusters here? 
@@ -653,7 +673,7 @@ Wait a minute.
 loafercreek$depth.to.5YR
 ```
 
-There are values of `200` and _over_ From `estimateSoilDepth()`.,,,
+There are values of `200` and _over_ From `estimateSoilDepth()`.
 
 Turns out, setting the result to an arbitrarily large number `200` is default behavior for profiles that never match the pattern. Some are greater than `200` and if you check, they are the bottom depths from the last (bedrock) layer in those pedons. 
 
@@ -686,12 +706,16 @@ Subset `sub1` is created using _aqp_ function `subsetProfiles()`. It consists of
 
 ```{r}
 sub1 <- subsetProfiles(loafercreek, s = 'depth.to.5YR <= 40')
-nrow(site(sub1))
+length(sub1)
 ```
 
 The less than 40 cm group looks pretty good. Not too many gaps in the data, and our criteria are met. And we have `r nrow(site(sub1))` pedons in the group.
 
 ```{r}
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
 plotSPC(sub1, max.depth=100, print.id = FALSE, 
         axis.line.offset=-0.5, name = '', 
         width = 0.4, color = 'd_hue')
