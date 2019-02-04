@@ -150,7 +150,7 @@ We use the _data.frame_-like bracket notation to get a few profiles (by specifyi
 my.sub.set <- loafercreek[4:7, ]
 
 # number of rows (sites or profiles)
-nrow(site(my.sub.set))
+length(my.sub.set)
 ```
 
 Make a plot of just our subset. 
@@ -176,12 +176,12 @@ Now, we will take a look at the main parts of the `loafercreek` SPC.
 
 __Number of sites in `loafercreek` site _data.frame___
 ```{r}
-nrow(site(loafercreek))
+length(loafercreek)
 ```
 
 __Number of horizons in `loafercreek` horizons _data.frame___
 ```{r}
-nrow(horizons(loafercreek))
+nrow(loafercreek)
 ```
 
 __Maximum clay content observed out of _all_ profiles__
@@ -301,7 +301,7 @@ Check for yourself. Use `soilDB::fetchKSSL()` to make a SPC of the lab pedons co
 k <- fetchKSSL(series = "loafercreek")
 
 # count the number of rows (records) in the `loafercreek@site` data.frame
-n.pedons <- nrow(site(k))
+n.pedons <- length(k)
 
 # here you would inspect the data 
 
@@ -531,11 +531,11 @@ bad.peiid <- c("542129")
 
 #SPC with just the "bad" pedon (this one isn't that bad)
 deep.one <- loafercreek[site(loafercreek)$peiid %in% bad.peiid, ]
-nrow(site(deep.one))
+length(deep.one)
 
 #the inverse, loafercreek without the "bad" one
 loafernew <-loafercreek[!(site(loafercreek)$peiid %in% bad.peiid), ]
-nrow(site(loafernew))
+length(loafernew)
 ```
 
 You can clearly see the "deep" observation in the `loafercreek$bedrckdepth` `density()` plots above. You also may have noticed `148` was the sole value above the 99th percentile when we looked at quantiles. 
@@ -612,7 +612,7 @@ Access `loafercreek` site attribute `bedrckdepth` using `$` and set the value to
 loafercreek$bedrckdepth <- depth.to.contact
 ```
 
-Since `length(depth.to.contact) == nrow(site(loafercreek))` the SPC is smart enough to know we are editing a `loafercreek@site` record. 
+Since `length(depth.to.contact) == length(loafercreek)` the SPC is smart enough to know we are editing a `loafercreek@site` record. 
 
 To resolve ambiguity about whether you are accessing `loafercreek@site` or `loafercreek@horizons` you need to specify a _site-_ or _horizon-index_ (length equal to number of rows) and/or use `site(loafercreek)` or `horizons(loafercreek)`. 
 
@@ -623,7 +623,7 @@ Unpredictable results or errors may arise if you do not at least implicitly spec
 loafercreek$new.hz.level.variable <- loafercreek$clay / 100 
 ```
 
-Since `length(loafercreek$clay) == nrow(horizons(loafercreek))` the SPC is smart enough to know we are editing a horizon record called `new.hz.level.variable`. `new.hz.level.variable` does not exist in `loafercreek@horizons`, so it will be created.
+Since `length(loafercreek$clay) == nrow(loafercreek)` the SPC is smart enough to know we are editing a horizon record called `new.hz.level.variable`. `new.hz.level.variable` does not exist in `loafercreek@horizons`, so it will be created.
 
 ## Example: Indicators of landscape stability
 
@@ -709,7 +709,7 @@ sub1 <- subsetProfiles(loafercreek, s = 'depth.to.5YR <= 40')
 length(sub1)
 ```
 
-The less than 40 cm group looks pretty good. Not too many gaps in the data, and our criteria are met. And we have `r nrow(site(sub1))` pedons in the group.
+The less than 40 cm group looks pretty good. Not too many gaps in the data, and our criteria are met. And we have `r length(sub1)` pedons in the group.
 
 ```{r}
 # adjust margins, units are inches, bottom, left, top, right
@@ -720,6 +720,26 @@ plotSPC(sub1, max.depth=100, print.id = FALSE,
         axis.line.offset=-0.5, name = '', 
         width = 0.4, color = 'd_hue')
 ```
+
+
+Lets fix those colors and the ordering to reflect "redness".
+```{r}
+# convert to a factor and set levels, yellow -> red
+sub1$d_hue <- factor(sub1$d_hue, levels=c('10YR', '7.5YR', '5YR', '2.5YR'))
+
+# new colors for each hue, roughly based on the each Munsell hue
+colors <- parseMunsell(c('10YR 6/7', '7.5YR 5/5', '5YR 5/8', '2.5YR 3/10'))
+
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
+plotSPC(sub1, max.depth=100, print.id = FALSE, 
+        axis.line.offset=-0.5, name = '', 
+        width = 0.4, color = 'd_hue', 
+        col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
+```
+
 
 To make `sub2`, we use SPC square bracket notation, the `%in%` operator, and a logical vector for subsetting. 
 
@@ -736,18 +756,29 @@ not.in.sub1 <- !(site(loafercreek)$peiid %in% site(sub1)$peiid)
 # square bracket SPC subsetting
 sub2 <- loafercreek[not.in.sub1,]
 
-nrow(site(sub2))
+length(sub2)
 ```
 
 Hmm...
 
-```{r}
+```{r fig.width=8, fig.height=4.5}
+# convert to a factor and set levels, yellow -> red
+sub2$d_hue <- factor(sub2$d_hue, levels=c('2.5Y', '10YR', '7.5YR', '5YR', '7.5R'))
+
+# new colors for each hue, roughly based on the each Munsell hue
+colors <- parseMunsell(c('2.5Y 8/2', '10YR 6/7', '7.5YR 5/5', '5YR 4/8', '7.5R 3/8'))
+
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
 # make SPC plot cut off at 100, hide IDs and make it clear which have data
 plotSPC(sub2, max.depth=100, print.id = FALSE, 
         axis.line.offset=-0.5, name = '', 
-        width = 0.4, color = 'd_hue')
+        width = 0.4, color = 'd_hue',
+        col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
 
-nrow(site(sub2))
+length(sub2)
 ```
 
 OK. So, in the last two profile plots we can visually see four cases. 
@@ -772,7 +803,7 @@ We will combine groups __#2__ and __#3__, with the caveat that it appears that _
 
 Since we want to see if the provisional separation using the 40 cm depth separates distinct "morphologies," we want to make a new site-level attribute called `red.shallow` to portray pedon class membership with respect to this "redness" depth threshold. 
 
-We do this using the typical `spc$variable.name <- new.value` assignment discussed above in the _SoilProfileCollection_ section. `new.value` is either of length `1` (assigned to all sites) or `nrow(site(spc))` for a _site_-level variable. 
+We do this using the typical `spc$variable.name <- new.value` assignment discussed above in the _SoilProfileCollection_ section. `new.value` is either of length `1` (assigned to all sites) or `length(spc)` for a _site_-level variable. 
 
 ```{r}
 loafercreek$red.shallow <- (loafercreek$depth.to.5YR <= 40)
@@ -785,7 +816,7 @@ We saw in the profile plots that the first group `sub1` pretty uniformly met the
 However, quite a few pedons in the "remainder" group `sub2` have some issues.
 Notably, pedons with no dry hue data (all horizons `NA`)
 
-But `r sum(is.na(loafercreek$depth.to.5YR))` out of `r nrow(site(loafercreek))` pedons returned `NA`. 
+But `r sum(is.na(loafercreek$depth.to.5YR))` out of `r length(loafercreek)` pedons returned `NA`. 
 
 These "all `NA`" have infinite `Inf` `depth.to.5YR` (we set it to that), because their `depth.to.5YR` was greater than `bedrckdepth`, but it also was some of our "not red" pedons. 
 
@@ -794,7 +825,7 @@ These "all `NA`" have infinite `Inf` `depth.to.5YR` (we set it to that), because
 ```{r, eval=FALSE}
 sum(is.na(loafercreek$depth.to.5YR))
 
-nrow(site(loafercreek))
+length(loafercreek)
 ```
 
 We remove `NA` when calculating most summary statistics. Often times that is fine because there is either good reason they are `NA` (e.g. bedrock) or we agree that their pattern of absence is "random" and not "systematic" and therefore won't hurt sample estimates _much_, as long as we have "enough" data.
@@ -832,12 +863,12 @@ _Here is a test of your logic._
 
 _Why does this expression work as expected?_
 ```{r, eval=FALSE}
-plot(loafercreek[!is.na(loafercreek$red.shallow) & !(loafercreek$red.shallow)], color='d_hue')` 
+plot(loafercreek[!is.na(loafercreek$red.shallow) & !(loafercreek$red.shallow), ], color='d_hue')
 ```
 
 _But this gives an error?_
 ```{r, eval=FALSE}
-plot(loafercreek[!loafercreek$red.shallow], color = 'd_hue')`
+plot(loafercreek[!loafercreek$red.shallow, ], color = 'd_hue')
 ```
 
 ***
@@ -862,6 +893,9 @@ The remaining `NA` values (and corresponding site/pedon data) need to be omitted
 Inspection of the plot of pedons with our grouping variable equal to `NA` correctly shows only pedons that lack dry hue data at all depths.
 
 ```{r}
+# adjust margins, units are inches, bottom, left, top, right
+par(mar=c(0, 0, 0, 2))
+
 plotSPC(loafercreek[is.na(loafercreek$red.shallow),], 
      color = 'd_hue', max.depth=100, 
      print.id = FALSE, name = '', axis.line.offset=-0.5)
@@ -869,11 +903,23 @@ plotSPC(loafercreek[is.na(loafercreek$red.shallow),],
 
 Looks good. And, likewise, here is the grouped profile plot showing our "redness" groups. They all have color data to back them up.
 
-```{r}
+```{r fig.width=12, fig.height=5.5}
+# convert to a factor and set levels, yellow -> red
+loafercreek$d_hue <- factor(loafercreek$d_hue, levels=c('2.5Y', '10YR', '7.5YR', '5YR', '2.5YR', '7.5R'))
+
+# new colors for each hue, roughly based on the each Munsell hue
+colors <- parseMunsell(c('2.5Y 8/2', '10YR 6/7', '7.5YR 5/5', '5YR 4/8', '2.5YR 3/10', '7.5R 3/8'))
+
+
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
 groupedProfilePlot(loafercreek[!is.na(loafercreek$red.shallow)],
                    groups = 'red.shallow', color = 'd_hue', max.depth=100, 
-                   print.id = FALSE, name = '', , 
-                   width = 0.45)
+                   print.id = FALSE, name = '',
+                   width = 0.45,
+                   col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
                    # NOTE: GPPs DO allow NA in the grouping variable; plots as '<missing>'
 ```
 
@@ -904,11 +950,16 @@ loafercreek$redness.class <- factor(red.shallow.nax,
                                     labels = redness.classes)
 ```
 
-```{r}
+```{r fig.width=12, fig.height=5.5}
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
 groupedProfilePlot(loafercreek, max.depth=100,
                    groups = 'redness.class', color = 'd_hue', 
                    print.id = FALSE, name = '', axis.line.offset=-0.5, 
-                   width = 0.45)
+                   width = 0.45,
+                   col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
 ```
 
 
@@ -1492,7 +1543,7 @@ If the function you are trying to `profileApply()` work for a few single well-be
 
 If it is a function you have designed, add a bit of code to print out the ID so you can know if `profileApply()` is failing on a particular pedon. 
 
-If you didnt write the function, or would prefer not to edit it, write a wrapper function to print the ID of each pedon before passing the pedon and other arguments to your problematic function, and call your wrapper function with `profileApply()` instead.
+If you did not write the function, or would prefer not to edit it, write a wrapper function to print the ID of each pedon before passing the pedon and other arguments to your problematic function, and call your wrapper function with `profileApply()` instead.
 
 Say, you want to calculate the depth-weighted average of a _numeric_ property over some depth interval [`tdepth`,`bdepth`] for all profiles in a SPC using this function:
 
@@ -1616,7 +1667,7 @@ Let's look at the breakdown of depth class in `loafercreek`. The variable `depth
 We calculate the number of pedon observations (rows in `loafercreek@site` `n.obs`) and combine that total with the summary output to calculate proportions.
 
 ```{r}
-n.obs <- nrow(site(loafercreek))
+n.obs <- length(loafercreek)
 names(n.obs) <- "total"
 loafercreek.depth.summary <- summary(sdc$depth.class)
 ```
@@ -1821,6 +1872,8 @@ xyplot(top ~ p.q50 | redness.class, data = loaf.slab.sub,
        panel = panel.depth_function, 
        prepanel = prepanel.depth_function,
        cf = loaf.slab.sub$contributing_fraction,
+       sync.colors=TRUE, alpha=0.25,
+       # par.settings=list(),
        layout = c(3,1), scales = list(x = list(alternating = 1))
   )
 ```
