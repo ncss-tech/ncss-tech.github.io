@@ -18,10 +18,14 @@ opts_chunk$set(message = FALSE,
                fig.align = 'center', 
                dev = 'png', 
                dev.args = list(pointsize = 10, 
-                             type = 'cairo', 
-                             antialias = 'subpixel'), 
-               tidy = TRUE)
+                             # type = 'cairo', 
+                             antialias = 'subpixel'),
+               cache = FALSE,
+               tidy = FALSE)
+
+options(width=100)
 ```
+
 # _Loafercreek_ - Context
 
 The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series (_fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs_) is comprised of soils on foothills underlain by vertically-bedded metavolcanic rock. They are moderately deep (50 to 100cm) to a paralithic contact. 
@@ -59,6 +63,16 @@ For instance, Auburn, by definition, does not have an argillic horizon and class
 In CA630, the shallow metavolcanic soils _with argillic horizons_ (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a _deep_ bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode) (fine-loamy) or [Gardellones](https://casoilresource.lawr.ucdavis.edu/sde/?series=gardellones) (loamy-skeletal).
 
 
+```{r echo=FALSE, results='hide', fig.width=10, fig.height=6}
+library(soilDB)
+x <- fetchOSD(c("Argonaut", "Auburn", "Bonanza", "Dunstone", 
+                  "Exchequer", "Gardellones", "Gopheridge", 
+                  "Jasperpeak", "Loafercreek", "Motherlode", 
+                  "Sobrante"))
+
+sharpshootR::SoilTaxonomyDendrogram(x, y.offset = 0.35, cex.taxon.labels = 0.9)
+```
+
 ## This demo
 
 In this series of demos, we are going to use R-based pedon summaries to explore properties of the _Loafercreek_ soils found during the soil survey inventory in _CA630_. 
@@ -69,17 +83,14 @@ This demo has three worked "examples" involving the use of `profileApply()` for 
 
 Readers are encouraged to run all of the code in their own IDE/text editor/console. Also, you are encouraged to use `?function.name` to view R manual pages whenever you encounter a `function()` you do not recognize.
 
-You can get the latest development versions of *aqp*, *soilDB* and *sharpshootR* using *devtools* package:
+You can get the latest development versions of *aqp*, *soilDB* and *sharpshootR* using *remotes* package:
 
 ```{r eval=FALSE}
-# install devtools if needed
-# install.packages("devtools")
-devtools::install_github('ncss-tech/aqp', 
-                         dependencies = FALSE, build = FALSE)
-devtools::install_github('ncss-tech/soilDB', 
-                         dependencies = FALSE, build = FALSE)
-devtools::install_github('ncss-tech/sharpshootR', 
-                         dependencies = FALSE, build = FALSE)
+# install remotes if needed
+# install.packages("remotes")
+remotes::install_github('ncss-tech/aqp', dependencies = FALSE, build = FALSE)
+remotes::install_github('ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
+remotes::install_github('ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
 ```
 
 ## For reference
@@ -728,7 +739,7 @@ Lets fix those colors and the ordering to reflect "redness".
 sub1$d_hue <- factor(sub1$d_hue, levels=c('10YR', '7.5YR', '5YR', '2.5YR'))
 
 # new colors for each hue, roughly based on the each Munsell hue
-colors <- parseMunsell(c('10YR 6/7', '7.5YR 5/5', '5YR 5/8', '2.5YR 3/10'))
+colors <- parseMunsell(c('10YR 4/4', '7.5YR 5/5', '5YR 5/8', '2.5YR 3/10'))
 
 # adjust margins, units are inches, bottom, left, top, right
 # be sure to leave room for legend
@@ -761,12 +772,12 @@ length(sub2)
 
 Hmm...
 
-```{r fig.width=8, fig.height=4.5}
+```{r fig.width=10, fig.height=4.5}
 # convert to a factor and set levels, yellow -> red
 sub2$d_hue <- factor(sub2$d_hue, levels=c('2.5Y', '10YR', '7.5YR', '5YR', '7.5R'))
 
 # new colors for each hue, roughly based on the each Munsell hue
-colors <- parseMunsell(c('2.5Y 8/2', '10YR 6/7', '7.5YR 5/5', '5YR 4/8', '7.5R 3/8'))
+colors <- parseMunsell(c('2.5Y 8/2', '10YR 4/4', '7.5YR 5/5', '5YR 4/8', '7.5R 3/8'))
 
 # adjust margins, units are inches, bottom, left, top, right
 # be sure to leave room for legend
@@ -847,7 +858,7 @@ all.na  <- profileApply(loafercreek,
                           return(all(is.na(p$d_hue))) 
                         } )
 
-loafercreek$red.shallow[all.na] <- NA
+loafercreek$red.shallow[which(all.na)] <- NA
 ```
 
 Now look at the groups we calculated.
@@ -896,7 +907,7 @@ Inspection of the plot of pedons with our grouping variable equal to `NA` correc
 # adjust margins, units are inches, bottom, left, top, right
 par(mar=c(0, 0, 0, 2))
 
-plotSPC(loafercreek[is.na(loafercreek$red.shallow),], 
+plotSPC(loafercreek[which(is.na(loafercreek$red.shallow)),], 
      color = 'd_hue', max.depth=100, 
      print.id = FALSE, name = '', axis.line.offset=-0.5)
 ```
@@ -908,17 +919,18 @@ Looks good. And, likewise, here is the grouped profile plot showing our "redness
 loafercreek$d_hue <- factor(loafercreek$d_hue, levels=c('2.5Y', '10YR', '7.5YR', '5YR', '2.5YR', '7.5R'))
 
 # new colors for each hue, roughly based on the each Munsell hue
-colors <- parseMunsell(c('2.5Y 8/2', '10YR 6/7', '7.5YR 5/5', '5YR 4/8', '2.5YR 3/10', '7.5R 3/8'))
-
+colors <- parseMunsell(c('2.5Y 6/4', '10YR 4/4', '7.5YR 5/5', '5YR 4/8', '2.5YR 3/10', '7.5R 3/8'))
 
 # adjust margins, units are inches, bottom, left, top, right
 # be sure to leave room for legend
 par(mar=c(0, 0, 3, 2))
 
 groupedProfilePlot(loafercreek[!is.na(loafercreek$red.shallow)],
+                   group.name.cex = 1.5,
                    groups = 'red.shallow', color = 'd_hue', max.depth=100, 
                    print.id = FALSE, name = '',
-                   width = 0.45,
+                   width = 0.4,
+                   divide.hz=FALSE,
                    col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
                    # NOTE: GPPs DO allow NA in the grouping variable; plots as '<missing>'
 ```
@@ -955,13 +967,36 @@ loafercreek$redness.class <- factor(red.shallow.nax,
 # be sure to leave room for legend
 par(mar=c(0, 0, 3, 2))
 
-groupedProfilePlot(loafercreek, max.depth=100,
+groupedProfilePlot(loafercreek, max.depth=100, 
+                   group.name.cex = 1.5,
                    groups = 'redness.class', color = 'd_hue', 
                    print.id = FALSE, name = '', axis.line.offset=-0.5, 
-                   width = 0.45,
+                   width = 0.4,
+                   divide.hz=FALSE,
                    col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
 ```
 
+
+```{r fig.width=10, fig.height=6}
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(4, 0, 3, 2))
+
+idx <- which(loafercreek$redness.class == 'LT40')
+sub <- loafercreek[idx, ]
+new.order <- order(sub$depth.to.5YR)
+
+plotSPC(sub,
+                   plot.order=new.order, cex.depth.axis = 1.25,
+                   max.depth=125, 
+                   color = 'd_hue', 
+                   print.id = FALSE, name = '', axis.line.offset=-2, 
+                   width = 0.4,
+                   col.palette = colors, col.legend.cex=1.25, col.label='Dry Hue')
+
+axis(side = 1, at = 1:length(sub), labels = sub$depth.to.5YR[new.order], cex.axis=0.75)
+mtext(text = 'Depth to 5YR (cm)', side = 1, line = 2.5)
+```
 
 ### Defining your own functions
 
@@ -1033,7 +1068,7 @@ We find that our profile maximum clay contents span the  fine-loamy clay content
 ```{r}
 # calculate the max clay content in all profiles
 loafercreek$maxclay <- profileApply(loafercreek, profileMaxClay)
-plot(density(loafercreek$maxclay, na.rm=T))
+plot(density(loafercreek$maxclay, na.rm=TRUE))
 ```
 
 Another value that could be of interest is DEPTH to maximum clay content. 
@@ -1083,7 +1118,7 @@ plot.params <- data.frame(labels=line.labelz,
                           line.color=line.colorz, 
                           lty=plot.lty, stringsAsFactors=FALSE)
 
-#make a base plot with base R apply() :)
+# make a base plot with base R apply() :)
 apply(plot.params, MARGIN=1, FUN=function(c) {
   idx <- loafercreek$redness.class %in% c[['labels']]
   
@@ -1688,7 +1723,7 @@ The density plot we made with `estimateSoilDepth()` and the categorical summary 
 
 We can use the `aggregateColor()` function to summarize the colors in a SPC by horizon designation. It returns a two element list containing _scaled_ and _aggregate_ data. 
 
-_Scaled_ data (default) is a _list_ of colors and their weights (proportion or number of horizons with a particular designation/group label). 
+_Scaled_ data is a _list_ of colors and their weights (proportion or number of horizons with a particular designation/group label). 
 
 When you specify the argument `k` you get _aggregate_ color data. Aggregate data is a _data.frame_ of "best representative" colors. Munsell colors are converted to LAB color space (a different _numeric_ representation of color). 
 
@@ -1736,6 +1771,9 @@ loafercreek$extragenhz <-  factor(loafercreek$extragenhz,
 Show all dry colors in the `loafercreek` SPC  -- grouped by our extra-generalized horizons `loafercreek$extragenhz`.
 
 ```{r fig.width=10}
+# fix margins
+par(mar=c(4.5,2,0,0))
+
 aggregateColorPlot(aggregateColor(groups='extragenhz', 
                                   col ='dry_soil_color', 
                                   loafercreek), 
@@ -1751,12 +1789,15 @@ LAB colors are clustered into a user-specified number (`k`) of groups using Part
 
 For each group, the medoid LAB color is back-transformed to nearest Munsell chip and returned. Then the weight of all of the observations in the cluster is assigned to that chip. 
 
-The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different colors that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output. 
+The math behind the clustering is beyond the scope of this demo, but the result when specifying `k` in a call to `aggregateColor()` is that you get back `k` different colors that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output. 
 
 For a given dataset, larger the value of `k` the more similar the medoid colors will be to one another. That is, as you increase `k` each color cluster will partition less variation. If the input data are _very_ similar, different cluster medoids theoretically could back-transform to the same Munsell chip. This is because LAB allows for much greater "precision" than whole-chip Munsell colors, and if you force it to make more clusters than are needed, those clusters could come back as the "same".
 
-```{r fig.width=8, fig.height=7}
+```{r fig.width=10}
 lt40.to.red <- loafercreek[loafercreek$redness.class == 'LT40', ]
+
+# fix margins
+par(mar=c(4.5,2,0,0))
 
 aggregateColorPlot(aggregateColor(groups='extragenhz', 
                                   col='dry_soil_color', 
@@ -1766,8 +1807,11 @@ aggregateColorPlot(aggregateColor(groups='extragenhz',
                    print.n.hz = TRUE)
 ```
 
-```{r fig.width=8, fig.height=7}
+```{r fig.width=10}
 gt40.to.red <- loafercreek[loafercreek$redness.class == 'GT40', ]
+
+# fix margins
+par(mar=c(4.5,2,0,0))
 
 aggregateColorPlot(aggregateColor(groups='extragenhz', 
                                   col='dry_soil_color', 
@@ -1787,7 +1831,7 @@ Lets investigate how these "redness" groups, however intermingled they may be, t
 
 The _aqp_ `slab()` function takes constant-thickness slices from multiple pedons and aggregates them using a function (`slab.fun`). This has the effect of "smoothing" the between-pedon variation to give depth-wise quantile estimates for properties within a SPC.
 
-Multiple continuous variables OR a single categorical (factor) variable (in this case `redness.class`) can be aggregated within a call to `slab()`. Slab returns the results of  running arbitrary functions on groups of slices. 
+Multiple continuous variables OR a single categorical (factor) variable (in this case `redness.class`) can be aggregated within a call to `slab()`. Slab returns the results of running arbitrary functions on groups of slices. 
 
 Below we expand the default `slab()` function `slab.fun=aqp:::.slab.fun.numeric.default` to include the mean with a user-defined function `slab.default.plus.mean()`.
 
@@ -1859,9 +1903,12 @@ Load the `lattice` package, and create an XY plot of the slab-wise median and in
 Use the same grouping variable you supplied to `slab()` (`redness.class`) to create separate plots for each group.
 
 ```{r}
-# install.packages("lattice") #if needed
 library(lattice)
-# make lattice xy plot
+
+# define plotting style
+tps <- list(superpose.line=list(col=c('RoyalBlue'), lwd=2))
+
+# lattice graphics make it (a little) simple to plot grouped data
 xyplot(top ~ p.q50 | redness.class, data = loaf.slab.sub, 
        main = 'Loafercreek - depth distribution of clay by \"redness class\"',
        ylab = 'Depth, cm',
@@ -1873,15 +1920,18 @@ xyplot(top ~ p.q50 | redness.class, data = loaf.slab.sub,
        prepanel = prepanel.depth_function,
        cf = loaf.slab.sub$contributing_fraction,
        sync.colors=TRUE, alpha=0.25,
-       # par.settings=list(),
+       par.settings=tps,
+       strip=strip.custom(bg=grey(0.85)),
        layout = c(3,1), scales = list(x = list(alternating = 1))
   )
 ```
 
 __Calculate the maximum clay content from the 5cm slab-wise medians__
 ```{r}
-df <- aggregate(loaf.slab.sub$p.q50, by = list(loaf.slab.sub$redness.class), FUN = max, na.rm = T)
+df <- aggregate(loaf.slab.sub$p.q50, by = list(loaf.slab.sub$redness.class), FUN = max, na.rm = TRUE)
 names(df) <- c("redness.class","maxclay.q50")
+
+# print the results
 df
 ```
 
@@ -1895,14 +1945,29 @@ Remember 10% of the data fall outside of the 5th-95th percentile range for each 
 
 #### Quantile-based summaries of unslabbed results
 
-We will use quantiles to summarize the distribution of `maxclay` for our three different redness groups and compare these values to the smoothed slab-wise quantiles derived above.
+We will use quantiles to summarize the distribution of `maxclay` for our three different redness groups and compare these values to the smoothed slab-wise quantiles derived above. Some extra effort is used to prepare a more legible table.
 
 ```{r}
-aggregate(loafercreek$maxclay, by=list(loafercreek$redness.class),
-  FUN=quantile, na.rm = TRUE, probs = c(0,0.05,0.25,0.5,0.75,0.95,1))
+# define some quantiles of interest
+probs <- c(0,0.05,0.25,0.5,0.75,0.95,1)
+
+# split the max clay values by redness class into a list
+s <- split(loafercreek$maxclay, f = loafercreek$redness.class)
+# compute desired quantiles within each list element
+a <- lapply(s, quantile, na.rm = TRUE, probs = probs)
+# combine into a data.frame
+a <- as.data.frame(do.call('rbind', a))
+
+# fix column names
+names(a) <- paste('q', probs, sep='')
+
+# note that group labels are stored in row.names
+# pretty-print the table, automatically converted to HTML in an Rmarkdown document
+knitr::kable(a)
 ```
 
-The _median_ we calculate above for each group using aggregate() is not considering horizon thickness. These medians show larger differences between groups than we found in the slab-wise analysis. This make sense, because all obseravations have equal weight in the above aggregate call, whereas slab effectively weights them based on their depths relative to the user defined slab structure.
+
+The _median_ (`q0.5`) we calculate above for each group is not considering horizon thickness. These medians show larger differences between groups than we found in the slab-wise analysis. This make sense, because all obseravations have equal weight in the above aggregate call, whereas slab effectively weights them based on their depths relative to the user defined slab structure.
 
 Think of it this way: when calculating max clay for a profile... a horizon with 60% clay that is 3 cm thick counts just as much as a horizon that is 50cm thick. 
 
@@ -1916,7 +1981,7 @@ On one hand, this is expected since we started with a relatively constrained gro
 
 On the other hand, the pedons spill outside of that neat parenthetical box.
 
-There appears to be more variation within the `LT40` group (evidenced by the wide gray bars in the `lattice` plot). 
+There appears to be more variation within the `LT40` group (evidenced by the shaded area in the `lattice` plot). 
 
 The variation is probably not pronounced or predictable enough to affect use and management in these areas (dominantly rangeland). 
 
@@ -1950,7 +2015,8 @@ groupedProfilePlot(loafergopher[c(1,8,123,140), ],
                    print.id = FALSE, axis.line.offset = -1,
                    color = 'total_frags_pct', 
                    groups = "taxonname", 
-                   group.name.offset = 0,
+                   max.depth=150,
+                   group.name.offset = -10,
                    group.name.cex = 0.5)
 ```
 
