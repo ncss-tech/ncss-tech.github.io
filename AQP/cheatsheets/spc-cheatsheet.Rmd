@@ -27,16 +27,16 @@ install.packages(c("aqp","soilDB","sharpshootR"))
 You can get the latest "development" versions of ncss-tech packages from GitHub. 
 
 ```{r, eval=F, warning=F, message=F}
-# install.packages("devtools") # if needed
-devtools::install_github(repo = 'ncss-tech/aqp', dependencies = FALSE, build = FALSE)
-devtools::install_github(repo = 'ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
-devtools::install_github(repo = 'ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
+# install.packages("remotes") # if needed
+remotes::install_github(repo = 'ncss-tech/aqp', dependencies = FALSE, build = FALSE)
+remotes::install_github(repo = 'ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
+remotes::install_github(repo = 'ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
 ```
 
-Note that _soilReports_ package (containing, for instance, the mapunit comparison report) is ONLY available __FROM GitHub__.
+Note that _soilReports_ package (containing, for instance, the map unit comparison report) is ONLY available __FROM GitHub__.
 
 ```{r, eval=F, warning=F, message=F}
-devtools::install_github(repo = 'ncss-tech/soilReports', dependencies = FALSE, build = FALSE)
+remotes::install_github(repo = 'ncss-tech/soilReports', dependencies = FALSE, build = FALSE)
 ```
 
 After installing, load the packages with `library()` to use them in your R environment.
@@ -58,9 +58,10 @@ Load one of the sample (NASIS) datasets from _soilDB_ package
 data("loafercreek")
 ```
 
+
 ## SPCs from NASIS
 
-Get data from NASIS (requires ODBC connection to local NASIS db). You can create SPCs from pedon (point data) or aggregated data (map unit components).
+Get data from NASIS (requires [ODBC connection](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html) to local NASIS db). You can create SPCs from [pedon (point data)](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html) or [aggregated data (map unit components)](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html).
 
 ```{r, eval=F, warning=F, message=F}
 fetchNASIS() # default argument of fetchNASIS() gets pedons
@@ -85,6 +86,9 @@ KSSL Data by rectangular bounding box (specified in longitude and latitude)
 fetchKSSL(bbox = c(-119, 37, -120, 38))
 ```
 
+Additional [`fetchKSSL` examples](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html).
+
+
 ## SPCs from SSURGO/STATSGO (SDA) components 
 
 Fetch component and component horizon information from Soil Data Access (interface to SSURGO/STATSGO) subject to a user-specified WHERE constraint.
@@ -105,6 +109,9 @@ SDA_query(q = "SELECT * FROM legend AS l
                WHERE areasymbol = 'CA630' AND compname = 'Mantree';")
 ```
 
+Additional [`SDA_query` examples](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html).
+
+
 ## SPCs from Soil Classification database
 
 Create an SPC containing OSDs from Soil Classification (SC) database (an input vector of series names is provided).
@@ -122,7 +129,11 @@ your.extended.list <- fetchOSD(soils = "Holland", extended = TRUE)
 your.extended.list$SPC
 ```
 
+
+
 # Accessing SPCs
+
+[Detailed `SoilProfileCollection` tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
 
 Get site _data.frame_ from `loafercreek` SPC.
 
@@ -130,23 +141,31 @@ Get site _data.frame_ from `loafercreek` SPC.
 site(loafercreek)
 ```
 
-These are two equivalent expressions for finding the __number of sites/profiles__ in an SPC.
+Determine the __number of profiles__ in an SPC.
 ```{r,eval=F, warning=F, message=F}
+# overload of generic "length" function
+length(loafercreek)
+# this also works because each profile in the collection must have site level attributes
 nrow(site(loafercreek))
-length(loafercreek) # length(spc) is an alias for nrow(site(spc))
+```
+
+Get site _data.frame_ from `loafercreek` SPC.
+```{r, eval=F, warning=F, message=F}
+site(loafercreek)
 ```
 
 Get horizon _data.frame_ from `loafercreek` SPC.
- 
 ```{r, eval=F, warning=F, message=F}
 horizons(loafercreek)
 ```
 
-These are two equivalent expressions for finding the __number of horizons__ in an SPC.
+Determine the __number of horizons__ in an SPC.
 ```{r,eval=F, warning=F, message=F}
+# overload of generic "nrow" function
+nrow(loafercreek)
 nrow(horizons(loafercreek))
-nrow(loafercreek) # nrow(spc) is an alias for nrow(horizons(spc))
 ```
+
 
 Create a subset SPC based on a site-level attribute using`subsetProfiles()` and argument `s` containing an expression to evaluate. Here we write an expression to select all profiles that have a field-measured slope gradient _less than 8 percent_.
 
@@ -154,20 +173,20 @@ Create a subset SPC based on a site-level attribute using`subsetProfiles()` and 
 sub1 <- subsetProfiles(loafercreek, s='slope_field < 8')
 ```
 
-Create a subset SPC based on a horizon-level attribute using`subsetProfiles()` and argument `h` containing an expression to evaluate. Here we write an expression select all profiles that have _one or more horizons_ with clay content greater than 35 percent.
+Create a subset SPC based on a horizon-level attribute using`subsetProfiles()` and argument `h` containing an expression to evaluate. Here we write an expression select all profiles that have _one or more horizons_ with clay content greater than 35 percent. Note that horizon data are not modified.
 
 ```{r, eval=F, warning=F, message=F}
 sub2 <- subsetProfiles(loafercreek, h = 'clay > 35')
 ```
 
-## Create a subset SPC based on a list of userpedonIDs
+## Create a subset SPC based on a list of user pedon IDs
 
-First, make a character vector (using `c()`) to concatenate a set of character strings (the userpedonIDs that you want).
+First, make a character vector (using `c()`) to concatenate a set of character strings (the user pedon IDs that you want).
 ```{r, eval=F, warning=F, message=F}
-your.list <- c("07SKC016","10MJE016","10CKS034","S2000CA007012","06SMM013" )
+your.list <- c("07SKC016", "10MJE016", "10CKS034", "S2000CA007012", "06SMM013" )
 ```
 
-Create a `TRUE`/`FALSE` (logical) vector by checking each userpedonID in `loafercreek` to see if it matches one in `your.list`. 
+Create a `TRUE`/`FALSE` (logical) vector by checking each user pedon ID in `loafercreek` to see if it matches one in `your.list`. 
 
 ```{r, eval=F, warning=F, message=F}
 matches.your.list <- site(loafercreek)$pedon_id %in% your.list 
@@ -175,7 +194,7 @@ matches.your.list <- site(loafercreek)$pedon_id %in% your.list
 
 Note that the length of the vector `matches.your.list` equals `nrow(site(loafercreek))`. 
 
-The number of `TRUE` values in `matches.your.list` (`sum(matches.your.list)`) is equal to `length(your.list)`. This is because all profile IDs in the list were found. If `sum(matches.your.list) < length(your.list)` some in the list were NOT found.
+The number of `TRUE` values in `matches.your.list` (`sum(matches.your.list)`) is equal to `length(your.list)`. This is because all user pedon IDs in the list were found. If `sum(matches.your.list) < length(your.list)` some in the list were NOT found.
 
 To get just the positions (index) where the logical vector `matches.your.list` is `TRUE` use `which()`
 
@@ -185,46 +204,55 @@ your.matching.indices <- which(matches.your.list)
 
 Create a new SPC `loafercreek.subset` that is the subset corresponding to your "matching" indices. 
 
-Use the _data.frame_-like bracket notation `spc[site.index, horizon.index]` to access the sites corresponding to your matching userpedonIDs.
+Use the _data.frame_-like square bracket notation `spc[site.index, horizon.index]` to access the sites corresponding to your matching user pedon IDs.
 
 ```{r, eval=F, warning=F, message=F}
 loafercreek.subset <- loafercreek[your.matching.indices, ]
 ```
 
+
 # Editing SPCs
 
 Create a site or horizon-level variable.
 ```{r, eval=F, warning=F, message=F}
-loafercreek$foo <- 1:nrow(site(loafercreek))
+# be sure to specify the correct length
+loafercreek$foo <- 1:length(loafercreek)
 
-loafercreek$foohz <- 1:nrow(horizons(loafercreek))
+# be sure to specify a vector that is the correct length
+loafercreek$foohz <- 1:nrow(loafercreek)
 
 # note that this one causes an error. Test your understanding: why?
 horizons(loafercreek)$foohz2 <- 1:nrow(site(loafercreek))
 ```
 
+
 Create a site or horizon-level variable _without having replacement equal to number of sites/horizons_ by explicitly calling `site()` or `horizons()`. Here since the replacement is length `1` it is set for all sites/horizons. This is the only way to set a site or horizon attribute that is not equal to the length of the respective _data.frame_.
 
 ```{r, eval=F, warning=F, message=F}
+# vectors shorter than length(SPC) are recycled
 site(loafercreek)$foo <- 2
+
+# vectors shorter than nrow(SPC) are recycled
 horizons(loafercreek)$foo <- 2
 ```
 
-Add multiple attributes to the site data of a SPC based on common (unique) site id (for example: `id`). An SPC is smart enough to to _LEFT JOIN_ on the shared unique site ID (must be present in new data data.frame `your.site.data`). 
 
-This type of site level assignment results in an SPC with the unique site level attributes resulting from the join. Note we are assiging the new datato a call to `site()` on the SPC we are editing.
+Add multiple attributes to the site data of a SPC based on common (unique) site id (for example: `id`). An SPC is smart enough to to _LEFT JOIN_ on a shared site column (must be present in new data data.frame `your.site.data`). Ideally, you would use a unique ID such as the one used to initialize the SPC. You can check what is currently used via `idname(SPC)` and `profile_id(SPC)`.
+
+This type of site level assignment results in an SPC with the unique site level attributes resulting from the join. The original site level attributes are not modified when using `site()` in this manner.
 
 ```{r, eval=F, warning=F, message=F}
 site(your.spc) <- your.site.data
 ```
 
-Adding horizon data to the SPC based on common (unique) horizon id (for example: `hzid`) is a little more complicated. You need to be careful when using direct replacement (like below) to make sure that you do not accidentally remove horizon records. Force all records from the original data to be retained by setting `all.x = TRUE`
+Adding horizon data to the SPC based on common (unique) horizon id (for example: `hzid`) is a little more complicated. You need to be careful when using direct replacement (like below) to make sure that you do not accidentally remove horizon records. Force all records from the original data to be retained by setting `all.x = TRUE`. Care must also be taken to avoid duplication of horizon records.
 
 ```{r, eval=F, warning=F, message=F}
 horizons(your.spc) <- merge(horizons(your.spc), your.horizon.data, by = "hzid", all.x=TRUE)
 ```
 
-In the future, SPCs will allowq 
+There are plans for implementing a left-join style interface to horizon level attributes.
+
 
 # Combining SPCs
 
@@ -241,6 +269,7 @@ Make a `list()` of SPCs, and combine them with `union()`
 loafergopher <- union(list(loafercreek, gopheridge))
 ```
 
+
 # Plotting SPCs
 
 Make a plot of first 10 profiles in `loafercreek`. `plot(your.spc)` is an alias (shorthand) for `plotSPC()`
@@ -249,21 +278,25 @@ Make a plot of first 10 profiles in `loafercreek`. `plot(your.spc)` is an alias 
 plot(loafercreek[1:10, ], label = "pedon_id")
 ```
 
-Make a plot of first 10 profiles in `loafercreek`, this time grouped by _taxonname_. 
+Make a plot of first 10 profiles in `loafercreek`, this time grouped by _taxonname_. The default margins are a bit small, you will typically want to adjust these with `par()` depending on the number of profiles in the collection. 
 
-```{r, eval=T, warning=F, message=F}
+```{r, eval=T, warning=F, message=F, fig.width=9, fig.height=5}
+# adjust margins, units are inches, bottom, left, top, right
+par(mar=c(1,1,0.5,1))
+
 groupedProfilePlot(loafercreek[1:10, ], groups = "taxonname", 
                   label = "pedon_id", id.style="side",
-                  axis.line.offset = -1.5, y.offset=25)
+                  axis.line.offset = -1.5, group.name.offset = -10)
 ```
 
-To make this plot "nice" we set the default label position style to "side" and label with the the `pedon_id` (_NASIS userpedonID_) instead of `peiid` (_NASIS pedon record id_). 
+To make this plot "nice" we set the default label position style to "side" and label with the the `pedon_id` (_NASIS user pedon ID_) instead of `peiid` (_NASIS pedon record id_). 
 
 We adjust the depth axis offset (units of "profile index" - the _x_ dimension) to the right. This is done so the axis does not plot on top of the horizon designations of the farthest profile to the right.
 
-Also, we set the vertical (_y_ dimension) offset of top of profiles (specified using depth units, _centimeters_ in this case) so the top of the profiles/y-axis do not overlap the group labels containing the _taxonname_.
+Also, we set the vertical `group.name.offset` (specified using depth units, _centimeters_ in this case) so the top of the profiles do not overlap the group labels containing the _taxonname_. Specifying a vector of offsets (e.g. `group.name.offset=c(-10, -15)`) is a convenient way to avoid overlap when collections and / or group names are large.
 
-There are _many, many more_ plotting options that can be found in the helpfiles. See `?plotSPC` and `?groupedProfilePlot`.
+There are _many, many more_ plotting options that can be found in the helpfiles. See `?plotSPC` and `?groupedProfilePlot`. More ideas in the [SPC tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) and in [this tutorial](http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html).
+
 
 # Making Spatial SPCs
 
@@ -304,3 +337,9 @@ Write _SpatialPointsDataFrame_ derived from an SPC to a shapefile (_do not use '
 ```{r, eval=F, warning=F, message=F}
 rgdal::writeOGR(obj = loafercreek.spdf, layer = 'output.shapefile.name', driver = 'ESRI Shapefile')
 ```
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
+

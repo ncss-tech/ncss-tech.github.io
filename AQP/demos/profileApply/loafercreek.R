@@ -9,8 +9,19 @@
 #'     toc_float: true
 #'     number_sections: true
 #' ---
-#' 
-#' 
+## ----setup, echo=F, warning=F, message=F---------------------------------
+library(knitr, quietly = TRUE)
+opts_chunk$set(message = FALSE, 
+               warning = FALSE, 
+               background = '#F7F7F7', 
+               dpi = 100, 
+               fig.align = 'center', 
+               dev = 'png', 
+               dev.args = list(pointsize = 10, 
+                             type = 'cairo', 
+                             antialias = 'subpixel'), 
+               tidy = TRUE)
+
 #' # _Loafercreek_ - Context
 #' 
 #' The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series (_fine-loamy, mixed, superactive, thermic Ultic Haploxeralfs_) is comprised of soils on foothills underlain by vertically-bedded metavolcanic rock. They are moderately deep (50 to 100cm) to a paralithic contact. 
@@ -21,7 +32,7 @@
 #' 
 #' The metamorphic belt is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks (mostly basaltic in composition). These metamorphosed volcanics are closely associated with sedimentary rocks (Jurassic in age, and also of marine origin). 
 #' 
-#' The metavolcanic rocks in this area were recognized by miners during the gold rush to form distinctive "tombstone"-like outcrops. 
+#' The metavolcanic rocks in this area were recognized to form distinctive "tombstone"-like outcrops by miners during the California Gold Rush. You can see some examples of this in the image below.
 #' 
 #' ![Thermic metavolcanic foothills landscape - vantage from Rushing Hill Fire Tower near Keystone, CA](images/CA630_keystonequad_rushingmtn_tower6.JPG)
 #' 
@@ -45,7 +56,7 @@
 #' 
 #' For instance, Auburn, by definition, does not have an argillic horizon and classifies with the Lithic Haploxerepts. But its taxonomy and the mapping conventions have changed over time (40-50 years) since much of the land in the Sierra Nevada foothills was initially mapped.
 #' 
-#' In CA630, the shallow metavolcanic soils _with argillic horizons_ (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a deep bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode).
+#' In CA630, the shallow metavolcanic soils _with argillic horizons_ (Ultic Haploxeralfs) are the [Bonanza](https://casoilresource.lawr.ucdavis.edu/sde/?series=bonanza) and [Dunstone](https://casoilresource.lawr.ucdavis.edu/sde/?series=dunstone) series. Fine particle size class (PSC) soils are similar to the [Argonaut](https://casoilresource.lawr.ucdavis.edu/sde/?series=argonaut) concept. Skeletal PSC soils are [Jasperpeak](https://casoilresource.lawr.ucdavis.edu/sde/?series=jasperpeak) (shallow, Lithic Haploxeralfs) and [Gopheridge](https://casoilresource.lawr.ucdavis.edu/sde/?series=gopheridge) (moderately deep, Ultic Haploxeralfs). Soils with a _deep_ bedrock restriction are called [Motherlode](https://casoilresource.lawr.ucdavis.edu/sde/?series=motherlode) (fine-loamy) or [Gardellones](https://casoilresource.lawr.ucdavis.edu/sde/?series=gardellones) (loamy-skeletal).
 #' 
 #' 
 #' ## This demo
@@ -63,9 +74,12 @@
 ## ----eval=FALSE----------------------------------------------------------
 ## # install devtools if needed
 ## # install.packages("devtools")
-## devtools::install_github('ncss-tech/aqp', dependencies = FALSE, build = FALSE)
-## devtools::install_github('ncss-tech/soilDB', dependencies = FALSE, build = FALSE)
-## devtools::install_github('ncss-tech/sharpshootR', dependencies = FALSE, build = FALSE)
+## devtools::install_github('ncss-tech/aqp',
+##                          dependencies = FALSE, build = FALSE)
+## devtools::install_github('ncss-tech/soilDB',
+##                          dependencies = FALSE, build = FALSE)
+## devtools::install_github('ncss-tech/sharpshootR',
+##                          dependencies = FALSE, build = FALSE)
 
 #' 
 #' ## For reference
@@ -109,16 +123,16 @@ data("loafercreek")
 #' 
 #' ## _SoilProfileCollection_
 #' 
-#' A _SoilProfileCollection_ (SPC) is an S4 object contains site (`spc@site`) and horizon (`spc@horizon`) slots, which are each comprised of a single _data.frame_. 
+#' A _SoilProfileCollection_ (SPC) is an S4 object contains site (`spc@site`) and horizon (`spc@horizon`) slots, which are each comprised of a single _data.frame_. These are the two most important slots, with others containing important information about spatial reference, and internal organization of the profile collection object.
 #' 
 #'  * [Introduction to SoilProfileCollection Objects](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
 #'  
-#' The contents of a SPC should be accessed/edited-by-replacement by using `horizons(spc)` and `site(spc)`. 
+#' The contents (slots) of a SPC should be accessed by using `horizons(spc)`,  `site(spc)`, `coordinates(spc)`, etc. 
 #' 
 #' For instance:
 #' 
 ## ---- eval=FALSE---------------------------------------------------------
-## # access the cly attribute from the horizons data frame
+## # access the clay attribute from the horizons data frame
 ## horizons(spc)$clay
 ## 
 ## #add new site data by LEFT JOIN on UNIQUE site ID (assumed to be present in both spc and new.site.data)
@@ -132,18 +146,26 @@ data("loafercreek")
 #' We use the _data.frame_-like bracket notation to get a few profiles (by specifying a site-index) and plot them.
 #' 
 ## ------------------------------------------------------------------------
-my.sub.set <- loafercreek[3:6, ]
+# get profiles #4, 5, 6, 7
+my.sub.set <- loafercreek[4:7, ]
 
 # number of rows (sites or profiles)
 nrow(site(my.sub.set))
 
 #' 
+#' Make a plot of just our subset. 
 #' 
-#' Make a plot of just the subset. Put userpedonID labels on each profile (along left hand side) and make the label text twice as large as default (`cex.id = 0.5`).
+#' Put userpedonID labels on each profile (along left-hand side) and make the label text larger (than default: `cex.id = 0.5`).
 #' 
 ## ------------------------------------------------------------------------
-plotSPC(my.sub.set, label = 'pedon_id', id.style = "side", cex.id = 1)
+plotSPC(my.sub.set, label = 'pedon_id', 
+        id.style = "side", cex.id = 0.65,
+        x.idx.offset = 0.1)
 
+#' 
+#' Setting the `x.idx.offset` (e.g. `x.idx.offset = 0.1`) can sometimes help with displaying plots with small numbers of profiles. This is a byproduct of some of the limitations of the base R graphics system.
+#' 
+#' To get these SPC plots to look "nice" there are many other options for adjusting offsets for plots and axis positions, as well as labels, colors, legends, etc. that can be found under `?plotSPC()`.
 #' 
 #' Now, we will take a look at the main parts of the `loafercreek` SPC.
 #' 
@@ -164,7 +186,6 @@ max(horizons(loafercreek)$clay, na.rm = TRUE)
 #' 
 #' You can see from the ratio of rows in `loafercreek@horizons` to rows in `loafercreek@site`, there is a _many:one_ relationship. _Many:one_ is the rule, not the exception, for many properties we describe in soil survey (geomorphology, color, structure, rock fragments etc) and encode in soil data structures. 
 #' 
-#' ***
 #' #### Tip: Using logical vectors to index SPCs
 #' 
 #' Logical vectors are handy as indexes of `SoilProfileCollections` and various other R objects. A _logical expression_ is a piece of code that results in a _logical vector_.
@@ -175,7 +196,7 @@ max(horizons(loafercreek)$clay, na.rm = TRUE)
 #' 
 #' You can also index using just the "positions" you want (e.g. `spc[c(2, 3, 10), ]` to get the second, third and tenth profile in an SPC). 
 #' 
-#' You can convert a logical vector to a _vector of _positions where the logical vector is `TRUE`_ using the function `which()`.
+#' You can convert a logical vector to a vector of _positions where the logical vector is `TRUE`_ using the function `which()`.
 #' 
 #' For instance:
 #' 
@@ -189,9 +210,7 @@ which(a) # to this
 #' 
 #' You can _invert_ logicals (take the opposite; `TRUE` to `FALSE` & `FALSE` to `TRUE`) using the exclamation mark `!` (_NOT_) operator. 
 #' 
-#' _logical_ comparison (_equals_: `==`; _does not equal_: `!=`) is done between the values in the _same index position_ of two vectors being compared. T
-#' 
-#' hat means that when making _logical expressions_, vectors should either be the _same_ length, or one of _n_-length and the other of length 1.
+#' _logical_ comparison (_equals_: `==`; _does not equal_: `!=`) is done between the values in the _same index position_ of two vectors being compared. That means that when making _logical expressions_, vectors should either be the _same_ length, or one of _n_-length and the other of length 1.
 #' 
 #' You can also evaluate a logical expression using `&` (_AND_) and `|` (_OR_) operators. 
 #' 
@@ -239,13 +258,16 @@ which(a) # to this
 #' 
 #' Here is an example showing a _SoilProfileCollection_ created using _soilDB_ function `fetchOSD()`. 
 #' 
-#' A list of soil series (`series.names`) that are geographically or conceptually associated with metavolcanic rocks in the Sierra Nevada Foothills is supplied. The `extended` argument is set to `TRUE` to return a _SoilProfileCollection_ of type location descriptions parsed from the _Official Series Description_ (OSD).
+#' A list of soil series (`series.names`) that are geographically or conceptually associated with metavolcanic rocks in the Sierra Nevada Foothills is supplied.
+#' 
+#' The `extended` argument is set to `TRUE` to return a _SoilProfileCollection_ of type location descriptions parsed from the _Official Series Description_ (OSD).
 #' 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 library(soilDB)
 series.names <- c("Argonaut", "Auburn", "Bonanza", "Dunstone", 
-                  "Exchequer", "Gopheridge", "Jasperpeak", 
-                  "Loafercreek", "Motherlode", "Sobrante")
+                  "Exchequer", "Gardellones", "Gopheridge", 
+                  "Jasperpeak", "Loafercreek", "Motherlode", 
+                  "Sobrante")
 
 osds <- fetchOSD(soils = series.names, extended = TRUE)
 
@@ -270,12 +292,13 @@ hz.match <- '' # match all horizons
 ## # ?fetchKSSL for details
 ## k <- fetchKSSL(series = "loafercreek")
 ## 
-## #count the number of rows (records) in the `loafercreek@site` data.frame
+## # count the number of rows (records) in the `loafercreek@site` data.frame
 ## n.pedons <- nrow(site(k))
 ## 
 ## # here you would inspect the data
 ## 
-## #calculate some basic univariate summary statistics on _all_ horizons in the SPC
+## # calculate some basic univariate summary statistics
+## # on _all_ horizons in the SPC
 ## median(k$fe_dith, na.rm = TRUE)
 ## min(k$fe_dith, na.rm = TRUE)
 ## max(k$fe_dith, na.rm = TRUE)
@@ -294,15 +317,19 @@ hz.match <- '' # match all horizons
 coordinates(loafercreek) <- ~ x_std + y_std
 
 #' 
+#' Inspect the spatial slot.
+#' 
 ## ------------------------------------------------------------------------
 loafercreek@sp
 
-#' Ok, so the spatial points are in there, but the coordinate reference system (CRS) is `NA`. 
 #' 
-#' We know what the CRS is (data originates from NASIS, where it is standard to use WGS84 decimal degrees), so let's set it.
+#' Ok, so the spatial points are _in there_... but the coordinate reference system (CRS) is `NA`. 
+#' 
+#' We know what the CRS is. The data originate from NASIS, where it is standard to use WGS84 decimal degrees. Decimal degrees are the values contained in `x_std` and `y_std` when we `fetchNASIS()`. So, let's set the CRS for `loafercreek`.
 #' 
 ## ------------------------------------------------------------------------
-#when you set the proj4string, be sure it matches the formula & data you sent to coordinates()
+# when you set the proj4string, be sure it matches the formula 
+# and the system/format of the data you sent to coordinates() above
 proj4string(loafercreek) <- '+proj=longlat +datum=WGS84'
 
 #' 
@@ -312,20 +339,22 @@ loafercreek@sp
 #' 
 #' Looks good. These `SpatialPoints` are safe to `spTransform()` (e.g. to UTM).
 #' 
+#' #### Tip: Safe interaction with S4 objects
+#' 
 #' Note that it is _not_ good practice to use the `@` (slots) to _edit_ data. But they are available for inspection. Generally slots are for internal use only by S4 objects. They have special functions (like `coordinates()` and `proj4string()`) designed to access/alter them.
 #' 
-#' You can get a separate _SpatialPointsDataFrame_ (with just the site-level data) from an SPC using the below code. Note that you should NOT use `site()` as that would return an ordinary _data.frame_ without the _SpatialPoints_ slot found in `loafercreek`.
+#' You can get a separate _SpatialPointsDataFrame_ (with just the site-level data) from an SPC using the below code. We "coerce" the `loafercreek` _SoilProfileCollection_ to _SpatialPointsDataFrame_ using a custom S4 method that is part of the internal definition of the SPC. 
+#' 
 #' 
 ## ------------------------------------------------------------------------
 class(loafercreek)
 
 loafercreek.spdf <- as(loafercreek, 'SpatialPointsDataFrame')
 
-# there is no method for coercing a data.frame to SPDF (you need spatial info)
-## loafercreek.spdf <- as(site(loafercreek), 'SpatialPointsDataFrame')
-
 class(loafercreek.spdf)
 
+#' 
+#' Note that in the coercion call `as()` you should NOT use `site(loafercreek)` as that would return the ordinary _data.frame_ `loafercreek@site` (without the _SpatialPoints_ slot found in `loafercreek@sp`).
 #' 
 #' __Obligatory spatial plot__ 
 #' 
@@ -453,7 +482,9 @@ plot(density(depth.to.contact, na.rm = TRUE))
 #' Let's summarize `depth.to.contact` using _quantiles_.
 #' 
 ## ------------------------------------------------------------------------
-quantile(depth.to.contact, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
+quantile(depth.to.contact, 
+         probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), 
+         na.rm = TRUE)
 
 #' 
 #' A sample quantile "splits" your data at a particular level (specified with `probs`) based on the estimated probability mass density distribution along the range [min, max] of your data (`depth.to.contact`). 
@@ -1226,9 +1257,11 @@ abline(0, 1, lwd = 1, lty = 3)
 #' 
 #' The coefficient for the intercept term is `r round(coef(lin.model)[1], 2)`. So, this model says: for a hypothetical profile with `0`% clay in the second horizon, the maximum clay content would be about `r round(coef(lin.model)[1])`%. 
 #' 
-#' For each unit (1%) increase in `second.horizon.clay` it predicts an increase in `loafercreek$maxclay` of `r round(1 / coef(lin.model)[2], 2)`, that is a,  `r round(100 / coef(lin.model)[2])-100`% relative increase. 
+#' For each unit (1%) increase in `second.horizon.clay` it predicts an increase in `loafercreek$maxclay` of `r round(coef(lin.model)[2], 2)`, that is a,  `r round(coef(lin.model)[2])-100`% relative change. 
 #' 
-#' The relative increase calculated from the slope coefficient `r round(coef(lin.model)[2], 2)`. But the 95% confidence interval for that coefficient is `r round(confint(lin.model,'second.horizon.clay'),3)`. So, that means the coefficientt could be more or less sloping than a slope of 1 (1:1 line). 
+#' The relative change calculated from the slope coefficient `r round(coef(lin.model)[2], 2)`. 
+#' 
+#' But the _95% confidence interval_ for that coefficient is `r round(confint(lin.model,'second.horizon.clay'),3)`. So, that means the coefficient could be more or less sloping than a slope of 1 (1:1 line). 
 #' 
 ## ------------------------------------------------------------------------
 summary(lin.model)
@@ -1244,13 +1277,21 @@ summary(lin.model)
 #' 
 #' Use the below code to calculate the median second horizon clay content, then estimate confidence and prediction intervals  given `x = median(second.horizon.clay)`.
 #' 
-#' `fit` is the prediction for profile max clay (mean), `lwr` and `upr` are the lower and upper (95%) bounds for `prediction` and `confidence` interval of the mean, respectively. These intervals are 
+#' `fit` is the prediction for profile max clay (mean), `lwr` and `upr` are the lower and upper (95%) bounds for `prediction` and `confidence` interval of the mean, respectively. 
+#' 
+#' Here is how we calculate the confidence and prediction interval for maximum clay content, given the median second horizon clay content as a predictor.
+#' 
 ## ------------------------------------------------------------------------
 hz2median <- data.frame(second.horizon.clay = round(median(second.horizon.clay, na.rm = TRUE), 1))
-res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median, 
-                                   interval = c("prediction")), 2)), 
-        conf=as.data.frame(round(predict(lin.model, newdata = hz2median, 
-                                   interval = c("confidence")),2)))
+res <- cbind(pred = as.data.frame(round(predict(lin.model,
+                                              newdata = hz2median, 
+                                              interval = c("prediction")),
+                                      2)), 
+        conf = as.data.frame(round(predict(lin.model, 
+                                         newdata = hz2median, 
+                                         interval = c("confidence")),
+                                 2)))
+res
 
 #' 
 #' Given the median second horizon clay content as our predictor (point on _x-axis_), and based on the model slope and intercept, we the expected value (mean) maximum clay content predicted is `r round(res[1])`% , with a confidence interval of `r round(res[5])` to `r round(res[6])`%. 
@@ -1263,7 +1304,7 @@ res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median,
 #' 
 #' The observed data suggest we should be suspiscious of the portion of the interval that would suggest maximum clay content less than the second horizon clay content, but the scatter in the data prevents our model from getting more specific.
 #' 
-#' ### Stratification
+#' ### Stratification of input data
 #' 
 #' Another thing to consider in interpretation of these results is the possibility that there is not enough spread in clay contents in `loafercreek` (which contains mostly fine-loamy soils) to get a model that accurately reflects the conditions operating in finer-textured soils. 
 #' 
@@ -1572,11 +1613,11 @@ round(c(loafercreek.depth.summary / n.obs) * 100, digits = 1)
 #' 
 #' We can use the `aggregateColor()` function to summarize the colors in a SPC by horizon designation. It returns a two element list containing _scaled_ and _aggregate_ data. 
 #' 
-#' _Scaled_ data (default) is a _list_ of colors and their weights (proportion or number of horizons with that designation). 
+#' _Scaled_ data (default) is a _list_ of colors and their weights (proportion or number of horizons with a particular designation/group label). 
 #' 
-#' When you specify the argument `k` you get _aggregate_ color data. Aggregate data is a _data.frame_ of "representative" colors. Munsell colors are converted to LAB color space. In LAB space, mathematical operations using color data are more feasible than they are using Munsell notation.
+#' When you specify the argument `k` you get _aggregate_ color data. Aggregate data is a _data.frame_ of "best representative" colors. Munsell colors are converted to LAB color space (a different _numeric_ representation of color). 
 #' 
-#' LAB colors are clustered into user-specified `k` groups using Partitioning Around Medoids. For each group, th medoid LAB color is back-transformed to nearest Munsell chip and returned. Then the weight of all of the observations in the cluster is assigned to that chip. The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different chips that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output.
+#' In LAB space, mathematical operations using color data are more feasible than they are using Munsell notation.
 #' 
 #' `aggregateColorPlot()` is a special plotting function designed to use the results of `aggregateColor()`. We set the option to display the number of horizons contributing dry color data to each group.
 #' 
@@ -1591,50 +1632,77 @@ round(c(loafercreek.depth.summary / n.obs) * 100, digits = 1)
 #' We make some general rules for what is an A horizon, what is transitional, what is argillic, what is lower gradational and bedrock and save the groupings in a new variable `extragenhz`.
 #' 
 ## ------------------------------------------------------------------------
-#copy generalized horizon labels (component layer ID)
+#copy generalized horizon labels (NASIS component layer ID) to new variable
 loafercreek$extragenhz <- loafercreek$genhz
 
-#NOTE that the order of the following 5 statements is important (they can overwrite each other)
+# NOTE that the order of the following 5 statements is **important** 
+# (they can overwrite each other)
 
-#if it contains A it goes in the A group
+# if it contains A it goes in the A group
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='A')] <- 'A'
 
 # if starts with B, and has a t, it goes in Bt group
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^B.*t.*')] <- 'Bt'
 
-#if it starts with BC (with or without t) its in the "lower gradational to bedrock group" BCt
+# if it starts with BC (with or without t) its in the 
+# "lower gradational to bedrock group" BCt
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^BC')] <- 'BCt'
 
-#any start with C? [no]
-loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
+# any start with C? [no]
+## loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='^C')] <- 'C'
 
 # bedrock colors - usually weird and rarely populated
 loafercreek$extragenhz[grepl(loafercreek$genhz, pattern='Cr|R|Cd')] <- 'Cr'
 
-#' 
-#' Show all colors in the set, grouped by our extra-generalized horizons.
-#' 
-## ----fig.height=6--------------------------------------------------------
-aggregateColorPlot(aggregateColor(groups='extragenhz', col ='dry_soil_color', loafercreek), print.n.hz = TRUE)
+loafercreek$extragenhz <-  factor(loafercreek$extragenhz,
+                                  levels = c('A','Bt','BCt','Cr'))
 
 #' 
-#' Use the code below to show three "best" Munsell chips for each extra-generalized horizon label in the SPC. 
+#' Show all dry colors in the `loafercreek` SPC  -- grouped by our extra-generalized horizons `loafercreek$extragenhz`.
+#' 
+## ----fig.width=10--------------------------------------------------------
+aggregateColorPlot(aggregateColor(groups='extragenhz', 
+                                  col ='dry_soil_color', 
+                                  loafercreek), 
+                   label.cex = 1,
+                   print.n.hz = TRUE)
+
+#' 
+#' Use the code below to show three "best" Munsell chips for each horizon label. 
 #' 
 #' The "best" chips are determined after converting Munsell to LAB color coordinates, clustering (i.e. grouping similar colors together) and converting cluster medoids back to Munsell notation. 
 #' 
-#' This method accounts for a lot of the scatter in the source data: reducing the full data to a set number of "different" colors. For a given dataset, larger the value of `k` the more similar the medoid colors will be to one another. That is, as you increase `k` each color cluster will partition less variation.
+#' LAB colors are clustered into a user-specified number (`k`) of groups using Partitioning Around Medoids. 
 #' 
-## ----fig.height=6--------------------------------------------------------
-aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
-                                  loafercreek[loafercreek$redness.class == 'LT40'], k = 3), print.n.hz = TRUE)
+#' For each group, the medoid LAB color is back-transformed to nearest Munsell chip and returned. Then the weight of all of the observations in the cluster is assigned to that chip. 
+#' 
+#' The math behind the clustering is beyond the scope of this demo, but the result when specifying k in a call to `aggregateColor()` is that you get back `k` different colors that represent the data best. This has the effect of aggregating similar colors into a single chip, which simplifies the output. 
+#' 
+#' For a given dataset, larger the value of `k` the more similar the medoid colors will be to one another. That is, as you increase `k` each color cluster will partition less variation. If the input data are _very_ similar, different cluster medoids theoretically could back-transform to the same Munsell chip. This is because LAB allows for much greater "precision" than whole-chip Munsell colors, and if you force it to make more clusters than are needed, those clusters could come back as the "same".
+#' 
+## ----fig.width=8, fig.height=7-------------------------------------------
+lt40.to.red <- loafercreek[loafercreek$redness.class == 'LT40', ]
+
+aggregateColorPlot(aggregateColor(groups='extragenhz', 
+                                  col='dry_soil_color', 
+                                  lt40.to.red, 
+                                  k = 3),  
+                   label.cex = 1,
+                   print.n.hz = TRUE)
 
 #' 
-## ----fig.height=6--------------------------------------------------------
-aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color', 
-                                  loafercreek[loafercreek$redness.class == 'GT40'], k = 3), print.n.hz = TRUE)
+## ----fig.width=8, fig.height=7-------------------------------------------
+gt40.to.red <- loafercreek[loafercreek$redness.class == 'GT40', ]
+
+aggregateColorPlot(aggregateColor(groups='extragenhz', 
+                                  col='dry_soil_color', 
+                                  gt40.to.red, 
+                                  k = 3),  
+                   label.cex = 1,
+                   print.n.hz = TRUE)
 
 #' 
-#' In addition to the 5YR hue, the `LT40` group has 6 chroma represented at somewhat higher proportions. There is not a huge amount of difference between 6/4 or 5/4 chips on the 5YR and 7.5YR pages. Thus, there is not a huge amount of difference between these groups when their colors are looked at in aggregate. The raw color plots show more detail (without the `PAM`-based mixing and `k = 3` argument to `aggregateColor()`), but more or less tell the same story.
+#' In addition to the 5YR hue, the `LT40` group has 6 chroma represented at somewhat higher proportions. The chips with same value/chroma are pretty s Thus, there is not a huge amount of difference between these groups when their colors are looked at in aggregate. The raw color plots show more detail (without the `PAM`-based mixing and `k = 3` argument to `aggregateColor()`), but more or less tell the same story.
 #' 
 #' However, even though we didn't find a difference more than the result of our arbitrary split, applying a calculation "Depth to 5YR hue", we had the opportunity to explore the natural variability within a group of related soils as well as the gaps in our data.
 #' 
@@ -1642,7 +1710,7 @@ aggregateColorPlot(aggregateColor(groups='extragenhz', col='dry_soil_color',
 #' 
 #' ## `slab()` and `slice()`
 #' 
-#' The _aqp_ `slab()` function takes constant-thickness slices from multiple pedons and aggregates them using a function (`slab.fun`). This has the effect of "smoothing out"" the between-pedon variation to give depth-wise quantile estimates for properties within a SPC.
+#' The _aqp_ `slab()` function takes constant-thickness slices from multiple pedons and aggregates them using a function (`slab.fun`). This has the effect of "smoothing" the between-pedon variation to give depth-wise quantile estimates for properties within a SPC.
 #' 
 #' Multiple continuous variables OR a single categorical (factor) variable (in this case `redness.class`) can be aggregated within a call to `slab()`. Slab returns the results of  running arbitrary functions on groups of slices. 
 #' 
@@ -1654,11 +1722,13 @@ slab.default.plus.mean <- function(value) {
   the.mean <- mean(value, na.rm=TRUE)
   names(the.mean) <- "avg"
   
-  # combine mean with the .slab.fun.numeric.default used in the slab() function definition
+  # combine mean with the .slab.fun.numeric.default 
+  # used in the slab() function definition
   return(c(aqp:::.slab.fun.numeric.default(value), the.mean))
 }
 
-# slab loafercreek SPC using user-defined slab.fun; summarize clay content by redness class (in 5cm depth "slabs")
+# slab loafercreek SPC using user-defined slab.fun; 
+# summarize clay content by redness class (in 5cm depth "slabs")
 loaf.slab <- slab(loafercreek, redness.class ~ clay, slab.fun=slab.default.plus.mean, slab.structure=5)
 
 #' 
@@ -1685,9 +1755,9 @@ head(loaf.slab)
 #' 
 #' #### Data contributing to a slab
 #' 
-#' There are good and _not so good_ reasons why the contributing fraction (% of profiles) for a particular slab isn't 100%. 
+#' There are good and _not so good_ reasons why the contributing fraction (`loaf.slab$contributing_fraction`; % of profiles) for a particular slab isn't 100%. 
 #' 
-#' In soils that end at a paralithic/lithic contact, like _Loafercreek_, or with descriptions to varying bottom depths, the contributing fraction drops as you exceed the bottom depth of the "shallowest" pedons in the set. 
+#' In soils that end at a bedrock contact, like _Loafercreek_, or with descriptions to varying bottom depths, the contributing fraction drops as you exceed the bottom depth of the "shallowest" pedons in the set. 
 #' 
 #' It is OK that the contributing fraction drops off when non-soil layers (i.e. bedrock) are summarized. It is _less OK_ when the contributing fraction drops because the description stopped before the end of the series control section or because data are missing for a soil horizon when they could have been recorded. __Always describe the entire series control section.__ 
 #' 
@@ -1765,7 +1835,9 @@ aggregate(loafercreek$maxclay, by=list(loafercreek$redness.class),
 #' 
 #' Most of these pedons, but not all, fall within the fine-loamy particle size family range of 18-35% clay in the particle size control section. All methods we used to look at clay maximum suggest slight differences in group composition, but not so much meaningful differences given the precision of typical field clay content estimates.
 #' 
-#' On one hand, this is to be expected since we started with a relatively constrained group of pedons (fine-loamy, mod. deep, with argillic, all from same area). On the other hand, the pedons in some ways spill outside of that neat little parenthetical box.
+#' On one hand, this is expected since we started with a relatively constrained group of pedons (_fine-loamy, mod. deep, with argillic, more or less from similar areas_). 
+#' 
+#' On the other hand, the pedons spill outside of that neat parenthetical box.
 #' 
 #' There appears to be more variation within the `LT40` group (evidenced by the wide gray bars in the `lattice` plot). 
 #' 
@@ -1804,15 +1876,16 @@ aggregate(loafercreek$maxclay, by=list(loafercreek$redness.class),
 ##                    group.name.offset = 0,
 ##                    group.name.cex = 0.5)
 
+#' 
 #' ***
 #' 
 #' # Future directions
 #' 
-#' Recently code was added to _aqp_ to calculate the upper and lower boundary of the particle size control section using `estimatePSCS(pedon)`. It returns a vector of two numeric values corresponding to the upper and lower bound. These bounds can then be used for selecting horizon data, calculating weighted averages, etc.
+#' Recently code was added to _aqp_ to calculate the upper and lower boundary of the particle size control section using `estimatePSCS(pedon)`. This function returns two numeric values corresponding to the upper and lower bounds of the PSCS. These bounds can be used for selecting horizon data, calculating weighted averages over that interval, etc.
 #' 
-#' This is a high-level function that makes use of multiple lower level functions to apply the PSCS key from _Keys to Soil Taxonomy_. It requires machinery for the identification of argillic horizons, O horizons, plow layers etc. It also needs to be able to deal with regional differences in description styles, data entry guidelines and ambiguities in data population relative to taxonomic criteria.
+#' `estimatePSCS()` is a high-level function (makes use of multiple lower level functions) to apply the PSCS key from _Keys to Soil Taxonomy_. It requires "machinery" for the identification of argillic horizons, O horizons, plow layers etc. It also needs to be able to deal with regional differences in description styles, data entry guidelines and ambiguities in data population relative to taxonomic criteria.
 #' 
-#' There is still no handling of some "unusual" soils (well, unusual in that they would be a huge amount of effort to cover a minute fraction of observations) e.g. grossarenic subgroups, strongly contrasting etc. Some of these can be done. Others might be more effort than it is worth unless they are needed and will rely on some sort of an external flag like a record in the taxonomic history table. 
+#' There is still no handling of some "unusual" soils (well, unusual in that they would be a huge amount of effort to cover a minute fraction of observations) e.g. grossarenic subgroups, strongly contrasting etc. Some of these can be added if there is a need or interest. Others might be more effort than it is worth and will in all likelihood have to rely on some sort of an external flag (like a record in the taxonomic history table). 
 #' 
 #' If someone has a specific need for additional functionality, and has a dataset to use test with, the author would be willing to explore implementation of any of these more complex criteria.
 #' 

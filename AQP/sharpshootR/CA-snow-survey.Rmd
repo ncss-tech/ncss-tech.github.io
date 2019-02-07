@@ -1,0 +1,257 @@
+---
+title: "California Cooperative Snow Survey Summary"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
+```
+
+These are my notes on getting, processing, and plotting the CA cooperative snow survey data each winter.
+
+Key points:
+
+   * data are fetched from CDEC via `sharpshootR::CDECsnowQuery()` by course number
+   * data are compared using a combination of SWE percentiles, [SPI](http://iridl.ldeo.columbia.edu/maproom/Global/Precipitation/SPI.html), and z-score transformation of SWE
+   * downloading the full record for all courses take a little while
+   * some fairly bizzare Lattice graphics witchcraft is employed to get the first figure
+   * the data object `CDEC.snow.courses` from the `sharpshootR` package contains a snapshot of snow course metadata
+   
+
+There is plenty of room for improvement.
+
+## Custom Functions
+```{r}
+# http://joewheatley.net/20th-century-droughts/
+getSPI <- function(y){
+  #empirical, symmetrized Standard Precipitation Index
+  fit.cdf <- ecdf(y)
+  fit.rcdf <- ecdf(-y)
+  cdfs <- fit.cdf(y)
+  rcdfs <- 1 -fit.rcdf(-y)
+  #invert normal
+  spi.t <- qnorm(cdfs)
+  spi.tp <- na.omit(spi.t[ spi.t != Inf ]) #drop Inf
+  #reversed
+  rspi.t <- qnorm(rcdfs)
+  rspi.tp <- na.omit(rspi.t[ rspi.t != -Inf ]) #drop Inf
+  #symmetrise
+  spi.sym <- (spi.t+rspi.t)/2
+  spi.sym[which(spi.t == Inf)] <- rspi.t[which(spi.t==Inf)]
+  spi.sym[which(rspi.t == -Inf)] <- spi.t[which(rspi.t==-Inf)]
+  return(spi.sym)
+}
+
+# custom panel function, run once within each lattice panel
+panel.SWE <- function(x, y, ...) {
+  panel.grid(h=FALSE, v=-1, lty=2)
+  # make box-whisker plot
+  panel.bwplot(x, y, ...)
+  # tabulate number of obs (years) of data per station
+  course.levels <- levels(y)
+  n.yrs <- tapply(x, y, function(i) length(na.omit(i)))
+  # determine station position on y-axis
+  y.pos <- match(names(n.yrs), course.levels)
+  # add 'yrs'
+  n.yrs.txt <- paste('(', n.yrs, ' yrs)', sep='')
+  # annotate panel with number of years / box-whisker
+  grid.text(label=n.yrs.txt, x=unit(0.99, 'npc'), y=unit(y.pos, 'native'), gp=gpar(cex=0.65, font=2), just='right')
+}
+
+# custom stats for box-whisker plot: 5th-25th-50th-75th-95th percentiles
+custom.bwplot <- function(x, coef=NA, do.out=FALSE) {
+  stats <- quantile(x, p=c(0.05, 0.25, 0.5, 0.75, 0.95), na.rm=TRUE)
+  n <- length(na.omit(x))
+  out.low <- x[which(x < stats[1])]
+  out.high <- x[which(x > stats[5])]
+  return(list(stats=stats, n=n, conf=NA, out=c(out.low, out.high)))
+}
+
+# custom strip function, allowing more than 1 strip color
+strip.color.fun <- function(..., bg) {
+  strip.default(..., bg=trellis.par.get("strip.background")$col[which.packet()])
+}
+```
+
+
+## Data and Summary for the Stanislaus
+```{r results='hide'}
+library(sharpshootR)
+library(latticeExtra)
+library(grid)
+library(plyr)
+
+# current data are:
+yr <- 2019
+mo <- 'February'
+
+# Stanislaus River watershed
+course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
+```
+
+```{r results='hide'}
+# get historic data
+d.long_term <- ddply(course.data, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2019)})
+
+# join-in metadata
+data(CDEC.snow.courses)
+d.long_term <- join(d.long_term, CDEC.snow.courses, by='course_number', type='left')
+
+# reset levels of site names, sorting by elevation
+names.elevations <- unique(d.long_term[, c('name', 'elev_feet')])
+new.levels <- names.elevations$name[order(names.elevations$elev_feet)]
+d.long_term$name <- factor(d.long_term$name, levels=new.levels)
+
+# c('February', 'March', 'April', 'May')
+
+
+## compute long-term average, by course / month, using the Adjusted 
+d.long_term.avg <- ddply(d.long_term, c('course_number', 'month'), summarise, 
+                         avg.SWE=mean(SWE, na.rm=TRUE), 
+                         avg.density=mean(density, na.rm=TRUE),
+                         avg.Depth=mean(Depth, na.rm=TRUE),
+                         no.yrs=length(na.omit(SWE))
+)
+
+# make a copy of the current yr / mo data
+d.current <- subset(d.long_term, subset=month == mo & year == yr)
+
+# join current data with long term averages
+# keep only data that exists in both tables
+d.merged <- join(d.current, d.long_term.avg, by=c('course_number', 'month'), type='left')
+
+# compute pct of normal of depth, SWE, density
+d.merged$pct_of_normal_Depth <- with(d.merged, (Depth / avg.Depth) * 100.0)
+d.merged$pct_of_normal_SWE <- with(d.merged, (SWE / avg.SWE) * 100.0)
+d.merged$pct_of_normal_density <- with(d.merged, (density / avg.density) * 100.0)
+
+
+## using customized boxplot !!
+## compare with Feb, March, April, May only
+
+# determine which panel contains the current month's data
+this.month.panel <- match(mo, levels(d.current$month))
+# strip colors
+strip.colors <- rep(grey(0.95), times=length(levels(d.current$month)))
+# modifiy this month's strip color
+strip.colors[this.month.panel] <- grey(0.75)
+
+## compare this year's data with long-term variability
+p1 <- xyplot(name ~ SWE | month, data=d.current, fill='RoyalBlue', pch=21, cex=0.75, ylab='')
+p2 <- bwplot(name ~ SWE | month, data=d.long_term, panel=panel.SWE, stats=custom.bwplot, xlab='Snow Water Eqivalent (in)', layout=c(5, 1), strip=strip.color.fun, as.table=TRUE, scales=list(x=list(alternating=3)), subset=month %in% c('January','February','March','April','May'))
+
+
+# combine figures
+p3 <- p2 + p1
+
+# add title, and legend
+main.title <- paste(mo, yr, 'Snow Survey')
+p3 <- update(p3, main=main.title, key=list(corner=c(0.97,-0.15), points=list(pch=21, fill='RoyalBlue', cex=1), text=list(paste('Current (', mo, ' ', yr, ') SWE', sep='')), between=1))
+
+
+# make legend sub-plot
+set.seed(101010)
+x <- rnorm(100)
+x.stats <- custom.bwplot(x)
+p4 <- bwplot(x, stats=custom.bwplot, scales=list(draw=FALSE), xlab=list('Percentiles', cex=0.75), ylab='', ylim=c(0.5, 1.75))
+p4 <- p4 + layer(panel.text(x=x.stats$stats, y=1.5, label=c('5%','25%','50%','75%','95%'), cex=0.75))
+```
+
+
+```{r fig.width=12, fig.height=6}
+# setup plot style
+tps <- list(box.dot=list(col='black', pch='|'), box.rectangle=list(col='black'), box.umbrella=list(col='black', lty=1), plot.symbol=list(col='black', cex=0.33), strip.background=list(col=strip.colors))
+
+trellis.par.set(tps)
+print(p3, more=TRUE, position=c(0,0.08,1,1))
+print(p4, more=FALSE, position=c(0.125,0,0.425,0.175))
+```
+
+
+
+## Analysis of the Entire Record, all Courses
+```{r results='hide'}
+# all snow courses
+data(CDEC.snow.courses)
+
+# get historic data
+d.long_term <- ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2019)})
+
+# save local cache
+# save(d.long_term, file='long_term_data-cache.rda')
+
+# join-in the snow metadata
+d.long_term <- join(d.long_term, CDEC.snow.courses, by='course_number', type='left')
+
+# reset levels of site names, sorting by elevation
+names.elevations <- unique(d.long_term[, c('name', 'elev_feet')])
+new.levels <- names.elevations$name[order(names.elevations$elev_feet)]
+d.long_term$name <- factor(d.long_term$name, levels=new.levels)
+
+## scale by course / month, across all years
+scaled.data <- ddply(d.long_term, c('name', 'month'), function(i) {
+  scaled.SWE <- scale(i$SWE)
+  emp.pctile <- ecdf(i$SWE)(i$SWE)
+  spi <- getSPI(i$SWE)
+  d <- data.frame(course_number=i$name, Date=i$Date, year=i$year, month=i$month, scaled.SWE=scaled.SWE, emp.pctile=emp.pctile, SWE=i$SWE, spi=spi)
+  return(d)
+})
+
+# re-order by course, Date
+scaled.data <- scaled.data[order(scaled.data$name, scaled.data$Date), ]
+
+# subset out the typical months
+scaled.data <- subset(scaled.data, month %in% c('February', 'March', 'April', 'May') & year > 1930)
+scaled.data$month <- factor(scaled.data$month)
+```
+
+
+```{r fig.width=10, fig.height=7}
+# plot all data, each line is a course
+xyplot(SWE ~ year | month, data=scaled.data, groups=name, col=rgb(0.1, 0.1, 0.1, alpha=0.25), type=c('l','g'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)))
+
+# plot all data: each dot is a survey
+xyplot(SWE ~ year | month, data=scaled.data, type=c('p','g', 'smooth'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)), cex=0.25, pch=16, lwd=2)
+
+xyplot(scaled.SWE ~ year | month, data=scaled.data, type=c('p','g', 'smooth'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)), cex=0.25, pch=16, lwd=2)
+
+xyplot(emp.pctile ~ year | month, data=scaled.data, type=c('p','g', 'smooth'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)), cex=0.25, pch=16, lwd=2)
+
+xyplot(emp.pctile ~ year | month, data=scaled.data, type=c('p','g', 'smooth'), span=0.25, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)), cex=0.25, pch=16, lwd=2, subset=year > 1970)
+```
+
+
+```{r fig.width=10, fig.height=6}
+tps <- list(box.dot=list(col='black', pch='|'), box.rectangle=list(col='black'), box.umbrella=list(col='black', lty=1), plot.symbol=list(col='black', cex=0.33), strip.background=list(col=grey(0.85)))
+
+bwplot(emp.pctile ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == 'February', stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
+
+bwplot(spi ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == 'February', stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
+
+bwplot(emp.pctile ~ factor(year), data=scaled.data, main='February Snow Survey', sub='Period of Record: 1939-2019', ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == 'February', panel=function(x=x, y=y, ...) {
+  panel.grid(-1, -1)
+  panel.abline(h=0.5, lty=2, col='orange')
+  panel.bwplot(x=x, y=y, ...)
+  n.stations <- tapply(y, x, length)
+  panel.text(x=1:length(n.stations), y=1.03, labels=n.stations, cex=0.65, font=2)
+  panel.text(x=10, y=1.075, labels='Snow Courses Reporting', cex=0.85, font=3)
+  })
+```
+
+
+
+----------------------------
+This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+
+
