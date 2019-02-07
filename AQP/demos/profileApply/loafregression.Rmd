@@ -1,0 +1,307 @@
+---
+title: "Loafregression"
+author: "Andrew Brown"
+date: "February 6, 2019"
+output: html_document
+---
+
+## Example: Predicting profile maximum clay
+
+Let's make a linear regression model to predict the site-level attribute we made in the previous example (`loafercreek$maxclay`).
+
+We want to predict profile `maxclay` from the clay content of the second mineral horizon. Maybe we don't like digging that much. Say what! Soil Scientists that don't like digging?! Or we are interested in what the typical clay increase is from transitional horizon/upper argillic to profile maximum.
+
+### Linear Regression & Prediction
+
+We will fit a simple linear regression model to `maxclay` and `second.horizon.clay`, and compare the model fit to the 1:1 line. 
+
+```{r, echo=F}
+# TODO: aqp bug that this creates SPDF intermediate? 
+# final result is numeric vector of second horizon clay contents
+second.horizon.clay <- loafercreek[,2]$clay 
+```
+
+```{r}
+# Define a function to calculate the second mineral horizon clay content
+# We could use the bracket notation for selecting horizons (`spc[,index]`) to get the second.
+# But then we wouldnt be able to skip O horizons
+
+second.horizon.clay <- profileApply(loafercreek, function(p) {
+  # find all horizons without O in designation
+  mineral.horizons <- !grepl(p$hzname, pattern="O")
+  
+  # take the cumulative sum of the logical vector, and find first index equal to 2
+  idx <- which(cumsum(mineral.horizons) == 2)[1]
+  
+  return(p$clay[idx])
+})
+
+# fit a linear model with lm(); 
+## (y) maxclay as a function of (x) second horizon clay
+lin.model <- lm(loafercreek$maxclay ~ second.horizon.clay)
+```
+
+```{r}
+# check assumptions
+plot(lin.model) 
+```
+
+The stripes or lineations in the residuals come from common clay content percentages. 
+
+You generally don't see banding of residuals in lab data due to higher precision and less textural triangle bias. In field clay contents, we will often see rounder numbers offset from major breaks and relatively less falling "on the line" or on a break such as 18, 27, 35, 40 percent clay. 
+
+We can take a brief aside to investigate this phenomenon. We will convert clay contents into a categorical variable and tabulate what our most common values are.
+
+```{r}
+#turn numeric vector into factor
+clay.factor <- factor(loafercreek$clay)
+
+#aggregate length (#) in each factor group
+clay.df <- aggregate(1:length(clay.factor), by=list(clay.factor), FUN=length)
+
+#name the output
+colnames(clay.df) <- c("field.clay.content","times.observed")
+
+#sort in decreasing order of times observed (most common first)
+clay.df <- clay.df[order(clay.df$times.observed, decreasing= TRUE),]
+
+#print the first 6 (most common) field clay contents in loafercreek
+head(clay.df)
+```
+
+At this point different transformations or additional/alternate variable selection might be warranted. There probably isn't much we can do to make this model great for prediction with just this predictor but perhaps we will get some insight.
+
+Back to the residuals... there is more variance (a funnel shape) on the high end of clay distribution, and both tails deviate from normality on the Q-Q plot.
+
+It is common for variance to increase with the mean. You want normality of residuals for simple linear regression.
+
+```{r}
+plot(density(resid(lin.model)))
+
+shapiro.test(resid(lin.model))
+```
+
+The density plot of the model residuals is right-skewed (in the positive direction) and the Shapiro-Wilks test rejects the null hypothesis of normality. _"Not good."_ but a lot of soil data are more skewed than this. It "comes with the territory" of depth-dependence, multiple scales of observation and covariance of properties. 
+
+Lets plot the observations that were labeled in the regression diagnostic plots. And some other "influential" observations.
+
+```{r}
+# calculate some linear model influence measures
+lin.model.inf <- lm.influence(lin.model)
+```
+
+Now we plot top 5% influential observations based on quantiles of influence measures `sigma`.
+Note that we are using `names()` -- for `lm.influence()` output of the `names` attribute contains the index in terms of input dataframe. We need to do this because there can be an offset in length of `lm.influence()` output and the number of rows of input due to `NA` observations. 
+
+```{r}
+influential.idx <- which(lin.model.inf$sigma < quantile(lin.model.inf$sigma, probs=0.05))
+influential.idx.plotlm <- c(16,17,31,32,77) # for example these are IDs from the plot.lm output
+
+# combine some ids we picked that we want to check, with the ones determined from lm.influence()
+to.plot <- unique(c(names(influential.idx), influential.idx.plotlm))
+
+plotSPC(loafercreek[to.plot], color='clay', print.id=F, axis.line.offset=0)
+```
+
+Note that several heavy textured pedons are described with lithologic disontinuities. There are also several pedons with low second horizon clay content (10-15%) and relatively heavier subsurface textures that result in a high _relative_ increase in clay. 
+
+Perhaps this phenomenon (lithologic discontinuities) is under-recognized in Loafercreek? Or there is a different explanation? Let's see if the influential pedons have anything more mundane in common...
+
+```{r}
+# check who described them >:)
+summary(factor(loafercreek[to.plot]$describer))
+```
+
+They are mostly described by the same person (Robert "Bob" Vobora AKA RJV). 
+
+We know that Bob described more than just a few of the soils in this dataset, so we trust his judgement overall.
+
+To be precise, he described `r sum(grepl(loafercreek$describer, pattern="Vobora|RJV"))` of `r length(loafercreek)` profiles in `loafercreek`. All of them are under describer name "Bob Vobora", but we use a regular expression to check for his last name OR initials to count his pedons, just in case.
+
+```{r, eval = FALSE}
+sum(grepl(loafercreek$describer, pattern="Vobora|RJV"))
+
+length(loafercreek)
+```
+
+We will plot the data regardless of lack of normality, and with influential observations included.
+
+```{r}
+# somewhat promising?
+summary(lin.model)
+```
+
+Note the position of the points and model fit line relative to the 1:1 line.
+
+They are all above it. 
+
+```{r}
+# inspect
+plot(loafercreek$maxclay ~ second.horizon.clay, 
+     xlab = "Second Horizon Clay, %", ylab="Maximum Profile Clay Content, %",
+     xlim = c(10,60), ylim = c(10,60),
+     pch=19, cex=0.5)
+
+# add 1:1 line for reference; helps when the plot is not square or different axes
+abline(0, 1, lwd = 1, lty = 3)
+```
+
+This plot visually supports the idea that, for the `loafercreek` SPC, there is a relative clay increase between the second horizon and the horizon where maximum clay content occurs. 
+
+A few points plot on the 1:1 line (i.e. their second horizon has the max. clay), but otherwise they all occur above (i.e. the max occurs in another [deeper] horizon).
+
+Something you might expect of relatively stable landscapes and a bunch of _Ultic Haploxeralfs_...
+
+### Confidence and Prediction Intervals
+
+Let's add some confidence and prediction interval lines. 
+
+We can do this because of the assumptions/structure that come along with the linear model. Other modeling frameworks may require different approaches for estimation of similar intervals. That said, `predict()`-based implementations (specifying a model object and some new data for prediction) is common in R regardless of modeling framework.
+
+```{r}
+# recreate above plot
+plot(loafercreek$maxclay ~ second.horizon.clay, 
+     xlab = "Second Horizon Clay, %", ylab="Maximum Profile Clay Content, %",
+     xlim = c(10,60), ylim = c(10,60),
+     pch=19, cex=0.5)
+
+# plot prediction line and interval
+clayrange <- 10:60
+confidence <- predict(lin.model, 
+                      newdata=data.frame(second.horizon.clay=clayrange), 
+                      interval="confidence")
+prediction <- predict(lin.model, 
+                      newdata=data.frame(second.horizon.clay=clayrange), 
+                      interval="prediction")
+
+abline(lin.model) # model fit
+lines(clayrange, confidence[,2], col="BLUE", lwd=2) #confidence interval, lbound
+lines(clayrange, confidence[,3], col="BLUE", lwd=2) #confidence interval, ubound
+lines(clayrange, prediction[,2], col="RED", lwd=2) #prediction interval, lbound
+lines(clayrange, prediction[,3], col="RED", lwd=2) #prediction interval, ubound
+
+# add 1:1 line for reference; helps when the plot is not square or different axes
+abline(0, 1, lwd = 1, lty = 3)
+```
+
+Both plots suggest the model isn't terribly useful for _specific_ predictions. The former plot demonstrates what we already know about these soils in a graphical/semiquantiative manner. Adding the confidence and prediction interval clearly shows how this model would likely perform for prediction (relatively poorly).
+
+Because we violated some assumptions required for a simple linear regression model, the confidence and prediction intervals are not trustworthy.
+
+Despite that, conceptually, the confidence and prediction intervals tell you something.
+
+The _confidence interval_ tells you where we think the mean maximum clay value is (for a particular second horizon clay content). The _prediction interval_ tells you where you expect future observations to fall. 
+
+The places where those past two statements seem especially "bad" relative to the black dots (data) are major deviations from normality (an assumption that is part of the linear model).
+
+The angle of the prediction lines relative to 1:1 (slope of 1) might suggest that the relative increase in clay decreases as your second horizon clay goes up, which makes sense. These aren't Fine PSC soils so second horizon clay contents above 35% will be rare, and it makes sense that there would be some natural limits on the maximum clay contents.
+
+But also, there are several high `maxclay` observations that all had fairly high `second.horizon.clay` content that are apparently "ignored" by the model. Obviously the model didn't _choose_ to ignore them, but they deviate noticably from the estimated intervals and bulk of the data.
+
+The fairly dramatic difference between the confidence and prediction intervals is reflective of the general scatter in the data, influential observations and the depth covariance of clay content. Note how narrow the _confidence_ interval is near the _center_ of the data cluster and how the _prediction_ interval is neccesarily large. The most extreme data are outside the prediction range. And MOST of the data is outside the confidence range.
+
+Visually, the red lines appear wider than most of the data and it is hard to tell if the slope is anything other than 1:1. Non-conforming observations have the effect of broadening the prediction interval and exacerbating deviation from normality, but do not seem to affect the slope as much.
+
+Using this graph, we can relatively precisely say where the center of the data cloud is depending on second horizon clay. But we can't be nearly as sure what a _specific_ unknown max clay content will be given the second horizon clay from that profile. This is because there is substantial variation in individual profile relationships between second horizon clay and profile maximum clay.
+
+### Depth-covariance and auto-correlation
+
+The depth covariance and auto-correlation of properties is an important issue in soils. Soil scientists know and appreciate that each soil observation is unique; but capturing that reality with quantitative data, an equation or a model is challenging.
+
+The depth-specific variations of individual profiles are not captured with our predictor `second.horizon.clay`. It essentially is using `mineral.horizon.index == 2`. We know that profiles have unique horizon thicknesses and boundaries, and have numerous other challenging to quantify/scale-dependent attributes that can cause certain individuals to have, for example, heavier textures. 
+
+Mixed models are a way of dealing with this sort of problem (allowing for independent intercepts and slopes for individuals or groups) but are outside the scope of this demo.
+
+In practice, when developing a model for a soil property you may want to use:
+
+ * more/better predictor(s) (ideally, even _easier_ to obtain than the second horizon clay content. Also, something that helps capture _individual_ variations/site properties that contribute to observed max clay)
+ 
+ * robust regression methods
+ 
+ * mixed models
+ 
+ * careful review or different grouping(s) of the input data
+
+### Model coefficients
+
+The coefficient for the intercept term is `r round(coef(lin.model)[1], 2)`. So, this model says: for a hypothetical profile with `0`% clay in the second horizon, the maximum clay content would be about `r round(coef(lin.model)[1])`%. 
+
+For each unit (1%) increase in `second.horizon.clay` it predicts an increase in `loafercreek$maxclay` of `r round(1 / coef(lin.model)[2], 2)`, that is a,  `r round(100 / coef(lin.model)[2])-100`% relative increase. 
+
+The relative increase calculated from the slope coefficient `r round(coef(lin.model)[2], 2)`. But the 95% confidence interval for that coefficient is `r round(confint(lin.model,'second.horizon.clay'),3)`. So, that means the coefficientt could be more or less sloping than a slope of 1 (1:1 line). 
+
+```{r}
+summary(lin.model)
+```
+
+Looking at the analysis of variance type output, the slope coefficient is highly statistically significant (p-value << 0.05), but that only tells you that the slope is non-zero. We know there should be some non-zero relationship between second horizon clay and max clay
+
+How does that _wide_ confidence range for the mean slope coefficient translate into uncertainty in our linear model predictions? 
+
+### "Typical" conditions and uncertainty
+
+Lets make a maximum clay prediction for a more realistic level of our predictor: the median from the second mineral horizon of each profile in `loafercreek`: `r round(median(second.horizon.clay, na.rm=T),1)`%.
+
+Use the below code to calculate the median second horizon clay content, then estimate confidence and prediction intervals  given `x = median(second.horizon.clay)`.
+
+`fit` is the prediction for profile max clay (mean), `lwr` and `upr` are the lower and upper (95%) bounds for `prediction` and `confidence` interval of the mean, respectively. These intervals are 
+```{r}
+hz2median <- data.frame(second.horizon.clay = round(median(second.horizon.clay, na.rm = TRUE), 1))
+res <- cbind(pred=as.data.frame(round(predict(lin.model, newdata = hz2median, 
+                                   interval = c("prediction")), 2)), 
+        conf=as.data.frame(round(predict(lin.model, newdata = hz2median, 
+                                   interval = c("confidence")),2)))
+```
+
+Given the median second horizon clay content as our predictor (point on _x-axis_), and based on the model slope and intercept, we the expected value (mean) maximum clay content predicted is `r round(res[1])`% , with a confidence interval of `r round(res[5])` to `r round(res[6])`%. 
+
+Again, the confidence interval is just the range for the _MEAN_ of the prediction.
+
+We can expect random future maximum clay values, in general, to fall in the broader _prediction_ interval of `r round(res[2])` to `r round(res[3])`%. So, our model is _not_ very useful for prediction. 
+
+The plot visually confirms what we already knew about these soils (they have a clay increase at some depth). 
+
+The observed data suggest we should be suspiscious of the portion of the interval that would suggest maximum clay content less than the second horizon clay content, but the scatter in the data prevents our model from getting more specific.
+
+### Stratification
+
+Another thing to consider in interpretation of these results is the possibility that there is not enough spread in clay contents in `loafercreek` (which contains mostly fine-loamy soils) to get a model that accurately reflects the conditions operating in finer-textured soils. 
+
+That is: `loafercreek` is just a subset of the CA630 pedon data. Some of those high max. clays are one-off heavy textures that might be inherently hard to predict (especially with our single predictor that has some shortcomings) or even due to observer errors.
+
+If you are trying to make predictions about the landscape, you should try to develop a model that can accomodate the natural variation of all or most soils within that landscape. Limiting analyses to subsets of observations may obscure important trends within the full data set. This can especially be the case if the subsets have little to do with the reality of arrangement of soils in the landscape and/or meaningful management differences.
+
+### Influential observations
+
+Omitting the most influential / unusually heavy textured soils would likely narrow prediction intervals and possibly bring deviations from normality more into line. However, that would be at the cost of further fragmenting the full dataset and omitting what may be real, repeatable variation in the landscape. 
+
+Nonetheless, for certain applications that are looking at dominant condition there may be operational/taxonomic/correlation value to doing this. 
+
+Robust regression (and other robust statistics) is a way to estimate the influence of observations and withhold problematic observations reproducibly.
+
+[see also: jackknife, bonferroni correction, robust methods]
+
+***
+
+##### __Exercise__
+_Repeat the linear regression analysis above, only using a depth-weighted average clay content (you choose _`tdepth` _and_ `bdepth` _)_ ___instead of___ _the second horizon._
+
+_Write your own depth-weighted-average function, or you can use the below function written using_ `aqp::slice()`. _Inspect the regression model the same way we did for second horizon data._
+
+```{r eval=FALSE}
+# we will use this function again later.
+depth.weighted.average <- function(spc, tdepth, bdepth, attr, ...) {
+  #expand `attr` in formula
+  custom.formula <- formula(paste0(tdepth, ":", bdepth, " ~ ", paste0(attr, collapse=" + ")))
+  # calculate a depth-weighted average using aqp::slice()
+  return(mean(slice(spc, custom.formula, just.the.data=TRUE)[[attr]], na.rm = TRUE))
+}
+```
+
+For instance, to calculate depth-weighted average clay over depth interval from 10 to 40 cm:
+```{r eval=FALSE}
+loafercreek$dwt.mean.10to40 <- profileApply(loafercreek, FUN=depth.weighted.average,
+                                            tdepth=10, bdepth=40, attr='clay') 
+```
+
+***
