@@ -234,8 +234,10 @@ names(df.lut) <- c("Dry Hue (H)", "H*")
 knitr::kable(df.lut, row.names = FALSE, caption="Lookup table: Equivalent H and H* Values (after Hurst, 1977)")
 
 ## ------------------------------------------------------------------------
-# calculate Hurst (1977) "Redness Index" H*(L/C)
+# determine H* using the lookup table
 hstar <- hue.lookup.table[loafercreek$d_hue]
+
+# calculate Hurst (1977) "Redness Index" H*(L/C)
 loafercreek$hri <- hstar * loafercreek$d_value / loafercreek$d_chroma
 
 ## ------------------------------------------------------------------------
@@ -246,7 +248,7 @@ summary(loafercreek$horizon.is.red)
 ## ------------------------------------------------------------------------
 loafercreek$depth.to.red <- profileApply(loafercreek, function(p) {
   h <- horizons(p)
-  return(h[which(h$horizon.is.red)[1],'hzdept'])
+  return(h[which(h$horizon.is.red)[1], 'hzdept'])
 })
 
 ## ------------------------------------------------------------------------
@@ -279,15 +281,12 @@ plotSPC(sub1, max.depth = 100, print.id = FALSE,
 
 # we sorted the plot on "depth to red" to add a line to guide our eye
 # plot a white line, with black dots along it
-lines(1:length(sub1), sub1$depth.to.red[plotting.order], 
-      col="white", lwd=2)
-lines(1:length(sub1), sub1$depth.to.red[plotting.order], 
-      lwd=3, lty=3)
+lines(1:length(sub1), sub1$depth.to.red[plotting.order], col = "white", lwd = 2)
+lines(1:length(sub1), sub1$depth.to.red[plotting.order], lwd = 3, lty = 3)
 
 # add an axis with depth to redness (corresponds to dotted line)
-axis(side = 1, at = 1:length(sub1),
-     labels = sub1$depth.to.red[plotting.order], 
-     cex.axis=0.5)
+axis(side = 1, at = 1:length(sub1), cex.axis = 0.5,
+     labels = sub1$depth.to.red[plotting.order])
 mtext(text = 'Depth to Red (cm)', side = 1, line = 2.5)
 
 ## ------------------------------------------------------------------------
@@ -386,7 +385,6 @@ groupedProfilePlot(loafercreek[!is.na(loafercreek$red.shallow)],
                    width = 0.4, divide.hz = FALSE,
                    col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
                    col.legend.cex = 1.25, col.label = 'Horizon is red?')
-                  
 
 ## ------------------------------------------------------------------------
 # make some labels
@@ -416,6 +414,9 @@ groupedProfilePlot(loafercreek, max.depth=100,
                    width = 0.4, divide.hz = FALSE,
                    col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')),
                    col.legend.cex=1.25, col.label='Horizon is red?')
+
+## ------------------------------------------------------------------------
+your.function.name <- function(...) { "output" } 
 
 ## ------------------------------------------------------------------------
 # your input `tempF` is a numeric vector in degrees fahrenheit
@@ -549,26 +550,27 @@ qtiles.redgenhz <- do.call('rbind', lapply(red.genhz.list, function(d) {
   names(n.obs) <- "n.obs"
   
   # calculate quantiles, concatenate n.obs & return
-  return(data.frame(q=t(quantile(d$clay, 
-                    probs = c(0,0.05,0.25,0.5,0.75,0.95,1), 
-                    na.rm = TRUE)), n.obs, 
-                    redness=d$redness[1], genhz=d$genhz[1]))
+  return(data.frame(q = t(quantile(d$clay,
+                                  probs = c(0,0.05,0.25,0.5,0.75,0.95,1), 
+                                  na.rm = TRUE)), 
+                    n.obs, 
+                    redness = d$redness[1], 
+                    genhz = d$genhz[1]))
 }))
 
 
 # remove NA rows
 qtiles.redgenhz <- qtiles.redgenhz[complete.cases(qtiles.redgenhz),]
 
-# add grouping factors
-
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE, results='asis'------------------------------------------
 # print a list of data frames, split by redness class
 library(knitr)
 red.clayl <- split(qtiles.redgenhz, f = qtiles.redgenhz$redness)
 
 lapply(red.clayl, function(d) {
   rownames(d) <- d$genhz
-  print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"),], caption = "Selected Quantiles of Clay Content - grouped by NASIS Component Layer ID & Redness Group"))
+  print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"), ], 
+              caption = "Selected Quantiles of Clay Content - grouped by NASIS Component Layer ID & Redness Group"))
 })
 
 ## ------------------------------------------------------------------------

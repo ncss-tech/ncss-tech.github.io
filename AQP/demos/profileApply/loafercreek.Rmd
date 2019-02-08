@@ -32,7 +32,7 @@ The [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercree
 
 The Loafercreek series was established in Butte county (_CA612_) and now is mapped in Calaveras and Tuolumne (_CA630_) as well as small portions of Mariposa and Stanislaus Counties (_CA630_ join with _CA649_ and _CA644_).
 
-The metamorphic belt in the Sierra Nevada Foothills is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks (mostly basaltic in composition). These metamorphosed volcanics are closely associated with sedimentary rocks (Jurassic in age, and also of marine origin). 
+The metamorphic belt in the Sierra Nevada Foothills is comprised of Mesozoic and Paleozoic age metamorphic rocks. The metavolcanic rocks, dominantly what is called greenstone, are derived from metamorphosed intermediate to mafic igneous rocks (mostly basaltic in composition). These metamorphosed volcanics are closely associated with sedimentary rocks (marine origin). 
 
 The metavolcanic rocks in this area were recognized to form distinctive "tombstone"-like outcrops by miners during the California Gold Rush. You can see some examples of this in the image below.
 
@@ -44,7 +44,7 @@ Many areas (mapunits) of Auburn soils are outside the range of the family (12th 
 
 The _Loafercreek_ series concept might fit the range in characteristics of the deeper (moderately deep) areas within Auburn mapunits. 
 
-In this demo we will study some of the soils similar to Loafercreek to start to see how we can use R to summarize a _range in characteristics_ for a soil.
+In this demo we will explore the _aqp_ function `profileApply()` for soil-profile-based analyses and workflows. We use a dataset called `loafercreek` from _soilDB_. This is a sample data set that roughly corresponds to the "extended" set of pedons (including taxadjuncts, similar soils, etc.) to the series.
 
 ***
 
@@ -74,7 +74,7 @@ sharpshootR::SoilTaxonomyDendrogram(x, y.offset = 0.35, cex.taxon.labels = 0.9, 
 
 In this series of demos, we are going to use R-based pedon summaries to explore properties of the _Loafercreek_ soils found during the soil survey inventory in _CA630_. 
 
-This demo has three worked "examples" involving the use of `profileApply()` for summarizing pedon data.
+This demo has two worked "examples" involving the use of `profileApply()` for summarizing pedon data. This, as well as some troubleshooting information and example code (some of which uses `profileApply()`).
 
 *You can use this [R script](loafercreek_nodoc.R) version of the demo document to avoid having to copy and paste all the code. This will allow you to focus on interpreting the output. [This](loafercreek.R) version has all of the text as comments.*
 
@@ -336,7 +336,9 @@ Note that two pedons from _CA612_ are included (one is the type location), but c
 
 You can build-your-own _SoilProfileCollection_ by reading site/horizon data from flat files (e.g. `read.csv`) or querying from a database into data.frames.
 
-Here we construct some fake site and horizon dat.frames for demonstration. You should mimic the format of the `your.site.data` and `your.horizon.data` files if you go the flat file route, and most query engines would return some sort of similar tabular result.
+Here we construct some fake site and horizon data.frames for demonstration. 
+
+You should mimic the format of the `your.site.data` and `your.horizon.data` files if you go the flat file route, and most query engines would return some sort of similar tabular result.
 
 Horizon data is related to site data via site ID column (`id`). For most applications it is expected each unique site ID has a set of non-overlapping top and bottom depths: `top` and `bottom` in this case. Site and horizon IDs can be accessed from an SPC using `profile_id()` and `hzID()`. The column names used for storing those IDs are accessible with `idname()` and `hzidname()`.
 
@@ -612,11 +614,13 @@ names(df.lut) <- c("Dry Hue (H)", "H*")
 knitr::kable(df.lut, row.names = FALSE, caption="Lookup table: Equivalent H and H* Values (after Hurst, 1977)")
 ```
 
-Redder hues have lower $H^*$ values, which overall will lower the $Redness Index$ assigned to a particular Hue-Value-Chroma combination.
+Redder hues have lower $H^*$ values -- this will lower the $Redness Index$ assigned to a particular Hue-Value-Chroma combination.
 
 ```{r}
-# calculate Hurst (1977) "Redness Index" H*(L/C)
+# determine H* using the lookup table
 hstar <- hue.lookup.table[loafercreek$d_hue]
+
+# calculate Hurst (1977) "Redness Index" H*(L/C)
 loafercreek$hri <- hstar * loafercreek$d_value / loafercreek$d_chroma
 ```
 
@@ -632,7 +636,7 @@ Using the idea that "redder colors have lower redness index," we will use the $R
 
 ### Developing a Hypothesis
 
-Our hypothesis is: soils that are shallower to a "red redness index" will have higher clay content -- possibly because they have older, more weathered materials near the surface. We will use the Hurst redness index concept as defined above (hereafter known as "redness"). 
+Our hypothesis is: soils that are shallower to a "red" redness index will have higher clay content -- possibly because they have older, more weathered materials near the surface. We will use the Hurst redness index concept as defined above (hereafter known as "redness"). 
 We will classify our data based on the _top depth_ of the _shallowest_ horizon found with a $Redness Index$ _less than or equal to_ `20` . 
 
 This provisional threshold was chosen for this demonstration after some preliminary inspection of the data, similar to the sections that follow, and review of _Figure 3_ from Hurst (1977) in light of the Loafercreek data.
@@ -643,11 +647,9 @@ loafercreek$horizon.is.red <- loafercreek$hri <= 20
 summary(loafercreek$horizon.is.red)
 ```
 
-In these relatively old, residual, bedrock-controlled landscapes, several different colluvial "events" (or historic _periods_ of greater hillsope transport activity) that may have buried the residual material. In the shallow soils, and on the most active portions of the landscape, little to no true "residuum" may be present, and those soils may be comprised primarily colluvium that was deposited on top of previously "scoured" bedrock. Some of that colluvium may have been from eroded argillic horizons, or have been around long enough to weather a bit itself. This makes the distinction of discontinuities murkier. In other landscape positions, erosion could have exposed highly weathered material at the surface.
+In these relatively old, residual, bedrock-controlled landscapes, several different colluvial "events" (or historic _periods_ of greater hillsope transport activity) may have buried residual materials. In the shallow soils, and on the most active portions of the landscape, little to no true "residuum" may be present. These soils may be comprised primarily of colluvium that was deposited on top of previously "scoured" bedrock. Some of that colluvium may have been from eroded argillic horizons, or have been in place long enough to weather. This makes the distinction of discontinuities murkier. In other landscape positions, erosion could have exposed highly weathered material at the surface.
 
-Individual profiles within the Loafercreek concept can vary quite widely -- I hypothesize in part due to the challenge of disentangling their complex colluvial history.
-
-The natural variation is coupled with unclear or inconsistent indicators of lithologic discontinuities in the field data reflected in the `loafercreek` _SoilProfileCollection_.
+I hypothesize the variation we see in `loafercreek` is in part due to the challenge of disentangling the complex colluvial history of parts of these landscapes. The natural variation is coupled with unclear or inconsistent indicators of lithologic discontinuities in the field, as well as in the profile descriptions.
 
 ### Depth to Redness
 
@@ -656,7 +658,7 @@ Let's use `profileApply()` to calculate the top depth of the first horizon to me
 ```{r}
 loafercreek$depth.to.red <- profileApply(loafercreek, function(p) {
   h <- horizons(p)
-  return(h[which(h$horizon.is.red)[1],'hzdept'])
+  return(h[which(h$horizon.is.red)[1], 'hzdept'])
 })
 ```
 
@@ -696,15 +698,12 @@ plotSPC(sub1, max.depth = 100, print.id = FALSE,
 
 # we sorted the plot on "depth to red" to add a line to guide our eye
 # plot a white line, with black dots along it
-lines(1:length(sub1), sub1$depth.to.red[plotting.order], 
-      col="white", lwd=2)
-lines(1:length(sub1), sub1$depth.to.red[plotting.order], 
-      lwd=3, lty=3)
+lines(1:length(sub1), sub1$depth.to.red[plotting.order], col = "white", lwd = 2)
+lines(1:length(sub1), sub1$depth.to.red[plotting.order], lwd = 3, lty = 3)
 
 # add an axis with depth to redness (corresponds to dotted line)
-axis(side = 1, at = 1:length(sub1),
-     labels = sub1$depth.to.red[plotting.order], 
-     cex.axis=0.5)
+axis(side = 1, at = 1:length(sub1), cex.axis = 0.5,
+     labels = sub1$depth.to.red[plotting.order])
 mtext(text = 'Depth to Red (cm)', side = 1, line = 2.5)
 ```
 
@@ -766,7 +765,7 @@ We will deal with the `NA` after the next section. First we will briefly inspect
 
 ### Inspection of "Loaferred" 
 
-If we look at the distribution of our redness index across all horizons in `sub1` with a `density()` plot, we see that the data span both sides of our provisional threshold of `20`, with a peak on the "red" side of the line (smaller redness index = redder). 
+If we look at the distribution of our redness index across all horizons in `sub1` with a `density()` plot, we see that the data span both sides of our provisional threshold of `20`... with a peak on the "red" side of the line (smaller redness index = redder). 
 
 ```{r}
 # plot estimate of the probability density function for redness index
@@ -803,7 +802,7 @@ knitr::kable(qtiles.by.genhz[c("A", "Bt1", "Bt2", "Bt3", "BCt"),],
              caption="Selected Quantiles of Hurst Redness Index - grouped by NASIS Component Layer ID")
 ```
 
-Based on the above table, it appears that there are some trends in terms of generalized (correlated) genetic horizons and overall redness in that the middle to lower argillic is the reddest. However, this subset is overall well on the red side, with large proportions of the data below the "redness" threshold we set of `20`.
+Based on the above table, it appears that there are some trends in terms of generalized (correlated) genetic horizons and overall redness in that the middle to lower argillic is the reddest. Since this is a portion of loafercreek that had red colors at shallow depthsarge proportions of the data are below the redness index threshold of `20` that we set.
 
 ### Site-level grouping based on horizons
 
@@ -918,7 +917,6 @@ groupedProfilePlot(loafercreek[!is.na(loafercreek$red.shallow)],
                    width = 0.4, divide.hz = FALSE,
                    col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
                    col.legend.cex = 1.25, col.label = 'Horizon is red?')
-                  
 ```
 
 So we have FOUR categories... Let's make a new `factor` to handle these redness subsets. 
@@ -970,6 +968,10 @@ groupedProfilePlot(loafercreek, max.depth=100,
 ### Defining your own functions
 
 In R, you define your own functions using `function()` and the assignment operator `<-`. 
+
+```{r}
+your.function.name <- function(...) { "output" } 
+```
 
 A function takes zero or more inputs and executes some code and produces some result or output. 
 
@@ -1187,33 +1189,36 @@ qtiles.redgenhz <- do.call('rbind', lapply(red.genhz.list, function(d) {
   names(n.obs) <- "n.obs"
   
   # calculate quantiles, concatenate n.obs & return
-  return(data.frame(q=t(quantile(d$clay, 
-                    probs = c(0,0.05,0.25,0.5,0.75,0.95,1), 
-                    na.rm = TRUE)), n.obs, 
-                    redness=d$redness[1], genhz=d$genhz[1]))
+  return(data.frame(q = t(quantile(d$clay,
+                                  probs = c(0,0.05,0.25,0.5,0.75,0.95,1), 
+                                  na.rm = TRUE)), 
+                    n.obs, 
+                    redness = d$redness[1], 
+                    genhz = d$genhz[1]))
 }))
 
 
 # remove NA rows
 qtiles.redgenhz <- qtiles.redgenhz[complete.cases(qtiles.redgenhz),]
-
-# add grouping factors
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, results='asis'}
 # print a list of data frames, split by redness class
 library(knitr)
 red.clayl <- split(qtiles.redgenhz, f = qtiles.redgenhz$redness)
 
 lapply(red.clayl, function(d) {
   rownames(d) <- d$genhz
-  print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"),], caption = "Selected Quantiles of Clay Content - grouped by NASIS Component Layer ID & Redness Group"))
+  print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"), ], 
+              caption = "Selected Quantiles of Clay Content - grouped by NASIS Component Layer ID & Redness Group"))
 })
 ```
 
 What is particularly interesting is that several of the less-red groups have some very high clay contents observed. There is no reason to expect clay content and redness to always be correlated in the same way everywhere on the landscape. The place to take this analysis now would be to... the rest of the profile description data in NASIS from this metavolcanic landscape AND/OR to investigating spatial relationships between these groups. As this was a profileApply demo, the spatial stuff is outside the scope, aside of its role as a componen of the SoilProfileCollction Object.
 
-You can imagine how the three (colored) groups we created combine to form the (black dotted) full `loafercreek` line. You know they must since they are density distributions that are made from subsets (biased samples?) of the full set. Do any of the colored peaks appear divergent enough from the black peak to consider them dissimilar? [of course, we are _ONLY_ looking at profile maximum clay content in this graph]
+You can imagine how the redness groups we created combine to form the (black dotted) full `loafercreek` line. They are density distributions that are made from subsets of the larger set. 
+
+Do any of the colored peaks appear divergent enough from the black peak to consider them dissimilar? [of course, we are _ONLY_ looking at profile maximum clay content in this graph]
 
 ```{r}
 summary(loafercreek$redness.class)
@@ -1433,6 +1438,10 @@ _How many records are flagged at the 0.4 `na.threshold` using the depth-weighted
 _HINT: use depth to bedrock (`loafercreek$bedrckdepth`) as your total thickness -- exclude the thickness of any non-soil layers_
 
 ***
+
+## References
+
+_Hurst, V.J. (1977) Visual estimation of iron in saprolite. Geo Soc Am Bull. 88:174-176._
 
 ## Future demos
 
