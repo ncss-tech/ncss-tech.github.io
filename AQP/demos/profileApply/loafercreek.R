@@ -23,7 +23,12 @@ x <- fetchOSD(c("Argonaut", "Auburn", "Bonanza",
 x@horizons[which(horizons(x)$hzname == "R"),'bottom'] <- 200
 x@horizons[which(horizons(x)$hzname == "R"),'soil_color'] <- NA
 
-sharpshootR::SoilTaxonomyDendrogram(x, y.offset = 0.35, cex.taxon.labels = 0.9, max.depth=200)
+sharpshootR::SoilTaxonomyDendrogram(x, 
+                                    y.offset = 0.35, 
+                                    cex.taxon.labels = 1.2,
+                                    cex.names=0.8,
+                                    cex.id=1.1,
+                                    max.depth=200)
 
 ## ----eval=FALSE----------------------------------------------------------
 ## # install remotes if needed
@@ -58,7 +63,7 @@ par(mar=c(0, 0, 0, 1))
 
 # make a SoilProfileCollection plot
 plotSPC(my.sub.set, label = 'pedon_id', 
-        id.style = "side", cex.id = 0.65,
+        id.style = "side", cex.names = 0.75,
         x.idx.offset = 0.1)
 
 ## ------------------------------------------------------------------------
@@ -225,6 +230,97 @@ loafercreek$bedrckdepth <- depth.to.contact
 loafercreek$new.hz.level.variable <- loafercreek$clay / 100 
 
 ## ------------------------------------------------------------------------
+your.function.name <- function(...) { return("output") } 
+
+## ------------------------------------------------------------------------
+# your input `tempF` is a numeric vector in degrees fahrenheit
+fahrenheit_to_celsius <- function(temp_F) {
+  
+  # perform the conversion from input to output
+  temp_C <- ((temp_F - 32) * (5 / 9))
+  
+  # return output, a numeric vector in degrees C
+  return(temp_C)
+}
+
+## ------------------------------------------------------------------------
+# a numeric vector in degrees fahrenheit; e.g. Soil Temperature Regime breaks
+temp.regime.F <- c(46.4, 59, 71.6)
+
+# call the function we defined, and store the output
+temp.regime.C <- fahrenheit_to_celsius(temp.regime.F)
+
+temp.regime.C
+
+## ------------------------------------------------------------------------
+profileMaxClay <- function(p) {
+    # access the numeric vector `clay` from the horizons data.frame
+    d <- horizons(p)$clay
+    
+    # if all `d` are NA and na.rm = TRUE, max() makes a zero-length variable
+    if(all(is.na(d))) 
+      return(NA) # so if a pedon `p` has no clay data... return NA pre-emptively
+    
+    # calculate the maximum value in `d`, omitting NA
+    return(max(d, na.rm = TRUE))
+}
+
+## ------------------------------------------------------------------------
+# calculate the max clay content in all profiles
+loafercreek$maxclay <- profileApply(loafercreek, profileMaxClay)
+
+## ------------------------------------------------------------------------
+# look at the density plot (estimated probability density function) of maximum clay contents
+plot(density(loafercreek$maxclay, na.rm = TRUE, kernel = "rectangular"))
+
+# calculate quantiles
+quantile(loafercreek$maxclay, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
+
+## ------------------------------------------------------------------------
+profileMaxClayAttr <- function(p, attr = "clay") {
+    # maybe you could calculate something more interesting
+    # than the maximum in your version of this function?
+    h <- horizons(p)
+    
+    # pre-emptively return NA if all clay are NA
+    if(all(is.na(h$clay))) 
+      return(NA)
+    
+    # here we calculate the horizon indices that equal THE PROFILE max clay
+    d.max.idx <- which(h$clay == max(h$clay, na.rm = TRUE))
+    
+    # there may be multiple horizons with the max clay content... 
+    # we just care about the first one (closest to the surface)
+    # flattening a (possible) many:one relationship
+    d.max.idx.first <- d.max.idx[1]
+    
+    # return an arbitrary attribute `name` 
+    # default returns clay from horizon of max clay
+    # you set attr to return attr from horizon of max clay
+    return(h[d.max.idx.first, attr])
+}
+
+## ------------------------------------------------------------------------
+# overwrite with identical values as obtained with profileMaxClay()
+# from new generalized function! using default attr='clay'
+loafercreek$maxclay <- profileApply(loafercreek, profileMaxClayAttr)
+
+# calculate the DEPTH TO first horizon with max clay content in all profiles
+# note we change default attr to return hzdept instead of clay
+loafercreek$maxclaydepth <- profileApply(loafercreek, 
+                                         profileMaxClayAttr, attr="hzdept")
+
+## ------------------------------------------------------------------------
+# look at the density plot (estimated probability density function)
+# of minimum depth to maximum clay content
+plot(density(loafercreek$maxclaydepth, na.rm = TRUE))
+
+# calculate quantiles
+quantile(loafercreek$maxclaydepth, 
+         probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), 
+         na.rm = TRUE)
+
+## ------------------------------------------------------------------------
 # create a named numeric vector as a "lookup table"
 hue.lookup.table <- seq(5, 22.5, 2.5)
 names(hue.lookup.table) <- c('5R','7.5R','10R','2.5YR',
@@ -233,7 +329,7 @@ names(hue.lookup.table) <- c('5R','7.5R','10R','2.5YR',
 ## ----echo=F--------------------------------------------------------------
 df.lut <- data.frame(names(hue.lookup.table), hue.lookup.table)
 names(df.lut) <- c("Dry Hue (H)", "H*")
-knitr::kable(df.lut, row.names = FALSE, digits=0,
+knitr::kable(df.lut, row.names = FALSE, digits=1,
              caption="Lookup table: Equivalent H and H* Values (after Hurst, 1977)")
 
 ## ------------------------------------------------------------------------
@@ -250,8 +346,14 @@ summary(loafercreek$horizon.is.red)
 
 ## ------------------------------------------------------------------------
 loafercreek$depth.to.red <- profileApply(loafercreek, function(p) {
+  # access horizon slot of a single profile `p` from loafercreek
   h <- horizons(p)
-  return(h[which(h$horizon.is.red)[1], 'hzdept'])
+  
+  # calculate indices where horizon.is.red == TRUE, take the first 
+  shallowest.match.idx <- which(h$horizon.is.red)[1]
+  
+  # return top depth of first horizon matching 
+  return(h[shallowest.match.idx, 'hzdept'])
 })
 
 ## ------------------------------------------------------------------------
@@ -260,15 +362,24 @@ density.cutoff <- max(loafercreek$depth.to.red, na.rm=T)+1
 density.cutoff
 
 ## ------------------------------------------------------------------------
-plot(density(loafercreek$depth.to.red, from = 0, to = density.cutoff,  
+plot(density(loafercreek$depth.to.red, 
+             from = 0, to = density.cutoff,  
              kernel="rectangular", na.rm=T))
 
 ## ------------------------------------------------------------------------
 # subset of profiles with depth.to.red <= 20
 sub1 <- subsetProfiles(loafercreek, s = 'depth.to.red <= 20')
 
-# number of profiles
+## ------------------------------------------------------------------------
+# subset of profiles with any horizon.is.red == TRUE
+sub1.alternate <- subsetProfiles(loafercreek, h = 'horizon.is.red == TRUE')
+
+## ------------------------------------------------------------------------
+# has red color within 20 cm
 length(sub1)
+
+# has red color at any depth
+length(sub1.alternate)
 
 ## ------------------------------------------------------------------------
 # adjust margins, units are inches, bottom, left, top, right
@@ -300,12 +411,14 @@ axis(side = 1, at = 1:length(sub1), cex.axis = 0.5,
 mtext(text = 'Depth to Red (cm)', side = 1, line = 2.5)
 
 ## ------------------------------------------------------------------------
-# create a logical vector of `peiids` in `loafercreek` that are IN sub1, then invert it with NOT (!)
+# create a logical vector of `peiids` in `loafercreek` that are IN sub1, 
+# then invert it with NOT (!)
 not.in.sub1 <- !(site(loafercreek)$peiid %in% site(sub1)$peiid)
 
 # square bracket SPC subsetting
 sub2 <- loafercreek[not.in.sub1,]
 
+# how many in the "remainder" set?
 length(sub2)
 
 ## ----fig.width=10, fig.height=4.5----------------------------------------
@@ -320,8 +433,6 @@ plotSPC(sub2, max.depth=100, print.id = FALSE,
         width = 0.4, color = 'horizon.is.red',
         col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
         col.legend.cex=1.25, col.label='Horizon is red?')
-
-length(sub2)
 
 ## ------------------------------------------------------------------------
 # plot estimate of the probability density function for redness index
@@ -343,7 +454,9 @@ genhz.list <- split(horizons(sub1), f=sub1$genhz)
 qtiles.by.genhz <- do.call('rbind', lapply(genhz.list, function(d) {
   n.obs <- sum(!is.na(d$hri))
   names(n.obs) <- "n.obs"
-  return(c(quantile(d$hri, probs=c(0,0.05,0.25,0.5,0.75,0.95,1), na.rm=TRUE), n.obs))
+  return(c(quantile(d$hri, 
+                    probs=c(0,0.05,0.25,0.5,0.75,0.95,1), 
+                    na.rm=TRUE), n.obs))
 }))
 
 #remove NA rows
@@ -366,9 +479,10 @@ loafercreek$red.shallow <- loafercreek$depth.to.red <= 20
 all.na  <- profileApply(loafercreek, 
                         function(p) {
                           return(all(is.na(p$horizon.is.red))) 
-                        } )
+                        })
 
 ## ------------------------------------------------------------------------
+# change value of profiles that have NA red.shallow, without all NA color
 loafercreek$red.shallow[is.na(loafercreek$red.shallow) & !all.na] <- 2
 
 ## ------------------------------------------------------------------------
@@ -426,96 +540,13 @@ groupedProfilePlot(loafercreek, max.depth=100,
                    col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')),
                    col.legend.cex=1.25, col.label='Horizon is red?')
 
-## ------------------------------------------------------------------------
-your.function.name <- function(...) { return("output") } 
-
-## ------------------------------------------------------------------------
-# your input `tempF` is a numeric vector in degrees fahrenheit
-fahrenheit_to_celsius <- function(temp_F) {
-  
-  # perform the conversion from input to output
-  temp_C <- ((temp_F - 32) * (5 / 9))
-  
-  # return output, a numeric vector in degrees C
-  return(temp_C)
-}
-
-## ------------------------------------------------------------------------
-# a numeric vector in degrees fahrenheit; e.g. Soil Temperature Regime breaks
-temp.regime.F <- c(46.4, 59, 71.6)
-
-# call the function we defined, and store the output
-temp.regime.C <- fahrenheit_to_celsius(temp.regime.F)
-
-temp.regime.C
-
-## ------------------------------------------------------------------------
-profileMaxClay <- function(p) {
-    # access the numeric vector `clay` from the horizons data.frame
-    d <- horizons(p)$clay
-    
-    # if all `d` are NA and na.rm = TRUE, max() makes a zero-length variable
-    if(all(is.na(d))) 
-      return(NA) # so if a pedon `p` has no clay data... return NA pre-emptively
-    
-    # calculate the maximum value in `d`, omitting NA
-    return(max(d, na.rm = TRUE))
-}
-
-## ------------------------------------------------------------------------
-# calculate the max clay content in all profiles
-loafercreek$maxclay <- profileApply(loafercreek, profileMaxClay)
-
-## ------------------------------------------------------------------------
-# look at the density plot (estimated probability density function) of maximum clay contents
-plot(density(loafercreek$maxclay, na.rm = TRUE))
-
-# calculate quantiles
-quantile(loafercreek$maxclay, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
-
-## ------------------------------------------------------------------------
-profileMaxClayAttr <- function(p, attr = "clay") {
-    # maybe you could calculate something more interesting
-    # than the maximum in your version of this function?
-    h <- horizons(p)
-    if(all(is.na(h$clay))) 
-      return(NA)
-    
-    # here we calculate the horizon indices that equal THE PROFILE max clay
-    d.max.idx <- which(h$clay == max(h$clay, na.rm = TRUE))
-    
-    # there may be multiple horizons with the max clay content... 
-    # we just care about the first one (closest to the surface)
-    # flattening a (possible) many:one relationship
-    d.max.idx.first <- d.max.idx[1]
-    
-    # return an arbitrary attribute `name` (default `name` "clay")
-    return(h[d.max.idx.first, attr])
-}
-
-## ------------------------------------------------------------------------
-# overwrite with identical values (the max clay content in all profiles)
-# from new generalized function 
-loafercreek$maxclay <- profileApply(loafercreek, profileMaxClayAttr)
-
-# calculate the DEPTH TO first horizon with max clay content in all profiles
-loafercreek$maxclaydepth <- profileApply(loafercreek, profileMaxClayAttr, attr="hzdept")
-
-## ------------------------------------------------------------------------
-# look at the density plot (estimated probability density function)
-# of minimum depth to maximum clay content
-plot(density(loafercreek$maxclaydepth, na.rm = TRUE))
-
-# calculate quantiles
-quantile(loafercreek$maxclaydepth, 
-         probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), 
-         na.rm = TRUE)
-
 ## ----echo=FALSE----------------------------------------------------------
-plot(density(loafercreek$maxclay, na.rm = TRUE, ), 
+who.idx <- which(loafercreek$redness.class == "RED" | 
+                   loafercreek$redness.class == "NOTRED") 
+plot(density(loafercreek$maxclay[who.idx], na.rm = TRUE, ), 
      type="n", xlim = c(0, 60), ylim = c(0, 0.1), 
-     main = "Probability density distribution\n of profile maximum clay content by \"redness\" class", 
-     sub = "RED v.s NOTRED")
+     main = "Probability density of profile maximum clay content by \"redness\" class", 
+     sub = "Maximum Clay %; RED v.s NOTRED")
 
 sub.idx <- c(2,4)
 # set up plotting arguments
@@ -534,10 +565,11 @@ plot.params <- plot.params[sub.idx,]
 res <- apply(plot.params, MARGIN=1, FUN=function(i) {
   idx <- loafercreek$redness.class %in% i[['labels']]
   
-  if(all(!idx)) # handle 'ALL' which is not a factor level... it is all factor levels
+  if(all(!idx)) # handle 'ALL' which is not a factor level; it is al levels
     idx <- !idx
   
-  lines(density(loafercreek$maxclay[idx], na.rm = TRUE, from=0, to=60, kernel="rectangular"), 
+  lines(density(loafercreek$maxclay[idx], 
+                na.rm = TRUE, from=0, to=60, kernel="rectangular"), 
                 lty=as.numeric(i[['lty']]), col=i[['line.color']], lwd = 2)
 })
 
@@ -549,8 +581,8 @@ legend(x = 45, y = 0.1025, cex = 0.9,
 # compare groups versus full set. Empty plot.
 plot(density(loafercreek$maxclay, na.rm = TRUE, ), 
      type="n", xlim = c(0, 60), ylim = c(0, 0.1), 
-     main = "Comparison of probability density distribution\n of profile maxiumum clay content by \"redness\" class", 
-     sub = "Loafercreek (full set) versus depth-to-\"redness\" + NODATA groups")
+     main = "Probability density of profile\n maxiumum clay content by \"redness\" class", 
+     sub = "Maximum Clay %; Subsets versus full `loafercreek` group")
 
 # set up plotting arguments
 line.labelz <- c("ALL", levels(loafercreek$redness.class))
@@ -579,6 +611,11 @@ legend(x = 45, y = 0.1025, cex = 0.9,
        lwd = 2, lty = plot.params$lty)
 
 ## ------------------------------------------------------------------------
+table(toupper(loafercreek$taxonname))
+
+table(toupper(loafercreek$taxonkind))
+
+## ------------------------------------------------------------------------
 # modify the  "genhz" (NASIS Comp. Layer ID) to combine BA and A
 # we do this because there is only one BA horizon with dry color data
 loafercreek$genhz[loafercreek$genhz == "BA"] <- "A"
@@ -594,6 +631,7 @@ loafercreek$redness <- merge(horizons(loafercreek),
 red.genhz.list <- split(horizons(loafercreek), 
                         f = list(loafercreek$redness, loafercreek$genhz))
 
+## ------------------------------------------------------------------------
 # calculate some quantiles of clay content for each redness.class*genhz
 qtiles.redgenhz <- do.call('rbind', lapply(red.genhz.list, function(d) {
   
@@ -610,7 +648,7 @@ qtiles.redgenhz <- do.call('rbind', lapply(red.genhz.list, function(d) {
                     genhz = d$genhz[1]))
 }))
 
-## ----echo=FALSE, results='asis'------------------------------------------
+## ----results='asis'------------------------------------------------------
 # print a list of data frames, split by redness class
 library(knitr)
 
@@ -620,7 +658,8 @@ res <- lapply(red.clayl, function(d) {
   rownames(d) <- d$genhz
   
   print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"), ], 
-              caption = "Selected Quantiles of Clay Content - grouped by NASIS Component Layer ID & Redness Group"))
+              caption = "Selected Quantiles of Clay Content - 
+                          grouped by NASIS Component Layer ID & Redness Group"))
 })
 
 ## ------------------------------------------------------------------------
@@ -672,8 +711,9 @@ typeof(numeric.vector)  # double precision numeric
 a.list <- profileApply(loafercreek, estimateSoilDepth, simplify = FALSE)
 
 head(a.list, 3)     # a named list, names are peiid
-class(a.list)       # the list is a list
-typeof(a.list)      # it is a list
+
+class(a.list)       # list can contain a mix of any data type
+
 typeof(a.list[[1]]) # the first element of this list is numeric (integer)
 
 str(unlist(a.list)) # create a named numeric vector from list (since all are numeric)
