@@ -11,7 +11,7 @@
 
 <meta name="author" content="D.E. Beaudette" />
 
-<meta name="date" content="2019-02-08" />
+<meta name="date" content="2019-02-12" />
 
 <title>Querying Soil Series Data</title>
 
@@ -188,7 +188,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Querying Soil Series Data</h1>
 <h4 class="author"><em>D.E. Beaudette</em></h4>
-<h4 class="date"><em>2019-02-08</em></h4>
+<h4 class="date"><em>2019-02-12</em></h4>
 
 </div>
 
@@ -520,17 +520,18 @@ s &lt;- fetchOSD(soils, extended = TRUE)
 
 # note additional data, packed into a list
 str(s, 1)</code></pre>
-<pre><code>## List of 10
-##  $ SPC            :Formal class 'SoilProfileCollection' [package &quot;aqp&quot;] with 8 slots
-##  $ competing      :'data.frame': 34 obs. of  3 variables:
-##  $ geomcomp       :'data.frame': 4 obs. of  9 variables:
-##  $ hillpos        :'data.frame': 4 obs. of  8 variables:
-##  $ mtnpos         :'data.frame': 1 obs. of  9 variables:
-##  $ pmkind         :'data.frame': 6 obs. of  5 variables:
-##  $ pmorigin       :'data.frame': 18 obs. of  5 variables:
-##  $ mlra           :'data.frame': 39 obs. of  4 variables:
-##  $ climate.annual :'data.frame': 32 obs. of  12 variables:
-##  $ climate.monthly:'data.frame': 96 obs. of  14 variables:</code></pre>
+<pre><code>## List of 11
+##  $ SPC             :Formal class 'SoilProfileCollection' [package &quot;aqp&quot;] with 8 slots
+##  $ competing       :'data.frame':    34 obs. of  3 variables:
+##  $ geomcomp        :'data.frame':    4 obs. of  9 variables:
+##  $ hillpos         :'data.frame':    4 obs. of  8 variables:
+##  $ mtnpos          :'data.frame':    1 obs. of  9 variables:
+##  $ pmkind          :'data.frame':    6 obs. of  5 variables:
+##  $ pmorigin        :'data.frame':    18 obs. of  5 variables:
+##  $ mlra            :'data.frame':    39 obs. of  4 variables:
+##  $ climate.annual  :'data.frame':    32 obs. of  12 variables:
+##  $ climate.monthly :'data.frame':    96 obs. of  14 variables:
+##  $ soilweb.metadata:'data.frame':    12 obs. of  2 variables:</code></pre>
 Competing soil series are those series that share a family-level classification. For example, the soil series competing with <a href="https://casoilresource.lawr.ucdavis.edu/sde/?series=cecil">Cecil</a> would have a family level classification of <em>fine, kaolinitic, thermic typic kanhapludults</em>. These data are sourced from the current snapshot of the Soil Classification database via SoilWeb.
 <table class="table" style="font-size: 10px; width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -3283,7 +3284,7 @@ title('Hydrologic Ordering via Geomorphic Component Proportions')
 par(mar=c(0,0,1,1))
 SoilTaxonomyDendrogram(s$SPC)</code></pre>
 <hr />
-<p>This document is based on <code>aqp</code> version 1.17.01, <code>soilDB</code> version 2.3.6, and <code>sharpshootR</code> version 1.4.01.</p>
+<p>This document is based on <code>aqp</code> version 1.17.01, <code>soilDB</code> version 2.3.6, and <code>sharpshootR</code> version 1.4.02.</p>
 </div>
 
 
