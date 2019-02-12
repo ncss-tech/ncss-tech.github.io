@@ -188,10 +188,46 @@ sum(x$value, na.rm = TRUE)
 ### Monthly Precipitation
 Query the entire record of monthly precipitation measurements from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
 ```{r, fig.height=5, fig.width=7}
-x <- CDECquery(id='sor', sensor=2, interval='M', start='1900-01-01', end='2019-01-01')
+x <- CDECquery(id='sor', sensor=2, interval='M', start='1900-01-01', end='2030-01-01')
 
 # plot
 bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in Monthly Total PPT', xlab='Monthly Total PPT (inches)')
+```
+
+
+### Water Year Summaries
+```{r fig.height=5, fig.width=7}
+x <- CDECquery(id='sor', sensor=45, interval='D', start='1900-01-01', end='2030-01-01')
+
+## NEW function in sharpshootR
+## still testing
+# eval water year and water day, length should be the same
+w <- waterDayYear(x$datetime)
+
+## TODO: include in CDEC_query
+x$water_day <- w$wd
+x$water_year <- w$wy
+
+# re-order
+x <- x[order(x$water_year, x$water_day), ]
+
+## TODO: finish this
+xx <- split(x, x$water_year)
+xx <- ldply(xx, function(i) {
+  i$ppt <- cumsum(ifelse(is.na(i$value), 0, i$value))
+  return(i)
+})
+  
+## not quite right, leap years aren't adequately handled     
+z <- ddply(xx, 'water_day', .fun = plyr::summarise, 
+           q05=quantile(ppt, probs = 0.05, na.rm = TRUE),
+           q50=quantile(ppt, probs = 0.5, na.rm = TRUE),
+           q95=quantile(ppt, probs = 0.95, na.rm = TRUE)
+           )
+
+# almost right
+matplot(z[1:365, 1], z[1:365, -1], type='l', col='RoyalBlue', lwd=c(1,2,1), lty=c(3,1,3), las=1, xlab='Water Day', ylab='Cumulative PPT (inches)', main='Sonora Ranger Station (SOR)\n1981--2019')
+grid()
 ```
 
 
