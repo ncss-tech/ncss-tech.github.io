@@ -188,7 +188,7 @@ sum(x$value, na.rm = TRUE)
 ### Monthly Precipitation
 Query the entire record of monthly precipitation measurements from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
 ```{r, fig.height=5, fig.width=7}
-x <- CDECquery(id='sor', sensor=2, interval='M', start='1900-01-01', end='2030-01-01')
+x <- CDECquery(id='SOR', sensor=2, interval='M', start='1900-01-01', end='2030-01-01')
 
 # plot
 bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in Monthly Total PPT', xlab='Monthly Total PPT (inches)')
@@ -196,52 +196,19 @@ bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in
 
 
 ### Water Year Summaries
-This is close but not quite right. No accounting for leap years. Select percentiles of cumulative PPT by "water day" are not always monotonic functions.
-```{r fig.height=5, fig.width=7}
+
+Cumulative PPT over the course of an idealized water year (October 1 through September 30). Measurements are selected from water years with annual PPT close to the 5th, 25th, 50th, 75th, and 95th percentiles of annual PPT (over all water years). The current year is symbolized with a red line.
+```{r fig.height=5.5, fig.width=9}
 x <- CDECquery(id='SOR', sensor=45, interval='D', start='1900-01-01', end='2030-01-01')
 
 ## NOTE: requires sharpshootR >= 1.4.02
-# re-order
-x <- x[order(x$water_year, x$water_day), ]
-
-# cumulative PPT by water year
-.cumulativePPT <- function(i) {
-  i$cumulative_ppt <- cumsum(ifelse(is.na(i$value), 0, i$value))
-  # number of days in summation
-  i$n <- nrow(i)
-  return(i)
-}
-
-# TODO: would be nice to know number of years
-# TODO: filtering on number of days in summation?
-# percentiles over all years, by water day
-.PPT_pctiles <- function(i) {
-  res <- quantile(i$cumulative_ppt, probs=c(0.05, 0.25, 0.5, 0.75, 0.95), na.rm = TRUE)
-  return(res)
-}
-
-## not quite right, leap years aren't adequately handled     
-xx <- ddply(x, 'water_year', .fun=.cumulativePPT)
-xxx <- ddply(xx, 'water_day', .fun=.PPT_pctiles)  
-
-zz <- subset(xx, subset=water_year == 2019)
-zzz <- ddply(zz, 'water_day', .fun=.PPT_pctiles)  
-
-# almost right
-matplot(xxx[1:365, 1], xxx[1:365, -1], type='l', col='RoyalBlue', 
-        lwd=c(1,1,2,1,1), lty=c(3,2,1,2,3), 
-        las=1, xlab='Water Day', ylab='Cumulative PPT (inches)', 
-        main='Sonora Ranger Station (SOR)\n1981--2019')
-
-matlines(zzz[1:365, 1], zzz[1:365, 4], lwd=2, col='firebrick')
-
-grid()
+PCP_plot(x, ylab='Cumulative PPT (inches)', main='Sonora Ranger Station (SOR)')
 ```
 
 
 ### Visualization Ideas
 Query the entire record of daily precipitation measurements from New Hogan Lake ([NHG](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=NHG)).
-```{r}
+```{r, fig.width=7.5, fig.height=5}
 x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2020-01-01')
 summary(x$value)
 head(x)
