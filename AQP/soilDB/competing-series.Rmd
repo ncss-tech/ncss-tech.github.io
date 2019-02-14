@@ -97,45 +97,30 @@ Compare [annual climate summaries](https://ncss-tech.github.io/AQP/soilDB/series
 ```{r}
 # get OSD + extended summaries for all competing series
 s.competing.data <- fetchOSD(s.names, extended = TRUE)
-
-# make a copy of the annual climate data
-s.ca <- s.competing.data$climate.annual
-
-# widen for clustering of medians
-s.ca.wide <- dcast(s.ca, series ~ climate_var, value.var = 'q50')
-# save row names for labeling later
-row.names(s.ca.wide) <- s.ca.wide$series
-
-# re-order based on divisive hierarchical clustering of medians
-# keep cluster pkg class for dendrogram + profile sketches
-s.ca.d <- diana(daisy(s.ca.wide[, -1], stand = TRUE))
-# convert to hclust class for ordering of series in climate summaries
-s.ca.h <- as.hclust(s.ca.d)
-s.ca$series <- factor(s.ca$series, levels=s.ca.h$labels[s.ca.h$order])
 ```
+
+
+Evaluate individual climate variables using select percentiles. Soil series labels are sorted according to divisive hierarchical clustering. The two main groupings are clearly visible in those climate varibles linked to mean annual air temperature.
+```{r fig.width=12, fig.height=8}
+# control color like this
+trellis.par.set(plot.line=list(col='RoyalBlue'))
+
+# control centers symbol and size here
+res <- vizAnnualClimate(s.competing.data$climate.annual, s=soil, IQR.cex = 1.1, cex=1.1, pch=18)
+
+print(res$fig)
+```
+
 
 Vizualize pair-wise distances using a dendrogram and profile sketches. What do the two main groupings tell us about this family?
 ```{r fig.width=12, fig.height=6}
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s.competing.data$SPC, clust = s.ca.d, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
+plotProfileDendrogram(s.competing.data$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
+mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
 ```
 
-Evaluate individual climate variables using select percentiles. Soil series labels are sorted according to divisive hierarchical clustering. The two main groupings are clearly visible in those climate varibles linked to mean annual air temperature.
-```{r fig.width=12, fig.height=8}
-segplot(series ~ q05 + q95 | factor(climate_var), centers=q50, data=s.ca, main=fm.name, draw.bands=FALSE, segments.fun=panel.arrows, ends='both', angle=90, length=1, unit='mm', scales=list(y=list(alternating=3), x=list(relation='free')), as.table=TRUE, col='RoyalBlue', strip=strip.custom(bg=grey(0.85), par.strip.text=list(cex=0.7)), xlab='5th-25th-50th-75th-95th Percentiles', panel=function(x, y, z, q25=s.ca$q25, q75=s.ca$q75, subscripts, ...) {
-  # basic plot
-  panel.grid(h=FALSE, v=-1, col='grey', lty=3)
-  panel.abline(h=1:length(unique(s.ca$series)), col='grey', lty=3)
-  panel.segplot(x, y, z, subscripts=subscripts, ...)
-  
-  # add interquartile range
-  q25 <- q25[subscripts]
-  q75 <- q75[subscripts]
-  zz <- z[subscripts]
-  panel.rect(xleft=q25, xright=q75, ybottom=as.numeric(zz) - 0.025, ytop=as.numeric(zz) + 0.025, border='RoyalBlue', col='RoyalBlue')
-})
-```
+
 
 ## Geomorphic Summaries
 
@@ -349,6 +334,13 @@ map('state')
 lapply(l, function(i) {
   plot(i, border=NA, col=alpha(cols[2], 0.33), add=TRUE)
   })
+
+# add queried series
+idx <- match(soil, sapply(l, function(i) i$series[1]))
+plot(l[[idx]], border=NA, col=alpha(cols[1], 0.5), add=TRUE)
+
+# legend
+legend('topright', legend=soil, col=alpha(cols[1], 0.5), pch=15, bty='n')
 
 # finish map
 box()

@@ -188,16 +188,27 @@ sum(x$value, na.rm = TRUE)
 ### Monthly Precipitation
 Query the entire record of monthly precipitation measurements from Sonora Ranger Station ([SOR](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=SOR)).
 ```{r, fig.height=5, fig.width=7}
-x <- CDECquery(id='sor', sensor=2, interval='M', start='1900-01-01', end='2019-01-01')
+x <- CDECquery(id='SOR', sensor=2, interval='M', start='1900-01-01', end='2030-01-01')
 
 # plot
 bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in Monthly Total PPT', xlab='Monthly Total PPT (inches)')
 ```
 
 
+### Water Year Summaries
+
+Cumulative PPT over the course of an idealized water year (October 1 through September 30). Measurements are selected from water years with annual PPT close to the 5th, 25th, 50th, 75th, and 95th percentiles of annual PPT (over all water years). The current year is symbolized with a red line.
+```{r fig.height=5.5, fig.width=9}
+x <- CDECquery(id='SOR', sensor=45, interval='D', start='1900-01-01', end='2030-01-01')
+
+## NOTE: requires sharpshootR >= 1.4.02
+PCP_plot(x, ylab='Cumulative PPT (inches)', main='Sonora Ranger Station (SOR)')
+```
+
+
 ### Visualization Ideas
 Query the entire record of daily precipitation measurements from New Hogan Lake ([NHG](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=NHG)).
-```{r}
+```{r, fig.width=7.5, fig.height=5}
 x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2020-01-01')
 summary(x$value)
 head(x)

@@ -23,7 +23,12 @@ x <- fetchOSD(c("Argonaut", "Auburn", "Bonanza",
 x@horizons[which(horizons(x)$hzname == "R"),'bottom'] <- 200
 x@horizons[which(horizons(x)$hzname == "R"),'soil_color'] <- NA
 
-sharpshootR::SoilTaxonomyDendrogram(x, y.offset = 0.35, cex.taxon.labels = 0.9, max.depth=200)
+sharpshootR::SoilTaxonomyDendrogram(x, 
+                                    y.offset = 0.35, 
+                                    cex.taxon.labels = 1.2,
+                                    cex.names=0.8,
+                                    cex.id=1.1,
+                                    max.depth=200)
 
 ## ----eval=FALSE----------------------------------------------------------
 ## # install remotes if needed
@@ -58,7 +63,7 @@ par(mar=c(0, 0, 0, 1))
 
 # make a SoilProfileCollection plot
 plotSPC(my.sub.set, label = 'pedon_id', 
-        id.style = "side", cex.id = 0.65,
+        id.style = "side", cex.names = 0.75,
         x.idx.offset = 0.1)
 
 ## ------------------------------------------------------------------------
@@ -77,12 +82,13 @@ series.names <- c("Argonaut", "Auburn", "Bonanza",
 osds <- fetchOSD(soils = series.names, extended = TRUE)
 
 # adjust margins, units are inches, bottom, left, top, right; modify as needed
-par(mar=c(0,0,0,1))
+par(mar=c(0, 0, 0, 1))
+
 plotSPC(osds$SPC, max.depth=200)
 
 ## ---- message=FALSE, echo=FALSE------------------------------------------
-
 k <- fetchKSSL("loafercreek")
+
 hz.match <- '' # match all horizons
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -99,7 +105,8 @@ hz.match <- '' # match all horizons
 ## min(k$fe_dith, na.rm = TRUE)
 ## max(k$fe_dith, na.rm = TRUE)
 ## 
-## # here you would inspect the data further (by horizon designation perhaps?)
+## # here you would inspect the data further ...
+## # other attributes or by horizon designation, perhaps?
 ## 
 
 ## ------------------------------------------------------------------------
@@ -131,7 +138,7 @@ nrow(loafercreek.spdf)
 
 ## ------------------------------------------------------------------------
 # plot pedon locations as points
-plot(loafercreek.spdf, main = "Loafercreek Pedon Locations", pch = 19, cex = 0.5)
+plot(loafercreek.spdf, sub = "Loafercreek Pedon Locations", pch = 19, cex = 0.5)
 
 # "add" county level maps from maps package
 maps::map(database = 'county', regions = 'CA', add = TRUE)
@@ -223,199 +230,7 @@ loafercreek$bedrckdepth <- depth.to.contact
 loafercreek$new.hz.level.variable <- loafercreek$clay / 100 
 
 ## ------------------------------------------------------------------------
-# create a named numeric vector as a "lookup table"
-hue.lookup.table <- seq(5, 22.5, 2.5)
-names(hue.lookup.table) <- c('5R','7.5R','10R','2.5YR',
-                             '5YR','7.5YR','10YR','2.5Y')
-
-## ----echo=F--------------------------------------------------------------
-df.lut <- data.frame(names(hue.lookup.table), hue.lookup.table)
-names(df.lut) <- c("Dry Hue (H)", "H*")
-knitr::kable(df.lut, row.names = FALSE, caption="Lookup table: Equivalent H and H* Values (after Hurst, 1977)")
-
-## ------------------------------------------------------------------------
-# calculate Hurst (1977) "Redness Index" H*(L/C)
-hstar <- hue.lookup.table[loafercreek$d_hue]
-loafercreek$hri <- hstar * loafercreek$d_value / loafercreek$d_chroma
-
-## ------------------------------------------------------------------------
-loafercreek$horizon.is.red <- loafercreek$hri <= 20
-
-summary(loafercreek$horizon.is.red)
-
-## ------------------------------------------------------------------------
-loafercreek$depth.to.red <- profileApply(loafercreek, function(p) {
-  h <- horizons(p)
-  return(h[which(h$horizon.is.red)[1],'hzdept'])
-})
-
-## ------------------------------------------------------------------------
-# calculate top depth of deepest horizon that met our redness criteria
-density.cutoff <- max(loafercreek$depth.to.red, na.rm=T)
-density.cutoff
-
-plot(density(loafercreek$depth.to.red, 
-             from = 0, to = density.cutoff,  kernel="rectangular", na.rm=T))
-
-## ------------------------------------------------------------------------
-sub1 <- subsetProfiles(loafercreek, s = 'depth.to.red <= 20')
-length(sub1)
-
-## ------------------------------------------------------------------------
-# adjust margins, units are inches, bottom, left, top, right
-# be sure to leave room for legend
-par(mar=c(0, 0, 3, 2))
-
-# convert legend variable to factor for coloring
-sub1$horizon.is.red <- factor(sub1$horizon.is.red)
-
-# calculate the plotting order
-plotting.order <- order(sub1$depth.to.red)
-plotSPC(sub1, max.depth = 100, print.id = FALSE, 
-        plot.order = plotting.order,
-        axis.line.offset = -0.5, name = '',
-        col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')),
-        width = 0.4, color = 'horizon.is.red')
-
-# we sorted the plot on "depth to red" to add a line to guide our eye
-# plot a white line, with black dots along it
-lines(1:length(sub1), sub1$depth.to.red[plotting.order], 
-      col="white", lwd=2)
-lines(1:length(sub1), sub1$depth.to.red[plotting.order], 
-      lwd=3, lty=3)
-
-# add an axis with depth to redness (corresponds to dotted line)
-axis(side = 1, at = 1:length(sub1),
-     labels = sub1$depth.to.red[plotting.order], 
-     cex.axis=0.5)
-mtext(text = 'Depth to Red (cm)', side = 1, line = 2.5)
-
-## ------------------------------------------------------------------------
-# create a logical vector of `peiids` in `loafercreek` that are IN sub1, then invert it with NOT (!)
-not.in.sub1 <- !(site(loafercreek)$peiid %in% site(sub1)$peiid)
-
-# square bracket SPC subsetting
-sub2 <- loafercreek[not.in.sub1,]
-
-length(sub2)
-
-## ----fig.width=10, fig.height=4.5----------------------------------------
-par(mar=c(0, 0, 3, 2))
-
-# convert legend variable to factor for coloring
-sub2$horizon.is.red <- factor(sub2$horizon.is.red)
-
-# depth cut off at 100cm, hide IDs and make it clear which have data
-plotSPC(sub2, max.depth=100, print.id = FALSE, 
-        axis.line.offset=-0.5, name = '', 
-        width = 0.4, color = 'horizon.is.red',
-        col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
-        col.legend.cex=1.25, col.label='Horizon is red?')
-
-length(sub2)
-
-## ------------------------------------------------------------------------
-# plot estimate of the probability density function for redness index
-plot(density(sub1$hri, na.rm=T))
-
-# add a vertical line at HRI=20 (where we put our "break" in the data)
-abline(v=20, lty=2, lwd=2, col="RED")
-
-## ------------------------------------------------------------------------
-# modify the  "genhz" (NASIS Comp. Layer ID) to combine BA and A
-# we do this because there is only one BA horizon with dry color data
-loafercreek$genhz[loafercreek$genhz == "BA"] <- "A"
-
-# make a list of data frames split by "genhz" (NASIS Comp. Layer ID)
-genhz.list <- split(horizons(sub1), f=sub1$genhz)
-
-# calculate some quantiles of Hurst Redness Index for each genhz
-qtiles.by.genhz <- do.call('rbind', lapply(genhz.list, function(d) {
-  n.obs <- sum(!is.na(d$hri))
-  names(n.obs) <- "n.obs"
-  return(c(quantile(d$hri, probs=c(0,0.05,0.25,0.5,0.75,0.95,1), na.rm=TRUE), n.obs))
-}))
-
-#remove NA rows
-qtiles.by.genhz  <- qtiles.by.genhz[complete.cases(qtiles.by.genhz),]
-
-## ----echo=FALSE----------------------------------------------------------
-# reorder soil horizons genetically and make a table
-knitr::kable(qtiles.by.genhz[c("A", "Bt1", "Bt2", "Bt3", "BCt"),],
-             caption="Selected Quantiles of Hurst Redness Index - grouped by NASIS Component Layer ID")
-
-## ------------------------------------------------------------------------
-loafercreek$red.shallow <- (loafercreek$depth.to.red <= 20)
-
-## ---- eval=FALSE---------------------------------------------------------
-## sum(is.na(loafercreek$red.shallow))
-## 
-## length(loafercreek)
-
-## ------------------------------------------------------------------------
-all.na  <- profileApply(loafercreek, 
-                        function(p) {
-                          return(all(is.na(p$horizon.is.red))) 
-                        } )
-
-## ------------------------------------------------------------------------
-loafercreek$red.shallow[is.na(loafercreek$red.shallow) & !all.na] <- 2
-
-## ------------------------------------------------------------------------
-summary(factor(loafercreek$red.shallow))
-
-## ------------------------------------------------------------------------
-# adjust margins, units are inches, bottom, left, top, right
-par(mar=c(0, 0, 0, 2))
-
-plotSPC(loafercreek[which(is.na(loafercreek$red.shallow)),], 
-     color = 'd_hue', max.depth=100, 
-     print.id = FALSE, name = '', axis.line.offset=-0.5)
-
-## ----fig.width=12, fig.height=5.5----------------------------------------
-# adjust margins, units are inches, bottom, left, top, right
-# be sure to leave room for legend
-par(mar=c(0, 0, 3, 2))
-loafercreek$horizon.is.red <- factor(loafercreek$horizon.is.red)
-
-# NOTE: GPPs DO allow NA in the grouping variable; plots as '<missing>'
-groupedProfilePlot(loafercreek[!is.na(loafercreek$red.shallow)],
-                   group.name.cex = 1.5, groups = 'red.shallow', 
-                   color = 'horizon.is.red', max.depth = 100, 
-                   print.id = FALSE, name = '',
-                   width = 0.4, divide.hz = FALSE,
-                   col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
-                   col.legend.cex = 1.25, col.label = 'Horizon is red?')
-                  
-
-## ------------------------------------------------------------------------
-# make some labels
-#loafercreek$red.shallow :   1      0         2        NA
-redness.levels <-        c("RED","DEEPRED", "NOTRED","NODATA")
-
-# set the value of the NAs to 3
-loafercreek$red.shallow[is.na(loafercreek$red.shallow)] <- 3
-
-# create a site-level grouping factor
-loafercreek$redness.class <- factor(loafercreek$red.shallow, 
-                                    levels = c(1,0,2,3), 
-                                    labels = redness.levels)
-
-## ------------------------------------------------------------------------
-summary(loafercreek$redness.class)
-
-## ----fig.width=12, fig.height=5.5----------------------------------------
-# adjust margins, units are inches, bottom, left, top, right
-# be sure to leave room for legend
-par(mar=c(0, 0, 3, 2))
-
-groupedProfilePlot(loafercreek, max.depth=100, 
-                   group.name.cex = 1.5, groups = 'redness.class', 
-                   color = 'horizon.is.red', print.id = FALSE, 
-                   name = '', axis.line.offset=-0.5, 
-                   width = 0.4, divide.hz = FALSE,
-                   col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')),
-                   col.legend.cex=1.25, col.label='Horizon is red?')
+your.function.name <- function(...) { return("output") } 
 
 ## ------------------------------------------------------------------------
 # your input `tempF` is a numeric vector in degrees fahrenheit
@@ -456,15 +271,18 @@ loafercreek$maxclay <- profileApply(loafercreek, profileMaxClay)
 
 ## ------------------------------------------------------------------------
 # look at the density plot (estimated probability density function) of maximum clay contents
-plot(density(loafercreek$maxclay, na.rm = TRUE))
+plot(density(loafercreek$maxclay, na.rm = TRUE, kernel = "rectangular"))
 
 # calculate quantiles
 quantile(loafercreek$maxclay, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
 
 ## ------------------------------------------------------------------------
 profileMaxClayAttr <- function(p, attr = "clay") {
-    # maybe you could calculate something more interesting than the maximum in your version of this function?
+    # maybe you could calculate something more interesting
+    # than the maximum in your version of this function?
     h <- horizons(p)
+    
+    # pre-emptively return NA if all clay are NA
     if(all(is.na(h$clay))) 
       return(NA)
     
@@ -476,31 +294,295 @@ profileMaxClayAttr <- function(p, attr = "clay") {
     # flattening a (possible) many:one relationship
     d.max.idx.first <- d.max.idx[1]
     
-    # return an arbitrary attribute `name` (default `name` "clay")
+    # return an arbitrary attribute `name` 
+    # default returns clay from horizon of max clay
+    # you set attr to return attr from horizon of max clay
     return(h[d.max.idx.first, attr])
 }
 
 ## ------------------------------------------------------------------------
-# overwrite with identical values (the max clay content in all profiles)
-# from new generalized function 
+# overwrite with identical values as obtained with profileMaxClay()
+# from new generalized function! using default attr='clay'
 loafercreek$maxclay <- profileApply(loafercreek, profileMaxClayAttr)
 
 # calculate the DEPTH TO first horizon with max clay content in all profiles
-loafercreek$maxclaydepth <- profileApply(loafercreek, profileMaxClayAttr, attr="hzdept")
+# note we change default attr to return hzdept instead of clay
+loafercreek$maxclaydepth <- profileApply(loafercreek, 
+                                         profileMaxClayAttr, attr="hzdept")
 
 ## ------------------------------------------------------------------------
-# look at the density plot (estimated probability density function) of minimum depth to maximum clay content
+# look at the density plot (estimated probability density function)
+# of minimum depth to maximum clay content
 plot(density(loafercreek$maxclaydepth, na.rm = TRUE))
 
 # calculate quantiles
-quantile(loafercreek$maxclaydepth, probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), na.rm = TRUE)
+quantile(loafercreek$maxclaydepth, 
+         probs = c(0,0.01,0.05,0.25,0.5,0.75,0.95,0.99,1), 
+         na.rm = TRUE)
+
+## ------------------------------------------------------------------------
+# create a named numeric vector as a "lookup table"
+hue.lookup.table <- seq(5, 22.5, 2.5)
+names(hue.lookup.table) <- c('5R','7.5R','10R','2.5YR',
+                             '5YR','7.5YR','10YR','2.5Y')
+
+## ----echo=F--------------------------------------------------------------
+df.lut <- data.frame(names(hue.lookup.table), hue.lookup.table)
+names(df.lut) <- c("Dry Hue (H)", "H*")
+knitr::kable(df.lut, row.names = FALSE, digits=1,
+             caption="Lookup table: Equivalent H and H* Values (after Hurst, 1977)")
+
+## ------------------------------------------------------------------------
+# determine H* using the lookup table
+hstar <- hue.lookup.table[loafercreek$d_hue]
+
+# calculate Hurst (1977) "Redness Index" H*(L/C)
+loafercreek$hri <- hstar * loafercreek$d_value / loafercreek$d_chroma
+
+## ------------------------------------------------------------------------
+loafercreek$horizon.is.red <- loafercreek$hri <= 20
+
+summary(loafercreek$horizon.is.red)
+
+## ------------------------------------------------------------------------
+loafercreek$depth.to.red <- profileApply(loafercreek, function(p) {
+  # access horizon slot of a single profile `p` from loafercreek
+  h <- horizons(p)
+  
+  # calculate indices where horizon.is.red == TRUE, take the first 
+  shallowest.match.idx <- which(h$horizon.is.red)[1]
+  
+  # return top depth of first horizon matching 
+  return(h[shallowest.match.idx, 'hzdept'])
+})
+
+## ------------------------------------------------------------------------
+# calculate top depth of deepest horizon that met our redness criteria
+density.cutoff <- max(loafercreek$depth.to.red, na.rm=T)+1
+density.cutoff
+
+## ------------------------------------------------------------------------
+plot(density(loafercreek$depth.to.red, 
+             from = 0, to = density.cutoff,  
+             kernel="rectangular", na.rm=T))
+
+## ------------------------------------------------------------------------
+# subset of profiles with depth.to.red <= 20
+sub1 <- subsetProfiles(loafercreek, s = 'depth.to.red <= 20')
+
+## ------------------------------------------------------------------------
+# subset of profiles with any horizon.is.red == TRUE
+sub1.alternate <- subsetProfiles(loafercreek, h = 'horizon.is.red == TRUE')
+
+## ------------------------------------------------------------------------
+# has red color within 20 cm
+length(sub1)
+
+# has red color at any depth
+length(sub1.alternate)
+
+## ------------------------------------------------------------------------
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
+# convert legend variable to factor for coloring
+sub1$horizon.is.red <- factor(sub1$horizon.is.red)
+
+# calculate the plotting order
+plotting.order <- order(sub1$depth.to.red)
+
+# make a plot, used some exaggerated red and brown colors to display
+# horizon class membership for our threshold
+plotSPC(sub1, max.depth = 100, print.id = FALSE, 
+        plot.order = plotting.order,
+        axis.line.offset = -0.5, name = '',
+        col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')),
+        width = 0.4, color = 'horizon.is.red')
+
+# we sorted the plot on "depth to red" to add a line to guide our eye
+# plot a white line, with black dots along it
+lines(1:length(sub1), sub1$depth.to.red[plotting.order], col = "white", lwd = 2)
+lines(1:length(sub1), sub1$depth.to.red[plotting.order], lwd = 3, lty = 3)
+
+# add an axis with depth to redness (corresponds to dotted line)
+axis(side = 1, at = 1:length(sub1), cex.axis = 0.5,
+     labels = sub1$depth.to.red[plotting.order])
+mtext(text = 'Depth to Red (cm)', side = 1, line = 2.5)
+
+## ------------------------------------------------------------------------
+# create a logical vector of `peiids` in `loafercreek` that are IN sub1, 
+# then invert it with NOT (!)
+not.in.sub1 <- !(site(loafercreek)$peiid %in% site(sub1)$peiid)
+
+# square bracket SPC subsetting
+sub2 <- loafercreek[not.in.sub1,]
+
+# how many in the "remainder" set?
+length(sub2)
+
+## ----fig.width=10, fig.height=4.5----------------------------------------
+par(mar=c(0, 0, 3, 2))
+
+# convert legend variable to factor for coloring
+sub2$horizon.is.red <- factor(sub2$horizon.is.red)
+
+# depth cut off at 100cm, hide IDs and make it clear which have data
+plotSPC(sub2, max.depth=100, print.id = FALSE, 
+        axis.line.offset=-0.5, name = '', 
+        width = 0.4, color = 'horizon.is.red',
+        col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
+        col.legend.cex=1.25, col.label='Horizon is red?')
+
+## ------------------------------------------------------------------------
+# plot estimate of the probability density function for redness index
+plot(density(sub1$hri, na.rm=T))
+
+# add a vertical line at HRI=20 (where we put our "break" in the data)
+abline(v=20, lty=2, lwd=2, col="RED")
+
+## ------------------------------------------------------------------------
+# modify the  "genhz" (NASIS Comp. Layer ID) to combine BA and A
+# we do this because there is only one BA horizon with dry color data
+loafercreek$genhz[loafercreek$genhz == "BA"] <- "A"
+
+# make a list of data frames split by "genhz" (NASIS Comp. Layer ID)
+genhz.list <- split(horizons(sub1), f=sub1$genhz)
+
+# calculate some quantiles of Hurst Redness Index for each genhz
+# lapply applies an anoymous function to each data frame in genhz.list
+qtiles.by.genhz <- do.call('rbind', lapply(genhz.list, function(d) {
+  n.obs <- sum(!is.na(d$hri))
+  names(n.obs) <- "n.obs"
+  return(c(quantile(d$hri, 
+                    probs=c(0,0.05,0.25,0.5,0.75,0.95,1), 
+                    na.rm=TRUE), n.obs))
+}))
+
+#remove NA rows
+qtiles.by.genhz  <- qtiles.by.genhz[complete.cases(qtiles.by.genhz),]
+
+## ----echo=FALSE----------------------------------------------------------
+# reorder soil horizons genetically and make a table
+knitr::kable(qtiles.by.genhz[c("A", "Bt1", "Bt2", "Bt3", "BCt"),], digits = 0,
+             caption="Quantiles of Hurst Redness Index - grouped by NASIS Component Layer ID")
+
+## ------------------------------------------------------------------------
+loafercreek$red.shallow <- loafercreek$depth.to.red <= 20
+
+## ---- eval=FALSE---------------------------------------------------------
+## sum(is.na(loafercreek$red.shallow))
+## 
+## length(loafercreek)
+
+## ------------------------------------------------------------------------
+all.na  <- profileApply(loafercreek, 
+                        function(p) {
+                          return(all(is.na(p$horizon.is.red))) 
+                        })
+
+## ------------------------------------------------------------------------
+# change value of profiles that have NA red.shallow, without all NA color
+loafercreek$red.shallow[is.na(loafercreek$red.shallow) & !all.na] <- 2
+
+## ------------------------------------------------------------------------
+summary(factor(loafercreek$red.shallow))
+
+## ------------------------------------------------------------------------
+# adjust margins, units are inches, bottom, left, top, right
+par(mar=c(0, 0, 0, 2))
+
+plotSPC(loafercreek[which(is.na(loafercreek$red.shallow)),], 
+     color = 'd_hue', max.depth=100, 
+     print.id = FALSE, name = '', axis.line.offset=-0.5)
+
+## ----fig.width=12, fig.height=5.5----------------------------------------
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+loafercreek$horizon.is.red <- factor(loafercreek$horizon.is.red)
+
+# NOTE: GPPs DO allow NA in the grouping variable; plots as '<missing>'
+# ...but a warning is generated
+groupedProfilePlot(loafercreek,
+                   group.name.cex = 1.5, groups = 'red.shallow', 
+                   color = 'horizon.is.red', max.depth = 100, 
+                   print.id = FALSE, name = '', width = 0.4, divide.hz = FALSE,
+                   col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')), 
+                   col.legend.cex = 1.25, col.label = 'Horizon is red?')
+
+## ------------------------------------------------------------------------
+# make some labels
+#loafercreek$red.shallow :   1      0         2        NA
+redness.levels <-        c("RED","DEEPRED", "NOTRED","NODATA")
+
+# set the value of the NAs to 3
+loafercreek$red.shallow[is.na(loafercreek$red.shallow)] <- 3
+
+# create a site-level grouping factor
+loafercreek$redness.class <- factor(loafercreek$red.shallow, 
+                                    levels = c(1,0,2,3), 
+                                    labels = redness.levels)
+
+## ------------------------------------------------------------------------
+summary(loafercreek$redness.class)
+
+## ----fig.width=12, fig.height=5.5----------------------------------------
+# adjust margins, units are inches, bottom, left, top, right
+# be sure to leave room for legend
+par(mar=c(0, 0, 3, 2))
+
+groupedProfilePlot(loafercreek, max.depth=100, 
+                   group.name.cex = 1.5, groups = 'redness.class', 
+                   color = 'horizon.is.red', print.id = FALSE, 
+                   name = '', axis.line.offset=-0.5, 
+                   width = 0.4, divide.hz = FALSE,
+                   col.palette = parseMunsell(c('10YR 5/3', '5YR 3/8')),
+                   col.legend.cex=1.25, col.label='Horizon is red?')
+
+## ----echo=FALSE----------------------------------------------------------
+who.idx <- which(loafercreek$redness.class == "RED" | 
+                   loafercreek$redness.class == "NOTRED") 
+plot(density(loafercreek$maxclay[who.idx], na.rm = TRUE, ), 
+     type="n", xlim = c(0, 60), ylim = c(0, 0.1), 
+     main = "Probability density of profile maximum clay content by \"redness\" class", 
+     sub = "Maximum Clay %; RED v.s NOTRED")
+
+sub.idx <- c(2,4)
+# set up plotting arguments
+line.labelz <- c("ALL", levels(loafercreek$redness.class))
+line.colorz <- c("BLACK","DARKRED","RED","BLUE","PURPLE")
+plot.lty <- c(3,1,1,1,1)
+
+# CREATE DATA FRAME (NO FACTORS TO PRESERVE ORDERING)
+plot.params <- data.frame(labels=line.labelz, 
+                          line.color=line.colorz, 
+                          lty=plot.lty, stringsAsFactors=FALSE)
+
+plot.params <- plot.params[sub.idx,]
+
+# make a base plot with base R apply() :)
+res <- apply(plot.params, MARGIN=1, FUN=function(i) {
+  idx <- loafercreek$redness.class %in% i[['labels']]
+  
+  if(all(!idx)) # handle 'ALL' which is not a factor level; it is al levels
+    idx <- !idx
+  
+  lines(density(loafercreek$maxclay[idx], 
+                na.rm = TRUE, from=0, to=60, kernel="rectangular"), 
+                lty=as.numeric(i[['lty']]), col=i[['line.color']], lwd = 2)
+})
+
+legend(x = 45, y = 0.1025, cex = 0.9,
+       legend = plot.params$labels, col = plot.params$line.color, 
+       lwd = 2, lty = plot.params$lty)
 
 ## ------------------------------------------------------------------------
 # compare groups versus full set. Empty plot.
 plot(density(loafercreek$maxclay, na.rm = TRUE, ), 
      type="n", xlim = c(0, 60), ylim = c(0, 0.1), 
-     main = "Comparison of probability density distribution\n of profile maxiumum clay content by \"redness\" class", 
-     sub = "Loafercreek (full set) versus depth-to-\"redness\" + NODATA groups")
+     main = "Probability density of profile\n maxiumum clay content by \"redness\" class", 
+     sub = "Maximum Clay %; Subsets versus full `loafercreek` group")
 
 # set up plotting arguments
 line.labelz <- c("ALL", levels(loafercreek$redness.class))
@@ -513,14 +595,15 @@ plot.params <- data.frame(labels=line.labelz,
                           lty=plot.lty, stringsAsFactors=FALSE)
 
 # make a base plot with base R apply() :)
-apply(plot.params, MARGIN=1, FUN=function(c) {
+res <- apply(plot.params, MARGIN=1, FUN=function(c) {
   idx <- loafercreek$redness.class %in% c[['labels']]
   
   if(all(!idx)) # handle 'ALL' which is not a factor level... it is all factor levels
     idx <- !idx
   
-  lines(density(loafercreek$maxclay[idx], na.rm = TRUE, from=0, to=60, kernel="rectangular"), 
-                lty=as.numeric(c[['lty']]), col=c[['line.color']], lwd = 2)
+  lines(density(loafercreek$maxclay[idx], na.rm = TRUE, from=0, to=60,
+                kernel="rectangular"), lty=as.numeric(c[['lty']]), 
+                col=c[['line.color']], lwd = 2)
 })
 
 legend(x = 45, y = 0.1025, cex = 0.9,
@@ -528,47 +611,55 @@ legend(x = 45, y = 0.1025, cex = 0.9,
        lwd = 2, lty = plot.params$lty)
 
 ## ------------------------------------------------------------------------
+table(toupper(loafercreek$taxonname))
+
+table(toupper(loafercreek$taxonkind))
+
+## ------------------------------------------------------------------------
 # modify the  "genhz" (NASIS Comp. Layer ID) to combine BA and A
 # we do this because there is only one BA horizon with dry color data
 loafercreek$genhz[loafercreek$genhz == "BA"] <- "A"
 loafercreek$genhz[is.na(loafercreek$genhz)] <- "not-assigned"
 
-# make a list of data frames split by "redness" and "genhz" (NASIS Comp. Layer ID)
-
 # create a horizon level redness grouping factor from site
+# TODO: make an easier method for doing this in the SPC object
 loafercreek$redness <- merge(horizons(loafercreek), 
                             site(loafercreek)[,c('peiid','redness.class')], 
                             all.x = TRUE)$redness.class
 
-red.genhz.list <- split(horizons(loafercreek), f=list(loafercreek$redness, loafercreek$genhz))
+# make a list of data frames split by "redness" and "genhz" (NASIS Comp. Layer ID)
+red.genhz.list <- split(horizons(loafercreek), 
+                        f = list(loafercreek$redness, loafercreek$genhz))
 
+## ------------------------------------------------------------------------
 # calculate some quantiles of clay content for each redness.class*genhz
 qtiles.redgenhz <- do.call('rbind', lapply(red.genhz.list, function(d) {
+  
   # add number of obervations (named numeric vector) to output
   n.obs <- sum(!is.na(d$clay))
   names(n.obs) <- "n.obs"
   
   # calculate quantiles, concatenate n.obs & return
-  return(data.frame(q=t(quantile(d$clay, 
-                    probs = c(0,0.05,0.25,0.5,0.75,0.95,1), 
-                    na.rm = TRUE)), n.obs, 
-                    redness=d$redness[1], genhz=d$genhz[1]))
+  return(data.frame(q = t(quantile(d$clay,
+                                  probs = c(0,0.05,0.25,0.5,0.75,0.95,1), 
+                                  na.rm = TRUE)), 
+                    n.obs, 
+                    redness = d$redness[1], 
+                    genhz = d$genhz[1]))
 }))
 
-
-# remove NA rows
-qtiles.redgenhz <- qtiles.redgenhz[complete.cases(qtiles.redgenhz),]
-
-# add grouping factors
-
-## ----echo=FALSE----------------------------------------------------------
+## ----results='asis'------------------------------------------------------
 # print a list of data frames, split by redness class
 library(knitr)
+
 red.clayl <- split(qtiles.redgenhz, f = qtiles.redgenhz$redness)
 
-lapply(red.clayl, function(d) {
+res <- lapply(red.clayl, function(d) {
   rownames(d) <- d$genhz
-  print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"),], caption = "Selected Quantiles of Clay Content - grouped by NASIS Component Layer ID & Redness Group"))
+  
+  print(kable(d[c("A", "Bt1", "Bt2", "Bt3", "BCt", "Cr", "not-assigned"), ], 
+              caption = "Selected Quantiles of Clay Content - 
+                          grouped by NASIS Component Layer ID & Redness Group"))
 })
 
 ## ------------------------------------------------------------------------
@@ -620,8 +711,9 @@ typeof(numeric.vector)  # double precision numeric
 a.list <- profileApply(loafercreek, estimateSoilDepth, simplify = FALSE)
 
 head(a.list, 3)     # a named list, names are peiid
-class(a.list)       # the list is a list
-typeof(a.list)      # it is a list
+
+class(a.list)       # list can contain a mix of any data type
+
 typeof(a.list[[1]]) # the first element of this list is numeric (integer)
 
 str(unlist(a.list)) # create a named numeric vector from list (since all are numeric)
@@ -677,9 +769,6 @@ wrapper.test <- profileApply(loafercreek,
                              na.threshold = 0.40,
                              tdepth = 25, bdepth = 75,
                              attr = 'clay')
-## NOTE: na.threshold 40% was chosen just to flag a few pedons for minimal output
-##        you will need to decide how much missing data is acceptable and what to do with
-##        incomplete observations for your analysis
 
 plot(density(wrapper.test, na.rm=TRUE), 
      main = "25-75cm depth-weighted average clay content\nall `loafercreek` pedons")
