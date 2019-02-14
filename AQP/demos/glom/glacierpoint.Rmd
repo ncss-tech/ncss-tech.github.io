@@ -1,5 +1,5 @@
 ---
-title: "glom() Demo - checking for cambic horizon criteria"
+title: "Glacierpoint - glom() Demo"
 subtitle: 'v0.1.1 - last updated 2019/02/14'
 author: "Andrew Brown; andrew.g.brown@ca.usda.gov"
 version: "0.1.1"
@@ -14,7 +14,7 @@ In this demo, we use the _aqp_ functions `glom()` and `profileApply()` to analyz
 
 `glom()` returns the horizon(s) that intersect the specified depth [_z1_] or depth interval [_z1_, _z2_].
 
-### Checking for "sandy cambics"
+### Checking for cambic horizon criteria
 
 First, the script queries components by component name, then gets records populated in the _Component Diagnostic Features_ (`codiagfeatures`) table. 
 
