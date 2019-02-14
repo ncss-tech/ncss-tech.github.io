@@ -1,0 +1,171 @@
+---
+title: "glom() Demo - checking for cambic horizon criteria"
+author: "Andrew Brown"
+date: "Last updated: 2019/02/14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this demo, we use the _aqp_ functions `glom()` and `profileApply()` to analyze a depth-subset of horizons from each profile in a _SoilProfileCollection_.
+
+`glom()` returns the horizon(s) that intersect the specified depth [_z1_] or depth interval [_z1_, _z2_].
+
+### Sandy Cambic Checker
+
+This demonstration script loads some components from Yosemite National Park (_CA790_). 
+
+First, the script queries records populated in the _Component Diagnostic Features_ (`codiagfeatures`) table for a set of `cokey`s. Then we add the cambic top and bottom depth as _site-level_ variables for each component that has a cambic.
+
+A custom function `has_sandy_cambic()` is defined to use `glom()` on each profile (`p`) in `my.spc`.
+
+`glom()` is used along with the top and bottom depth of the cambic (which we added to `site` table) to get _all horizons that are part of the specified (cambic) depth range_.
+
+A pair of regular expression patterns are used to check the `glom()`-ed horizons for stratified and/or sandy textures. If either stratified or sandy textures are found, the function returns `TRUE`. Otherwise, the function returns `FALSE`.
+
+In this simple example, two out of four components have sandy cambics. 
+
+The _Glacierpoint_ series (_Sandy-skeletal, isotic Xeric Dystrocryepts_) is defined as having __either__ an Umbric epipedon __OR__ a cambic horizon. It appears that cambic horizons were populated even for the components whose RV textures do not meet cambic criteria.
+
+```{r message=F, warning=F}
+# load soilDB
+library(soilDB)
+
+# get components from Yosemite National Park for a sandy-skeletal, cryic, inceptisol
+my.spc <- fetchSDA_component(WHERE="compname = 'Glacierpoint'")
+```
+
+`fetchSDA_component()` does not return diagnostic feature info by default. We need to query SDA specifically to obtain that info.
+
+```{r message=F, warning=F}
+# custom function using SDA_query() to get the diagnostic table
+get_SDA_diagnostics <- function(my.spc) {
+  target_cokeys <- site(my.spc)[,idname(my.spc)]
+  q <- paste0('SELECT * FROM codiagfeatures WHERE cokey IN ', format_SQL_in_statement(target_cokeys), ";")
+  return(SDA_query(q))
+}
+
+# query diagnostic info from SDA
+diag.info <- get_SDA_diagnostics(my.spc)
+
+# rename the RV depths for plotting
+diag.info$featdept <- diag.info$featdept_r
+diag.info$featdepb <- diag.info$featdepb_r
+
+# set diagnostics slot of my.spc to contain SDA diagnostics
+diagnostic_hz(my.spc) <- diag.info
+```
+
+SPC-creating functions may require you to independently query the diagnostic features into a _data.frame_ and set them for your SPC, as we did above. Alternately, you can create your SPC other ways. The `fetchNASIS_XXX()` results include the diagnostic feature table _by default_.
+
+```{r, eval=F}
+## You don't need to use SDA! You can get components from your NASIS selected set. 
+## To use component records from NASIS, use the code below to make `my.spc.nasis` 
+my.spc.nasis <- fetchNASIS_components()
+```
+
+Access the SPC `@diagnostics` slot (which we just filled in), figure out which pedons have cambics, and then add their cambic top and bottom depth to the `site` table.
+
+```{r message=F, warning=F}
+# copy contents of diagnostics slot
+diagz <- diagnostic_hz(my.spc)
+
+# take just records that are featkind == cambic
+diag.sub <- diagz[grepl(diagz$featkind, pattern="[Cc]ambic"),]
+
+# get just the unique ID and RV top and bottom depths for join to site table
+diag.sub <- diag.sub[,c(idname(my.spc),'featdept_r','featdepb_r')]
+
+# rename top and bottom depth to be more connotative
+names(diag.sub) <- c(idname(my.spc),'cambicdept_r','cambicdepb_r')
+```
+
+Make a subset SPC that is just the profiles that have cambic horizons in their diagnostics table.
+
+```{r message=F, warning=F}
+my.spc.sub <- my.spc[site(my.spc)[,idname(my.spc)] %in% diag.sub[,idname(my.spc)], ]
+
+# add our modified diagnostic depth table to site table of SPC
+site(my.spc.sub) <- diag.sub
+```
+
+Visually show sand contents by horizon, with cambic top and bottom depths as bracket annotation.
+
+```{r message=F, warning=F}
+par(mar=c(0,0,3,0))
+plot(my.spc.sub, color='sandtotal_r', width=0.15)
+addDiagnosticBracket(my.spc.sub, kind='Cambic horizon', col='red', offset=-0.25)
+```
+
+***
+
+Now that we have the data and have done some preliminary inspection, let's define a regular expression pattern and a function. We will use these to identify horizon texture classes that are "sandy" and components that have sandy cambics.
+
+```{r message=F, warning=F}
+sandy.texture.pattern <- "-S$|^S$|COS$|L[^V]FS$|[^L]VFS$|LS$|LFS$"
+```
+
+Define a custom function `has_sandy_cambic()` to test horizons _within the cambic depth range_ for each profile.
+
+```{r message=F, warning=F}
+# p is a single profile SPC 
+has_sandy_cambic <- function(p) {
+  cambic_top <- p$cambicdept_r
+  cambic_bot <- p$cambicdepb_r
+  
+  print(paste0(cambic_top,"-",cambic_bot))
+  # if top or bottom depth are NULL there is no cambic
+  if(!is.null(cambic_top) | !is.null(cambic_bot)) {
+    
+    # call glom to get horizons in p between cambic_top and cambic_bot
+    cambic_horizons <- glom(p, cambic_top, cambic_bot)
+    
+    print(paste0(unique(p$cokey),":", paste0(cambic_horizons$texture, collapse=",")))
+    
+    # consider stratified cambics "sandy" -- in that stratification is not allowed per cambic def'n
+    if(any(grepl(cambic_horizons$texture, 
+                 pattern = "SR",
+                 ignore.case = TRUE))) {
+      return(TRUE) 
+    }
+  
+    # use a regular expression to match the sandy textures
+    if(any(grepl(cambic_horizons$texture, 
+                 pattern = sandy.texture.pattern, 
+                 ignore.case = TRUE))) {
+      return(TRUE) 
+    }  
+  }
+  
+  return(FALSE)
+}
+```
+
+Apply the function to each profile.
+
+```{r message=F, warning=F}
+# apply function has_sandy_cambic() to each profile
+my.spc.sub$sandy_cambic <- profileApply(my.spc.sub, has_sandy_cambic)
+```
+
+Inspect results. Print out the offending unique IDs and textural classes (if any).
+
+```{r message=F, warning=F}
+# do any components have a sandy cambic?
+if(any(my.spc.sub$sandy_cambic)) {
+  print(paste0("The following components have sandy cambics: ",
+        paste0(site(my.spc.sub)[my.spc.sub$sandy_cambic,idname(my.spc)], collapse=",")))
+} else {
+  print("All components with cambics have appropriate textures.")
+}
+```
+
+```{r message=F, warning=F}
+# print a list of the sandy textures in the subset of components with cambics
+sandy.idx <- grepl(my.spc.sub$texture, 
+                   pattern = sandy.texture.pattern, 
+                   ignore.case = TRUE)
+unique(my.spc.sub$texture[sandy.idx])
+```
