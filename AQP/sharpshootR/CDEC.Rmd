@@ -197,12 +197,21 @@ bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in
 
 ### Water Year Summaries
 
-Cumulative PPT over the course of an idealized water year (October 1 through September 30). Measurements are selected from water years with annual PPT close to the 5th, 25th, 50th, 75th, and 95th percentiles of annual PPT (over all water years). The current year is symbolized with a red line.
+Cumulative PPT over the course of an idealized water year (October 1 through September 30). Measurements are selected from water years with annual PPT close to the 5th, 25th, 50th, 75th, and 95th percentiles of annual PPT (over all water years). The current water year is symbolized with a red line. The red box and whisker plot (modified, whiskers are 5th and 95th percentiles) summarizes cumulative PPT on the current "water day".
 ```{r fig.height=5.5, fig.width=9}
-x <- CDECquery(id='SOR', sensor=45, interval='D', start='1900-01-01', end='2030-01-01')
+# define station of interest
+s <- 'SOR'
+# get metadata
+s.info <- CDEC_StationInfo(s)
+# format title for cumulative PPT
+title.text <- sprintf("%s [%s]", s.info$site.meta$Name, s)
+
+# get data
+x <- CDECquery(id=s, sensor=45, interval='D', start='1900-01-01', end='2030-01-01')
 
 ## NOTE: requires sharpshootR >= 1.4.02
-PCP_plot(x, ylab='Cumulative PPT (inches)', main='Sonora Ranger Station (SOR)')
+# plot
+PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text)
 ```
 
 
