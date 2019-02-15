@@ -190,10 +190,8 @@ has_sandy_cambic &lt;- function(p, sandy.texture.pattern = &quot;SR|-S$|^S$|COS$
     
     # call glom to get horizons in p between cambic_top and cambic_bot 
     
-    #TODO: minor bug:
-    # we add 1 because clod.hz.ids() will include the overlying horizon 
-    # if z1 is a horizon boundary. the reindexing is handled *correctly* for z2
-    # also, some combinations cause the SPC-SPDF horizon indexing error
+    #TODO: we add 1 because glom() is greedy and will include the overlying horizon by default
+    # if z1 is a horizon boundary. as.data.frame because single horizon SPCs cause errors
     cambic_horizons &lt;- glom(p, cambic_top + 1, cambic_bot, as.data.frame = TRUE)
     
     print(paste0(&quot;COKEY: &quot;,unique(p$cokey),&quot; has cambic (&quot;,
