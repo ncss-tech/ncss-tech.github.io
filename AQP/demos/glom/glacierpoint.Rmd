@@ -18,17 +18,15 @@ In this demo, we use the _aqp_ functions `glom()` and `profileApply()` to analyz
 
 First, the script queries components by component name, then gets records populated in the _Component Diagnostic Features_ (`codiagfeatures`) table. 
 
-A custom function `has_sandy_cambic()` is defined to use `glom()` on each profile (`p`) in `my.spc`.
+`glom()` is used to get all horizons that are _within the cambic depth range_. A custom function `has_sandy_cambic()` is defined to use `glom()` on individual profiles (`p`). A pair of regular expression patterns are used to check the `glom()`-ed horizons for stratified and/or sandy textures.
 
-`glom()` is used along with the top and bottom depth of the cambic (which we added to `site` table) to get _all horizons that are part of the specified (cambic) depth range_.
-
-A pair of regular expression patterns are used to check the `glom()`-ed horizons for stratified and/or sandy textures. If either stratified or sandy textures are found, the function returns `TRUE`. Otherwise, the function returns `FALSE`.
+If either stratified or sandy textures are found, the function returns `TRUE` for that profile. Otherwise, the function returns `FALSE`.
 
 ***
 
 This demonstration script loads some components from Yosemite National Park (_CA790_). In this simple example, we look at some components correlated to _Glacierpoint_.
 
-The _Glacierpoint_ series (_Sandy-skeletal, isotic Xeric Dystrocryepts_) is defined as having __either__ an Umbric epipedon __OR__ a cambic horizon. It appears that cambic horizons were populated even for the components whose RV textures do not meet cambic criteria.
+The _Glacierpoint_ series (_Sandy-skeletal, isotic Xeric Dystrocryepts_) is defined as having __either__ an Umbric epipedon __OR__ a cambic horizon. It appears that cambic horizons were populated even for some of the components whose RV textures do not meet cambic criteria.
 
 ```{r message=F, warning=F}
 # load soilDB
@@ -38,7 +36,9 @@ library(soilDB)
 my.spc <- fetchSDA_component(WHERE="compname = 'Glacierpoint'")
 ```
 
-`fetchSDA_component()` does not return diagnostic feature info by default. We need to query SDA specifically to obtain that info.
+`fetchSDA_component()` does not return diagnostic feature info by default.
+
+We need to query SDA specifically to obtain that info. Define a function that uses `SDA_query()` to do s.
 
 ```{r message=F, warning=F}
 # custom function using SDA_query() to get the diagnostic table
@@ -74,7 +74,7 @@ Use `plotSPC()` to show sand fraction percentage by horizon -- with cambic top a
 
 ```{r message=F, warning=F}
 par(mar=c(0,0,3,0))
-plot(my.spc.sub, color='sandtotal_r', width=0.15)
+plotSPC(my.spc.sub, color='sandtotal_r', width=0.15)
 addDiagnosticBracket(my.spc.sub, kind='Cambic horizon', 
                      top='featdept_r', bottom='featdepb_r',
                      col='red', offset=-0.25)
@@ -84,7 +84,7 @@ addDiagnosticBracket(my.spc.sub, kind='Cambic horizon',
 
 Now that we have the data and have done some preliminary inspection, let's define a regular expression pattern and a function to check our cambic criteria. 
 
-Define a custom function `has_sandy_cambic()` to test horizons _within the cambic depth range_ for each profile. The default arguement `sandy.texture.pattern` matches stratified or sandy textures. If any such textures are found, the function returns `TRUE`.
+Define a custom function `has_sandy_cambic()` to test horizons _within the cambic depth range_ for each profile. The default argument `sandy.texture.pattern` matches stratified or sandy textures. 
 
 ```{r message=F, warning=F}
 # p is a single profile SPC 
