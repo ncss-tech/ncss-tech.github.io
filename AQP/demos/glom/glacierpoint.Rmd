@@ -44,8 +44,8 @@ We need to query SDA specifically to obtain that info. Define a function that us
 
 ```{r message=F, warning=F}
 # custom function using SDA_query() to get the diagnostic table
-get_SDA_diagnostics <- function(my.spc) {
-  target_cokeys <- site(my.spc)[,idname(my.spc)]
+get_SDA_diagnostics <- function(spc) {
+  target_cokeys <- profile_id(spc)
   q <- paste0('SELECT * FROM codiagfeatures WHERE cokey IN ', format_SQL_in_statement(target_cokeys), ";")
   return(SDA_query(q))
 }
@@ -72,11 +72,16 @@ A total of `r length(my.spc.sub)` components out of `r length(my.spc)` have camb
 
 Let's inspect those `r length(my.spc.sub)` components visually. 
 
-Use `plotSPC()` to show sand fraction percentage by horizon -- with cambic top and bottom depths portrayed with bracket annotation (using `aqp::addDiagnosticBracket()`).
+Use `plotSPC()` to show sand fraction percentage by horizon -- with cambic top and bottom depths shown with brackets using `aqp::addDiagnosticBracket()`.
 
 ```{r message=F, warning=F}
+# set margins
 par(mar=c(0,0,3,0))
+
+# plot spc using total sand RV % as color
 plotSPC(my.spc.sub, color='sandtotal_r', width=0.15)
+
+# add red brackets showing cambic horizon top and bottom depth
 addDiagnosticBracket(my.spc.sub, kind='Cambic horizon', 
                      top='featdept_r', bottom='featdepb_r',
                      col='red', offset=-0.25)
@@ -89,9 +94,11 @@ Now that we have the data and have done some preliminary inspection, let's defin
 Define a custom function `has_sandy_cambic()` to test horizons _within the cambic depth range_ for each profile. The default argument `sandy.texture.pattern` matches stratified or sandy textures. 
 
 ```{r message=F, warning=F}
-# p is a single profile SPC 
+# has_sandy_cambic() has one required argument p, which is a single profile SPC 
 has_sandy_cambic <- function(p, sandy.texture.pattern = "SR|-S$|^S$|COS$|L[^V]FS$|[^L]VFS$|LS$|LFS$") {
   d <- diagnostic_hz(p)
+  
+  # match the pattern cambic or Cambic
   d.cambic.idx <- grep(d$featkind, pattern="[Cc]ambic")
   cambic_top <- d[d.cambic.idx, 'featdept_r']
   cambic_bot <- d[d.cambic.idx, 'featdepb_r']
@@ -99,12 +106,17 @@ has_sandy_cambic <- function(p, sandy.texture.pattern = "SR|-S$|^S$|COS$|L[^V]FS
   # if top or bottom depth are NULL there is no cambic
   if(!is.null(cambic_top) | !is.null(cambic_bot)) {
     
-    # call glom to get horizons in p between cambic_top and cambic_bot
-    cambic_horizons <- glom(p, cambic_top, cambic_bot)
+    # call glom to get horizons in p between cambic_top and cambic_bot 
+    
+    #TODO: minor bug:
+    # we add 1 because clod.hz.ids() will include the overlying horizon 
+    # if z1 is a horizon boundary. the reindexing is handled *correctly* for z2
+    # also, some combinations cause the SPC-SPDF horizon indexing error
+    cambic_horizons <- glom(p, cambic_top + 1, cambic_bot, as.data.frame = TRUE)
     
     print(paste0("COKEY: ",unique(p$cokey)," has cambic (",
-                 cambic_top," - ",cambic_bot," cm) with texture class: ",
-                 paste0(cambic_horizons$texture, collapse=", ")))
+                 cambic_top," - ",cambic_bot," cm) with ", paste0(cambic_horizons$hzname, collapse=","), 
+                 " horizons of texture class: ", paste0(cambic_horizons$texture, collapse=", ")))
   
     # use a regular expression to match the sandy textures
     if(any(grepl(cambic_horizons$texture, 
@@ -113,7 +125,6 @@ has_sandy_cambic <- function(p, sandy.texture.pattern = "SR|-S$|^S$|COS$|L[^V]FS
       return(TRUE) 
     }  
   }
-  
   return(FALSE)
 }
 ```
