@@ -18,15 +18,10 @@ In this demo, we use the _aqp_ functions `glom()` and `profileApply()` to analyz
 
 First, the script queries components by component name, then gets records populated in the _Component Diagnostic Features_ (`codiagfeatures`) table. 
 
-<<<<<<< HEAD
 `glom()` is used to get all horizons that are _within the cambic depth range_. A custom function `has_sandy_cambic()` is defined to use `glom()` on individual profiles (`p`). 
 
 A regular expression pattern is used to check the `glom()`-ed horizon textures field (`p$texture`) for stratified and/or sandy texture classes that are _not_ allowed in cambic horizons.
 
-=======
-`glom()` is used to get all horizons that are _within the cambic depth range_. A custom function `has_sandy_cambic()` is defined to use `glom()` on individual profiles (`p`). A pair of regular expression patterns are used to check the `glom()`-ed horizons for stratified and/or sandy textures.
-
->>>>>>> e399a59a8e8e3956e03d0babc6f884257cfc627d
 If either stratified or sandy textures are found, the function returns `TRUE` for that profile. Otherwise, the function returns `FALSE`.
 
 ***
