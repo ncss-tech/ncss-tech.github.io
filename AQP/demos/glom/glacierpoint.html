@@ -133,7 +133,8 @@ $(document).ready(function () {
 <div id="checking-for-cambic-horizon-criteria" class="section level3">
 <h3>Checking for cambic horizon criteria</h3>
 <p>First, the script queries components by component name, then gets records populated in the <em>Component Diagnostic Features</em> (<code>codiagfeatures</code>) table.</p>
-<p><code>glom()</code> is used to get all horizons that are <em>within the cambic depth range</em>. A custom function <code>has_sandy_cambic()</code> is defined to use <code>glom()</code> on individual profiles (<code>p</code>). A pair of regular expression patterns are used to check the <code>glom()</code>-ed horizons for stratified and/or sandy textures.</p>
+<p><code>glom()</code> is used to get all horizons that are <em>within the cambic depth range</em>. A custom function <code>has_sandy_cambic()</code> is defined to use <code>glom()</code> on individual profiles (<code>p</code>).</p>
+<p>A regular expression pattern is used to check the <code>glom()</code>-ed horizon textures field (<code>p$texture</code>) for stratified and/or sandy texture classes that are <em>not</em> allowed in cambic horizons.</p>
 <p>If either stratified or sandy textures are found, the function returns <code>TRUE</code> for that profile. Otherwise, the function returns <code>FALSE</code>.</p>
 <hr />
 <p>This demonstration script loads some components from Yosemite National Park (<em>CA790</em>). In this simple example, we look at some components correlated to <em>Glacierpoint</em>.</p>
