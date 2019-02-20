@@ -35,13 +35,15 @@ install.packages('rvest', dep=TRUE)
 install.packages('httr', dep=TRUE)
 install.packages('reshape2', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
+install.packages('sharpshootR', dep=TRUE)
 ```
 
 You will also need the latest version of `soilDB` and `aqp`:
 ```{r eval=FALSE}
 install.packages('devtools', dep=TRUE)
-devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
-devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 
@@ -64,6 +66,7 @@ m <- SCAN_site_metadata(site.code=c(2072,356,2148,2187))
 
 knitr::kable(m, row.names = FALSE)
 
+# result is a list
 x <- fetchSCAN(site.code=c(574), year=c(2016))
 
 # print a list of sensor types
@@ -129,15 +132,13 @@ sensor.depths <- unique(x$SMS$depth)
 # slice the KSSL data associated with the sensor depths
 s1 <- slice(s, sensor.depths ~ .)
 
-# generate a better axis for dates
-date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 months')
-
 # plot profile of lab data horizons then over plot with location of sensor depths within them
-plot(s, name='hzn_desgn', label='pedon_id', id.style='top', cex.names=0.75, x.idx.offset=0.5, axis.line.offset=-15)
+par(mar=c(0,0,3,1))
+plotSPC(s, name='hzn_desgn', label='pedon_id', id.style='top', cex.names=0.75, width=0.05, x.idx.offset=0.1, axis.line.offset=-15, space=2)
 title(paste('Sensor Depths for SCAN site', unique(x$SMS$Site), sep=" "), line=0.5, cex.main=1.5)
 
 # over plot the sensor depths on the previous plot
-plot(s1, width=0.005, name='hzn_top', label='pedon_id', print.id=FALSE, id.style='top', cex.names=0.75, x.idx.offset=0.5, lwd=2, fill='blue', plot.depth.axis=FALSE, add=TRUE)
+plotSPC(s1, width=0.005, name='hzn_top', label='pedon_id', print.id=FALSE, id.style='top', cex.names=0.75, x.idx.offset=0.1, lwd=2, fill='blue', plot.depth.axis=FALSE, add=TRUE)
 ```
 
 

@@ -67,7 +67,7 @@ and aggregated to the following granularity:
 
 
 Query daily sensor data associated with the Sequoia / Kings Canyon soil survey.
-```{r get-data, fig.width=6, fig.height=7, results='hide'}
+```{r fig.width=6, fig.height=7, results='hide'}
 library(soilDB)
 library(latticeExtra)
 library(RColorBrewer)
@@ -101,28 +101,6 @@ kable_styling(kable(head(x$soiltemp), row.names = FALSE, format='html'), full_wi
 
 Make a simple graphical timeline of the data by sensor.
 ```{r fig.width=8, fig.height=5}
-HenryTimeLine <- function(sensor_data, ...) {
-  
-  # filter NA
-  x.no.na <- na.omit(sensor_data)
-  # compute date ranges by sensor
-  x.range <- ddply(x.no.na, 'sensor_name', .fun = plyr::summarise, start=as.Date(min(date_time)), end=as.Date(max(date_time)))
-  x.range$sensor_name <- factor(x.range$sensor_name)
-  
-  # composite plot
-  p <- segplot(sensor_name ~ start + end, data=x.range,
-        scales=list(alternating=3, x=list(cex=0.85, tick.number=10), y=list(relation='free', cex=0.65, rot=0)),
-        band.height=0.75,
-        xlab='', ylab='',
-        panel = function(...) {
-          panel.abline(h=1:length(levels(x.range$sensor_name)), col='grey', lty=3)
-          panel.segplot(...)
-        }, ...
-  )
-  
-  return(p)
-}
-
 HenryTimeLine(x$soiltemp, main='Soil Temperature Records', col='RoyalBlue')
 HenryTimeLine(x$soilVWC, main='Soil VWC Records', col='RoyalBlue')
 ```
@@ -182,14 +160,24 @@ par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'),
 xlab='Day of Year', ylab='Year')
 ```
 
-Soil moisture data.
+Soil moisture data by calendar years and Julian day.
 ```{r fig.width=9, fig.height=4}
 levelplot(factor(!is.na(sensor_value)) ~ doy * factor(year) | sensor_name, main='Daily Soil Moisture at 50cm',
 data=x$soilVWC, subset=sensor_depth == 50, 
 col.regions=c('grey', 'RoyalBlue'), cuts=1, 
 colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
-xlab='Day of Year', ylab='Year')
+xlab='Day', ylab='Year')
+```
+
+Soil moisture data by water year and day.
+```{r fig.width=9, fig.height=4}
+levelplot(factor(!is.na(sensor_value)) ~ water_day * factor(water_year) | sensor_name, main='Daily Soil Moisture at 50cm\nOctober 1 -- September 30',
+data=x$soilVWC, subset=sensor_depth == 50, 
+col.regions=c('grey', 'RoyalBlue'), cuts=1, 
+colorkey=FALSE, as.table=TRUE, scales=list(alternating=3, cex=0.75), 
+par.strip.text=list(cex=0.85), strip=strip.custom(bg='yellow'), 
+xlab='Water Day', ylab='Water Year')
 ```
 
 Comparison between years, faceted by sensor name.
@@ -204,6 +192,8 @@ colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75),
 par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
 xlab='Day of Year', ylab='Year')
 ```
+
+
 
 Comparison between sensor depths, faceted by sensor name.
 ```{r fig.width=8, fig.height=5}
@@ -229,9 +219,10 @@ xlab='Day of Year', ylab='Year')
 useOuterStrips(p, strip=strip.custom(bg='grey'), strip.left = strip.custom(bg='grey', horizontal=FALSE))
 ```
 
-Same idea, this time with soil moisture data.
+
+Same idea, this time with soil temperature data.
 ```{r fig.width=9, fig.height=7}
-p <- levelplot(sensor_value ~ doy * factor(year) | sensor_name + factor(sensor_depth), main='Daily Soil Moisture',
+p <- levelplot(sensor_value ~ doy * factor(year) | sensor_name + factor(sensor_depth), main='Daily Soil Temperature',
 data=x$soiltemp, col.regions=cols.temp,
 subset=sensor_name %in% c('Ashmountain', 'CedarGrove', 'LeConte'), 
 colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75), 
@@ -302,6 +293,12 @@ Get water level data associated with the "NorthernNY_watertable" project. Water 
 ```{r}
 x <- fetchHenry(project='NorthernNY_watertable', gran = 'day', what='waterlevel')
 ```
+
+Check data availability.
+```{r fig.width=8, fig.height=5}
+HenryTimeLine(x$waterlevel, main='Water Level', col='RoyalBlue')
+```
+
 
 Simple time-series style plot, each panel is a water level sensor.
 ```{r fig.width=10, fig.height=8}
