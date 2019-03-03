@@ -94,7 +94,7 @@ library(plyr)
 
 # current data are:
 yr <- 2019
-mo <- 'February'
+mo <- 'March'
 
 # Stanislaus River watershed
 course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
@@ -235,11 +235,11 @@ xyplot(emp.pctile ~ year | month, data=scaled.data, type=c('p','g', 'smooth'), s
 ```{r fig.width=10, fig.height=6}
 tps <- list(box.dot=list(col='black', pch='|'), box.rectangle=list(col='black'), box.umbrella=list(col='black', lty=1), plot.symbol=list(col='black', cex=0.33), strip.background=list(col=grey(0.85)))
 
-bwplot(emp.pctile ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == 'February', stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
+bwplot(emp.pctile ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == mo, stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
 
-bwplot(spi ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == 'February', stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
+bwplot(spi ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == mo, stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
 
-bwplot(emp.pctile ~ factor(year), data=scaled.data, main='February Snow Survey', sub='Period of Record: 1939-2019', ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == 'February', panel=function(x=x, y=y, ...) {
+bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub='Period of Record: 1939-2019', ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
   panel.grid(-1, -1)
   panel.abline(h=0.5, lty=2, col='orange')
   panel.bwplot(x=x, y=y, ...)

@@ -200,7 +200,7 @@ bwplot(month ~ value, data=x, ylab='', main='Sonora Ranger Station\nVariation in
 Cumulative PPT over the course of an idealized water year (October 1 through September 30). Measurements are selected from water years with annual PPT close to the 5th, 25th, 50th, 75th, and 95th percentiles of annual PPT (over all water years). The current water year is symbolized with a red line. The red box and whisker plot (modified, whiskers are 5th and 95th percentiles) summarizes cumulative PPT on the current "water day".
 ```{r fig.height=5.5, fig.width=9}
 # define station of interest
-s <- 'SOR'
+s <- 'SPW'
 # get metadata
 s.info <- CDEC_StationInfo(s)
 # format title for cumulative PPT
