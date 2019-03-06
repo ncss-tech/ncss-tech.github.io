@@ -18,6 +18,26 @@ options(width=100, stringsAsFactors=FALSE)
 # Introduction
 Occasionally our IT staff push a new version of **R** and **RStudio** to our local machines. This is usually a *good thing* as the more recent version contains bug-fixes and optimization. However, the library of R packages is "lost". This document outlines a couple of steps that you can take before and after the upgrade to minimize the inconvenience. Unlike previous updates we are hoping to provide NRCS staff with an warning before the new version is pushed out by IT.
 
+# Post Upgrade (TODO: finish this)
+```{r eval=FALSE}
+update.packages(ask=FALSE, checkBuilt=TRUE)
+```
+
+It might take a little while to finish. Once it is done, use the instructions from the soilReports page on getting the system ready:
+
+```{r eval=FALSE}
+# need devtools to install packages from GitHub
+install.packages('devtools', dep=TRUE)
+
+# get the latest version of the 'soilReports' package
+remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade_dependencies=FALSE) 
+```
+
+Then, the report-specific [instructions](https://github.com/ncss-tech/soilReports/tree/master/inst/reports/region2/mu-comparison).
+
+
+
+
 # R Profile Setup
 On many of our machines, the `$HOME` directory points to a network share. This can cause all kinds of problems when installing R packages, especially if you connect to the network by VPN. The following code is a one-time solution and will cause R packages to be installed on a local disk by adding an `.Rprofile` file to your `$HOME` directory. This file will instruct R to use `C:/Users/FirstName.LastName/Documents/R/` for installing R packages. Again, you only have to do this **once**.
 
