@@ -30,6 +30,13 @@ Then, have local experts evaluate the degree to which these grid sizes can accom
 In short, this kind of work should help us setup standards that are based on our data and our institutional knowledge... which I think is important.
 
 
+
+
+## Misc.
+
+The "most-likely" concept is related to the fact that most all classification algorithms generate conditional probabilities for each possible "label" (map unit symbol, soil series, etc.). A selection must be made in order to assign a class label to a pixel. This is usually based on the class with the highest conditional probability.
+
+
 ## Links / References
    
    * http://spatial-analyst.net/wiki/index.php/Grid_size_calculator
