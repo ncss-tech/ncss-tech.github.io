@@ -40,6 +40,7 @@ install.packages('rgeos', dep=TRUE)
 Copy and paste the following code into a new R script document. Step through the lines of code (e.g. run each line starting from the top) by moving the cursor to the top line and then press ctrl + enter repeatedly.
 ```{r example, eval=FALSE}
 require(soilDB)
+require(aqp)
 require(rgdal)
 require(rgeos)
 

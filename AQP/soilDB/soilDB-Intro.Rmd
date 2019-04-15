@@ -102,6 +102,8 @@ The `fetchNASIS()` function will load pedons from the "selected set" in your loc
 
 ```{r local-nasis-demo, eval=FALSE}
 library(soilDB)
+require(aqp)
+
 # fetch pedons from the selected set, replace NULL rock fragment fractions with 0
 f <- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
 # fetch pedons from the selected set, do not replace NULL rock fragment fractions with 0
@@ -117,6 +119,8 @@ The `fetchPedonPC(dsn)` function will load all pedon records into the current R 
 
 ```{r pedonPC-demo, eval=FALSE}
 library(soilDB)
+require(aqp)
+
 # this will only work if you have a PedonPC Database and Windows :(
 dsn <- "S:/Service_Center/NRCS/pedon/pedon.accdb"
 f <- fetchPedonPC(dsn)
@@ -246,6 +250,7 @@ f.largest <- function(i) {
 Load required libraries, setup a query, submit to SDA, and process the results.
 ```{r sda-ssurgo-query-example-2, results='hide'}
 # load libraries
+require(aqp)
 library(soilDB)
 library(plyr)
 

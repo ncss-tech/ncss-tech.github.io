@@ -11,7 +11,7 @@
 
 <meta name="author" content="D.E. Beaudette" />
 
-<meta name="date" content="2019-02-08" />
+<meta name="date" content="2019-04-15" />
 
 <title>Competing Soil Series</title>
 
@@ -188,7 +188,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Competing Soil Series</h1>
 <h4 class="author"><em>D.E. Beaudette</em></h4>
-<h4 class="date"><em>2019-02-08</em></h4>
+<h4 class="date"><em>2019-04-15</em></h4>
 
 </div>
 
@@ -213,6 +213,7 @@ $(document).ready(function () {
 <p>Load relevant packages and define some helper functions.</p>
 <pre class="r"><code># you will need the latest version of soilDB
 library(soilDB)
+library(aqp)
 library(sharpshootR)
 library(latticeExtra)
 library(RColorBrewer)
@@ -792,7 +793,7 @@ Limestone and dolomite
 <p>Summarize acreage by MLRA.</p>
 <pre class="r"><code>plyr::ddply(s.competing.data$mlra, 'mlra', .fun=plyr::summarize, total_ac=sum(area_ac))</code></pre>
 <hr />
-<p>This document is based on <code>aqp</code> version 1.17.01 and <code>soilDB</code> version 2.3.6.</p>
+<p>This document is based on <code>aqp</code> version 1.17.02 and <code>soilDB</code> version 2.3.8.</p>
 </div>
 </div>
 

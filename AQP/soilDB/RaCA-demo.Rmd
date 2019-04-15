@@ -11,7 +11,6 @@ output:
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -68,6 +67,7 @@ Data can be queried by two-letter state code, fuzzy-matching of series name, or 
 ```{r get-data, fig.width=6, fig.height=6, results='hide', eval=TRUE}
 # load libraries
 library(soilDB)
+require(aqp)
 library(plyr)
 library(maps)
 library(lattice)

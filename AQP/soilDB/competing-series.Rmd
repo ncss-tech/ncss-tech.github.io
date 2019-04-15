@@ -40,6 +40,7 @@ Load relevant packages and define some helper functions.
 ```{r fig.width=9, fig.height=6}
 # you will need the latest version of soilDB
 library(soilDB)
+library(aqp)
 library(sharpshootR)
 library(latticeExtra)
 library(RColorBrewer)

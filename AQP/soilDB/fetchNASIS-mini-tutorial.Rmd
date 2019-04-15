@@ -38,6 +38,7 @@ Load up your local database and selected set with some pedon data and follow alo
 ```{r get-pedon-data, results='hide'}
 # load required libraries
 library(soilDB)
+require(aqp)
 
 # get pedon data, using defaults
 p <- fetchNASIS(from='pedons')

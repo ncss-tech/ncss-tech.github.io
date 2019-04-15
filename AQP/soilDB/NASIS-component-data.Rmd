@@ -47,6 +47,7 @@ The most commonly used data from the data map unit, component, component horizon
 ```{r, results='hide'}
 # load required libraries
 library(soilDB)
+require(aqp)
 library(ggplot2)
 library(plyr)
 
