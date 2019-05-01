@@ -49,6 +49,8 @@ The [soilDB](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) package fo
 
 ### SoilWeb: UC Davis / NRCS Collaboration
 
+![](static-images/soilweb-gmap-example.jpg)
+
 [SoilWeb](https://casoilresource.lawr.ucdavis.edu/soilweb-apps) is an interface to the SSURGO, KSSL, SC, Block Diagram, and OSD databases, updated with each (fiscal year) SSURGO release.
 
    * [Google Maps interface to SoilWeb, functions on desktop and mobile platforms](http://casoilresource.lawr.ucdavis.edu/gmap/)

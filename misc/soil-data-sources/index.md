@@ -68,16 +68,25 @@ SoilWeb is an interface to the SSURGO, KSSL, SC, Block Diagram, and OSD database
 [SoilWeb Home](https://casoilresource.lawr.ucdavis.edu/soilweb-apps)
 
 
-
-
-## R Interfaces: `soilDB` Package
+## AQP
 
 [Project Homepage](http://ncss-tech.github.io/AQP/)
 
- 1. [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): Lab data, [processing details](https://github.com/dylanbeaudette/process-kssl-snapshot).
- 2. [`fetchOSD()`](http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html): Select data elements parsed from OSD text files.
- 3. [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html): Simple interface to NASIS local database.
- 4. [`fetchSCAN()`](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html): Unified interface to SCAN/SNOTEL data.
- 5. [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html): Get series extent data from SoilWeb/SEE.
- 6. [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html): Wrapper to SDA web-service.
+
+### R-Based Interfaces
+
+ * SDA
+    + [`SDA_query`](http://ncss-tech.github.io/soilDB/docs/reference/SDA_query.html)
+    + ['SDA_query_features`](http://ncss-tech.github.io/soilDB/docs/reference/SDA_query_features.html)
+
+  * SSURGO/KSSL via SoilWeb
+    + [`fetchKSSL`](http://ncss-tech.github.io/soilDB/docs/reference/fetchKSSL.html)
+    + [`fetchOSD`](http://ncss-tech.github.io/soilDB/docs/reference/fetchOSD.html)
+    + [`siblings`](http://ncss-tech.github.io/soilDB/docs/reference/siblings.html)
+    + [`OSDquery`](http://ncss-tech.github.io/soilDB/docs/reference/OSDquery.html) 
+    + [`seriesExtent`](http://ncss-tech.github.io/soilDB/docs/reference/seriesExtent.html)
+    
+  * SCAN/SNOTEL
+    + [`fetchSCAN`](http://ncss-tech.github.io/soilDB/docs/reference/fetchSCAN.html)
+    + [`SCAN_SNOTEL_metadata`](http://ncss-tech.github.io/soilDB/docs/reference/SCAN_SNOTEL_metadata.html)
 
