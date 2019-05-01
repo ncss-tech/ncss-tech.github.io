@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="D.E. Beaudette and Soil Survey Staff" />
+
+
+<title>USDA-NRCS / NCSS Soil Data Sources</title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">USDA-NRCS / NCSS Soil Data Sources</h1>
+<h4 class="author">D.E. Beaudette and Soil Survey Staff</h4>
+<h4 class="date">April 2019</h4>
+
+
+
+<div id="digital-soil-survey-data" class="section level2">
+<h2>Digital Soil Survey Data</h2>
+<p><a href="http://www.nrcs.usda.gov/wps/portal/nrcs/main/soils/survey/geo/">Main link</a></p>
+<ul>
+<li><a href="ssurgo.html">SSURGO</a> (1:24,000 scale) detailed soil survey</li>
+<li>STATSGO (1:250,000 scale) generalized soil survey</li>
+</ul>
+</div>
+<div id="official-soil-series-descriptions-osds" class="section level2">
+<h2>Official Soil Series Descriptions (OSDs)</h2>
+</div>
+<div id="laboratory-characterization-data" class="section level2">
+<h2>Laboratory Characterization Data</h2>
+<p>These pages provide search and download facilities for soil characterization data.</p>
+<ul>
+<li><a href="http://ncsslabdatamart.sc.egov.usda.gov/">Basic Query / Home Page</a></li>
+<li><a href="http://ncsslabdatamart.sc.egov.usda.gov/advquery.aspx">Advanced Query</a></li>
+</ul>
+</div>
+<div id="soil-data-access-sda" class="section level2">
+<h2>Soil Data Access (SDA)</h2>
+</div>
+<div id="official-series-descriptions-osd" class="section level2">
+<h2>Official Series Descriptions (OSD)</h2>
+<p>These pages provide search tools for the OSD pages and associated Soil Classification (SC) database.</p>
+<ul>
+<li><a href="https://soilseries.sc.egov.usda.gov/osdname.aspx">OSD Search</a></li>
+<li><a href="https://soilseries.sc.egov.usda.gov/osdlist.aspx">Multiple OSD Search</a></li>
+<li><a href="https://soilseries.sc.egov.usda.gov/osdquery.aspx">OSD Search via Soil Classification (SC) Database</a></li>
+</ul>
+<p>Search the OSD documents using pattern matching within the entire OSD, or limited to sections of the OSD. See each page below for examples on how to create search patterns.</p>
+<ul>
+<li><a href="https://casoilresource.lawr.ucdavis.edu/osd-search/">search by section</a></li>
+</ul>
+</div>
+<div id="scan-snotel" class="section level2">
+<h2>SCAN / SNOTEL</h2>
+<p>Above and below ground sensor data. The <a href="http://www.wcc.nrcs.usda.gov/webmap/index.html#elements=&amp;networks=SCAN&amp;states=!&amp;counties=!&amp;hucs=&amp;minElevation=&amp;maxElevation=&amp;elementSelectType=all&amp;activeOnly=true&amp;hucLabels=false&amp;stationLabels=&amp;overlays=&amp;hucOverlays=&amp;mode=stations&amp;openSections=dataElement,parameter,date,elements,location,networks&amp;controlsOpen=true&amp;popup=&amp;base=esriNgwm&amp;lat=45.06&amp;lon=-101.95&amp;zoom=4&amp;dataElement=PREC&amp;parameter=PCTAVG&amp;frequency=DAILY&amp;duration=null&amp;customDuration=&amp;dayPart=E&amp;year=2016&amp;month=6&amp;day=22&amp;monthPart=E">interactive map</a> is the simplest way to search for data.</p>
+<ul>
+<li><a href="http://www.wcc.nrcs.usda.gov/scan/">SCAN</a></li>
+<li><a href="http://www.wcc.nrcs.usda.gov/snow/">SNOTEL</a></li>
+</ul>
+</div>
+<div id="block-diagrams" class="section level2">
+<h2>Block Diagrams</h2>
+<p>This is a collection of block diagrams from historic soil survey documents that have been scanned and indexed.</p>
+<p><a href="http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_054317">Historic Block Diagram Archive</a></p>
+</div>
+<div id="soilweb-uc-davis-nrcs-collaboration" class="section level2">
+<h2>SoilWeb: UC Davis / NRCS Collaboration</h2>
+<p>SoilWeb is an interface to the SSURGO, KSSL, SC, Block Diagram, and OSD databases, updated with each (fiscal year) SSURGO release.</p>
+<p><a href="https://casoilresource.lawr.ucdavis.edu/soilweb-apps">SoilWeb Home</a></p>
+</div>
+<div id="r-interfaces-soildb-package" class="section level2">
+<h2>R Interfaces: <code>soilDB</code> Package</h2>
+<p><a href="http://ncss-tech.github.io/AQP/">Project Homepage</a></p>
+<ol style="list-style-type: decimal">
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html"><code>fetchKSSL()</code></a>: Lab data, <a href="https://github.com/dylanbeaudette/process-kssl-snapshot">processing details</a>.</li>
+<li><a href="http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html"><code>fetchOSD()</code></a>: Select data elements parsed from OSD text files.</li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html"><code>fetchNASIS()</code></a>: Simple interface to NASIS local database.</li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html"><code>fetchSCAN()</code></a>: Unified interface to SCAN/SNOTEL data.</li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/series-extent.html"><code>seriesExtent()</code></a>: Get series extent data from SoilWeb/SEE.</li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html"><code>SDA_query()</code></a>: Wrapper to SDA web-service.</li>
+</ol>
+</div>
+
+
+
+
+</body>
+</html>
