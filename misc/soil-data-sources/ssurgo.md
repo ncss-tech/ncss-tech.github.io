@@ -29,6 +29,14 @@ Archived soil survey manuscripts are [indexed by state](http://www.nrcs.usda.gov
 SSURGO is complex by design: soils, landscapes, mangement decisions, and the general-purpose nature of the soil survey require a database that can accomodate a wide range of needs. Any use of SSURGO require careful [study of table structure, linkages, and column definitiions](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_053631). Contact a local [NRCS employee](https://www.nrcs.usda.gov/wps/portal/nrcs/main/national/contact/) if you have specific questions.
 
 
+### Usage Statistics
+SSURGO is one of the most extensively used USDA datasets: with 7,000 to 10,000 unique requests (via Web Soil Survey) per day.
+
+![](static-images/WSS-AOI-density.png)
+
+
+
+
 
 ## Getting the Data
 
