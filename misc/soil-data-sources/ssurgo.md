@@ -57,7 +57,9 @@ SSURGO archives can be downloaded from R, using the [FedData](http://ropensci.gi
 
 [SDA](https://sdmdataaccess.nrcs.usda.gov/) is a suite of [web-services (API)](https://sdmdataaccess.nrcs.usda.gov/WebServiceHelp.aspx) for accessing SSURGO spatial and tabular data. SDA provides low-level access to SSURGO and STATSGO via queries written in [T-SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). WFS and WMS services are also provided.
 
-The [soilDB](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) package for R provides a convenient interface to SDA. 
+The [soilDB](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) package for R provides a convenient interface to SDA.
+
+Test page for the [REST/POST interface to SDA](https://sdmdataaccess.sc.egov.usda.gov/test/testpost.html).
 
 
 
