@@ -23,6 +23,12 @@ The SSURGO database contains information about soil as collected by the National
 
 Archived soil survey manuscripts are [indexed by state](http://www.nrcs.usda.gov/wps/portal/nrcs/soilsurvey/soils/survey/state/).
 
+### Reference Material
+
+   * [National Soil Survey Handbook](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/scientists/?cid=nrcs142p2_054242)
+   * *[Introduction to Soils](wss-introduction-to-soils.pdf)* from Web Soil Survey
+   * [Web Soil Survey Glossary](Glossary.pdf)
+
 ### Structure of the Data
 ![](static-images/ssurgo-structure-demo.png)
 
@@ -40,7 +46,7 @@ SSURGO is one of the most extensively used USDA datasets: with 7,000 to 10,000 u
 
 ## Getting the Data
 
-[Web Soil Survey](https://websoilsurvey.sc.egov.usda.gov/App/HomePage.htm) is the pimary delivery mechanism for SSURGO data. Data can be downloaded by user-defined "area of interest (AOI)", or as soil survey areas. Have a look at our ["Getting Started"](https://websoilsurvey.nrcs.usda.gov/app/GettingStarted.htm) page for additional details.
+[Web Soil Survey](https://websoilsurvey.sc.egov.usda.gov/App/HomePage.htm) is the pimary delivery mechanism for SSURGO data. Data can be downloaded by user-defined "area of interest (AOI)", or as soil survey areas. Have a look at our ["Getting Started"](https://websoilsurvey.nrcs.usda.gov/app/GettingStarted.htm) page for additional details. Specific data elements have been [organized for quick lookup in this PDF](https://websoilsurvey.sc.egov.usda.gov/App/Resources/HomePage/Soil_Explorer_Tab.pdf).
 
 [gSSURGO](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_053628) is an alternative packaging of SSURGO, built as state or CONUS composites. These files are very large and geared towards advanced users with access to ESRI software.
 
@@ -49,7 +55,7 @@ SSURGO archives can be downloaded from R, using the [FedData](http://ropensci.gi
 
 ### Soil Data Access (SDA)
 
-[SDA](https://sdmdataaccess.nrcs.usda.gov/) is a suite of web-services (API) for accessing SSURGO spatial and tabular data. SDA provides low-level access to SSURGO and STATSGO via queries written in [T-SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). WFS and WMS services are also provided.
+[SDA](https://sdmdataaccess.nrcs.usda.gov/) is a suite of [web-services (API)](https://sdmdataaccess.nrcs.usda.gov/WebServiceHelp.aspx) for accessing SSURGO spatial and tabular data. SDA provides low-level access to SSURGO and STATSGO via queries written in [T-SQL](https://technet.microsoft.com/en-us/library/bb264565(v=sql.90).aspx). WFS and WMS services are also provided.
 
 The [soilDB](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) package for R provides a convenient interface to SDA. 
 
@@ -92,12 +98,24 @@ This tool is accessible via SDE (see above), or can be used by appending a soil 
   * [Cecil Series](http://soilmap2-1.lawr.ucdavis.edu/seriesTree/index.php?series=cecil)
 
 
-
 ## Related Links
 
    * http://ncss-tech.github.io/AQP/
    * https://github.com/ncss-tech/soilDB
    * https://github.com/ncss-tech/aqp
+
+
+## Further Reading
+A cursory background in the following topics will greatly increase your ability to use soil survey data.
+
+   * map scale and basic cartographic terminology
+   * what is soil?
+   * pH and its role in soil processes
+   * water holding capacity
+   * soil texture
+   * the soil water balance
+   * cation exchange capacity
+
    
    
 
