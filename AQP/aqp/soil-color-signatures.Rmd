@@ -24,7 +24,7 @@ Pending.
 
  * integrate ideas from [colordistance package](https://cran.r-project.org/web/packages/colordistance/vignettes/colordistance-introduction.html)
  * what is appropriate rescaling of L?
- * use metric color distances via [farver package](https://github.com/thomasp85/farver)
+ * use $\Delta E_{00}$ metric color distances via [farver package](https://github.com/thomasp85/farver)
 
 # Examples
 Source colors are in sRGB (D65) colorspace, as converted from Munsell notation using `aqp::munsell2rgb()`.
@@ -70,7 +70,7 @@ plotProfileDendrogram(sp1, dd, dend.y.scale = 0.25, scaling.factor = 0.001, y.of
 ## Colors from Official Series Descriptions
 
 ```{r fig.width=12, fig.height=6}
-s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'boomer', 'vleck', 'drummer', 'CANEYHEAD', 'musick', 'sierra', 'HAYNER', 'zook', 'argonaut', 'PALAU')
+s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'vleck', 'drummer', 'CANEYHEAD', 'musick', 'sierra', 'HAYNER', 'zook', 'argonaut', 'PALAU')
 
 # get these soil series
 s <- fetchOSD(s.list)
@@ -88,6 +88,12 @@ plot(s)
 
 
 Look at full range of OSD colors in this set.
+
+Colors, arranged by $\Delta E_{00}$.
+```{r fig.width=7, fig.height=7}
+previewColors(s$soil_color)
+```
+
 ```{r fig.width=7, fig.height=7}
 rgb.colors <- munsell2rgb(s$hue, s$value, s$chroma, return_triplets = TRUE)
 lab.colors <- as(RGB(rgb.colors[['r']], rgb.colors[['g']], rgb.colors[['b']]), 'LAB')@coords
@@ -114,8 +120,8 @@ d <- daisy(pig[, -1])
 dd <- diana(d)
 
 
-par(mar=c(1,1,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = max(d) / max(s), y.offset = max(d) / 10, width=0.15, cex.names=0.45)
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = max(d) / max(s), y.offset = max(d) / 10, width=0.25, cex.names=0.45)
 ```
 
 
@@ -132,8 +138,8 @@ d <- daisy(pig[, -1])
 dd <- diana(d)
 
 
-par(mar=c(1,1,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.15, cex.names=0.45)
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.25, cex.names=0.45)
 ```
 
 
@@ -150,8 +156,37 @@ row.names(pig) <- pig[, 1]
 d <- daisy(pig[, -1])
 dd <- diana(d)
 
-par(mar=c(1,1,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.15, cex.names=0.45)
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.25, cex.names=0.45)
+```
+
+
+## Soil Color Signature by "PAM" and delta-E00
+Select *k*-medoids (partitioning around medoids algorithm) from all possible colors within the profile or depth interval and use those CIE LAB coordinates as the signature. Each row is an observation, columns describe the multivariate soil color signature. Distances are computed via delta-E (CIE2000), $\Delta E_{00}$ within each cluster and summed.
+```{r fig.width=12, fig.height=6}
+k <- 4
+pig <- soilColorSignature(s, RescaleLightnessBy = 5, method = 'pam', pam.k = k)
+
+# iterate over clusters, result is a distance matrix (delta-E00)
+delta.E00 <- lapply(1:k, function(i) {
+  # LAB coordinates are named by cluster 1:k
+  v.names <- paste(c('L', 'A', 'B'), i, sep = '.')
+  # delta-E00
+  d.i <- farver::compare_colour(pig[, v.names], from_space='lab', white_from = 'D65', method='cie2000')
+  # copy over SPC ids
+  dimnames(d.i) <- list(pig[, 1], pig[, 1])
+  # convert to dist object
+  d.i <- as.dist(t(d.i))
+  return(d.i)
+})
+
+# sum distance matrices
+d <- Reduce('+', delta.E00)
+# divisive clustering
+dd <- diana(d)
+
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.45, y.offset = 6, width=0.25, cex.names=0.45)
 ```
 
 ## Loafercreek Colors

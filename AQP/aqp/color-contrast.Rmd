@@ -1,0 +1,171 @@
+---
+title: "Soil Color Contrast"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+
+```{r fig.width=8, fig.height=6}
+library(aqp)
+library(farver)
+library(cluster)
+library(ape)
+library(colorspace)
+library(lattice)
+
+## investigate color contrast
+# https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569
+# SSM pp. 153
+# implement SSM table 3-5 in aqp
+
+
+data(munsell)
+hues <- c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y')
+x <- subset(munsell, subset=value %in% 3:5 & chroma %in% 1:3 & hue %in% hues)
+x$hue <- factor(x$hue, levels=hues)
+
+# ok
+table(x$hue)
+nrow(x)
+
+#
+x$color <- munsell2rgb(x$hue, x$value, x$chroma)
+x$munsell <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
+
+previewColors(x$color, method = 'MDS')
+swatchplot(split(x$color, x$hue))
+
+xyplot(value ~ chroma | hue, data=x,
+       xlim=c(0.5, 3.5), ylim=c(2.5, 5.5), 
+       scales=list(alternating=3, x=list(at=1:3), y=list(at=3:5)),
+       as.table=TRUE, strip=strip.custom(bg='grey'),
+       subscripts=TRUE,
+       panel=function(xx, yy, subscripts, ...) {
+         panel.grid(-1, -1)
+         panel.points(xx, yy, col=x$color[subscripts], pch=15, cex=6)
+       }
+)
+
+# dE00
+# pair-wise distances are only present in the upper triangle
+# lower triangle is 0
+d <- compare_colour(x[, c('L', 'A', 'B')], from_space='lab', white_from = 'D65', method='cie2000')
+# copy color codes for convenience
+dimnames(d) <- list(x$munsell, x$munsell)
+
+# convert to dist object, which expects distances in the lower triangle
+d.dist <- as.dist(t(d))
+# hierarchical clustering
+h <- as.phylo(as.hclust(diana(d.dist)))
+# nMDS
+mds <- MASS::sammon(d.dist)
+
+# remove 0's in lower triangle and diagonal
+d[lower.tri(d, diag = TRUE)] <- NA
+hist(d)
+
+
+# double-check that ordering is correct
+# yes
+table(h$tip.label == x$munsell)
+
+
+par(mar=c(0.5,0.5,1,0.5), bg='black', fg='white')
+
+plot(h, label.offset=0.55, edge.color='white', tip.color='white', cex=0.66, direction='downwards', font=1)
+tiplabels(pch=15, cex=1.5, col=x$color, offset=0.23)
+title('Divisive Hierarchical Clustering', col.main='white', line=0)
+mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0, line=-0.5)
+
+plot(h, edge.color='white', tip.color='white', cex=0.5, direction='downwards', show.tip.label=FALSE)
+tiplabels(pch=15, cex=1.5, col=x$color, offset=0.25)
+tiplabels(text=x$value, cex=0.55, frame='none', col='white', offset=0.23)
+title('Divisive Hierarchical Clustering', col.main='white', line=0)
+mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0, line=-0.5)
+
+
+
+
+par(mar=c(0.5,0.5,1.5,0.5), bg='black', fg='white')
+
+plot(mds$points, type='n', axes=FALSE)
+abline(h=0, v=0, col=grey(0.85), lty=3)
+points(mds$points, pch=15, col=x$color, cex=3.5)
+text(mds$points[, 1],  mds$points[, 2], x$value, cex=0.75)
+mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0)
+mtext(text = 'Munsell value', side = 1, adj = 1, line=-1)
+title('nMDS', col.main='white', line=0.75)
+
+plot(mds$points, type='n', axes=FALSE)
+abline(h=0, v=0, col=grey(0.85), lty=3)
+points(mds$points, pch=15, col=x$color, cex=3.5)
+text(mds$points[, 1],  mds$points[, 2], paste0(x$value, '/', x$chroma), cex=0.66)
+mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
+mtext(text = 'Munsell value/chroma', side = 1, adj = 1, line=-1)
+title('nMDS', col.main='white', line=0.75)
+
+plot(mds$points, type='n', axes=FALSE)
+abline(h=0, v=0, col=grey(0.85), lty=3)
+points(mds$points, pch=15, col=x$color, cex=3.5)
+text(mds$points[, 1],  mds$points[, 2], x$hue, cex=0.66)
+mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
+mtext(text = 'Munsell hue', side = 1, adj = 1, line=-1)
+title('nMDS', col.main='white', line=0.75)
+
+plot(mds$points, type='n', axes=FALSE)
+abline(h=0, v=0, col=grey(0.85), lty=3)
+points(mds$points, pch=15, col=x$color, cex=3.5)
+text(mds$points[, 1],  mds$points[, 2], x$munsell, cex=0.66)
+mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
+mtext(text = 'Munsell color', side = 1, adj = 1, line=-1)
+title('nMDS', col.main='white', line=0.75)
+
+
+
+# locate color pairs which are at the edge of perceptable differences
+idx <- which(d < 4)
+row.idx <- row(d)[idx]
+col.idx <- col(d)[idx]
+low.dE00 <- cbind(dimnames(d)[[1]][row.idx], dimnames(d)[[2]][col.idx])
+
+# hmm
+swatchplot(list(
+  A=parseMunsell(low.dE00[, 1]),
+  B=parseMunsell(low.dE00[, 2])
+))
+
+l <- list()
+for(i in seq_along(x$munsell)) {
+  m <- x$munsell[i]
+  d.i <- na.omit(c(d[i, ], d[, i]))
+  l[[i]] <- data.frame(m=m, stat=median(d.i), stringsAsFactors = FALSE)  
+}
+
+E00.summary <- do.call('rbind', l)
+
+z <- merge(x, E00.summary, by.x='munsell', by.y='m', all.x=TRUE)
+
+xyplot(value ~ chroma | hue, data=z,
+       xlim=c(0.5, 3.5), ylim=c(2.5, 5.5), 
+       scales=list(alternating=3),
+       as.table=TRUE, strip=strip.custom(bg='grey'),
+       subscripts=TRUE,
+       panel=function(xx, yy, subscripts, ...) {
+         panel.grid(-1, -1)
+         panel.points(xx, yy, col=z$color[subscripts], pch=15, cex=sqrt(z$stat) * 1.5)
+       }
+)
+```
