@@ -44,10 +44,17 @@ nrow(x)
 #
 x$color <- munsell2rgb(x$hue, x$value, x$chroma)
 x$munsell <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
+```
 
+```{r fig.width=6, fig.height=6}
 previewColors(x$color, method = 'MDS')
-swatchplot(split(x$color, x$hue))
+```
 
+```{r fig.width=7, fig.height=5.5}
+swatchplot(split(x$color, x$hue))
+```
+
+```{r fig.width=8, fig.height=6}
 xyplot(value ~ chroma | hue, data=x,
        xlim=c(0.5, 3.5), ylim=c(2.5, 5.5), 
        scales=list(alternating=3, x=list(at=1:3), y=list(at=3:5)),
@@ -72,17 +79,21 @@ d.dist <- as.dist(t(d))
 h <- as.phylo(as.hclust(diana(d.dist)))
 # nMDS
 mds <- MASS::sammon(d.dist)
+```
 
+```{r fig.width=6, fig.height=4}
 # remove 0's in lower triangle and diagonal
 d[lower.tri(d, diag = TRUE)] <- NA
 hist(d)
+```
 
-
+```{r fig.width=8, fig.height=6}
 # double-check that ordering is correct
 # yes
 table(h$tip.label == x$munsell)
+```
 
-
+```{r fig.width=8, fig.height=4}
 par(mar=c(0.5,0.5,1,0.5), bg='black', fg='white')
 
 plot(h, label.offset=0.55, edge.color='white', tip.color='white', cex=0.66, direction='downwards', font=1)
@@ -95,10 +106,10 @@ tiplabels(pch=15, cex=1.5, col=x$color, offset=0.25)
 tiplabels(text=x$value, cex=0.55, frame='none', col='white', offset=0.23)
 title('Divisive Hierarchical Clustering', col.main='white', line=0)
 mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0, line=-0.5)
+```
 
 
-
-
+```{r fig.width=8, fig.height=6}
 par(mar=c(0.5,0.5,1.5,0.5), bg='black', fg='white')
 
 plot(mds$points, type='n', axes=FALSE)
@@ -132,9 +143,9 @@ text(mds$points[, 1],  mds$points[, 2], x$munsell, cex=0.66)
 mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
 mtext(text = 'Munsell color', side = 1, adj = 1, line=-1)
 title('nMDS', col.main='white', line=0.75)
+```
 
-
-
+```{r fig.width=8, fig.height=6}
 # locate color pairs which are at the edge of perceptable differences
 idx <- which(d < 4)
 row.idx <- row(d)[idx]
@@ -169,3 +180,55 @@ xyplot(value ~ chroma | hue, data=z,
        }
 )
 ```
+
+
+```{r}
+library(aqp)
+library(farver)
+library(rms)
+
+m1 <- c('10YR 3/3', '7.5YR 3/3', '10YR 2/2', '7.5YR 3/3')
+m2 <- c('5YR 3/4', '7.5YR 4/4', '7.5YR 2/2', '7.5YR 4/3')
+
+(d <- colorContrast(m1, m2))
+str(d)
+
+data(munsell)
+x <- subset(munsell, subset=value %in% 3:8 & chroma %in% 1:6 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+
+cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
+z <- combn(cols, 2)
+
+z <- data.frame(t(z), stringsAsFactors = FALSE)
+d <- colorContrast(z[[1]], z[[2]])
+
+# plot(dE00 ~ dH, data=d)
+# plot(dE00 ~ dV, data=d)
+# plot(dE00 ~ dC, data=d)
+
+dd <- datadist(d)
+options(datadist="dd")
+
+# there is a little bit of curvature
+(m <- ols(dE00 ~ rcs(dH, 3) + rcs(dV, 3) + rcs(dC, 3), data=d))
+# (m <- ols(dE00 ~ dH + dV + dC, data=d))
+
+plot(Predict(m, dH=NA, dV=0, dC=0))
+plot(Predict(m, dH=0, dV=NA, dC=0))
+plot(Predict(m, dH=0, dV=0, dC=NA))
+
+plot(Predict(m, dH=NA, dV=0:2, dC=0))
+plot(Predict(m, dV=NA, dH=0:2, dC=0))
+plot(Predict(m, dC=NA, dV=0:2, dH=0))
+
+plot(summary(m, dH=c(0,1), dV=c(0,1), dC=c(0,1)))
+
+plot(summary(m))
+
+plot(anova(m), what='partial R2')
+
+plot(nomogram(m))
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
