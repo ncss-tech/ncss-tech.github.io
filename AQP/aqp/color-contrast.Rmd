@@ -16,9 +16,18 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2,
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
+# Introduction
+
+## Soil Color Contrast Class
+
+## Delta-E
 
 
-```{r fig.width=8, fig.height=6}
+# Applications
+
+## Setup
+
+```{r}
 library(aqp)
 library(farver)
 library(cluster)
@@ -28,53 +37,139 @@ library(lattice)
 library(knitr)
 ```
 
-```{r fig.width=8, fig.height=6}
-## investigate color contrast
-# https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569
-# SSM pp. 153
-# implementation of SSM table 3-5 in aqp
+## Core Functions
 
+
+[Soil Survey Technical Note 2](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569)
+
+
+
+### Color Contrast Metrics
+
+Compute several indices of color contrast from 2 vectors of Munsell colors, `m1` and `m2`. Comparisons fully vectorized, e.g. comparisons performed element-wise $m1_i ~\leftrightarrow~ m2_i$ $...$ $m1_n ~\leftrightarrow~ m2_n$.
+
+   * $dH$: change in Munsell hue, see *Hue Position* section below
+   * $dV$: change in Munsell value (absolute value of difference)
+   * $dC$: change in Munsell chroma (absolute value of difference)
+   * $\Delta~E_{00}$: CIE2000 Delta-E
+   * $cc$: soil color contrast class ([Soil Survey Technical Note 2](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569))
+   
+Results as a `data.frame`.
+```{r fig.width=8, fig.height=6}
+# examples
 m1 <- c('10YR 6/3', '7.5YR 3/3', '10YR 2/2', '7.5YR 3/4')
 m2 <- c('5YR 3/4', '7.5YR 4/4', '2.5YR 2/2', '7.5YR 6/3')
 
-colorContrast(m1, m2)
+# result is a data.frame
+d <- colorContrast(m1, m2)
 
-# 10YR 6/3 vs 5YR 3/4
+# check
+kable(d, row.names=FALSE)
+```
+
+Results summarized in a figure.
+```{r fig.width=8, fig.height=4}
+# more examples
+m1 <- c('10YR 6/3', '7.5YR 3/3', '10YR 2/2', '7.5YR 3/4', '2.5Y 6/8', '5B 4/6')
+m2 <- c('5YR 3/4', '7.5YR 4/4', '2.5YR 2/2', '7.5YR 6/3', '10YR 2/1', '5GY 3/4')
+
+# graphical comparison
+colorContrastPlot(m1, m2)
+```
+
+
+### Color Contrast Class
+Test rules and cases outlined in [Soil Survey Technical Note 2](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569).
+
+10YR 6/3 vs 5YR 3/4
+```{r}
 contrastClass(v1=6, c1=3, v2=3, c2=4, dH=2, dV=3, dC=1, verbose = TRUE)
+```
 
-# 7.5YR 3/3 vs 7.5YR 4/4
+7.5YR 3/3 vs 7.5YR 4/4
+```{r}
 contrastClass(v1=3, c1=3, v2=4, c2=4, dH=0, dV=1, dC=1, verbose = TRUE)
+```
 
-# 10YR 2/2 vs 2.5YR 2/2
+10YR 2/2 vs 2.5YR 2/2
+```{r}
 contrastClass(v1=2, c1=2, v2=2, c2=2, dH=0, dV=0, dC=0, verbose = TRUE)
+```
 
-# 7.5YR 3/4 vs 7.5YR 6/3
+7.5YR 3/4 vs 7.5YR 6/3
+```{r}
 contrastClass(v1=3, c1=4, v2=5, c2=3, dH=0, dV=3, dC=1, verbose = TRUE)
 ```
 
+
+### Hue Position
+Differences in Munsell hue ($dH$) are computed according to radial position (clock-wise) from <span style="padding: 5px; background-color: `r parseMunsell('5R 6/8')`; color: white;">`5R`&nbsp;&nbsp;&nbsp;</span> to <span style="padding: 5px; background-color: `r parseMunsell('5PB 6/8')`; color: white;">&nbsp;&nbsp;&nbsp;`5PB`</span>.
+
+![](https://www.nrcs.usda.gov/Internet/FSE_MEDIA/nrcs142p2_050366.jpg)
+
+Use `huePosition()` to extract hues in order, or convert a vector of hues into an index of positions.
+```{r fig.width=7, fig.height=7, res=100}
+# hues used in the description of soil color (except for neutral hues)
+hues <- huePosition(x=NULL, returnHues = TRUE)
+# convert hue names into position
+hue.pos <- huePosition(hues)
+# check
+kable(head(cbind(hue.pos, hues)))
+```
+
+Arranged in CIELAB colorspace, the ordering of hues looks like this.
+```{r fig.width=7, fig.height=7, res=100}
+# make these into real colors by fixing value and chroma at '6'
+colors <- paste0(hues, ' 6/6')
+# convenient labels for figure
+hue.labels <- sprintf("%s\n%s", hues, hue.pos)
+
+# combine colors names, hex representation of colors, and CIELAB coordinates
+x <- data.frame(
+  colors, 
+  hex=parseMunsell(colors), 
+  parseMunsell(colors, returnLAB=TRUE), 
+  stringsAsFactors = FALSE
+)
+
+# make the figure
+plot(B ~ A, data=x, type='n', asp=0.75, xlab='A-coordinate', ylab='B-coordinate', ylim=c(-25, 45), main='Hue Order per TN #2\nCIELAB Colorspace')
+abline(h=0, v=0, lty=2)
+points(B ~ A, data=x, pch=15, col=x$hex, cex=4.5)
+text(x$A, x$B, labels = hue.labels, cex=0.75)
+```
+
+
+
+
+## Example 1
+
+
 ```{r fig.width=8, fig.height=6}
+# load full LUT from {aqp}
 data(munsell)
+
+# subset some common colors
 hues <- c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y')
 x <- subset(munsell, subset=value %in% 3:5 & chroma %in% 1:3 & hue %in% hues)
-x$hue <- factor(x$hue, levels=hues)
+
+# convert into an ordered factor, according to hue position
+huePos <- huePosition(x=NULL, returnHues = TRUE)
+x$hue <- factor(x$hue, levels=huePos, ordered = TRUE)
+x$hue <- droplevels(x$hue)
+
 
 # ok
 table(x$hue)
 nrow(x)
 
-#
+# convert into hex notation for plotting
 x$color <- munsell2rgb(x$hue, x$value, x$chroma)
 x$munsell <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
 ```
 
-```{r fig.width=6, fig.height=6}
-previewColors(x$color, method = 'MDS')
-```
 
-```{r fig.width=7, fig.height=5.5}
-swatchplot(split(x$color, x$hue))
-```
-
+Arrange colors in a familiar manner.
 ```{r fig.width=8, fig.height=6}
 xyplot(value ~ chroma | hue, data=x,
        xlim=c(0.5, 3.5), ylim=c(2.5, 5.5), 
@@ -86,7 +181,10 @@ xyplot(value ~ chroma | hue, data=x,
          panel.points(xx, yy, col=x$color[subscripts], pch=15, cex=6)
        }
 )
+```
 
+Evaluate $\Delta~E_{00}$ via `{farver}` pacakge.
+```{r fig.width=8, fig.height=6}
 # dE00
 # pair-wise distances are only present in the upper triangle
 # lower triangle is 0
@@ -203,6 +301,8 @@ xyplot(value ~ chroma | hue, data=z,
 ```
 
 
+
+## Example 2
 ```{r}
 library(rms)
 library(tactile)
@@ -217,10 +317,18 @@ z <- data.frame(t(z), stringsAsFactors = FALSE)
 d <- colorContrast(z[[1]], z[[2]])
 ```
 
-```{r fig.width=6, fig.height=4}
+```{r fig.width=7, fig.height=4}
 kable(head(d), row.names = FALSE)
 
-bwplot(cc ~ dE00, data=d, par.settings=tactile.theme())
+bwplot(cc ~ dE00, data=d, 
+       par.settings=tactile.theme(), 
+       xlab=expression(Delta~E['00']),
+       main='CIE Delta-E00 vs. Soil Color Contrast Class\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       scales=list(x=list(tick.number=10)), 
+       panel=function(...) {
+         panel.grid(h=3, v=-1)
+         panel.bwplot(...)
+       })
 ```
 
 
