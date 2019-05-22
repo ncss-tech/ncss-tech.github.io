@@ -51,7 +51,7 @@ Compute several indices of color contrast from 2 vectors of Munsell colors, `m1`
    * $dH$: change in Munsell hue, see *Hue Position* section below
    * $dV$: change in Munsell value (absolute value of difference)
    * $dC$: change in Munsell chroma (absolute value of difference)
-   * $\Delta~E_{00}$: CIE2000 Delta-E
+   * $\Delta{E_{00}}$: CIE2000 Delta-E
    * $cc$: soil color contrast class ([Soil Survey Technical Note 2](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569))
    
 Results as a `data.frame`.
@@ -75,6 +75,23 @@ m2 <- c('5YR 3/4', '7.5YR 4/4', '2.5YR 2/2', '7.5YR 6/3', '10YR 2/1', '5GY 3/4')
 
 # graphical comparison
 colorContrastPlot(m1, m2)
+```
+
+Simulated redoximorphic feature colors, constrast classes and $\Delta{E_{00}}$.
+```{r fig.width=8, fig.height=4}
+m1 <- paste0('7.5YR 4/', 2:8)
+m2 <- rep('10YR 5/2', times=length(m1))
+colorContrastPlot(m1, m2, labels = c('F3M', 'MAT'), d.cex = 0.8, col.cex = 0.8)
+
+
+m1 <- paste0('5Y 4/', 5:1)
+m2 <- rep('10YR 3/5', times=length(m1))
+colorContrastPlot(m1, m2, labels = c('RMX/FED', 'MAT'), d.cex = 0.8, col.cex = 0.8)
+
+
+m1 <- c('2.5Y 3/2', '5Y 3/2', '2.5GY 3/2', '5GY 3/2', '7.5BG 3/2', '2.5B 3/2')
+m2 <- rep('10YR 3/5', times=length(m1))
+colorContrastPlot(m1, m2, labels = c('RMX', 'MAT'), d.cex = 0.8, col.cex = 0.8)
 ```
 
 
