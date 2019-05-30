@@ -70,6 +70,7 @@ This tutorial can be used as a stand-alone demonstration of the functionality pr
 
 First, you will need to load some packages. Be sure to install these if missing, and install the latest versions of `soilDB` and `sharpshootR` as much of this tutorial depends on recent updates.
 ```{r eval=TRUE}
+library(aqp)
 library(soilDB)
 library(sharpshootR)
 library(dendextend)
@@ -323,43 +324,37 @@ kable_styling(kable(head(soils), format = 'html'), full_width = FALSE)
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, scaling.factor = 0.0225)
+SoilTaxonomyDendrogram(s, scaling.factor = 0.0225, width = 0.25)
 ```
 
 
 ```{r fig.width=10, fig.height=6}
-
 soils <- OSDquery(geog_location = 'strath & terrace', mlra='17,18')
 str(soils)
 
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s)
-
+SoilTaxonomyDendrogram(s, width=0.25)
 ```
 
 
 ```{r fig.width=10, fig.height=6}
-
 soils <- OSDquery(taxonomic_class = 'duri:* & calc:*', mlra = '28B')
 
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s)
-
+SoilTaxonomyDendrogram(s, width=0.25)
 ```
 
 ```{r fig.width=10, fig.height=6}
-
 soils <- OSDquery(geog_assoc_soils = 'musick')
-
 
 s <- fetchOSD(soils$series, extended = TRUE)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC)
+SoilTaxonomyDendrogram(s$SPC, width=0.2)
 
 kable_styling(kable(s$mtnpos, digits = 2, format = 'html'), full_width = FALSE)
 # kable(s$pmorigin)
