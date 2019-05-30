@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="D.E. Beaudette and S. Roecker" />
+
+<meta name="date" content="2019-05-30" />
+
+<title>2019 NCSS AQP Workshop</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">2019 NCSS AQP Workshop</h1>
+<h4 class="author">D.E. Beaudette and S. Roecker</h4>
+<h4 class="date">2019-05-30</h4>
+
+
+
+<div id="announcement" class="section level1">
+<h1>Announcement</h1>
+<p>Join us for a workshop from 4:15-5:16 on Monday June 10th where we will review the Algorithms for Quantitative Pedology (AQP) suite of R packages for soil data retrieval, analysis, and visualization. Bring your computer, ideally with the latest versions of <a href="https://cran.r-project.org/">R</a> and <a href="https://www.rstudio.com/products/rstudio/download/#download">RStudio</a> installed ahead of time.</p>
+</div>
+<div id="background" class="section level1">
+<h1>Background</h1>
+<p>The Algorithms for Quantitative Pedology (AQP) project was started in 2009 to organize a loosely-related set of concepts and source code on the topic of soil profile visualization, aggregation, and classification into an R package. Over the past 8 years, the project has grown into a suite of related R packages that enhance and simplify the quantitative analysis of soil profile data. Central to the AQP project is a new vocabulary of specialized functions and data structures that can accommodate the inherent complexity of soil profile information; freeing the scientist to focus on ideas rather than boilerplate data processing tasks. These functions and data structures have been extensively tested and documented, applied to projects involving hundreds of thousands of soil profiles, and deeply integrated into widely used tools such as SoilWeb. Components of the AQP project currently serve an important role in routine data analysis within the USDA-NRCS Soil Survey program. The AQP suite of R packages offer a convenient platform for bridging the gap between pedometric theory and practice.</p>
+</div>
+<div id="goals" class="section level1">
+<h1>Goals</h1>
+<ul>
+<li>getting the AQP suite of packages installed and review development process / <a href="http://ncss-tech.github.io/AQP/">GitHub</a></li>
+<li>review example data and <code>SoilProfileCollection</code> objects</li>
+<li>retrieving data from USDA-NRCS soil and climate databases</li>
+<li>make pretty graphics to show your friends and family</li>
+<li>perform some realistic examples</li>
+<li>time-permitting, attempt something new and excited on the fly</li>
+<li>debate the merits of <a href="http://dx.doi.org/10.1016/j.cageo.2012.10.020">key methods / assumptions</a></li>
+<li>answer questions and provide ideas for post-workshop training</li>
+</ul>
+</div>
+<div id="workshop-outline" class="section level1">
+<h1>Workshop Outline</h1>
+<ul>
+<li>15 minutes: overview of the AQP project, related packages (what/why)</li>
+<li>15 minutes: worked examples with discussion of methods / interpretation (how)</li>
+<li>30 minutes: Q&amp;A, detailed discussion of methods, assistance with applying to own data or running some of the many tutorials</li>
+</ul>
+</div>
+<div id="preparation" class="section level1">
+<h1>Preparation</h1>
+<p>Install <a href="https://cran.r-project.org/">R</a> and <a href="https://www.rstudio.com/products/rstudio/download/#download">RStudio</a>.</p>
+<p>Consider reviewing some of the material in the <a href="http://ncss-tech.github.io/AQP/aqp/aqp-intro.html">SoilProfilecollection tutorial</a> before the workshop. If you are new to the R language then consider reviewing some background material on R syntax and concepts. <a href="http://rspatial.org/">Spatial Data Science with R</a> is one of my favorites.</p>
+<div id="download-example-data-code" class="section level2">
+<h2>Download Example Data &amp; Code</h2>
+<p>Make a new folder somewhere on a local disk and save the files posted <a href="https://github.com/ncss-tech/ncss-tech.github.io/tree/master/AQP/presentations/2019-SSSA-AQP-workshop/data">here</a>. These will be a helpful backup in case of degraded network availability during the workshop. If you have not used GitHub before, the following links may be more convenient.</p>
+<ul>
+<li><a href="https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/dahlgren-granitics.csv">granite transect data</a></li>
+<li><a href="https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/rasmussen-andisitic-lahar-site.csv">andesite transect site data</a></li>
+<li><a href="https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/rasmussen-andisitic-lahar.csv">andesite transect pedon data</a></li>
+<li><a href="https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/transect-GIS-data.csv">sampled raster data</a></li>
+<li><a href="https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/processing.R">data processing R code</a></li>
+<li><a href="https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/prepare-GIS-data.R">raster sampling R code</a></li>
+<li><a href="https://github.com/ncss-tech/ncss-tech.github.io/blob/master/AQP/presentations/2019-SSSA-AQP-workshop/data/mps-vs-slab.R">MPS vs. slab R code</a></li>
+</ul>
+</div>
+<div id="assemble-your-own-data" class="section level2">
+<h2>Assemble Your Own Data</h2>
+<p>Any tabular format is fine as long as profiles can be uniquely identified by some kind of label, and horizon top/bottom depths are specified. CSV files are the simplest to work with, but it is possible to extract data from just about any tabular format.</p>
+<p>Here is an example of data that are “ready to go”:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">name</th>
+<th align="right">top</th>
+<th align="right">bottom</th>
+<th align="right">K</th>
+<th align="right">Mg</th>
+<th align="right">Ca</th>
+<th align="right">CEC_7</th>
+<th align="right">ex_Ca_to_Mg</th>
+<th align="right">sand</th>
+<th align="right">silt</th>
+<th align="right">clay</th>
+<th align="right">CF</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">colusa</td>
+<td align="left">A</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">0.3</td>
+<td align="right">25.7</td>
+<td align="right">9.0</td>
+<td align="right">23.0</td>
+<td align="right">0.35</td>
+<td align="right">46</td>
+<td align="right">33</td>
+<td align="right">21</td>
+<td align="right">0.12</td>
+</tr>
+<tr class="even">
+<td align="left">colusa</td>
+<td align="left">ABt</td>
+<td align="right">3</td>
+<td align="right">8</td>
+<td align="right">0.2</td>
+<td align="right">23.7</td>
+<td align="right">5.6</td>
+<td align="right">21.4</td>
+<td align="right">0.23</td>
+<td align="right">42</td>
+<td align="right">31</td>
+<td align="right">27</td>
+<td align="right">0.27</td>
+</tr>
+<tr class="odd">
+<td align="left">colusa</td>
+<td align="left">Bt1</td>
+<td align="right">8</td>
+<td align="right">30</td>
+<td align="right">0.1</td>
+<td align="right">23.2</td>
+<td align="right">1.9</td>
+<td align="right">23.7</td>
+<td align="right">0.08</td>
+<td align="right">40</td>
+<td align="right">28</td>
+<td align="right">32</td>
+<td align="right">0.27</td>
+</tr>
+<tr class="even">
+<td align="left">colusa</td>
+<td align="left">Bt2</td>
+<td align="right">30</td>
+<td align="right">42</td>
+<td align="right">0.1</td>
+<td align="right">44.3</td>
+<td align="right">0.3</td>
+<td align="right">43.0</td>
+<td align="right">0.01</td>
+<td align="right">27</td>
+<td align="right">18</td>
+<td align="right">55</td>
+<td align="right">0.16</td>
+</tr>
+<tr class="odd">
+<td align="left">glenn</td>
+<td align="left">A</td>
+<td align="right">0</td>
+<td align="right">9</td>
+<td align="right">0.2</td>
+<td align="right">21.9</td>
+<td align="right">4.4</td>
+<td align="right">18.8</td>
+<td align="right">0.20</td>
+<td align="right">54</td>
+<td align="right">20</td>
+<td align="right">25</td>
+<td align="right">0.55</td>
+</tr>
+<tr class="even">
+<td align="left">glenn</td>
+<td align="left">Bt</td>
+<td align="right">9</td>
+<td align="right">34</td>
+<td align="right">0.3</td>
+<td align="right">18.9</td>
+<td align="right">4.5</td>
+<td align="right">27.5</td>
+<td align="right">0.20</td>
+<td align="right">49</td>
+<td align="right">18</td>
+<td align="right">34</td>
+<td align="right">0.84</td>
+</tr>
+<tr class="odd">
+<td align="left">kings</td>
+<td align="left">A</td>
+<td align="right">0</td>
+<td align="right">4</td>
+<td align="right">0.2</td>
+<td align="right">12.1</td>
+<td align="right">1.4</td>
+<td align="right">23.7</td>
+<td align="right">0.58</td>
+<td align="right">43</td>
+<td align="right">55</td>
+<td align="right">3</td>
+<td align="right">0.50</td>
+</tr>
+<tr class="even">
+<td align="left">kings</td>
+<td align="left">Bt1</td>
+<td align="right">4</td>
+<td align="right">13</td>
+<td align="right">0.6</td>
+<td align="right">12.1</td>
+<td align="right">7.0</td>
+<td align="right">18.0</td>
+<td align="right">0.51</td>
+<td align="right">36</td>
+<td align="right">49</td>
+<td align="right">15</td>
+<td align="right">0.75</td>
+</tr>
+<tr class="odd">
+<td align="left">kings</td>
+<td align="left">Bt2</td>
+<td align="right">13</td>
+<td align="right">40</td>
+<td align="right">0.8</td>
+<td align="right">17.7</td>
+<td align="right">4.4</td>
+<td align="right">20.0</td>
+<td align="right">0.25</td>
+<td align="right">27</td>
+<td align="right">45</td>
+<td align="right">27</td>
+<td align="right">0.67</td>
+</tr>
+<tr class="even">
+<td align="left">napa</td>
+<td align="left">A</td>
+<td align="right">0</td>
+<td align="right">6</td>
+<td align="right">0.4</td>
+<td align="right">16.4</td>
+<td align="right">24.1</td>
+<td align="right">31.1</td>
+<td align="right">1.47</td>
+<td align="right">43</td>
+<td align="right">42</td>
+<td align="right">15</td>
+<td align="right">0.02</td>
+</tr>
+<tr class="odd">
+<td align="left">napa</td>
+<td align="left">Bt</td>
+<td align="right">6</td>
+<td align="right">20</td>
+<td align="right">0.1</td>
+<td align="right">16.2</td>
+<td align="right">21.5</td>
+<td align="right">27.9</td>
+<td align="right">1.32</td>
+<td align="right">54</td>
+<td align="right">29</td>
+<td align="right">17</td>
+<td align="right">0.07</td>
+</tr>
+</tbody>
+</table>
+<p>Soil color data should be encoded using the Munsell system within a single column (“10YR 3/4”) or split across three columns (hue,value,chroma). For example:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="right">top</th>
+<th align="right">bottom</th>
+<th align="right">clay</th>
+<th align="right">cec</th>
+<th align="right">ph</th>
+<th align="right">tc</th>
+<th align="left">hue</th>
+<th align="right">value</th>
+<th align="right">chroma</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="right">0</td>
+<td align="right">8</td>
+<td align="right">17.78</td>
+<td align="right">27.85</td>
+<td align="right">5.62</td>
+<td align="right">5.977</td>
+<td align="left">10YR</td>
+<td align="right">5</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="right">8</td>
+<td align="right">23</td>
+<td align="right">19.41</td>
+<td align="right">14.19</td>
+<td align="right">5.41</td>
+<td align="right">1.314</td>
+<td align="left">10YR</td>
+<td align="right">6</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">1</td>
+<td align="right">23</td>
+<td align="right">42</td>
+<td align="right">21.27</td>
+<td align="right">14.48</td>
+<td align="right">5.41</td>
+<td align="right">1.193</td>
+<td align="left">10YR</td>
+<td align="right">6</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="right">42</td>
+<td align="right">52</td>
+<td align="right">22.06</td>
+<td align="right">12.62</td>
+<td align="right">5.62</td>
+<td align="right">0.552</td>
+<td align="left">7.5YR</td>
+<td align="right">6</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">1</td>
+<td align="right">52</td>
+<td align="right">80</td>
+<td align="right">20.03</td>
+<td align="right">11.68</td>
+<td align="right">5.85</td>
+<td align="right">0.321</td>
+<td align="left">7.5YR</td>
+<td align="right">6</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="right">0</td>
+<td align="right">5</td>
+<td align="right">17.70</td>
+<td align="right">21.79</td>
+<td align="right">5.58</td>
+<td align="right">3.963</td>
+<td align="left">5YR</td>
+<td align="right">4</td>
+<td align="right">4</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="install-required-packages" class="section level2">
+<h2>Install Required Packages</h2>
+<p>Copy the following code (all at once or in pieces) into a <strong>new R session</strong>. This will install all of the packages that we will be using in this workshop. It is important to do this <strong>before</strong> the workshop so that the limited internet access isn’t saturated by 30 machines trying to download ~ 100Mb of data. This process should take about 10 minutes.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># helper fuction for installing required packages from CRAN</span>
+<span class="co"># a simple check is done to see if each is already installed</span>
+<span class="co"># p: vector of package names</span>
+<span class="co"># up: logical- upgrade installed packages?</span>
+ipkCRAN &lt;-<span class="st"> </span><span class="cf">function</span>(p, up){
+  <span class="cf">if</span> (up) {
+    <span class="kw">install.packages</span>(p, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+  } <span class="cf">else</span> {
+    new.pkg &lt;-<span class="st"> </span>p[<span class="op">!</span><span class="st"> </span>(p <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[, <span class="st">&quot;Package&quot;</span>])]
+    <span class="cf">if</span> (<span class="kw">length</span>(new.pkg) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) {
+      <span class="kw">message</span>(<span class="st">'installing packages from CRAN...'</span>)
+      <span class="kw">install.packages</span>(new.pkg, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>)
+    }
+  }
+}
+
+
+## list of packages
+packages &lt;-<span class="st"> </span><span class="kw">c</span>(
+  <span class="co"># soil</span>
+  <span class="st">&quot;aqp&quot;</span>, <span class="st">&quot;soilDB&quot;</span>, <span class="st">&quot;sharpshootR&quot;</span>, <span class="st">&quot;soiltexture&quot;</span>,
+  <span class="co"># gis</span>
+  <span class="st">&quot;sp&quot;</span>, <span class="st">&quot;raster&quot;</span>, <span class="st">&quot;rgdal&quot;</span>,
+  <span class="co"># data management</span>
+  <span class="st">&quot;devtools&quot;</span>, <span class="st">&quot;Hmisc&quot;</span>, <span class="st">&quot;RODBC&quot;</span>, <span class="st">&quot;circular&quot;</span>, <span class="st">&quot;DT&quot;</span>, <span class="st">&quot;remotes&quot;</span>, <span class="st">&quot;Gmedian&quot;</span>, <span class="st">&quot;farver&quot;</span>,
+  <span class="co"># graphics</span>
+  <span class="st">&quot;latticeExtra&quot;</span>, <span class="st">&quot;Cairo&quot;</span>, <span class="st">&quot;maps&quot;</span>, <span class="st">&quot;plotrix&quot;</span>, <span class="st">&quot;dendextend&quot;</span>,
+  <span class="co"># modeling</span>
+  <span class="st">&quot;car&quot;</span>, <span class="st">&quot;rms&quot;</span>, <span class="st">&quot;vegan&quot;</span>, <span class="st">&quot;ape&quot;</span>,
+  <span class="co"># sampling</span>
+  <span class="st">&quot;clhs&quot;</span>
+  )
+
+## install packages, upgrading as needed
+<span class="kw">ipkCRAN</span>(packages, <span class="dt">up=</span><span class="ot">TRUE</span>)</code></pre></div>
+</div>
+<div id="install-latest-aqp-suite-of-packages" class="section level2">
+<h2>Install Latest AQP Suite of Packages</h2>
+<p>These are often in a state of flux so the CRAN version may be several months out of date.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ncss-tech/aqp&quot;</span>, <span class="dt">dependencies=</span><span class="ot">FALSE</span>, <span class="dt">upgrade=</span><span class="ot">FALSE</span>, <span class="dt">build=</span><span class="ot">FALSE</span>)
+remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ncss-tech/soilDB&quot;</span>, <span class="dt">dependencies=</span><span class="ot">FALSE</span>, <span class="dt">upgrade=</span><span class="ot">FALSE</span>, <span class="dt">build=</span><span class="ot">FALSE</span>)
+remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ncss-tech/sharpshootR&quot;</span>, <span class="dt">dependencies=</span><span class="ot">FALSE</span>, <span class="dt">upgrade=</span><span class="ot">FALSE</span>, <span class="dt">build=</span><span class="ot">FALSE</span>)</code></pre></div>
+<p>Finally, check to see that your AQP suite of packages are the most recent.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(aqp)
+<span class="kw">library</span>(soilDB)
+<span class="kw">library</span>(sharpshootR)
+
+<span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.5.1 (2018-07-02)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 10 x64 (build 17763)
+## 
+## Matrix products: default
+## 
+## locale:
+## [1] LC_COLLATE=English_United States.1252 
+## [2] LC_CTYPE=English_United States.1252   
+## [3] LC_MONETARY=English_United States.1252
+## [4] LC_NUMERIC=C                          
+## [5] LC_TIME=English_United States.1252    
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] sharpshootR_1.4.02 soilDB_2.3.8       aqp_1.17.05       
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.1          mvtnorm_1.0-10      ape_5.3            
+##  [4] lattice_0.20-35     class_7.3-14        assertthat_0.2.1   
+##  [7] digest_0.6.18       R6_2.4.0            plyr_1.8.4         
+## [10] backports_1.1.4     acepack_1.4.1       e1071_1.7-1        
+## [13] evaluate_0.13       ggplot2_3.1.1       pillar_1.4.0       
+## [16] rlang_0.3.4         lazyeval_0.2.2      curl_3.3           
+## [19] rstudioapi_0.10     data.table_1.12.2   vegan_2.5-4        
+## [22] raster_2.8-19       rpart_4.1-13        Matrix_1.2-14      
+## [25] checkmate_1.9.3     rmarkdown_1.12.6    splines_3.5.1      
+## [28] stringr_1.4.0       foreign_0.8-70      htmlwidgets_1.3    
+## [31] igraph_1.2.4        munsell_0.5.0       compiler_3.5.1     
+## [34] xfun_0.7            pkgconfig_2.0.2     base64enc_0.1-3    
+## [37] mgcv_1.8-24         htmltools_0.3.6     nnet_7.3-12        
+## [40] tidyselect_0.2.5    tibble_2.1.1        gridExtra_2.3      
+## [43] htmlTable_1.13.1    Hmisc_4.2-0         codetools_0.2-15   
+## [46] permute_0.9-5       reshape_0.8.8       crayon_1.3.4       
+## [49] dplyr_0.8.0.1       MASS_7.3-50         grid_3.5.1         
+## [52] nlme_3.1-137        gtable_0.3.0        magrittr_1.5       
+## [55] scales_1.0.0        stringi_1.4.3       reshape2_1.4.3     
+## [58] sp_1.3-1            latticeExtra_0.6-28 xml2_1.2.0         
+## [61] boot_1.3-20         Formula_1.2-3       RColorBrewer_1.1-2 
+## [64] tools_3.5.1         glue_1.3.1          purrr_0.3.2        
+## [67] plotrix_3.7-5       parallel_3.5.1      survival_2.42-3    
+## [70] yaml_2.2.0          colorspace_1.4-1    circular_0.4-93    
+## [73] cluster_2.0.7-1     knitr_1.22</code></pre>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
