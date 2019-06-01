@@ -1,6 +1,6 @@
 ---
 title: "2019 SSSA AQP Workshop"
-author: D.E. Beaudette
+author: D.E. Beaudette and S. Roecker
 date: "`r Sys.Date()`"
 output:
   html_vignette
