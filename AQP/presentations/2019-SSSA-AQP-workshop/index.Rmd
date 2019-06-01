@@ -47,15 +47,7 @@ Consider reviewing some of the material in the [SoilProfilecollection tutorial](
 
 ## Download Example Data & Code
 
-Make a new folder somewhere on a local disk and save the files posted [here](https://github.com/ncss-tech/ncss-tech.github.io/tree/master/AQP/presentations/2019-SSSA-AQP-workshop/data). These will be a helpful backup in case of degraded network availability during the workshop. If you have not used GitHub before, the following links may be more convenient.
 
-   * [granite transect data](https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/dahlgren-granitics.csv)
-   * [andesite transect site data](https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/rasmussen-andisitic-lahar-site.csv)
-   * [andesite transect pedon data](https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/rasmussen-andisitic-lahar.csv)
-   * [sampled raster data](https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/transect-GIS-data.csv)
-   * [data processing R code](https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/processing.R)
-   * [raster sampling R code](https://raw.githubusercontent.com/ncss-tech/ncss-tech.github.io/master/AQP/presentations/2019-SSSA-AQP-workshop/data/prepare-GIS-data.R)
-   * [MPS vs. slab R code](https://github.com/ncss-tech/ncss-tech.github.io/blob/master/AQP/presentations/2019-SSSA-AQP-workshop/data/mps-vs-slab.R)
    
 
 ## Assemble Your Own Data
