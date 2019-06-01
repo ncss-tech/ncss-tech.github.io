@@ -10,7 +10,7 @@ output:
 
 # Announcement
 
-Join us for a workshop from 4:15-5:16 on Monday June 10th where we will review the Algorithms for Quantitative Pedology (AQP) suite of R packages for soil data retrieval, analysis, and visualization. Bring your computer, ideally with the latest versions of [R](https://cran.r-project.org/) and [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed ahead of time. 
+Join us for a workshop from 4:15-5:15pm on Monday June 10th where we will review the Algorithms for Quantitative Pedology (AQP) suite of R packages for soil data retrieval, analysis, and visualization. Bring your computer, ideally with the latest versions of [R](https://cran.r-project.org/) and [RStudio](https://www.rstudio.com/products/rstudio/download/#download) installed ahead of time. 
 
 
 # Background
