@@ -236,13 +236,13 @@ par(mar=c(0.5,0.5,1,0.5), bg='black', fg='white')
 plot(h, label.offset=0.55, edge.color='white', tip.color='white', cex=0.66, direction='downwards', font=1)
 tiplabels(pch=15, cex=1.5, col=x$color, offset=0.23)
 title('Divisive Hierarchical Clustering', col.main='white', line=0)
-mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0, line=-0.5)
+mtext(text = expression("Distance metric:"~Delta*E['00']), side = 3, adj = 0, line=-0.5)
 
 plot(h, edge.color='white', tip.color='white', cex=0.5, direction='downwards', show.tip.label=FALSE)
 tiplabels(pch=15, cex=1.5, col=x$color, offset=0.25)
 tiplabels(text=x$value, cex=0.55, frame='none', col='white', offset=0.23)
 title('Divisive Hierarchical Clustering', col.main='white', line=0)
-mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0, line=-0.5)
+mtext(text = expression("Distance metric:"~Delta*E['00']), side = 3, adj = 0, line=-0.5)
 ```
 
 
@@ -253,7 +253,7 @@ plot(mds$points, type='n', axes=FALSE)
 abline(h=0, v=0, col=grey(0.85), lty=3)
 points(mds$points, pch=15, col=x$color, cex=3.5)
 text(mds$points[, 1],  mds$points[, 2], x$value, cex=0.75)
-mtext(text = expression("Distance metric:"~Delta~E["00"]), side = 3, adj = 0)
+mtext(text = expression("Distance metric:"~Delta*E['00']), side = 3, adj = 0)
 mtext(text = 'Munsell value', side = 1, adj = 1, line=-1)
 title('nMDS', col.main='white', line=0.75)
 
@@ -261,7 +261,7 @@ plot(mds$points, type='n', axes=FALSE)
 abline(h=0, v=0, col=grey(0.85), lty=3)
 points(mds$points, pch=15, col=x$color, cex=3.5)
 text(mds$points[, 1],  mds$points[, 2], paste0(x$value, '/', x$chroma), cex=0.66)
-mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
+mtext(text = expression(Delta*E['00']), side = 3, adj = 0)
 mtext(text = 'Munsell value/chroma', side = 1, adj = 1, line=-1)
 title('nMDS', col.main='white', line=0.75)
 
@@ -269,7 +269,7 @@ plot(mds$points, type='n', axes=FALSE)
 abline(h=0, v=0, col=grey(0.85), lty=3)
 points(mds$points, pch=15, col=x$color, cex=3.5)
 text(mds$points[, 1],  mds$points[, 2], x$hue, cex=0.66)
-mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
+mtext(text = expression(Delta*E['00']), side = 3, adj = 0)
 mtext(text = 'Munsell hue', side = 1, adj = 1, line=-1)
 title('nMDS', col.main='white', line=0.75)
 
@@ -277,7 +277,7 @@ plot(mds$points, type='n', axes=FALSE)
 abline(h=0, v=0, col=grey(0.85), lty=3)
 points(mds$points, pch=15, col=x$color, cex=3.5)
 text(mds$points[, 1],  mds$points[, 2], x$munsell, cex=0.66)
-mtext(text = expression(Delta~E["00"]), side = 3, adj = 0)
+mtext(text = expression(Delta*E['00']), side = 3, adj = 0)
 mtext(text = 'Munsell color', side = 1, adj = 1, line=-1)
 title('nMDS', col.main='white', line=0.75)
 ```
@@ -353,7 +353,7 @@ kable(head(d), row.names = FALSE)
 
 bwplot(cc ~ dE00, data=d, 
        par.settings=tactile.theme(), 
-       xlab=expression(Delta~E['00']),
+       xlab=expression(Delta*E['00']),
        main='CIE Delta-E00 vs. Soil Color Contrast Class\nhue 10R-2.5Y, value 3-8, chroma 1-6',
        scales=list(x=list(tick.number=10)), 
        panel=function(...) {
