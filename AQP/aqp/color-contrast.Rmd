@@ -320,7 +320,8 @@ xyplot(value ~ chroma | hue, data=z,
 
 
 ## Moist vs. Dry Colors
-```{r fig.width=8, fig.height=4}
+
+```{r fig.width=10, fig.height=4}
 x <- fetchOSD('musick', colorState = 'dry')
 y <- fetchOSD('musick', colorState = 'moist')
 
@@ -330,6 +331,18 @@ m2 <- sprintf("%s %s/%s", y$hue, y$value, y$chroma)
 cc <- colorContrast(m1, m2)
 
 colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), d.cex = 0.9)
+```
+
+Tinker with plot settings and optimize for dark background.
+```{r fig.width=10, fig.height=4}
+x <- fetchOSD('Leefield', colorState = 'dry')
+y <- fetchOSD('Leefield', colorState = 'moist')
+
+m1 <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
+m2 <- sprintf("%s %s/%s", y$hue, y$value, y$chroma)
+
+par(bg='black', fg='white')
+colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), printMetrics = TRUE, d.cex = 1.25, col.cex = 1.5, label.cex = 2, label.font = 2)
 ```
 
 
