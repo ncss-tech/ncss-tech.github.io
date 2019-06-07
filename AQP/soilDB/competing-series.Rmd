@@ -122,6 +122,28 @@ mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = 
 ```
 
 
+### Monthly Climate Summaries
+```{r fig.width=10, fig.height=5}
+library(ggplot2)
+# reasonable colors for a couple of groups
+cols <- brewer.pal(9, 'Set1') 
+cols <- cols[c(1:5,7,9)]
+
+idx <- which(s.competing.data$climate.monthly$series %in% c('DRUMMER', 'MARCUS', 'PATTON', 'MAXCREEK') & s.competing.data$climate.monthly$variable == 'Precipitation (mm)')
+s.sub <- s.competing.data$climate.monthly[idx, ]
+
+ggplot(s.sub, aes(x = month, group=series)) + 
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill=series)) + 
+  geom_line(aes(month, q25)) + 
+  geom_line(aes(month, q75)) + 
+  geom_abline(intercept=0, slope = 0, lty=2) +
+  xlab('') + ylab('mm') + 
+  ggtitle('Monthly IQR') +
+  scale_fill_manual(values=alpha(cols, 0.75)) +
+  facet_wrap(vars(variable), scales = 'free_y') +
+  theme_bw()
+```
+
 
 ## Geomorphic Summaries
 
@@ -283,7 +305,7 @@ xyplot(top ~ p.q50 | variable, data=g.slab, ylab='Depth', main=fm.name, sub='sou
 
 
 Aggregate just Drummer data and compare with entire family. Note that Drummer records make up about 20% of the data within this family.
-```{r fig.width=10, fig.height=6}
+```{r fig.width=11, fig.height=6}
 # compare a single profile to the group-level aggregate values
 a <- slab(kssl.data[which(kssl.data$taxonname == soil), ], ~ clay + sand + estimated_ph_h2o + cec7 + bs82)
 levels(a$variable) <- c('Clay (%)', 'Sand (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
@@ -357,7 +379,7 @@ This needs more work.
 ### Parent Material
 Quickly tabulate parent material kind.
 ```{r}
-kable(sort(table(s.competing.data$pmkind$pmkind), decreasing = TRUE), format = 'html')
+kableExtra::kable_styling(kable(sort(table(s.competing.data$pmkind$pmkind), decreasing = TRUE), format = 'html'))
 ```
 
 Quickly tabulate parent material origin.
