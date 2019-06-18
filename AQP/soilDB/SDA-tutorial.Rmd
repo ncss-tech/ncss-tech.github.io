@@ -65,6 +65,7 @@ You only need to do this once. If you haven't installed these packages, then cop
 # run these commands in the R console
 # stable version from CRAN + dependencies
 install.packages("httr", dep=TRUE)
+install.packages("aqp", dep=TRUE)
 install.packages("soilDB", dep=TRUE)
 install.packages("rgdal", dep = TRUE)
 install.packages("raster", dep = TRUE)
@@ -75,6 +76,7 @@ install.packages("rgeos", dep = TRUE)
 # Simple Queries 
 Now that you have the required packages, load them into the current R session.
 ```{r load-libs}
+library(aqp)
 library(soilDB)
 library(sp)
 library(rgdal)
@@ -329,7 +331,7 @@ Check the results and plot the "Auburn" KSSL pedons, grouped by intersecting map
 ```{r sda-spatial-kssl-plot, fig.width=12, fig.height=5}
 # plot profiles, grouped by mukey
 # color horizons with clay content
-par(mar=c(0,0,4,0))
+par(mar=c(0,2,4,0))
 groupedProfilePlot(auburn, groups='mukey', group.name.cex=0.65, color='clay', name='hzn_desgn', id.style='side', label='pedon_id', max.depth=100)
 # describe IDs
 mtext('user pedon ID', side=2, line=-1.5)
