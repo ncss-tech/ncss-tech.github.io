@@ -89,6 +89,43 @@ axis(side=1, at = 1:length(x), labels = x$elev_field[new.order], line = 1)
 mtext('Elevation (m)', side = 1, line = 3.25)
 ```
 
+
+Test out some new features in `aqp`.
+```{r fig.width=8, fig.height=8}
+par(mar=c(4.5,1,3,1))
+plot(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE)
+
+# the "brackets" will automatically follow the new ordering
+addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, kind='paralithic contact', col='black')
+
+addVolumeFraction(x, 'total_frags_pct')
+
+
+plot(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE, relative.pos=jitter(1:length(x)))
+
+# the "brackets" will automatically follow the new ordering
+addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, kind='paralithic contact', col='black')
+
+addVolumeFraction(x, 'total_frags_pct')
+
+
+plot(x, color='total_frags_pct', print.id=FALSE, relative.pos=jitter(1:length(x)))
+
+# the "brackets" will automatically follow the new ordering
+addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, kind='paralithic contact', col='black')
+
+addVolumeFraction(x, 'total_frags_pct')
+```
+
+
+
+
 ```{r fig.width=8, fig.height=8}
 ## plot data as a transect, using coordinates and elevation
 
