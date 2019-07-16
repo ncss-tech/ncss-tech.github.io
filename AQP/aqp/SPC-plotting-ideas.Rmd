@@ -165,6 +165,24 @@ plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.tit
 plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', color='clay')
 ```
 
+Tinker with *relative* sketch positioning.
+```{r fig.width=8, fig.height=8}
+# standard transect plot, profile sketches arranged along integer sequence
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname')
+
+# default behavior, attempt adjustments to prevent over-plot and preserve relative spacing
+# use set.seed() to fix outcome
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative')
+
+# attempt relative positioning based on scaled distances, no corrections for overlap
+# profiles are clustered in space and therefore over-plot
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = FALSE)
+
+# customize arguments to aqp::fixOverlap()
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = list(maxIter=6000, trace=TRUE, adj=0.2, thresh=0.7))
+```
+
+
 
 ```{r fig.width=10, fig.height=5}
 # load example dataset
@@ -202,7 +220,7 @@ points(x.pos, gopheridge$max.clay.depth, col='white', pch=21, cex=0.75, bg='blac
 
 
 ----------------------------
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
 
 
