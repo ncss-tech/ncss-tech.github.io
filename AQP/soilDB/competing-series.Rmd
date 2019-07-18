@@ -267,7 +267,7 @@ kssl.data <- lapply(s.names, getPedons)
 # some may not have any data, filter those out
 not.null <- which(! sapply(kssl.data, is.null))
 # combine into single SPC
-kssl.data <- do.call('rbind', kssl.data[not.null])
+kssl.data <- union(kssl.data[not.null])
 
 # normalize soil series names
 for(i in s.names)

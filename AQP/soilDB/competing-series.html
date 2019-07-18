@@ -11,7 +11,7 @@
 
 <meta name="author" content="D.E. Beaudette" />
 
-<meta name="date" content="2019-06-07" />
+<meta name="date" content="2019-07-18" />
 
 <title>Competing Soil Series</title>
 
@@ -193,7 +193,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Competing Soil Series</h1>
 <h4 class="author">D.E. Beaudette</h4>
-<h4 class="date">2019-06-07</h4>
+<h4 class="date">2019-07-18</h4>
 
 </div>
 
@@ -399,7 +399,7 @@ kssl.data &lt;- lapply(s.names, getPedons)
 # some may not have any data, filter those out
 not.null &lt;- which(! sapply(kssl.data, is.null))
 # combine into single SPC
-kssl.data &lt;- do.call('rbind', kssl.data[not.null])
+kssl.data &lt;- union(kssl.data[not.null])
 
 # normalize soil series names
 for(i in s.names)
@@ -820,7 +820,7 @@ Limestone and dolomite
 <p>Summarize acreage by MLRA.</p>
 <pre class="r"><code>plyr::ddply(s.competing.data$mlra, 'mlra', .fun=plyr::summarize, total_ac=sum(area_ac))</code></pre>
 <hr />
-<p>This document is based on <code>aqp</code> version 1.17.05 and <code>soilDB</code> version 2.3.8.</p>
+<p>This document is based on <code>aqp</code> version 1.17.06 and <code>soilDB</code> version 2.3.9.</p>
 </div>
 </div>
 
