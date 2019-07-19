@@ -405,5 +405,10 @@ plot(anova(m), what='partial R2')
 plot(nomogram(m))
 ```
 
+For next time, how do you use these tables?
+```{r}
+print(nomogram(m, dH=c(0, 1, 2, 3)))
+```
+
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
