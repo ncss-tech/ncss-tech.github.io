@@ -23,6 +23,7 @@ library(soilDB)
 library(plyr)
 library(sharpshootR)
 library(latticeExtra)
+library(colorspace)
 ```
 
 
@@ -198,11 +199,43 @@ for(i in names(l)) {
 ```
 
 
+Reduce lists to `data.frame` objects for further use or reporting.
 ```{r}
 L1.data <- do.call('rbind', lapply(l, function(i) i$L1))
 m.data <- do.call('rbind', lapply(l, function(i) i$marginal))
-
 ```
+
+
+
+Examples for creating a soil-inspired palette of colors.
+```{r fig.width=7, fig.height=1.5}
+# colors: hex representation of color
+# lab: labels
+soilPalette <- function(colors, lab, ...) {
+  # basic plot
+  swatchplot(colors, ...)
+  # annotation
+  nx <- length(colors)
+  x.pos <- seq(from = 0, to = 1, by = 1/nx)[1:nx]
+  y.pos <- rep(0.01, times = nx)
+  text(x.pos, y.pos, labels = lab, col = "white", font = 2, adj = c(-0.125, -0.33))
+}
+
+
+# aggregate colors over all depths into 6 medoid colors
+s$grp <- rep('a', times=nrow(s))
+a <- aggregateColor(s, "grp", col = 'moist_soil_color', k = 6)
+
+# setup margins
+par(mar=c(0.25,0.25,0.25,0.25), bg='white')
+
+# using L1 medians, in depth-order
+soilPalette(L1.data$L1_color, L1.data$L1_chip)
+
+# using 6 medoid colors
+soilPalette(a$scaled.data$a$moist_soil_color, a$scaled.data$a$munsell)
+```
+
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
