@@ -64,7 +64,7 @@ print(sp4)
 
 
 # Accessing, Setting, and Replacing Data
-"Accessor" functions are used to extract specfic components from within `SoilProfileCollection` objects.
+"Accessor" functions are used to extract specific components from within `SoilProfileCollection` objects.
 ```{r accessor-functions, eval=FALSE}
 # methods for object inspection
 idname(sp4) # self-explanitory
@@ -158,7 +158,7 @@ sp4
 
 
 # Diagnostic Horizons
-Diagnostic horizons typically span several genetic horizons and may or may not be present in all profiles. To accomodate the wide range of possibilities, diagnostic horizon data are stored as a `data.frame` in "long format": each row corresponds to a diagnostic horizon, identified with a column matching the ID column used to initialize the `SoilProfileCollection` object.
+Diagnostic horizons typically span several genetic horizons and may or may not be present in all profiles. To accommodate the wide range of possibilities, diagnostic horizon data are stored as a `data.frame` in "long format": each row corresponds to a diagnostic horizon, identified with a column matching the ID column used to initialize the `SoilProfileCollection` object.
 ```{r diagnostic}
 # manually create some diagnostic horizon data
 # there is no restrictions on data format, as long as each row has an ID that exists within the collection
@@ -206,7 +206,7 @@ box()
 
 
 # Subsetting SoilProfileCollection Objects
-`SoilProfileCollection` objects can be subset using the familiar `[`-style notiation used by matrix and `data.frame` objects, such that: `spc[i, j]` will return profiles identified by the integer vector `i`, and horizons identified by the integer vector `j`. Ommitting either index will result in all profiles (`i` ommitted) or all horizons (`j` ommitted). Typically, site-level attributes will be used as the subsetting criteria. Functions that return an index to matches (such as `grep()` or `which()`) provide the link between attributes and an index to matching profiles. Some examples:
+`SoilProfileCollection` objects can be subset using the familiar `[`-style notation used by matrix and `data.frame` objects, such that: `spc[i, j]` will return profiles identified by the integer vector `i`, and horizons identified by the integer vector `j`. Omitting either index will result in all profiles (`i` omitted) or all horizons (`j` omitted). Typically, site-level attributes will be used as the subsetting criteria. Functions that return an index to matches (such as `grep()` or `which()`) provide the link between attributes and an index to matching profiles. Some examples:
 
 ```{r subsetting-1, eval=FALSE}
 # explicit string matching
@@ -292,17 +292,41 @@ par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', plot.order=length(sp4):1)
 ```
 
-Relative horizontal positioning via `relative.pos` argument. Can be used with `plot.order` but be careful: `relative.pos` must be specified in the *final* ordering of profiles. See `?plotSPC` for details.
-```{r fig.height=5, fig.width=9}
-par(mar=c(4,3,2,2))
-explainPlotSPC(sp4, name='name', relative.pos=jitter(1:length(sp4)))
-```
-
-
 Leave room for an additional 2 profile sketches.
 ```{r fig.height=5, fig.width=9}
 par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', n=length(sp4) + 2)
+```
+
+## Relative Horizontal Positioning
+
+Relative horizontal positioning via `relative.pos` argument. Can be used with `plot.order` but be careful: `relative.pos` must be specified in the *final* ordering of profiles. See `?plotSPC` for details.
+
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+pos <- jitter(1:length(sp4))
+explainPlotSPC(sp4, name='name', relative.pos=pos)
+```
+
+Relative positioning works well when the vector of positions is close to the default spacing along an integer sequence, but not when positions are closer than the width of a profile sketch.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+pos <- c(1, 1.2, 3, 4, 5, 5.2, 7, 8, 9, 10)
+explainPlotSPC(sp4, name='name', relative.pos=pos)
+```
+
+The `fixOverlap()` function can be used to find a suitable arrangement of profiles based on a compromise between the suggested relative positions and minimization of overlap. This is an iterative procedure, based on random perturbations of overlapping profiles, therefore it is possible for the algorithm to stop at a sub-optimal configuration. Results can be controlled using `set.seed()`.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+new.pos <- fixOverlap(pos)
+explainPlotSPC(sp4, name='name', relative.pos=new.pos)
+```
+
+There are several parameters available for optimizing horizontal position in the presence of overlap. See `?fixOverlap` for details and further examples. The [SPC plotting ideas tutorial](http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html) contains several practical examples.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+new.pos <- fixOverlap(pos, thresh = 0.7)
+explainPlotSPC(sp4, name='name', relative.pos=new.pos)
 ```
 
 
@@ -421,7 +445,7 @@ addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
 These functions (`addBracket`, `addDiagnosticBracket`, and `addVolumeFraction`) will automatically compensate for alternative sketch ordering or relative positioning.
 
 # Iterating Over Profiles in a Collection
-The `profileApply()` function is an extension of the familiar *apply()* family of functions that operate on vectors (`sapply` and `tapply`), matrices (`apply`), and lists (`lapply`)-- extended to `SoilProfileCollection` objects. The function named in the `FUN` argument is evaluated once for each profile in the collection, typicially returning a single value per profile. In this case, the ordering of the results would match the ordering of values in the site level attribute table.
+The `profileApply()` function is an extension of the familiar *apply()* family of functions that operate on vectors (`sapply` and `tapply`), matrices (`apply`), and lists (`lapply`)-- extended to `SoilProfileCollection` objects. The function named in the `FUN` argument is evaluated once for each profile in the collection, typically returning a single value per profile. In this case, the ordering of the results would match the ordering of values in the site level attribute table.
 ```{r profileApply-1}
 # max() returns the depth of a soil profile
 sp4$soil.depth <- profileApply(sp4, FUN=max)
@@ -460,7 +484,7 @@ wt.mean.ca.mg <- function(i) {
 sp4$wt.mean.ca.to.mg <- profileApply(sp4, wt.mean.ca.mg)
 ```
 
-We can now use our some of our new site-level attributes to order the profiles when plotting. In this case profiles are ordered based on the horizon-thickness weighted mean, exchageable Ca:Mg values. Horizons are colored by exchangeable Ca:Mg values.
+We can now use our some of our new site-level attributes to order the profiles when plotting. In this case profiles are ordered based on the horizon-thickness weighted mean, exchangeable Ca:Mg values. Horizons are colored by exchangeable Ca:Mg values.
 ```{r profileApply-4, fig.height=5, fig.width=8}
 # the result is an index of rank
 new.order <- order(sp4$wt.mean.ca.to.mg)
@@ -512,7 +536,7 @@ plot(sliced[, c(10:20, 40:50)])
 
 
 # Aggregating Soil Profile Collections Along Regular "Slabs"
-Depth-wise summary of horizon-level attributes is performed with the `slab()` function. Profile grouping criterial and horizon attribute selection is parametrized via formula: either `groups ~ var1 + var2 + var3` where named variables are aggregated within `groups` OR where named variables are aggregated across the entire collection ` ~ var1 + var2 + var3`. The default summary function (`slab.fun`) computes the 5th, 25th, 50th, 75th, and 95th percentiles via Harrell-Davis quantile estimator.
+Depth-wise summary of horizon-level attributes is performed with the `slab()` function. Profile grouping criteria and horizon attribute selection is parametrized via formula: either `groups ~ var1 + var2 + var3` where named variables are aggregated within `groups` OR where named variables are aggregated across the entire collection ` ~ var1 + var2 + var3`. The default summary function (`slab.fun`) computes the 5th, 25th, 50th, 75th, and 95th percentiles via Harrell-Davis quantile estimator.
 
 The depth structure ("slabs") over which summaries are computed is defined with the `slab.structure` argument using:
 
