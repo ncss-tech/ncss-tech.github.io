@@ -215,7 +215,7 @@ d.dist <- as.dist(t(d))
 # hierarchical clustering
 h <- as.phylo(as.hclust(diana(d.dist)))
 # nMDS
-mds <- MASS::sammon(d.dist)
+mds <- MASS::sammon(d.dist, trace = FALSE)
 ```
 
 ```{r fig.width=6, fig.height=4}
@@ -282,6 +282,8 @@ mtext(text = 'Munsell color', side = 1, adj = 1, line=-1)
 title('nMDS', col.main='white', line=0.75)
 ```
 
+
+### Nearly Imperceptible Differences
 ```{r fig.width=8, fig.height=6}
 # locate color pairs which are at the edge of perceptable differences
 idx <- which(d < 4)
@@ -289,12 +291,16 @@ row.idx <- row(d)[idx]
 col.idx <- col(d)[idx]
 low.dE00 <- cbind(dimnames(d)[[1]][row.idx], dimnames(d)[[2]][col.idx])
 
-# hmm
+# not so helpful viz of pairs
 swatchplot(list(
   A=parseMunsell(low.dE00[, 1]),
   B=parseMunsell(low.dE00[, 2])
 ))
+```
 
+
+```{r fig.width=8, fig.height=6}
+# compute median delta-E00 by Munsell chip
 l <- list()
 for(i in seq_along(x$munsell)) {
   m <- x$munsell[i]
@@ -302,10 +308,16 @@ for(i in seq_along(x$munsell)) {
   l[[i]] <- data.frame(m=m, stat=median(d.i), stringsAsFactors = FALSE)  
 }
 
+# flatten
 E00.summary <- do.call('rbind', l)
 
+# check
+kable(E00.summary[grep('10YR', E00.summary$m), ], digits=2)
+
+# combine chip summary with source data
 z <- merge(x, E00.summary, by.x='munsell', by.y='m', all.x=TRUE)
 
+# chip size is proportional to median delta-E00
 xyplot(value ~ chroma | hue, data=z,
        xlim=c(0.5, 3.5), ylim=c(2.5, 5.5), 
        scales=list(alternating=3),
@@ -313,10 +325,60 @@ xyplot(value ~ chroma | hue, data=z,
        subscripts=TRUE,
        panel=function(xx, yy, subscripts, ...) {
          panel.grid(-1, -1)
-         panel.points(xx, yy, col=z$color[subscripts], pch=15, cex=sqrt(z$stat) * 1.5)
+         panel.points(xx, yy, col=z$color[subscripts], pch=15, cex=z$stat * 0.4)
        }
 )
 ```
+
+
+## Color Chips Arranged by Perceptual Differences
+```{r fig.width=6, fig.height=10}
+# subset some common colors
+hues <- c('7.5YR')
+x <- subset(munsell, subset=value %in% 3:8 & chroma %in% c(1,2,3,4,6,8) & hue %in% hues)
+
+# convert into hex notation for plotting
+x$color <- munsell2rgb(x$hue, x$value, x$chroma)
+x$munsell <- sprintf("%s/%s", x$value, x$chroma)
+
+# dE00
+# pair-wise distances are only present in the upper triangle
+# lower triangle is 0
+d <- compare_colour(x[, c('L', 'A', 'B')], from_space='lab', white_from = 'D65', method='cie2000')
+# copy color codes for convenience
+dimnames(d) <- list(x$munsell, x$munsell)
+
+# convert to dist object, which expects distances in the lower triangle
+d.dist <- as.dist(t(d))
+
+# nMDS
+mds <- MASS::sammon(d.dist, trace = FALSE)
+
+# rotate 90 degrees CCW
+# to roughly follow Munsell color book page layout
+# column-order
+m <- matrix(
+  c(0, -1, 
+    1, 0), 
+  byrow = FALSE, ncol = 2
+)
+
+# apply transformation
+mds.trans <- mds$points %*% m
+
+par(mar=c(2.5, 0.5, 3, 0.5), bg='black', fg='white')
+
+plot(mds.trans, type='n', axes=FALSE, asp=1)
+abline(h=seq(-25, 25, 5), v=seq(-25, 25, 5), col='white', lty=3)
+points(mds.trans, pch=22, bg=x$color, cex=6)
+text(mds.trans[, 1],  mds.trans[, 2], paste0(x$value, '/', x$chroma), cex=0.66)
+# mtext(text = expression(Delta*E['00']), side = 3, adj = 0)
+# mtext(text = '7.5YR', side = 1, adj = 1, line=-1)
+title('Perceptual Distances\n7.5YR Page', col.main='white', line=0.75)
+mtext(text = expression(Delta*E['00']%->%nMDS%->%90*degree~CCW~rotation), side = 1, adj = 0)
+
+```
+
 
 
 ## Moist vs. Dry Colors
