@@ -156,7 +156,7 @@ axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
 plot(granite, color='BS', plot.order=granite.elev.order)
 axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
 
-plot(granite, color='Fe_d', plot.order=granite.elev.order)
+plotSPC(granite, color='Fe_d', plot.order=granite.elev.order)
 axis(1, at=1:length(granite), labels=granite$elev[granite.elev.order], line=-2)
 
 
@@ -181,16 +181,21 @@ g$b <- g.rgb[, 3]
 
 plotTransect(g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', label='soil_name')
 
-plotTransect(g, 'rain_fraction_mean_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', label='soil_name')
+plotTransect(g, 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)', label='soil_name', spacing = 'relative')
 
-plotTransect(g, 'effective_precipitation_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+plotTransect(g, 'rain.fraction_800', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Fraction PPT as Rain (%)', label='soil_name')
+
+plotTransect(g, 'effective.ppt_800', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Effective PPT (mm)',  label='soil_name', spacing='relative')
 
 
 plotTransect(g[which(g$transect == 'Granite'), ], 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
 
-plotTransect(g[which(g$transect == 'Andesite'), ], 'effective_precipitation_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+plotTransect(g[which(g$transect == 'Granite'), ], 'elev', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name', spacing = 'relative')
 
-plotTransect(g[which(g$transect == 'Mineral King'), ], 'effective_precipitation_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+
+plotTransect(g[which(g$transect == 'Andesite'), ], grad.var.name = 'effective.ppt_800m', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Elevation (m)',  label='soil_name')
+
+plotTransect(g[which(g$transect == 'Mineral King'), ], 'effective.ppt_800', crs=CRS('+proj=utm +zone=11 +datum=NAD83'), grad.axis.title='Effective PPT (mm)',  label='soil_name')
 
 
 # granite$HzD <- hzDistinctnessCodeToOffset(substr(granite$hz_boundary, 0, 1))
