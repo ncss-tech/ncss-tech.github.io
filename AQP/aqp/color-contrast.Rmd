@@ -36,6 +36,8 @@ library(ape)
 library(colorspace)
 library(lattice)
 library(knitr)
+library(MASS)
+library(vegan)
 ```
 
 ## Core Functions
@@ -376,9 +378,23 @@ text(mds.trans[, 1],  mds.trans[, 2], paste0(x$value, '/', x$chroma), cex=0.66)
 # mtext(text = '7.5YR', side = 1, adj = 1, line=-1)
 title('Perceptual Distances\n7.5YR Page', col.main='white', line=0.75)
 mtext(text = expression(Delta*E['00']%->%nMDS%->%90*degree~CCW~rotation), side = 1, adj = 0)
-
 ```
 
+Map perceptual arrangement to original representation in color book.
+```{r fig.width=6, fig.height=10}
+p <- procrustes(mds.trans, x[, c('value', 'chroma')], scale = TRUE, symmetric = TRUE)
+
+par(mar=c(2.5, 0, 3, 0), bg='black', fg='white')
+
+plot(p, pch=22, kind=0, axes=FALSE, xlab='', ylab='')
+points(p, display='rotated', pch=22, bg=x$color, cex=5)
+points(p, display='target', pch=21, bg=x$color, cex=4)
+lines(p, type='arrows', length=0.1)
+text(p, display='rotated', cex=0.66, labels=paste0(x$value, '/', x$chroma))
+title('Perceptual vs Color Book Arrangement', col.main='white', line=1)
+title(sub='7.5YR Page', col.sub='white', line=0)
+legend('bottomright', legend=c('color book', 'perceptual'), pch=c(22, 21), pt.bg=parseMunsell('7.5YR 4/6'), pt.cex=2, bty='n', inset=c(0.25, 0))
+```
 
 
 ## Moist vs. Dry Colors
