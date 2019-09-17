@@ -1,0 +1,56 @@
+---
+title: "Regular Expression"
+author: "D.E. Beaudette and Kristine Ryan"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr)
+library(kableExtra)
+
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+# Introduction
+
+   * [REGEX overview](http://en.wikipedia.org/wiki/Regular_expression)
+   * [REGEX from the ground up](https://www.regular-expressions.info)
+   * [REGEX as used by the R language](https://www.regular-expressions.info/rlanguage.html)
+   * [interactive REGEX tinkering](https://regexr.com/)
+   * [generalized horizon labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html)
+
+
+# Examples
+
+```{r, results='hide'}
+library(aqp)
+
+# example data
+x <- c('A', 'AC', 'Bt1', '^AC', 'C', 'BC', 'CB')
+
+# new labels
+n <- c('A', '^AC', 'C')
+
+# patterns:
+# "A anywhere in the name"
+# "literal '^A' anywhere in the name"
+# "C anywhere in name, but without preceding A"
+p <- c('A', '\\^A', '(?<!A)C')
+
+# note additional argument
+res <- generalize.hz(x, new = n, pat=p, perl=TRUE)
+
+# double-check: OK
+table(res, x)
+```
+
+```{r echo=FALSE}
+kable_styling(kable(table(res, x)), full_width = FALSE)
+```
