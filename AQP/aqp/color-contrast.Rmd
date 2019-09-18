@@ -54,7 +54,7 @@ Compute several indices of color contrast from 2 vectors of Munsell colors, `m1`
    * $dH$: change in Munsell hue, see *Hue Position* section below
    * $dV$: change in Munsell value (absolute value of difference)
    * $dC$: change in Munsell chroma (absolute value of difference)
-   * $\Delta{E_{00}}$: CIE2000 Delta-E
+   * $\Delta{E_{00}}$: CIE2000 Delta-E [#1](http://zschuessler.github.io/DeltaE/learn/), [#2](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000)
    * $cc$: soil color contrast class ([Soil Survey Technical Note 2](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569))
    
 Results as a `data.frame`.
