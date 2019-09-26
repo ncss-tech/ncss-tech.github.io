@@ -12,7 +12,7 @@
 
 <meta name="author" content="D.E. Beaudette" />
 
-<meta name="date" content="2019-09-24" />
+<meta name="date" content="2019-09-26" />
 
 <title>cLHS and Sampling for Soil Survey</title>
 
@@ -181,7 +181,7 @@ summary {
 
 <h1 class="title toc-ignore">cLHS and Sampling for Soil Survey</h1>
 <h4 class="author">D.E. Beaudette</h4>
-<h4 class="date">2019-09-24</h4>
+<h4 class="date">2019-09-26</h4>
 
 </div>
 
@@ -219,9 +219,23 @@ Pure subjective selection based on (possibly imperfect) tacit knowledge
 <p>The following commentary is from a previous email, related to a draft cLHS / sampling document &quot;Idaho 703 FY2019 cLHS.docx&quot;. This was part of an email thread from 6/6/2019.</p>
 <div id="rehash-of-previous-commentary-for-background" class="section level2">
 <h2>rehash of previous commentary for background</h2>
-<p>This document is a fine summary of cLHS and subsequent efforts that many of us are now using in our day to day work, as part of what I like to call &quot;flattening of high-dimensional spaces&quot;. I do wonder if the statistical acrobatics outlined in the document exceed the potential value of what is returned. It seems important to spend some of that time investigating: * ranking of covariates based on prior experience, if available * continuous evaluation of marginal distributions of exhaustive vs. cLHS samples, see attached</p>
-<p>I'd like to suggest that folks interested in cLHS and related methods carve-out some time to work through the specifics of the document, especially the unwritten assumptions of each step. cLHS is a powerful tool for generating (one of an infinite set of) samples from high-dimensional space (e.g. the stack of covariates). However, the stability of cLHS points between runs and the value of the results is predicated on three very important considerations: * the stability of cLHS decreases rapidly as the number of covariates increase (&quot;the curse of dimensionality&quot;) * the implicit assumption that all covariates are equally valuable * cLHS points have equal weight in terms of characterizing the high-dimensional space</p>
-<p>Otherwise, cLHS is a fine tool for the job. We use it in the 'West all of the time: * soil temperature sensor site selection * creating subsets for model calibration vs. validation * site selection ideas within map unit delineations, used as an alternative to a traverse</p>
+<p>This document is a fine summary of cLHS and subsequent efforts that many of us are now using in our day to day work, as part of what I like to call &quot;flattening of high-dimensional spaces&quot;. I do wonder if the statistical acrobatics outlined in the document exceed the potential value of what is returned. It seems important to spend some of that time investigating:</p>
+<ul>
+<li>ranking of covariates based on prior experience, if available</li>
+<li>continuous evaluation of marginal distributions of exhaustive vs. cLHS samples, see attached</li>
+</ul>
+<p>I'd like to suggest that folks interested in cLHS and related methods carve-out some time to work through the specifics of the document, especially the unwritten assumptions of each step. cLHS is a powerful tool for generating (one of an infinite set of) samples from high-dimensional space (e.g. the stack of covariates). However, the stability of cLHS points between runs and the value of the results is predicated on three very important considerations:</p>
+<ul>
+<li>the stability of cLHS decreases rapidly as the number of covariates increase (&quot;the curse of dimensionality&quot;)</li>
+<li>the implicit assumption that all covariates are equally valuable</li>
+<li>cLHS points have equal weight in terms of characterizing the high-dimensional space</li>
+</ul>
+<p>Otherwise, cLHS is a fine tool for the job. We use it in the 'West all of the time:</p>
+<ul>
+<li>soil temperature sensor site selection</li>
+<li>creating subsets for model calibration vs. validation</li>
+<li>site selection ideas within map unit delineations, used as an alternative to a traverse</li>
+</ul>
 </div>
 </div>
 <div id="more-material" class="section level1">

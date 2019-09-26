@@ -53,15 +53,18 @@ The following commentary is from a previous email, related to a draft cLHS / sam
 
 ## rehash of previous commentary for background
 This document is a fine summary of cLHS and subsequent efforts that many of us are now using in our day to day work, as part of what I like to call "flattening of high-dimensional spaces". I do wonder if the statistical acrobatics outlined in the document exceed the potential value of what is returned. It seems important to spend some of that time investigating:
+
    * ranking of covariates based on prior experience, if available
    * continuous evaluation of marginal distributions of exhaustive vs. cLHS samples, see attached
 
 I'd like to suggest that folks interested in cLHS and related methods carve-out some time to work through the specifics of the document, especially the unwritten assumptions of each step. cLHS is a powerful tool for generating (one of an infinite set of) samples from high-dimensional space (e.g. the stack of covariates). However, the stability of cLHS points between runs and the value of the results is predicated on three very important considerations:
+
    * the stability of cLHS decreases rapidly as the number of covariates increase ("the curse of dimensionality")
    * the implicit assumption that all covariates are equally valuable
    * cLHS points have equal weight in terms of characterizing the high-dimensional space
 
 Otherwise, cLHS is a fine tool for the job. We use it in the 'West all of the time:
+
    * soil temperature sensor site selection
    * creating subsets for model calibration vs. validation
    * site selection ideas within map unit delineations, used as an alternative to a traverse
