@@ -4,7 +4,6 @@ author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
-    mathjax: null
     jquery: null
     smart: no
     fig_caption: yes
@@ -13,13 +12,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 # options for knitr
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='png', dev.args=list(pointsize=10, type='cairo', antialias='subpixel'), tidy=TRUE)
-
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='png')
 
 # options for R session
 options(width=100, stringsAsFactors=FALSE)
@@ -114,7 +107,7 @@ loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
 loafercreek$genhz[loafercreek$genhz == 'not-used'] <- NA
 loafercreek$genhz <- factor(loafercreek$genhz)
 
-aggregateColorPlot(aggregateColor(loafercreek, 'genhz'), main='Loafercreek Series Dry Colors\nGeneralized Horizon Labels', print.n.hz = TRUE, label.cex = 0.8)
+aggregateColorPlot(aggregateColor(loafercreek, 'genhz'), main='Loafercreek Series Dry Colors\nGeneralized Horizon Labels', print.n.hz = TRUE, label.cex = 0.65)
 ```
 
 
@@ -246,7 +239,19 @@ sp1$genhz <- generalize.hz(sp1$name, n, p)
 
 # inspect the results
 a <- aggregateColor(sp1, 'genhz')
-print(a)
+
+# str(a)
+```
+
+```{r echo=FALSE, results='asis'}
+invisible(lapply(a$scaled.data, function(i) {
+  print(knitr::kable(i, row.names=FALSE, digits=3))
+  cat('\n<br>\n')
+}))
+```
+
+```{r}
+knitr::kable(a$aggregate.data, row.names=FALSE, digits=3)
 ```
 
 
