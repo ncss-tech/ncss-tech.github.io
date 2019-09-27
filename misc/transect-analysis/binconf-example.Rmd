@@ -1,0 +1,191 @@
+---
+title: "Confidence Intervals for Binomial Probabilities"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+
+```{r}
+library(Hmisc)
+library(plyr)
+library(latticeExtra)
+
+
+## apply to multiple map units
+
+# simulate transects
+x.1 <- c('A','A','A','A','B','B','B','C','C','D','E')
+x.2 <- c('A','A','A','A','B','B','B','B','F','F','F','F','F','E')
+x.3 <- c('A','B','B','B','B','B','C','C')
+
+# convert into long-format
+x <- make.groups(M1=x.1, M2=x.2, M3=x.3)
+names(x) <- c('soil', 'musym')
+x$all <- 'all'
+
+# define helper function, will apply it by map unit
+f <- function(i, conf.int=0.8) {
+  # just in case: convert to character (factors will lead to bogus output)
+  x <- as.character(i$soil)
+  a <- 1 - conf.int
+  
+  # binomial, 80% confidence intervals
+  b <- binconf(table(x), n=length(x), alpha=a, method='wilson', include.x=TRUE)
+  
+  # round to 2 decimal places
+  b <- round(b, 2)
+  
+  # convert to data.frame and fix column names
+  d <- data.frame(soil=dimnames(b)[[1]], b, stringsAsFactors=FALSE)
+  names(d) <- c('soil', 'n', 'P', 'lower', 'upper')
+  return(d)
+}
+
+# using default conf.int of 80%
+z <- ddply(x, 'musym', f)
+
+segplot(factor(soil) ~ lower + upper | musym, data=z, centers=P, pch=15, col='royalblue', draw.bands=FALSE, segments.fun = panel.segments)
+
+
+# # 90% conf.int
+# ddply(x, 'musym', f, conf.int=0.9)
+
+
+z <- ddply(x, 'all', f)
+segplot(factor(soil) ~ lower + upper, data=z, centers=P, pch=15, col='royalblue', draw.bands=FALSE, segments.fun = panel.segments)
+
+
+
+# transect or aggregated map unit composition data
+# x <- c('A','A','A','A','B','B','B','C','C','D','E')
+x <- c(rep(c('A', 'B', 'C'), times=c(15,3,5)))
+
+# tabulation
+table(x)
+# proportions
+prop.table(table(x))
+
+# binomial, 80% confidence intervals
+b <- binconf(table(x), n=length(x), alpha=0.2, method='wilson', include.x=TRUE)
+
+# round to 2 decimal places
+b <- round(b, 2)
+
+# convert to data.frame and fix column names
+d <- data.frame(soil=dimnames(b)[[1]], b, stringsAsFactors=FALSE)
+names(d) <- c('soil', 'n', 'P', 'lower', 'upper')
+
+# soil n    P lower upper
+# A    A 4 0.36  0.18  0.61
+# B    B 3 0.27  0.11  0.52
+# C    C 2 0.18  0.06  0.43
+# D    D 1 0.09  0.01  0.32
+# E    E 1 0.09  0.01  0.32
+
+
+# try by-hand
+# http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval
+# binconf() source
+x <- c(rep(c('A', 'B', 'C'), times=c(15,3,5))) # pretend transect data
+x.tab <- table(x) # tabulate
+alpha <- 0.2 # 80% conf. interval
+n <- sum(x.tab) # sample size
+x.i <- x.tab[1] # work with soil 'A'
+zcrit <- qnorm(1 - alpha/2) # critical z-value
+z2 <- zcrit * zcrit # square-it
+p <- x.i/n # probability of finding soil 'A'
+# Wilson-CI
+(p + z2/2/n + c(-1, 1) * zcrit * sqrt((p * (1 - p) + z2/4/n)/n))/(1 + z2/n)
+
+# # save LU table for Jason:
+# write.csv(data.frame(s, round(qnorm(s), 6)), row.names=FALSE, file='qnorm-LU-table.CSV')
+
+
+
+# not 100% sure of this
+# try boot-strap approach to viz distributions
+soils <- c('Edgerly', 'Crowley', 'Leton', 'Midland')
+x <- rep(soils, times=c(65, 5, 15, 25))
+x.b <- replicate(10000, prop.table(table(sample(x, replace=TRUE))))
+
+x.b.prop <- unlist(x.b)
+x.b.soil <- names(x.b.prop)
+x.b <- data.frame(soil=x.b.soil, P=x.b.prop, stringsAsFactors=FALSE)
+
+b <- binconf(table(x), n=length(x), alpha=0.2, method='wilson', include.x=TRUE)
+
+densityplot(~ P, groups=soil, data=x.b, pch=NA, 
+            bw=0.01,
+            ylab='Density', xlab='Proportion',
+            scales=list(x=list(tick.number=10)),
+            auto.key=list(columns=4, lines=TRUE, points=FALSE), 
+            panel=function(...){
+              panel.densityplot(...)
+              panel.abline(v=b[, 2], col='black', lty=2)
+              panel.abline(v=b[, 3:4], col='grey', lty=3)
+            })
+
+
+##
+# data from example in spreadsheet
+soils <- c('Edgerly', 'Crowley', 'Leton', 'Midland', 'Mowata', 'Vidrine', 'Kaplan')
+x <- rep(soils, times=c(73, 2, 5, 2, 1, 3, 4))
+
+# binomial, 80% confidence intervals
+b <- binconf(table(x), n=length(x), alpha=0.2, method='wilson', include.x=TRUE)
+
+# round to 2 decimal places
+b <- round(b, 2)
+
+# convert to data.frame and fix column names
+d <- data.frame(soil=dimnames(b)[[1]], b, stringsAsFactors=FALSE)
+names(d) <- c('soil', 'n', 'P', 'lower', 'upper')
+
+# soil  n    P lower upper
+# Crowley Crowley  2 0.02  0.01  0.05
+# Edgerly Edgerly 73 0.81  0.75  0.86
+# Kaplan   Kaplan  4 0.04  0.02  0.08
+# Leton     Leton  5 0.06  0.03  0.10
+# Midland Midland  2 0.02  0.01  0.05
+# Mowata   Mowata  1 0.01  0.00  0.04
+# Vidrine Vidrine  3 0.03  0.02  0.07
+# 
+
+
+
+
+
+##
+# data from example sent by kevin
+soils <- c('ALLEN', 'CANEYVILLE', 'LEESBURG', 'NELLA LIKE', 'Standingstone')
+x <- rep(soils, times=c(1, 1, 1, 1, 2))
+
+# binomial, 80% confidence intervals
+b <- binconf(table(x), n=length(x), alpha=0.2, method='wilson', include.x=TRUE)
+
+# round to 2 decimal places
+b <- round(b, 2)
+
+# convert to data.frame and fix column names
+d <- data.frame(soil=dimnames(b)[[1]], b, stringsAsFactors=FALSE)
+names(d) <- c('soil', 'n', 'P', 'lower', 'upper')
+
+
+
+
+```
+
+
