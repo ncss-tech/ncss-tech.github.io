@@ -84,6 +84,55 @@ Some follow-up thoughts on the matter after talking with Jay and re-reading the 
    4. Collection of short notes on why/why not cLHS points were actually used, with a short description as to why. Based on my experience and conversations with Jay, point locations are often in transitional zones representative of nothing. The location may be an efficient (simultaneous) distributional landmark, but not relevant at the scale of a map unit or even component.
 
 
+
+# Examples
+
+## Marginal Distributiions
+![Sampling of the marginal distributions.](marginal-dist-comparison.png)
+
+
+## Multivariate Distribution
+
+
+## Similarity: BIOCLIM
+
+   1.	expert interpretation of cLHS points, in the office:
+      a. does this point seem representative of anything
+      b. is it in an odd place
+      c. access considerations
+      d. would navigating to this point take me past several other "interesting" sampling locations
+   2.	index of local variance: does a representative buffer around each cLHS point contain a larger total variance (on average) than similar points that have been selected as representative of larger landscape features
+   3.	multivariate similarity surface analysis: after initial experimentation, the BIOCLIM approach seems more stable than MESS. Unfortunately, neither of these methods work with nominal / ordinal data. Gower's distance is one possible alternative, but computation time may be prohibitive.
+   4.	comparisons of similarity surfaces generated from three approaches:
+      a. samples collected within MU delineations
+      b. purposive sampling points
+      c. cLHS sampling points
+
+More and more, it seems like cLHS is an effective strategy for sampling suggestions within a thoughtfully constrained domain: landform elements, lithologic units, hillslope sequence—i.e. below the level at which an experienced soil scientist is able to stratify the landscape. Or, used to decimate an otherwise exhaustive sampling (e.g. 1 sample / acre from all MU delineations) of a covariate stack into the most compact, but still efficient, subset for model calibration.
+
+
+--------------------------------
+
+Note: these images use different color scales.
+
+![](MU-1115-bioclim-seki.jpg)
+
+
+![](MU-2150-bioclim-seki.jpg)
+
+
+![](cLHS-bioclim-seki-example-01.jpg)
+
+
+
+![](SEKI-L2-hierarchy.png)
+
+![](22AA (Sierra Alpine).png)
+
+![](SEKI-BIOCLIM-by-concept.png)
+
+
+
 # Resources
 
  * http://biostat.mc.vanderbilt.edu/wiki/Main/RmS
