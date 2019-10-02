@@ -25,6 +25,8 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 
 # Applications
 
+
+
 ## Setup
 
 ```{r}
@@ -44,6 +46,8 @@ library(vegan)
 
 
 [Soil Survey Technical Note 2](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569)
+
+
 
 
 
@@ -160,6 +164,15 @@ text(x$A, x$B, labels = hue.labels, cex=0.75)
 ```
 
 
+## Color Contrast Charts
+
+```{r fig.width=6, fig.height=8}
+contrastChart(m = '7.5YR 4/3', hues = c('7.5YR'))
+```
+
+```{r fig.width=16, fig.height=8}
+contrastChart(m = '7.5YR 4/3', hues = c('5YR', '7.5YR', '10YR'))
+```
 
 
 ## Example 1

@@ -209,19 +209,6 @@ m.data <- do.call('rbind', lapply(l, function(i) i$marginal))
 
 Examples for creating a soil-inspired palette of colors.
 ```{r fig.width=7, fig.height=1.5}
-# colors: hex representation of color
-# lab: labels
-soilPalette <- function(colors, lab, ...) {
-  # basic plot
-  swatchplot(colors, ...)
-  # annotation
-  nx <- length(colors)
-  x.pos <- seq(from = 0, to = 1, by = 1/nx)[1:nx]
-  y.pos <- rep(0.01, times = nx)
-  text(x.pos, y.pos, labels = lab, col = "white", font = 2, adj = c(-0.125, -0.33))
-}
-
-
 # aggregate colors over all depths into 6 medoid colors
 s$grp <- rep('a', times=nrow(s))
 a <- aggregateColor(s, "grp", col = 'moist_soil_color', k = 6)
