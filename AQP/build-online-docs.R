@@ -3,3 +3,6 @@
 
 # install from CRAN
 pkgdown::build_site()
+unlink('docs/reference/*.pdf')
+
+
