@@ -68,6 +68,10 @@ mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 
 Compute depth-wise transition probability matrix for moist colors. Visualize as a graph organized by communities.
 ```{r, fig.width=9, fig.height=9}
+# remove profile #8
+idx <- (1:length(s))[-8]
+s <- s[idx, ]
+
 # generate TP matrix from horizon moist colors
 tp <- hzTransitionProbabilities(s, name="color", loopTerminalStates = FALSE)
 
