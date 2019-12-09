@@ -36,7 +36,7 @@ library(farver)
 library(cluster)
 library(ape)
 library(colorspace)
-library(lattice)
+library(latticeExtra)
 library(knitr)
 library(MASS)
 library(vegan)
@@ -166,12 +166,25 @@ text(x$A, x$B, labels = hue.labels, cex=0.75)
 
 ## Color Contrast Charts
 
+Basic chart, single reference hue.
 ```{r fig.width=6, fig.height=8}
 contrastChart(m = '7.5YR 4/3', hues = c('7.5YR'))
 ```
 
-```{r fig.width=16, fig.height=8}
+Multiple reference hues.
+```{r fig.width=12, fig.height=8}
 contrastChart(m = '7.5YR 4/3', hues = c('5YR', '7.5YR', '10YR'))
+```
+
+Split chips by contrast class, single reference hue.
+```{r fig.width=12, fig.height=8}
+contrastChart(m = '7.5YR 4/3', hues = c('7.5YR'), style = 'CC')
+```
+
+Split chips by contrast class, multiple reference hues. This works better when run through `latticeExtra::useOuterStrips()`.
+```{r fig.width=12, fig.height=12}
+fig <- contrastChart(m = '7.5YR 4/3', hues = c('5YR', '7.5YR'), style = 'CC')
+useOuterStrips(fig, strip = strip.custom(bg=grey(0.85)), strip.left = strip.custom(bg=grey(0.85)) )
 ```
 
 

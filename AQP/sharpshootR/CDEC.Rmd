@@ -207,19 +207,19 @@ s.info <- CDEC_StationInfo(s)
 title.text <- sprintf("%s [%s]", s.info$site.meta$Name, s)
 
 # get data
-x <- CDECquery(id=s, sensor=45, interval='D', start='1999-01-01', end='2030-01-01')
+x <- CDECquery(id=s, sensor=45, interval='D', start='2000-01-01', end='2030-01-01')
 
 ## NOTE: requires sharpshootR >= 1.4.02
 # plot
 par(mar=c(4.5, 4.5, 2.5, 1.5))
-PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2019)
+PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2020)
 ```
 
 
 ### Visualization Ideas
 Query the entire record of daily precipitation measurements from New Hogan Lake ([NHG](http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=NHG)).
 ```{r, fig.width=7.5, fig.height=5}
-x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2020-01-01')
+x <- CDECquery(id='NHG', sensor=45, interval='D', start='1900-01-01', end='2021-01-01')
 summary(x$value)
 head(x)
 nrow(x)
@@ -281,10 +281,10 @@ plot(sn)
 ## Reservoir Levels
 ```{r, fig.width=11, fig.height=5}
 # get daily resevoir storage (ac. ft) from Pinecrest, New Melones, Lyons, and Don Pedro Reservoirs
-pinecrest <- CDECquery(id='swb', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
-new.melones <- CDECquery(id='nml', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
-lyons <- CDECquery(id='lys', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
-dp <- CDECquery(id='dnp', sensor=15, interval='D', start='2015-01-01', end='2020-01-01')
+pinecrest <- CDECquery(id='swb', sensor=15, interval='D', start='2015-01-01', end='2021-01-01')
+new.melones <- CDECquery(id='nml', sensor=15, interval='D', start='2015-01-01', end='2021-01-01')
+lyons <- CDECquery(id='lys', sensor=15, interval='D', start='2015-01-01', end='2021-01-01')
+dp <- CDECquery(id='dnp', sensor=15, interval='D', start='2015-01-01', end='2021-01-01')
 
 # compute storage capacity, based on published capacities
 pinecrest$capacity <- pinecrest$value / 18312 * 100
@@ -319,7 +319,7 @@ xyplot(capacity ~ datetime, groups=which, data=g, type='l',
 Investigate monthly levels and capacity of New Melones Reservoir.
 ```{r, fig.width=11, fig.height=5}
 # New Melones monthly data, retrieve as far back in time as possible 
-new.melones.monthly <- CDECquery(id='nml', sensor=15, interval='M', start='1900-01-01', end='2020-01-01')
+new.melones.monthly <- CDECquery(id='nml', sensor=15, interval='M', start='1900-01-01', end='2021-01-01')
 
 # convert to pct. capacity
 new.melones.monthly$capacity <- new.melones.monthly$value / 2400000 * 100
