@@ -1,16 +1,25 @@
-<!--
-when knitting, fetchOSD() fails on soils with spaces in their name!
--->
-
-### Arrange OSD Data Graphically
-
-```{r setup, echo=FALSE, results='hide'}
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG')
-options(width=100, stringsAsFactors=FALSE)
+---
+title: "OSD Dendrogram via Soil Taxonomy"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
+
 ```{r get-data}
-# need these
+library(aqp)
 library(soilDB)
 library(sharpshootR)
 
@@ -22,20 +31,22 @@ s <- fetchOSD(s.list)
 ```
 
 
-```{r check-via-plotting, fig.width=10, fig.height=5}
+```{r check-via-plotting, fig.width=16, fig.height=6}
 # estimate soil depth based on horizon designation
 s$soil.depth <- profileApply(s, estimateSoilDepth, name='hzname', top='top', bottom='bottom')
 
 # plot profiles, order by soil depth
-par(mar=c(0,0,0,0))
-plot(s, name='hzname', plot.order=order(s$soil.depth), cex.names=0.85, axis.line.offset=-5)
+par(mar=c(0, 0, 0, 0))
+plot(s, name='hzname', plot.order=order(s$soil.depth), cex.names=0.85, axis.line.offset=-5, width=0.25, id.style='top')
 ```
 
-```{r plot-dendrogram, fig.width=10, fig.height=5}
+```{r plot-dendrogram, fig.width=14, fig.height=6}
 # plot dendrogram + profiles
-SoilTaxonomyDendrogram(s, cex.taxon.labels=0.8)
+# result is the distance matrix used to generate dendrogram
+d <- SoilTaxonomyDendrogram(s, cex.taxon.labels=0.8, width=0.25, y.offset = 0.4)
 ```
+
 
 
 ----------------------------
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
