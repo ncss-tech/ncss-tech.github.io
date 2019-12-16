@@ -189,31 +189,6 @@ par(mar=c(0,0,1,1))
 plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.45, y.offset = 6, width=0.25, cex.names=0.45)
 ```
 
-## Loafercreek Colors
-
-```{r fig.width=18, fig.height=6}
-data("loafercreek")
-x <- loafercreek
-
-pig <- soilColorSignature(x, r = 'm_r', g = 'm_g', b='m_b')
-
-# account for missing data
-idx <- which(complete.cases(pig[, -1]))
-pig <- pig[idx, ]
-
-# the first column is the ID
-row.names(pig) <- pig[, 1]
-d <- daisy(pig[, 2:6])
-dd <- diana(d)
-
-# index to those profiles present in `d`
-idx <- which(profile_id(x) %in% pig$peiid)
-x <- x[idx, ]
-
-plotProfileDendrogram(x, dd, dend.y.scale = 0.25, scaling.factor = 0.001, y.offset = 0.01, width=0.15)
-```
-
-
 
 
 ----------------------------
