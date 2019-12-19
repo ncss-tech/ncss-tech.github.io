@@ -21,12 +21,12 @@ options(width=100, stringsAsFactors=FALSE)
 
 ```{r}
 # load required libaries
+library(aqp)
 library(soilDB)
 library(sharpshootR)
 library(cluster)
 library(lattice)
 library(reshape2)
-library(plyr)
 library(colorspace)
 
 # init vector of taxonnames to summarize
@@ -54,6 +54,7 @@ Get the cached copy of the `SoilProfileCollection` object used in this tutorial.
 ```{r}
 # load cached copy
 load(url('http://ncss-tech.github.io/AQP/aqp/profile-summary-SPC.rda'))
+# load(file='profile-summary-SPC.rda')
 
 # normalize taxonname via REGEX
 for(i in soils)
@@ -64,16 +65,16 @@ table(x$taxonname)
 
 # convert soil colors to CIE LAB colorspace
 # moist colors
-cols.lab <- as(sRGB(x$m_r, x$m_g, x$m_b), 'LAB')@coords
-x$m_L <- cols.lab[, 1]
-x$m_A <- cols.lab[, 2]
-x$m_B <- cols.lab[, 3]
+cols.lab <- munsell2rgb(x$m_hue, x$m_value, x$m_chroma, returnLAB = TRUE)
+x$m_L <- cols.lab$L
+x$m_A <- cols.lab$A
+x$m_B <- cols.lab$B
 
 # dry colors
-cols.lab <- as(sRGB(x$d_r, x$d_g, x$d_b), 'LAB')@coords
-x$d_L <- cols.lab[, 1]
-x$d_A <- cols.lab[, 2]
-x$d_B <- cols.lab[, 3]
+cols.lab <- munsell2rgb(x$d_hue, x$d_value, x$d_chroma, returnLAB = TRUE)
+x$d_L <- cols.lab$L
+x$d_A <- cols.lab$A
+x$d_B <- cols.lab$B
 
 
 # aggregate data by normalized taxonname, via slice-wise median
@@ -93,7 +94,7 @@ head(x.colors)
 # note that missing colors must be padded with NA
 x.colors$soil_color <- NA
 not.na <- which(complete.cases(x.colors[, c('d_L', 'd_A', 'd_B')]))
-cols.srgb <- data.frame(as(LAB(x.colors$d_L, x.colors$d_A, x.colors$d_B), 'sRGB')@coords)
+cols.srgb <- data.frame(coords(as(LAB(x.colors$d_L, x.colors$d_A, x.colors$d_B), 'sRGB')))
 
 x.colors$soil_color[not.na] <- with(cols.srgb[not.na, ], rgb(R, G, B, maxColorValue = 1))
 
@@ -127,7 +128,7 @@ title('Aggregate Soil Properties')
 
 ```{r fig.width=14, fig.height=6}
 d <- profile_compare(x.colors, vars=c('d_L', 'd_A', 'd_B'), max_d=150, k=0)
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name='',  divide.hz=FALSE, y.offset=10)
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name='',  divide.hz=FALSE, y.offset=10, width=0.2)
 addBracket(depth.brackets, col='black', label.cex=0.6)
 title('Aggregate Soil Properties')
 ```
@@ -151,21 +152,21 @@ addBracket(depth.brackets, col='black', label.cex=0.85)
 ```{r fig.width=14, fig.height=6}
 d <- profile_compare(x.colors, vars=c('clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10)
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2)
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='clay')
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2, color='clay')
 addBracket(depth.brackets, col='black', label.cex=0.6)
 addVolumeFraction(x.colors, 'total_frags_pct')
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='phfield')
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2, color='phfield')
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, color='total_frags_pct')
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2, color='total_frags_pct')
 ```
 
 ```{r fig.width=14, fig.height=6}
 d <- profile_compare(x.colors, vars=c('d_L', 'clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10)
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='', divide.hz=FALSE, y.offset=10, width=0.2)
 addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
 ```
 
