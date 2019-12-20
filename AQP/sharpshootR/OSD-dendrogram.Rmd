@@ -47,6 +47,31 @@ d <- SoilTaxonomyDendrogram(s, cex.taxon.labels=0.8, width=0.25, y.offset = 0.4)
 ```
 
 
+Approximate sorting of dendrogram according to catenary position ([hillslope position proportions](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs142p2_054252#describe)).
+```{r fig.width=8, fig.height=4}
+# TODO: try norforlk and siblings
+# http://soilmap2-1.lawr.ucdavis.edu/dylan/soilweb/sde/?series=norfolk
+
+# set of soil series to query
+soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
+
+# get morphology + extended summaries
+s <- fetchOSD(soils, extended = TRUE)
+
+# extract catenary relationships from hillslope proportion summary
+# and display
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
+```
+
+Organize ST dendrogram according to catenary position.
+```{r fig.width=12, fig.height=12}
+par(mar=c(0,0,1,1), mfrow=c(2,1))
+SoilTaxonomyDendrogram(s$SPC, width=0.25)
+mtext('default sorting', side = 2, line=-1, font=3, cex=1.25)
+SoilTaxonomyDendrogram(s$SPC, rotationOrder = res$order, width=0.25)
+mtext('approx. catenary sorting', side = 2, line=-1, font=3, cex=1.25)
+```
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
