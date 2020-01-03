@@ -99,11 +99,20 @@ horizons(sp4) <- x
 
 will replace horizon data. Further examples include:
 ```{r setter-functions, eval=FALSE}
-# extraction of soil profile components
-site(sp4)  # get or set site data
-diagnostic_hz(sp4) # get or set diagnostic horizons
-proj4string(sp4)
+# get or set site data
+site(sp4)
+
+# get or set diagnostic horizons
+diagnostic_hz(sp4)
+
+# get or set restrictions
+restrictions(sp4)
+
+# get or set spatial coordinates
 coordinates(sp4)
+
+# get or set coordinate reference system in PROJ4 notation
+proj4string(sp4)
 ```
 
 
@@ -147,7 +156,7 @@ horizons(sp4) <- h
 s <- site(sp4)
 
 # add a fake group to the site data
-s$group <- rep(c('A', 'B'), length.out=nrow(s))
+s$group <- factor(rep(c('A', 'B'), length.out=nrow(s)))
 
 # join new site data with previous data: old data are _not_ replaced
 site(sp4) <- s
@@ -177,6 +186,28 @@ dh.new <- data.frame(id='napa', kind='argillic', top=6, bottom=20, stringsAsFact
 diagnostic_hz(sp4) <- rbind(dh, dh.new)
 ```
 
+# Root Restrictive Features
+Features that restrict root entry (fine or very fine roots) are commonly used to estimate *functional* soil depth. Restrictive features include duripans, fragipans, paralithic matrials, lithic contact, or an abrupt change in chemical property. Not all soils have restrictive features, therefore these data are stored as a `data.frame` in "long format". Each row corresponds to a restrictive feature, associated depths, and identified by `profile_id()`. There may be more than one restrictive feature per soil profile.
+
+The example data `sp4` does not contain restrictive features, so we will simulate some at the bottom of each profile + 20cm.
+```{r restrictions}
+# get the depth of each profile
+rf.top <- profileApply(sp4, max)
+rf.bottom <- rf.top + 20
+
+# the profile IDs can be extracted from the names attribute
+pIDs <- names(rf.top)
+
+# carefully make data.frame
+# note: profile IDs must be stored in a column named for idname(sp4) -> 'id'
+rf <- data.frame(id=pIDs, top=rf.top, bottom=rf.bottom, kind='fake', stringsAsFactors=FALSE)
+
+# overwrite any existing diagnostic horizon data
+restrictions(sp4) <- rf
+
+# check
+restrictions(sp4)
+```
 
 # Spatial Data
 Spatial data can be explicitly stored within a `SoilProfileCollection` object and accessed with methods imported from the [sp](http://cran.at.r-project.org/web/packages/sp/index.html) package. The use of `sp` classes (in this case `SpatialPoints` and `SpatialPointsDataFrame` objects) simplifies operations such as [plotting spatial data, coordinate system transformations, and spatial queries](http://cran.at.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
@@ -371,6 +402,9 @@ plot(sp4, name='name', color='frag_pct')
 addVolumeFraction(sp4, 'frag_pct') # symbolize volume fraction data
 ```
 
+
+## Depth Intervals
+
 Annotation of depth-intervals can be accomplished using "brackets":
 ```{r plotting-depth-interval}
 # extract top/bottom depths associated with all A horizons
@@ -441,8 +475,28 @@ groupedProfilePlot(sp4, groups='group')
 addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
 ```
 
+
+Further customization of brackets:
+```{r, fig.height=4, fig.width=8}
+# copy root-restricting features 
+a <- restrictions(sp4)
+
+# add a label for each bracket, using restrictive feature 'kind'
+# addBracket() looks for a column called `label`
+a$label <- a$kind
+
+# plot with tighter margings
+par(mar=c(0,0,0,0))
+plotSPC(sp4, max.depth = 75)
+
+# add restrictions using vertical bars
+addBracket(a, col='red', label.cex = 0.75, tick.length = 0, lwd=3)
+```
+
+
 ### Notes
 These functions (`addBracket`, `addDiagnosticBracket`, and `addVolumeFraction`) will automatically compensate for alternative sketch ordering or relative positioning.
+
 
 # Iterating Over Profiles in a Collection
 The `profileApply()` function is an extension of the familiar *apply()* family of functions that operate on vectors (`sapply` and `tapply`), matrices (`apply`), and lists (`lapply`)-- extended to `SoilProfileCollection` objects. The function named in the `FUN` argument is evaluated once for each profile in the collection, typically returning a single value per profile. In this case, the ordering of the results would match the ordering of values in the site level attribute table.
@@ -666,6 +720,10 @@ Calculation of between-profile dissimilarity is performed using the `profile_com
 library(cluster)
 library(sharpshootR)
 
+# start fresh
+data(sp4)
+depths(sp4) <- id ~ top + bottom
+
 # eval dissimilarity:
 # using Ex-Ca:Mg and CEC at pH 7
 # with no depth-weighting (k=0)
@@ -681,7 +739,7 @@ d.diana <- diana(d)
 # this function is from the sharpshootR package
 # requires some manual adjustments
 par(mar=c(1,1,5,1))
-plotProfileDendrogram(sp4, d.diana, scaling.factor = 0.8, y.offset = 10, color='ex_Ca_to_Mg')
+plotProfileDendrogram(sp4, d.diana, scaling.factor = 0.8, y.offset = 5, width=0.25, color='ex_Ca_to_Mg')
 ```
 
 
