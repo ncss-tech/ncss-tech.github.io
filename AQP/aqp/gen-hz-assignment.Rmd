@@ -49,7 +49,7 @@ Here is a basic outline of the process:
   
   5. [Estimate a most likely horizonation](http://ncss-tech.github.io/AQP/aqp/estimate-ML-horizonation.html) e.g., top and bottom depths for each generalized horizon label.
   
-  6. [Compute range in characteristics](http://ncss-tech.github.io/AQP/aqp/gen-hz-application.html), aka [low-rv-high values](http://casoilresource.lawr.ucdavis.edu/wiki/Low-rv-high), for clay, sand, pH, etc. over GHL. (next document in this series)
+  6. [Compute range in characteristics](http://ncss-tech.github.io/AQP/aqp/gen-hz-application.html), aka [low-rv-high values](https://ncss-tech.github.io/soil-range-in-characteristics/why-percentiles.html), for clay, sand, pH, etc. over GHL. (next document in this series)
   
 
 
@@ -82,7 +82,7 @@ library(MASS)
 ```
 
 # Sample Data
-While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on 15 soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
+While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on 15 soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
 
 ```{r load-data, fig.width=9, fig.height=4, htmlcap='15 pedons correlated to the Loafercreek soil series.'}
 # load sample data from the soilDB package
