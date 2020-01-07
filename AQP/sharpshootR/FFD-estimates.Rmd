@@ -20,10 +20,7 @@ options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 
 # Background
 
-... finish this
-
-NASIS component table (ffd_r):
-  <i>The expected number of days between the last freezing temperature (0 degrees Celsius) in spring (Jan-Jul) and the first freezing temperature (0 degrees Celsius) in the fall (Aug-Dec). The number of days is based on the probability that the values for the standard "normal" period of 1961 to 1990 will be exceeded in 5 years out of 10.</i>
+FFD estimates are based on the number of days between 50th, 80th, and 90th percentiles of last spring frost day and 50th, 20th, and 10th percentiles of first fall frost day. FFD values are associated with 50%, 80%, or 90% confidence of being within the frost-free period.
 
 Links:
  
