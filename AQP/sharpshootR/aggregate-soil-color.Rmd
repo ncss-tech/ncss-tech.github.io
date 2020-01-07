@@ -184,10 +184,10 @@ aggregateColorPlot(aggregateColor(sp3, 'genhz'))
 load('cached-pedons-agg-color-example.rda')
 
 par(mar=c(4.5,5,4.5,0))
-aggregateColorPlot(aggregateColor(sierra_transect, 'taxonname'), label.cex=0.65, main='Soil Color Signatures', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
+aggregateColorPlot(aggregateColor(sierra_transect, 'taxonname'), label.cex=0.65, main='Soil Color Signatures\nAll Colors', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
 
 par(mar=c(4.5,5,4.5,0))
-aggregateColorPlot(aggregateColor(sierra_transect, 'taxonname', k=8), label.cex=0.65, main='Soil Color Signatures', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
+aggregateColorPlot(aggregateColor(sierra_transect, 'taxonname', k=8), label.cex=0.65, main='Soil Color Signatures\n8 Colors', print.n.hz = TRUE, rect.border = NA, print.label = FALSE, horizontal.borders = TRUE)
 ```
 
 
