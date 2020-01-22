@@ -20,9 +20,8 @@ options(width=100, stringsAsFactors=FALSE)
 
 Required packages.
 ```{r}
-library(soilDB)
 library(aqp)
-library(plyr)
+library(soilDB)
 ```
 
 
@@ -70,17 +69,12 @@ mixColorDemo <- function(x) {
   text(max(x.vals)+0.5, y.vals[1], '=', cex=2, lwd=2)
   
   # mix in both color spaces
-  mixed.lab <- mix_and_clean_colors(x, colorSpace = 'LAB', backTransform = TRUE)
-  mixed.srgb <- mix_and_clean_colors(x, colorSpace = 'sRGB', backTransform = TRUE)
+  mixed.lab <- mix_and_clean_colors(x, backTransform = TRUE)
   
   # add mixed colors
   points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=5, pch=15)
-  col.txt <- paste0(mixed.lab$colorhue, ' ', mixed.lab$colorvalue , '/', mixed.lab$colorchroma, '\n(LAB)')
+  col.txt <- paste0(mixed.lab$colorhue, ' ', mixed.lab$colorvalue , '/', mixed.lab$colorchroma)
   text(max(x.vals)+1, y.vals[1], col.txt, pos=1, offset=1.1, cex=0.75)
-  
-  points(max(x.vals)+1.5, y.vals[2], col=rgb(mixed.srgb[, c('r', 'g', 'b')]), cex=5, pch=15)
-  col.txt <- paste0(mixed.srgb$colorhue, ' ', mixed.srgb$colorvalue , '/', mixed.srgb$colorchroma, '\n(sRGB)')
-  text(max(x.vals)+1.5, y.vals[1], col.txt, pos=1, offset=1.1, cex=0.75)
 }
 
 
