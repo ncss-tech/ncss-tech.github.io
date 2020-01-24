@@ -76,6 +76,7 @@ remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, b
 After installing the above packages, add some *sites+pedons* or *components* into the selected set and try loading them into your R session.
 ```{r example, eval=FALSE}
 # load required libraries
+library(aqp)
 library(soilDB)
 
 # fetch all pedons from the selected set in local NASIS database
