@@ -71,6 +71,7 @@ install.packages("aqp", dep=TRUE)
 install.packages("https://cran.r-project.org/src/contrib/Archive/soilDB/soilDB_2.4.1.tar.gz", repos=NULL)
 
 # latest version off GitHub
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
