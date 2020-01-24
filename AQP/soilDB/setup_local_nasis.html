@@ -170,9 +170,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <span class="kw">install.packages</span>(<span class="st">&quot;RODBC&quot;</span>, <span class="dt">dep=</span><span class="ot">TRUE</span>)
 
 <span class="co"># stable version from CRAN + dependencies</span>
-<span class="kw">install.packages</span>(<span class="st">&quot;soilDB&quot;</span>, <span class="dt">dep=</span><span class="ot">TRUE</span>)
+<span class="kw">install.packages</span>(<span class="st">&quot;aqp&quot;</span>, <span class="dt">dep=</span><span class="ot">TRUE</span>)
 
-<span class="co"># latest version, required for Windows 10</span>
+<span class="co"># stable version from CRAN + dependencies</span>
+<span class="kw">install.packages</span>(<span class="st">&quot;https://cran.r-project.org/src/contrib/Archive/soilDB/soilDB_2.4.1.tar.gz&quot;</span>, <span class="dt">repos=</span><span class="ot">NULL</span>)
+
+<span class="co"># latest version off GitHub</span>
 remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ncss-tech/soilDB&quot;</span>, <span class="dt">dependencies=</span><span class="ot">FALSE</span>, <span class="dt">upgrade=</span><span class="ot">FALSE</span>, <span class="dt">build=</span><span class="ot">FALSE</span>)</code></pre></div>
 </div>
 <div id="an-example-r-session" class="section level2">

@@ -65,9 +65,12 @@ You will need to install the `RODBC` and `soilDB` packages if not present. You c
 install.packages("RODBC", dep=TRUE)
 
 # stable version from CRAN + dependencies
-install.packages("soilDB", dep=TRUE)
+install.packages("aqp", dep=TRUE)
 
-# latest version, required for Windows 10
+# stable version from CRAN + dependencies
+install.packages("https://cran.r-project.org/src/contrib/Archive/soilDB/soilDB_2.4.1.tar.gz", repos=NULL)
+
+# latest version off GitHub
 remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
