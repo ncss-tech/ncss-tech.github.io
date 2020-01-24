@@ -25,7 +25,19 @@ This document describes how to setup an ODBC link between **R** and the local NA
   
   + Name the data source `nasis_local`, the data source description is optional.
   
-  + The server name is in the format `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the [full name of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name). It is usually on the outside of your computer somewhere, or can be accessed by right-clicking on the "My Computer" icon and then clicking on the "Properties" tab. On Windows 10, you can access your computer name by opening the "System" control panel. It will look something like: `CASONORA00L354`. When finished click "Next".
+  + The NASIS SQL server name is in the format `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the ["computer name" of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name) and `NASISSQLEXPRESS` denotes the local NASIS SQL Express server.
+  
+  + Your computer name is often on the asset tag sticker on the outside of your computer. 
+  
+  + On Windows 10, you can view your computer name by opening the _Control Panel_ and selecting "System" _OR_ by searching "This PC" in the _Start Menu_, right-clicking it, and selecting "Properties" . You need the value found under "Computer name:" (highlighted below).
+    
+![](odbc-06.png)
+  
+  + Your computer name will look something like: `CASONORA00L354` -- where state, office and number will vary from computer to computer.
+  
+  + So, in summary, you will have something like _Server:_ `CASONORA00L354\NASISSQLEXPRESS` entered on the form pictured below.
+
+When finished click "Next".
 
 ![](odbc-03.png)
 
