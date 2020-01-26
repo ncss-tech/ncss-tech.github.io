@@ -1,8 +1,8 @@
 ---
 title: "Glacierpoint - glom() Demo"
-subtitle: 'v0.1.1 - last updated 2019/02/14'
-author: "Andrew Brown; andrew.g.brown@ca.usda.gov"
-version: "0.1.1"
+subtitle: 'v0.2.0 - last updated 2020/01/25'
+author: "Andrew Brown; andrew.g.brown@usda.gov"
+version: "0.2.0"
 output: html_document
 ---
 
@@ -31,33 +31,14 @@ This demonstration script loads some components from Yosemite National Park (_CA
 The _Glacierpoint_ series (_Sandy-skeletal, isotic Xeric Dystrocryepts_) is defined as having __either__ an Umbric epipedon __OR__ a cambic horizon. It appears that cambic horizons were populated even for some of the components whose RV textures do not meet cambic criteria.
 
 ```{r message=F, warning=F}
-# load soilDB
+library(aqp)
 library(soilDB)
 
 # get components from Yosemite National Park for a sandy-skeletal, cryic, inceptisol
-my.spc <- fetchSDA_component(WHERE="compname = 'Glacierpoint'")
+my.spc <- fetchSDA(WHERE="compname = 'Glacierpoint'")
 ```
 
-`fetchSDA_component()` does not return diagnostic feature info by default.
-
-We need to query SDA specifically to obtain that info. Define a function that uses `SDA_query()` to do s.
-
-```{r message=F, warning=F}
-# custom function using SDA_query() to get the diagnostic table
-get_SDA_diagnostics <- function(spc) {
-  target_cokeys <- profile_id(spc)
-  q <- paste0('SELECT * FROM codiagfeatures WHERE cokey IN ', format_SQL_in_statement(target_cokeys), ";")
-  return(SDA_query(q))
-}
-
-# query diagnostic info from SDA and 
-# set @diagnostics slot of my.spc to contain them
-diagnostic_hz(my.spc) <- get_SDA_diagnostics(my.spc)
-```
-
-SPC-creating functions may require you to independently query the diagnostic features into a _data.frame_ and set them for your SPC, as we did above. Alternately, you can create your SPC other ways. For instance, the `fetchNASIS_XXX()` results include the diagnostic feature table _by default_.
-
-Now, access the SPC `@diagnostics` slot (which we just filled in), figure out which components have cambics, and then make a subset SPC `my.spc.sub` with _just those components_.
+Now, access the SPC `@diagnostics` slot to figure out which components have cambics, and then make a subset SPC `my.spc.sub` with _just those components_.
 
 ```{r message=F, warning=F}
 # copy contents of diagnostics slot
@@ -76,15 +57,22 @@ Use `plotSPC()` to show sand fraction percentage by horizon -- with cambic top a
 
 ```{r message=F, warning=F}
 # set margins
-par(mar=c(0,0,3,0))
+par(mar=c(0,1,3,1))
 
 # plot spc using total sand RV % as color
-plotSPC(my.spc.sub, color='sandtotal_r', width=0.15)
+plotSPC(my.spc.sub, 
+        color='sandtotal_r', 
+        width=0.15, 
+        cex.names = 1)
 
 # add red brackets showing cambic horizon top and bottom depth
-addDiagnosticBracket(my.spc.sub, kind='Cambic horizon', 
-                     top='featdept_r', bottom='featdepb_r',
-                     col='red', offset=-0.25)
+addDiagnosticBracket(my.spc.sub, 
+                     kind='Cambic horizon', 
+                     top='featdept_r',
+                     bottom='featdepb_r',
+                     col='red', 
+                     offset=0,
+                     lwd=10)
 ```
 
 ***
@@ -106,11 +94,8 @@ has_sandy_cambic <- function(p, sandy.texture.pattern = "SR|-S$|^S$|COS$|L[^V]FS
   # if top or bottom depth are NULL there is no cambic
   if(!is.null(cambic_top) | !is.null(cambic_bot)) {
     
-    # call glom to get horizons in p between cambic_top and cambic_bot 
-    
-    #TODO: we add 1 because glom() is greedy and will include the overlying horizon by default
-    # if z1 is a horizon boundary. as.data.frame because single horizon SPCs cause errors
-    cambic_horizons <- glom(p, cambic_top + 1, cambic_bot, as.data.frame = TRUE)
+    # glom horizons in p from cambic_top to cambic_bot 
+    cambic_horizons <- glom(p, cambic_top, cambic_bot, as.data.frame = TRUE)
     
     print(paste0("COKEY: ",unique(p$cokey)," has cambic (",
                  cambic_top," - ",cambic_bot," cm) with ", paste0(cambic_horizons$hzname, collapse=","), 
