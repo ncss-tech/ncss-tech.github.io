@@ -5,11 +5,11 @@
 #' output: html_document
 #' ---
 #' 
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE------------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
 #' 
-## ---- echo=FALSE, message=FALSE------------------------------------------
+## ---- message=FALSE------------------------------------------------------------------------------------------
 # load aqp and soilDB libraries
 library(aqp)
 library(soilDB)
@@ -29,7 +29,7 @@ hzidname(spc) <- "phiid"
 plot_all=FALSE
 
 #' 
-## ---- echo=FALSE, message=FALSE------------------------------------------
+## ---- message=FALSE------------------------------------------------------------------------------------------
 # Use `aqp` to calculate PSCS
 
 # We make an estimate of what the particle size control section should be for each profile in the SoilProfileCollection spc. We then make a table of pedon record IDs and estimated PSCS top and bottom depth.
@@ -46,7 +46,7 @@ site(spc) <- profileApply(spc, frameify=TRUE, function(p) {
 #' 
 #' 
 #' 
-## ---- echo=FALSE, message=FALSE, fig.align='center'----------------------
+## ---- message=FALSE, fig.align='center'----------------------------------------------------------------------
 # Compare Stored v.s. Calculated
 
 # `psctopdepth` and `pscbottomdepth` contain the top and bottom depths picked by `soilDB:::.pickBestTaxHistory` for `fetchNASIS`.
@@ -76,7 +76,7 @@ if(plot_all)
   idx <- 1:length(spc)
 
 #' 
-## ---- echo=FALSE, message=FALSE, results="asis", fig.width=12, fig.asp = .62----
+## ---- message=FALSE, results="asis", fig.width=12, fig.asp = .62---------------------------------------------
 if(length(idx)) {
   
   cat("Blue bracket depicts calculated PSCS, and red line in center of profile is stored PSCS.")
