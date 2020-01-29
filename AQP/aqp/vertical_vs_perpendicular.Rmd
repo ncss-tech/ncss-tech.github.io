@@ -1,20 +1,14 @@
-<!--
-manually process like this:
-library(knitr); library(markdown)
-knit('vertical_vs_perpendicular.Rmd')
-markdownToHTML('vertical_vs_perpendicular.md', 'vertical_vs_perpendicular.html')
--->
-
 ```{r setup, echo=FALSE, results='hide'}
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='png', tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-### Introduction
+# Introduction
 This is a simple demonstration of how to do some soils-related stuff in **R** with the `aqp` package.
 
 
-### A Visual Demonstration of Horizon Depths Measured Vertically vs. Perpendicular to the Surface Slope
+## A Visual Demonstration of Horizon Depths Measured Vertically vs. Perpendicular to the Surface Slope
 
 The relationship between perpendicular horizon depth ($T_{p}$) and vertical horizon depth ($T_{v}$) is defined as: 
 
@@ -22,15 +16,14 @@ $$T_{p} = T_{v} cos(\theta)$$
 
 where $\theta$ is the surface slope measured in radians. Surface slope measured in percent ($s$) can be converted to radians with $\theta = atan(s / 100)$.
 
-### Setup environment by loading required packages, and user-defined functions
+## Setup environment by loading required packages, and user-defined functions
 ```{r setup-env}
 # load required packages, you may have to install these if missing:
 # install.packages('Hmisc', dep=TRUE)
 library(lattice)
 library(Hmisc)
-library(Cairo)
 library(aqp)
-library(xtable)
+library(knitr)
 
 # convert angle in percent to radians
 pct2rad <- function(pct) {
@@ -58,7 +51,7 @@ VtoP <- function(i, which) {
 
 
 
-### Generate a sample data set for subsequent demonstrations
+## Generate a sample data set for subsequent demonstrations
 ```{r generate-pedons}
 # generate a single profile, keep only the relevant stuff
 set.seed(54321)
@@ -68,13 +61,13 @@ p <- random_profile(1)[, c('id', 'top', 'bottom', 'name')]
 pp <- rbind(p, p, p, p, p, p, p, p, p, p)
 
 # add a unique ID to each chunk copy
-pp$id <- rep(1:10, each=nrow(p))
+pp$id <- rep(sprintf("%02s", 1:10), each=nrow(p))
 
 # upgrade our data.frame into a SoilProfileCollection object
 depths(pp) <- id ~ top + bottom
 
 # generate a sequence of (10) simulated slope values
-s <- data.frame(id=1:10, slope=seq(from=1, to=70, length.out=10))
+s <- data.frame(id=sprintf("%02s", 1:10), slope=seq(from=1, to=70, length.out=10))
 # assign these values into the 'site' attribute table of our pedons
 site(pp) <- s
 
@@ -86,12 +79,12 @@ pp$Tp <- profileApply(pp, VtoP, which='bottom')
 print(pp)
 ```
 
-### Plot differences in horizon depth as a function of slope
-```{r plot-pedons-with-arrows, fig.width=8, fig.height=4, out.width='100%'}
+## Plot differences in horizon depth as a function of slope
+```{r plot-pedons-with-arrows, fig.width=8, fig.height=4.5, out.width='100%'}
 # adjust figure margins
-par(mar=c(2,0,0.75,0))
+par(mar=c(2, 0, 1, 0.5))
 # plot SoilProfileCollection
-plot(pp, n.depth.ticks=10)
+plot(pp, n.depth.ticks=10, name='name')
 
 # add a title
 title('Vertical Horizon Depths (black) vs. Perpendicular Horizon Depths (blue)', cex.main=0.75)
@@ -110,7 +103,7 @@ for(i in 1:length(pp)) {
 }
 ```
 
-### This time plot after converting horizon depths from vertical basis to perpendicular basis
+## This time plot after converting horizon depths from vertical basis to perpendicular basis
 ```{r change-depths, fig.width=8, fig.height=4, out.width='100%'}
 # make a copy of the original profiles
 pp.perp <- pp
@@ -120,19 +113,19 @@ pp.perp$top <- profileApply(pp.perp, VtoP, which='top')
 pp.perp$bottom <- profileApply(pp.perp, VtoP, which='bottom')
 
 # setup margins
-par(mar=c(2,0,0.75,0))
+par(mar=c(2, 0, 1, 0.5))
 # plot profiles
-plot(pp.perp, n.depth.ticks=10)
+plot(pp.perp, n.depth.ticks=10, name='name')
 # add title
 title('Changes in Horizon Depth as a Function of Surface Slope', cex.main=0.75)
 # add slope axis
 axis(side=1, cex.axis=0.75, line=-1.25, at=1:10, labels=round(s$slope))
 mtext(side=1, 'Slope (%)', line=0.5, cex=0.75)
 # add horizontal lines to assist with perception of depth
-abline(h=seq(from=5, to=75, by=5), lty=3, col='grey')
+abline(h=seq(from=5, to=120, by=10), lty=3, col='grey')
 ```
 
-### Tabulate the mean and cumulative difference in horizon depths by pedon
+## Tabulate the mean and cumulative difference in horizon depths by pedon
 ```{r make-depth-diff-table, results='asis'}
 # compute difference in horizon thickness
 diff.thick <- (pp$bottom - pp$top) - (pp.perp$bottom - pp.perp$top)
@@ -142,16 +135,18 @@ diff.by.pedon <- by(diff.thick, theID, function(i) cbind(mean.diff.cm=mean(i), t
 # composite into a data.frame and add slope values
 diff.by.pedon.df <- data.frame(do.call('rbind', diff.by.pedon), slope=round(s$slope))
 # convert tabular output into HTML
-print(xtable(diff.by.pedon.df), type='html')
+kable(diff.by.pedon.df, row.names = FALSE, digits = 2)
 ```
 
-### Another visualization of differences in vertical vs. perpendicular depths as a function of slope
+## Another visualization of differences in vertical vs. perpendicular depths as a function of slope
 ```{r diff-vs-slope-figure-setup}
 # make a grid of horizon thickness and slope percents
 d <- expand.grid(thick=c(5,10,20,50,100), slope=1:70)
 
 # compute the difference between vertical and perpendicular depths
 d$thickDiff <- thickDiff(d$slope, d$thick)
+
+d$thick <- factor(d$thick, labels=paste(c(5,10,20,50,100), 'cm depth'))
 
 # check the results
 head(d)
@@ -160,7 +155,7 @@ head(d)
 ```{r plot-diff-by-slope, fig.width=10, fig.height=5, out.width='100%'}
 # plot these data
 # note the different syntax-- this is lattice-style plotting
-xYplot(thickDiff ~ slope, data=d, groups=factor(thick, labels=paste(c(5,10,20,50,100), 'cm depth')), type='l',
+xYplot(thickDiff ~ slope, data=d, groups=thick, type='l',
 ylab='(Vertical - Perpendicular) Hz Thickness', xlab='Slope (%)', 
 main='Difference in Apparent Horizon Thickness as a Function of Slope', 
 scales=list(alternating=3, tick.number=10), 
