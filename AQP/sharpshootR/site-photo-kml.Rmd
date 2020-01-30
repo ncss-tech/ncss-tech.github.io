@@ -1,0 +1,42 @@
+---
+title: "Export NASIS Site Photos to KML"
+author: "Jay Skovlin"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
+```
+
+
+
+```{r, eval=FALSE}
+### Load data #####
+# fetch data from NASIS
+f <- fetchNASIS()
+
+# trim down to the essentials:
+vars <- c("site_id","pedon_id", "siteiid", "describer","obs_date",
+          "pedonpurpose","taxpartsize","taxsubgrp", 'x_std', 'y_std')
+f1 <- site(f)[ , vars]
+
+# get photo links
+e <- get_extended_data_from_NASIS_db()$photo
+
+# join photos to site data
+d1 <- join(f1, e, by='siteiid')
+
+## write kml file
+site_photos_kml(data = d1, filename = 'C:/Temp/site_photos.kml',
+                make.image.grid=TRUE, file.source = 'relative')
+
+```
