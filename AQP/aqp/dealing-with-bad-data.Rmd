@@ -1,13 +1,25 @@
+---
+title: "Dealing With Troublesome Data"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='CairoPNG', tidy=FALSE)
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-## Dealing With Troublesome Data
-A quick tutorial on how to search for and accommodate messy data. Inconsistent horizon depths, missing horizons, overlapping horizons, and other such mayhem can lead to unexpected results. It is best to search for and filter (or fix) these kind of errors before proceeding to analyze soil profile data. While classes and methods within the `aqp` package are fairly tolerant of messy data, it is recommended that you apply these tests to your data before feeding into `aqp` functions. This tutorial requires the `plyr` package; if you don't already have it, you can get it like this: `install.packages('plyr', dep=TRUE)`.
 
-### Sample Data
+A quick tutorial on how to search for and accommodate messy data. Inconsistent horizon depths, missing horizons, overlapping horizons, and other such mayhem can lead to unexpected results. It is best to search for and filter (or fix) these kind of errors before proceeding to analyze soil profile data. While classes and methods within the `aqp` package are fairly tolerant of messy data, it is recommended that you apply these tests to your data before feeding into `aqp` functions.
+
+# Sample Data
 Copy and paste this code into an R session to familiarize yourself with the sample data set used in this tutorial.
 ```{r example-data, eval=FALSE}
 library(aqp)
@@ -32,28 +44,16 @@ plot(sp1)
 ```
 
 
-### Data Cleaning
-Soil data often contain records where the lower depth of the deepest horizon is missing (`NA`). These data can either be filtered out or "cleaned" by replacing the missing lower depth with the corresponding upper depth. Older soils data with may have O horizons that start above the soil surface (e.g. "Oe 3 to 0 cm). Data containing these type of horizons must either be filtered or fixed before use with classes or methods defined in the `aqp` package. 
-```{r data-cleaning, eval=FALSE}
-# replace missing bottom depths
-sp1$bottom[!is.na(sp1$top) & is.na(sp1$bottom)] <- sp1$top[!is.na(sp1$top) & is.na(sp1$bottom)]
-
-# remove O horizons where top > bottom
-bad.O.hz.idx <- which(sp1$top > sp1$top)
-if(length(bad.O.hz.idx) > 0)
-	sp1 <- sp1[-bad.O.hz.idx, ]
-```
-
-
-### Checking for Bad Data
-Lets break some good data to make a point.
-```{r setup-environment}
+# Checking for Bad Data
+Lets break some good data to make a point. Checking the horizon logic of a `SoilProfileCollection` object is performed by the [`checkHzDepthLogic`](http://ncss-tech.github.io/aqp/docs/reference/checkHzDepthLogic.html) function. Note that the `kable` function from the `knitr` package is used for nice-looking output in the tutorial, you wouldn't normally use this in an interactive session. It is handy for use in RMarkdown reports.
+```{r fig.width=8, fig.height=4.5}
 # load required libraries
 library(aqp)
-library(plyr)
+library(knitr)
 
-# load sample data (you already tried this right?)
+# load sample data and promote to SoilProfileCollection
 data(sp1)
+depths(sp1) <- id ~ top + bottom
 
 # make a copy of the example data set, we will insert errors later
 bad <- sp1
@@ -64,43 +64,101 @@ bad$top[4] <- NA
 # create an overlapping horizon in profile P002
 bad$top[9] <- 15
 
-# check:
-head(sp1[, c('id', 'top', 'bottom')], 10) # good data
-head(bad[, c('id', 'top', 'bottom')], 10) # bad data
+# create a depth logic error in profile P003
+bad$bottom[13] <- 12
 
-# test for missing horizon depths OR overlapping horizons
-ddply(sp1, 'id', test_hz_logic, topcol='top', bottomcol='bottom') # TRUE is good
-ddply(bad, 'id', test_hz_logic, topcol='top', bottomcol='bottom') # FALSE is bad
+# perform battery of checks
+sp1.chk <- checkHzDepthLogic(sp1)
+bad.chk <- checkHzDepthLogic(bad)
+
+# graphical reference
+par(mar=c(0, 0, 0, 0))
+plot(sp1)
 ```
 
 
-### Filtering out Bad Data
-The `test_hz_logic()` function is applied to each profile using the `ddply()` function, with results returned as a simple table. We can use this table to determine which profiles should either be filtered or fixed. Note that we previously corrupted the horizons in profiles `P001` and `P002`.
-```{r filtering, fig.width=8, fig.height=4}
-# apply test to our 'bad' data and save result
-bad.test <- ddply(bad, 'id', test_hz_logic, topcol='top', bottomcol='bottom')
+Check the original data; looks like there is a problem with top/bottom depths sharing the save value! It is fairly common for Cr and R horizons to be described with only a top depth or equal top / bottom depths.
 
-# which are the good (valid) profiles?
-good.profiles <- as.character(bad.test$id[which(bad.test$hz_logic_pass)])
+Note that we are using `[` (square bracket) style indexing of `data.frame` and `SoilProfileCollection` objects. Be sure to review the [`SoilProfileCollection` Object Reference](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) for details.
+```{r}
+kable(sp1.chk)
+
+# highlight the problem
+idx <- which(sp1.chk$sameDepth)
+kable(sp1.chk[idx, ])
+
+# check horizon data for this profile
+# using profile-indexing to select the profile
+# using column-indexing to select the first 8 columns from horizon attributes
+kable(horizons(sp1[idx, ])[, 1:8])
+```
+
+Check the "bad" version of `sp1` that we intentionally broke.
+```{r}
+kable(bad.chk)
+```
+
+
+```{r fig.width=8, fig.height=4.5}
+# merge test results into site-level attributes of SoilProfileCollection
+site(bad) <- bad.chk
+# convert validity test to a factor
+bad$valid <- factor(bad$valid)
+
+# plot valid vs. invalid hz depth test results
+# par() is used to tighten default margins
+par(mar=c(0,0,3,0))
+groupedProfilePlot(bad, groups='valid', group.name.offset = -20)
+title('Valid Horizonation Check')
+```
+
+
+What happens if you attempt to use profiles with horizon depth errors? Functions like `slice` can tolerate some errors, but not overlaps.
+```{r}
+try(slice(bad, 1:100 ~ .))
+```
+
+You can ignore the error by setting `strict=FALSE`, but there are still warnings printed to the console.
+```{r results='hide'}
+slice(bad, 1:100 ~ ., strict = FALSE)
+```
+
+
+# Filtering out Bad Data
+```{r fig.width=8, fig.height=4.5}
+idx <- which(bad.chk$valid)
 
 # keep the good ones
-good <- subset(bad, id %in% good.profiles)
+good <- bad[idx, ]
 
-# promote to SoilProfileCollection
-depths(good) <- id ~ top + bottom
-
-# set figure margins to 0
+# check
 par(mar=c(0,0,0,0))
-# plot
 plot(good)
 ```
 
 
-### Concluding Notes
-Classes and methods within the `aqp` package can accommodate missing horizons (e.g. a horizon that was not submitted for lab characterization), however the following conditions are not allowed:
-  * missing horizon boundaries (bottom of an R horizon)
-  * top depth > bottom depth (old-style O horizon)
-  * overlapping horizons (data-entry error or multiple samples from overlapping depths)
+# Data Cleaning
+Soil data often contain records where the lower depth of the deepest horizon is missing (`NA`) or the same as the top depth (R, Cd, Cr, etc.). These data can either be filtered out or "cleaned" by replacing the missing lower depth with the corresponding upper depth. 
+
+Note: this functionality will eventually be put into a proper `aqp` function.
+```{r data-cleaning, eval=FALSE}
+# replace missing lower boundaries with top + 10
+idx <- which(!is.na(sp1$top) & is.na(sp1$bottom))   
+if(length(idx) > 0) {
+  sp1$bottom[idx] <- sp1$top[idx] + 10
+}
+
+# replace same top/bottom with top + 10
+idx <- which(sp1$top == sp1$bottom)
+if(length(idx) > 0) {
+  sp1$bottom[idx] <- sp1$bottom[idx] + 10
+}
+
+# check data-cleaning:
+kable(checkHzDepthLogic(sp1))
+```
+
+Older soils data with may have O horizons that start above the soil surface (e.g. "Oe 3 to 0 cm). Data containing these type of horizons must either be filtered or fixed before use with classes or methods defined in the `aqp` package. Functions in the `aqp` and `soilDB` packages always nag about horizon depth errors. It is in your best interest to fix these errors if you can, as output from `plotSPC`, `slice`, `slab` and related functions may not be reliable.
 
 
 ----------------------------
