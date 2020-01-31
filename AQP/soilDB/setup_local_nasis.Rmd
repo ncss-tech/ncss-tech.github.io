@@ -66,13 +66,13 @@ install.packages("RODBC", dep=TRUE)
 
 # stable version from CRAN + dependencies
 install.packages("aqp", dep=TRUE)
-
-# stable version from CRAN + dependencies
-install.packages("https://cran.r-project.org/src/contrib/Archive/soilDB/soilDB_2.4.1.tar.gz", repos=NULL)
+install.packages("soilDB", dep=TRUE)
+install.packages("sharpshootR", dep=TRUE)
 
 # latest version off GitHub
 remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
 
@@ -91,7 +91,13 @@ par(mar=c(0,0,0,0))
 plot(x[1:pmin(length(x), 10), ], name='hzname', label='taxonname')
 ```
 
-Good job, that wasn't so hard. Now is a good time to check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/). Details on loading NASIS data into R can be found in [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
+Good job, that wasn't so hard. 
+
+Now is a good time to check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/).
+
+Details on loading NASIS data into R can be found in [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
+
+
 
 
 
