@@ -33,9 +33,9 @@ This document describes how to setup an ODBC link between **R** and the local NA
     
 ![](odbc-06.png)
   
-  + Your computer name will look something like: `CASONORA00L354` -- where state, office and number will vary from computer to computer.
+  + Your computer name will look something like: `ARCCASON500002` -- where state, office and number will vary from computer to computer. _Be very careful when typing it in!_ This is a common source of error in setting up ODBC connection.
   
-  + So, in summary, you will have something like _Server:_ `CASONORA00L354\NASISSQLEXPRESS` entered on the form pictured below.
+  + So, in summary, you will have something like _Server:_ `ARCCASON500002\NASISSQLEXPRESS` entered on the form pictured below.
 
 When finished click "Next".
 
