@@ -30,15 +30,17 @@ Please see the [related tutorial on loading NASIS component data into R](http://
 ## Pedon Data
 Pedon data are extracted from the selected set using the `fetchNASIS()` convenience function. The resulting object is a distillation of the complex NASIS representation of a pedon into "site-level", "horizon-level", and "diagnostic" attributes. In the process of creating this simplified representation of pedon data we've tried to include the most often used data related to soil pedons.  The SPC is not comprehensive and does not include all the attributes that may related data in NASIS. [elaborate as needed]
 
-Load up your local database and selected set with some pedon data and follow along with the code blocks.  Any NASIS queries used to load data into your selected set should always "target" the following tables:
+Load up your local database and selected set with some pedon data and follow along with the code blocks.Any NASIS queries used to load data into your selected set should always "target" the following tables:
 
  * Site
  * Pedon
 
+You will probably have to modify the filtering expressions below to match the specifics of your selected set.
+
 ```{r get-pedon-data, results='hide'}
 # load required libraries
 library(soilDB)
-require(aqp)
+library(aqp)
 
 # get pedon data, using defaults
 p <- fetchNASIS(from='pedons')
