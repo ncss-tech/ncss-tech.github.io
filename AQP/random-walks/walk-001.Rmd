@@ -1,0 +1,135 @@
+---
+title: "Random Walk 001"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+
+
+```{r}
+library(aqp)
+library(soilDB)
+library(raster)
+library(rgeos)
+library(sharpshootR)
+library(cluster)
+library(reshape2)
+
+
+# define a bounding box: xmin, xmax, ymin, ymax
+#
+#         +-------------------(ymax, xmax)
+#         |                        |
+#         |                        |
+#     (ymin, xmin) ----------------+
+
+b <- c(-123.14851, -123.13538, 46.79967,  46.80866)
+
+# convert bounding box to WKT
+bbox.wkt <- writeWKT(as(extent(b), 'SpatialPolygons'))
+
+# compose query, using WKT BBOX as filtering criteria
+q <- sprintf("SELECT mukey, co.cokey, compname, comppct_r AS comppct,
+            chkey, hzname, hzdept_r, hzdepb_r, sandtotal_r AS sand, silttotal_r AS silt, claytotal_r AS clay
+            FROM component AS co
+            JOIN chorizon AS hz ON co.cokey = hz.cokey
+            WHERE mukey IN (SELECT DISTINCT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('%s') )
+            ORDER BY mukey, co.cokey, comppct_r DESC", bbox.wkt)
+
+# send query, results are tabular data only
+res <- SDA_query(q)
+
+# check
+head(res)
+
+# promote to SoilProfileCollection for sketches and other goodness
+depths(res) <- cokey ~ hzdept_r + hzdepb_r
+# move site-level attr up
+site(res) <- ~ mukey + compname + comppct
+
+# rescale sand, silt, clay values for mixing into sRGB colors
+sand <- res$sand / max(res$sand, na.rm = TRUE)
+silt <- res$silt / max(res$silt, na.rm = TRUE)
+clay <- res$clay / max(res$clay, na.rm = TRUE)
+
+# replace NA with a value that will approximate "light grey" when mixed
+sand <- ifelse(is.na(sand), 0.9, sand)
+silt <- ifelse(is.na(silt), 0.9, silt)
+clay <- ifelse(is.na(clay), 0.9, clay)
+
+# mix proportions into sRGB colors
+res$texture_color <- rgb(red=sand, green = silt, blue = clay, maxColorValue = 1)
+
+## kind of a hack...
+# build a very rough legend for expected texture classes
+# based on mixing of sRGB colors and rough estimates of sand, silt, clay percentages
+sand.leg <- c(80, 65, 25, 22) / max(res$sand, na.rm = TRUE)
+silt.leg <- c(15, 20, 55, 40) / max(res$silt, na.rm = TRUE)
+clay.leg <- c(5, 15, 20, 38) / max(res$clay, na.rm = TRUE)
+col.legend <- rgb(red=sand.leg, green = silt.leg, blue = clay.leg, maxColorValue = 1)
+texture.legend <- c('loamy sand', 'sandy loam', 'silt loam', 'clay loam')
+```
+
+
+```{r fig.width=10, fig.height=8}
+# tighten margins and plot all three fractions
+par(mar=c(0,0,3,1), mfrow=c(3, 1))
+
+plotSPC(res, color='sand', label='compname', name='hzname', col.label = 'Percent Sand')
+plotSPC(res, color='silt', label='compname', name='hzname', col.label = 'Percent Silt')
+plotSPC(res, color='clay', label='compname', name='hzname', col.label = 'Percent Clay')
+```
+
+```{r fig.width=10, fig.height=6}
+# plot mixed colors with legend
+par(mar=c(0,0,1,1), mfrow=c(1, 1))
+plotSPC(res, color='texture_color', label='compname', name='hzname')
+legend('bottom', legend = texture.legend, pch=22, pt.bg = col.legend, pt.cex = 2, bty='n', horiz = TRUE)
+
+# there are likely many versions of the same component 
+# generate an index to unique components as defined by the following horizon level attributes
+idx <- unique(res, vars=c('hzdept_r', 'hzdepb_r', 'sand', 'silt', 'clay'))
+res.unique <- res[idx, ]
+
+# ah, much more useful
+plotSPC(res.unique, color='texture_color', label='compname', name='hzname')
+legend('bottom', legend = texture.legend, pch=22, pt.bg = col.legend, pt.cex = 2, bty='n', horiz = TRUE)
+```
+
+```{r fig.width=10, fig.height=6}
+# quick comparison of profiles based on variation in:
+# sand and clay 
+# to a depth of 150cm 
+# no depth-weighting
+d <- profile_compare(res.unique, vars=c('sand', 'clay'), max_d=150, k=0)
+
+# hand the profiles from a dendrogam, built from divisive hierarchical clustering
+par(mar=c(0,0,3,3))
+plotProfileDendrogram(res.unique, diana(d), scaling.factor = 1.1, color='texture_color', width=0.25, y.offset = 5, axis.line.offset = -1, label='compname', name='hzname')
+
+# rough legend
+legend('bottom', legend = texture.legend, pch=22, pt.bg = col.legend, pt.cex = 2, bty='n', horiz = TRUE)
+```
+
+
+```{r fig.width=6, fig.height=6}
+# eval texture via 0-25cm weighted mean sand, silt, clay
+a <- slab(res, cokey ~ sand + silt + clay, slab.structure = c(0, 25), slab.fun = mean, na.rm=TRUE)
+ssc <- dcast(a, cokey ~ variable, value.var = 'value')
+ssc <- na.omit(ssc)
+
+textureTriangleSummary(ssc[, -1], sim=TRUE, cex=0.5, p = c(0.10, 0.5, 0.9)); title('0-25cm Weighted Mean')
+```
