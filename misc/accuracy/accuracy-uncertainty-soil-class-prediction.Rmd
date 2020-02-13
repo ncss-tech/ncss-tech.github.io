@@ -7,6 +7,11 @@ output:
     fig_caption: yes
     number_sections: no
     smart: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 bibliography: bibliography.bib
 ---
   
@@ -550,7 +555,7 @@ xyplot(H ~ CI, asp=1, scales=list(alternating=1), xlab='Confusion Index', ylab='
 
 
 
-```{echo=FALSE}
+```{r eval=FALSE, echo=FALSE}
                      crags/talus basins/cirques glacial v. floors glacial v. walls mtn. slopes, low RO mtn. slopes, high RO plateaus riparian class.error
 crags/talus                  151             22                 0                5                   0                    9       13        0       0.245
 basins/cirques                31             96                 5                9                   3                   17        9       30       0.520
