@@ -1,5 +1,5 @@
 ---
-title: "Accuracy and Uncertainty"
+title: "Accuracy and Uncertainty for Categorical Predictions"
 date: "`r Sys.Date()`"
 author: D.E. Beaudette
 output:
@@ -315,7 +315,6 @@ summaryTauW(weighted <- tauW(crossclass, W=weights))
 
 # weighted accuracy; tau with user's = producer's marginals
 summaryTauW(tauW(crossclass, W=weights, P=priors))
-
 ```
 
 ### Commentary from DGR
@@ -645,6 +644,33 @@ shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
 
 # compute shannon entropy for all rows
 apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
+```
+
+
+Variations on the $\tau$ statistic (pending).
+```{r eval=FALSE, echo=FALSE}
+# convert to factors for full range of classes in cross-tabulation
+d$actual <- factor(d$actual, levels = c('A', 'B', 'C', 'D', 'E'))
+
+# classify based on max probability
+idx <- apply(d[, 1:5], 1, which.max)
+d$predicted <- levels(d$actual)[idx]
+
+d$predicted <- factor(d$predicted, levels=levels(d$actual))
+
+# cross-tabulate
+(tab <- table(actual=d$actual, predicted=d$predicted))
+
+
+# unweighted accuracy
+summaryTauW(nnaive <- tauW(tab))
+
+# unweighted tau with equal priors, equivalent to Foody (1992) modified Kappa
+tauW(tab)$tau
+
+# unweighted tau with user's = producer's marginals, equivalent to original kappa
+(priors <-  apply(tab, 2, sum) / sum(tab))
+tauW(tab, P=priors)$tau
 ```
 
 
