@@ -3,9 +3,9 @@ title: "Accuracy and Uncertainty for Categorical Predictions"
 date: "`r Sys.Date()`"
 author: D.E. Beaudette
 output:
-  html_document:
+  bookdown::html_document2:
     fig_caption: yes
-    number_sections: no
+    number_sections: yes
     smart: no
     toc: yes
     toc_depth: 3
@@ -155,7 +155,7 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 
 This document is an attempt at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by @Rossiter2017.
 
-This [article](http://www.fharrell.com/post/classification/) does a fine job of summarizing the major differences between *classification* and *prediction*. Most of the modeling frameworks we will be using or evaluating generate predictions in the form of probabilities (prediction). At some point the stack of probabilities will be converted into a single map depicting the most likely class at each pixel (classification). The iterative assessment of model performance (e.g. accuracy and uncertainty) should happen as part of the *prediction* phase via metrics such as the Brier score and Shannon entropy. An evaluation of the final *classification* is helpful for communicating accuracy to a wider audience (e.g. percent correctly classified) but should not be the primary means of optimizing model performance.
+This [article](http://www.fharrell.com/post/classification/) does a fine job of summarizing the major differences between *classification* and *prediction*. Most of the modeling frameworks we will be using or evaluating generate predictions in the form of probabilities (prediction). At some point the stack of probabilities will be converted into a single map depicting the most likely class at each pixel (classification). The iterative assessment of model performance (e.g. accuracy and uncertainty) should happen as part of the *prediction* phase via metrics such as the Brier score (accuracy) and Shannon entropy (uncertainty). An evaluation of the final *classification* is helpful for communicating accuracy to a wider audience (e.g. percent correctly classified or weighted $\tau$) but should not be the primary means of optimizing model performance.
 
 
 ![](prediction-classification.png)
@@ -163,7 +163,7 @@ This [article](http://www.fharrell.com/post/classification/) does a fine job of 
 ## Status Quo
 The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
 
-Given the complex nature of class mapping results (e.g. stack of class probabilities) and inherent (likely quantifiable) similarity of soil classes, I think that we should explore options for a more robust suite of accuracy and uncertainty metrics. Furthermore, it is my opinion that any evaluation of probabilistic predictions should be integrated over *all* classes. 
+Given the complex nature of class mapping results (e.g. stack of class probabilities) and inherent (likely quantifiable) similarity of soil classes, I think that we should explore options for a more robust suite of accuracy and uncertainty metrics. Furthermore, it is my opinion that our quantification of uncertainty should be integrated over *all* classes (e.g. Shannon entropy). 
 
 
 ## Theses
@@ -204,6 +204,8 @@ Accuracy and uncertainty metrics are primarily vehicles for understanding, re-ca
 ## TODO
 
    * what are reasonable $\tau$ index values? we need some kind of range of threshold for standards
+   * develop an intuition and reference cases for interpretation of Shannon entropy
+      + equal probabilities among $\{2, 4, 8, 16\}$ classes result in entropy values of $\{1, 2, 3, 4\}$ (See Figure \@ref(fig:entropy-eq-prob-limits))
    * how do we answer "how much better is **x** vs. SSURGO?"
    * apply these concepts to the Boundary Waters project, so that we have some benchmark values of $\tau$ and $H$
 
@@ -363,7 +365,7 @@ where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu
 
 ## Comparison
 
-```{r, fig.width=7, fig.height=4}
+```{r entropy-eq-prob-limits, fig.width=7, fig.height=4, fig.cap="Theoretical limits on entropy and CI values as a function of equal-class probability. Essentially the lower limit on *certainty* given an equally-probably guess."}
 # H as a function of n
 n.seq <- 2:100
 H <- sapply(n.seq, function(i) shannonEntropy(rep(1/i, times=i), b = 2))
@@ -371,7 +373,7 @@ d <- data.frame(n=n.seq, H=H)
 
 cols <- wes_palette("Zissou1")[c(1, 5)]
 
-xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Theoretical Limits\nEqual Class Probability', panel=function(...) {
+xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Equal Class Probability', panel=function(...) {
   panel.xyplot(..., type=c('l', 'g'))
   panel.abline(h=1, col=cols[2], lty=2)
   panel.text(x=80, y=1.2, 'Confusion Index', font=2, cex=0.8)
