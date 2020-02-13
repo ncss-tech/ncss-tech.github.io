@@ -239,7 +239,7 @@ bwplot(emp.pctile ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.s
 
 bwplot(spi ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == mo, stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
 
-bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub='Period of Record: 1939-2019', ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
+bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub='Period of Record: 1939-2020', ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
   panel.grid(-1, -1)
   panel.abline(h=0.5, lty=2, col='orange')
   panel.bwplot(x=x, y=y, ...)
