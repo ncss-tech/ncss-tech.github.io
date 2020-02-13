@@ -93,8 +93,8 @@ library(grid)
 library(plyr)
 
 # current data are:
-yr <- 2019
-mo <- 'April'
+yr <- 2020
+mo <- 'February'
 
 # Stanislaus River watershed
 course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
@@ -102,7 +102,7 @@ course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138
 
 ```{r results='hide'}
 # get historic data
-d.long_term <- ddply(course.data, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2019)})
+d.long_term <- ddply(course.data, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2020)})
 
 # join-in metadata
 data(CDEC.snow.courses)
@@ -186,7 +186,7 @@ print(p4, more=FALSE, position=c(0.125,0,0.425,0.175))
 data(CDEC.snow.courses)
 
 # get historic data
-d.long_term <- ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2019)})
+d.long_term <- ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2020)})
 
 # save local cache
 # save(d.long_term, file='long_term_data-cache.rda')
