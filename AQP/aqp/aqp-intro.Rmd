@@ -7,6 +7,12 @@ output:
     mathjax: null
     jquery: null
     smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
@@ -272,7 +278,8 @@ subsetProfiles(sp4, h='clay < 20', s='group == "A"')
 
 
 # Concatenation of SoilProfileCollection Objects
-If the internal structures of several `SoilProfileCollection` objects are identical (e.g. same ID name, horizon, site, diagnostic horizon, and spatial attributes) they can be safely combined into a new object.
+`SoilProfileCollection` objects are combined by passing a list of objects to the `union` function. Ideally all objects share the same internal structure, profile ID, horizon ID, depth units, and other parameters of a `SoilProfileCollection`. Manually subset the example data into 3 pieces, compile into a list, and then `union` back together.
+ 
 ```{r concatenation, eval=FALSE}
 # subset data into chunks
 s1 <- sp4[1:2, ]
@@ -284,6 +291,55 @@ s <- union(list(s1, s2, s3))
 
 # double-check result
 plot(s)
+```
+
+
+It is possible to union `SoilProfileCollection` objects with different internal structure. Columns from all inputs will be merged by `plyr::rbind.fill` into the new horizon and site level attributes. IDs and horizon depth names are taken from the first object.
+```{r eval=FALSE}
+# sample data as data.frame objects
+data(sp1)
+data(sp3)
+
+# rename IDs horizon top / bottom columns
+sp3$newid <- sp3$id
+sp3$hztop <- sp3$top
+sp3$hzbottom <- sp3$bottom
+
+# remove originals
+sp3$id <- NULL
+sp3$top <- NULL
+sp3$bottom <- NULL
+
+# promote to SoilProfileCollection
+depths(sp1) <- id ~ top + bottom
+depths(sp3) <- newid ~ hztop + hzbottom
+
+# label each group
+sp1$g <- rep('sp1', times=length(sp1))
+sp3$g <- rep('sp3', times=length(sp3))
+
+# union
+x <- union(list(sp1, sp3))
+
+# make grouping variable into a factor for groupedProfilePlot
+x$g <- factor(x$g)
+
+# check results
+str(x)
+
+# graphical check
+plot(x, color='hzID')
+groupedProfilePlot(x, 'g', color='hzID', group.name.offset = -15)
+```
+
+
+## Splitting
+The inverse of `union` is `split`: subsets of the `SoilProfileCollection` are split into list elements, each containing a new `SoilProfileCollection`.
+```{r eval=FALSE}
+# continuing from above
+# split subsets of x into a list of SoilProfileCollection objcts using site-level attribute 'g'
+res <- split(x, 'g')
+str(res, 1)
 ```
 
 
