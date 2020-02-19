@@ -126,10 +126,11 @@ One way to get a visual diagram of where the SCAN soil moisture and temperature 
 x <- fetchSCAN(site.code=c(574), year=c(2016))
 s <- fetchKSSL(pedlabsampnum = na.omit(x$metadata$pedlabsampnum), returnMorphologicData = FALSE)
 
-# get unique set of soil moisture sensor depths
+# get unique set of soil moisture sensor depths in cm
 sensor.depths <- unique(x$SMS$depth)
 
 # slice the KSSL data associated with the sensor depths
+# this is a convenient way to access lab data for these depths
 s1 <- slice(s, sensor.depths ~ .)
 
 # plot profile of lab data horizons then over plot with location of sensor depths within them
@@ -138,7 +139,9 @@ plotSPC(s, name='hzn_desgn', label='pedon_id', id.style='top', cex.names=0.75, w
 title(paste('Sensor Depths for SCAN site', unique(x$SMS$Site), sep=" "), line=0.5, cex.main=1.5)
 
 # over plot the sensor depths on the previous plot
-plotSPC(s1, width=0.005, name='hzn_top', label='pedon_id', print.id=FALSE, id.style='top', cex.names=0.75, x.idx.offset=0.1, lwd=2, fill='blue', plot.depth.axis=FALSE, add=TRUE)
+lsp <- get("last_spc_plot", envir = aqp.env)
+points(x=rep(lsp$x0, times=length(sensor.depths)), y=sensor.depths, pch=15, cex=1.5, col='royalblue')
+text(x=rep(lsp$x0, times=length(sensor.depths)), y=sensor.depths, labels = sensor.depths, cex=0.75, pos=1)
 ```
 
 
