@@ -50,6 +50,7 @@ With a recent version of R (>= 2.15), it is possible to get all of the packages 
 install.packages('sharpshootR', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 install.packages('plyr', dep=TRUE)
+install.packages('daymetr', dep=TRUE)
 
 # get latest version from GitHub
 install.packages('devtools', dep=TRUE)
@@ -170,8 +171,46 @@ FFDplot(x.ffd, 'Henry: 1997NV005022')
 
 
 ## DAYMET
-```{r }
+Daily minimum air temperature data from [DAYMET](https://daymet.ornl.gov/), via [coordinate API]()https://daymet.ornl.gov/single-pixel/ at (-120, 38). The [`daytmetr`](https://CRAN.R-project.org/package=daymetr) package greatly simplifies data retrieval.
+```{r, fig.width=10, fig.height=5}
+library(daymetr)
 
+# convenience function, returns data suitable for FFD eval
+getDayMet <- function(x, y) {
+  
+  # get 30yr span for single coordinate
+  d <- download_daymet("daymet",
+                       lat = y,
+                       lon = x,
+                       start = 1981,
+                       end = 2010,
+                       internal = TRUE
+  )
+  
+  # keep only the data
+  d <- d$data
+  
+  # format data required for FFD calc
+  d$datetime <- as.Date(sprintf('%s %s', d$year, d$yday), format="%Y %j")
+  d$value <- d$tmin..deg.c.
+  
+  # note, these are deg C
+  return(d[, c('datetime', 'year', 'value')])
+}
+
+# get data
+x <- getDayMet(x = -120, y = 38)
+
+# estimate FFD over all years
+# air temperature are in deg C
+x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
+
+# basic summary
+kable(x.ffd$summary)
+
+# graphical summary of FFD estimates
+par(mar=c(4,3.5,3,1))
+FFDplot(x.ffd, 'DAYMET at (-120, 38)')
 ```
 
 
