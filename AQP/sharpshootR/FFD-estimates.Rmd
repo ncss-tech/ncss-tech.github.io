@@ -171,8 +171,8 @@ FFDplot(x.ffd, 'Henry: 1997NV005022')
 
 
 ## DAYMET
-Daily minimum air temperature data from [DAYMET](https://daymet.ornl.gov/), via [coordinate API]()https://daymet.ornl.gov/single-pixel/ at (-120, 38). The [`daytmetr`](https://CRAN.R-project.org/package=daymetr) package greatly simplifies data retrieval.
-```{r, fig.width=10, fig.height=5}
+Daily minimum air temperature data from [DAYMET](https://daymet.ornl.gov/), via [coordinate API](https://daymet.ornl.gov/single-pixel/) at (-120, 38). The [`daytmetr`](https://CRAN.R-project.org/package=daymetr) package greatly simplifies data retrieval.
+```{r, fig.width=10, fig.height=6}
 library(daymetr)
 
 # convenience function, returns data suitable for FFD eval
