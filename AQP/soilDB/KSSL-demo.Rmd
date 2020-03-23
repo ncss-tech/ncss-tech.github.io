@@ -24,8 +24,7 @@ With a recent version of R (>= 2.15), it is possible to get all of the packages 
 ```{r install-deps, eval=FALSE}
 # stable packages from CRAN
 install.packages('maps', dep=TRUE)
-install.packages('plyr', dep=TRUE)
-install.packages('reshape2', dep=TRUE)
+install.packages('aqp', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 
 # latest versions from GitHub
@@ -39,8 +38,6 @@ KSSL and NASIS data are from the September 2018 snapshot. Details pending.
 ```{r}
 library(aqp)
 library(soilDB)
-library(plyr)
-library(reshape2)
 
 # get lab and morphologic data
 # simplify colors to 1 color (moist and dry) per horizon via mixing
@@ -75,7 +72,7 @@ s.frags <- simplifyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
 # merge fragment data into SPC
 h <- horizons(pedons)
-h <- join(h, s.frags, by='labsampnum', type='left', match='first')
+h <- merge(h, s.frags, by='labsampnum', all.x=TRUE, sort=FALSE)
 horizons(pedons) <- h
 
 
@@ -101,7 +98,7 @@ s.frags <- simplifyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
 # merge fragment data into SPC
 h <- horizons(pedons)
-h <- join(h, s.frags, by='labsampnum', type='left', match='first')
+h <- merge(h, s.frags, by='labsampnum', all.x=TRUE, sort=FALSE)
 horizons(pedons) <- h
 
 # flag horizons with >= 100% total fragment volume
@@ -123,66 +120,24 @@ s$morph$phfrags[idx, ]
 ```
 
 # Fetch Data Associated with a Set of IDs
-Fetching KSSL data for a set of IDs requires some additional "helper" functions. The following example fetches data according to a vector of "pedlabsampnum" IDs, extracts the horizon color data, filters missing data, and combines the results into a single table.
+As of `soilDB` version 2.5.3, `fetchKSSL()` is fully vectorized.
 
 First, paste the following code into your script or console to initialize our helper functions.
 ```{r}
-# get data associated with a single ID
-# no records -> NULL returned
-getPedons <- function(x) {
-  suppressMessages(fetchKSSL(pedlabsampnum=x, returnMorphologicData = TRUE))
-}
-
-# extract a morphologic table from each record set
-# NULL data are filtered out
-# converted to data.frame
-extractMorphTable <- function(x, table='phcolor') {
-  m <- lapply(x, function(i) i[['morph']][[table]])
-  # index pedons with data
-  idx <- which(sapply(m, length) > 0) 
-  if(length(idx) < 1)
-    return(NULL)
-  # filter non-NULL and convert to DF
-  m <- ldply(m[idx])
-  return(m)
-}
-```
-
-Next, use the `getPedons()` helper function to fetch lab and morphologic data according to a vector of `pedlabsampnum` IDs. Note that the results are a list of lists. Select morphologic data are extracted and combined with the `extractMorphTable()` function.
-```{r}
 # pedons indexed by "pedlabsampnum" ID
 pls <- c("04N0610", "04N0611", "04N0612", "04N0613")
-# iterate over IDs and get data
-res <- lapply(pls, getPedons)
+
+# vectorization = implicit iteration
+res <- fetchKSSL(pedlabsampnum = pls, returnMorphologicData = TRUE, simplifyColors = TRUE)
 
 # check: OK
 str(res, 2)
 
-# extract phcolor data from list of records
-# result is a data.frame with all non-NULL rows
-phcolor <- extractMorphTable(res, table='phcolor')
-
-# check: OK
-head(phcolor)
-```
-
-Finally, extract the `SoilProfileCollection` objects from `res` and combine into a single object. We can now join our combined color data with the combined pedon data.
-```{r fig.width=8, fig.height=5}
-# extract pedons from list
-pedons <- lapply(res, function(i) i$SPC)
-# combine into a single SPC object
-pedons <- do.call('rbind', pedons)
+# extract SPC
+pedons <- res$SPC
 
 # check: looks good
 plot(pedons, color='estimated_ph_h2o', name='hzn_desgn')
-
-# simplify combined color data
-colors <- simplifyColorData(phcolor, id.var = 'labsampnum', wt='colorpct')
-
-# join combined color data to SPC
-h <- horizons(pedons)
-h <- join(h, colors, by='labsampnum', type='left', match='first')
-horizons(pedons) <- h
 
 # check: looks good
 plot(pedons, color='moist_soil_color', name='hzn_desgn')
@@ -195,15 +150,15 @@ Data can be queried by "taxonname"" (typically a soil series), using a geographi
 In this example, we are downloading KSSL data for the [musick](https://soilseriessc.egov.usda.gov/OSD_Docs/M/MUSIC.html), [chaix](https://soilseries.sc.egov.usda.gov/OSD_Docs/C/CHAIX.html), and [holland](https://soilseries.sc.egov.usda.gov/OSD_Docs/H/HOLLAND.html) soils; commonly found on granitic rocks of the Sierra Nevada Mountain region of California.
 ```{r get-data, fig.width=6, fig.height=7}
 # load libraries
+library(aqp)
 library(soilDB)
-library(plyr)
 library(lattice)
 library(maps)
 
 # define plotting style
 tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
 
-# fetch KSSL data by fuzzy-matching of series name
+# fetch KSSL data by series name
 musick <- fetchKSSL('musick')
 holland <- fetchKSSL('holland')
 chaix <- fetchKSSL('chaix')
@@ -253,6 +208,9 @@ g <- rbind(chaix, musick, holland)
 
 # compute weighted-mean particle diameter
 g$wmpd <- with(horizons(g), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
+
+# convert taxonname to factor for groupedProfilePlot
+g$taxonname <- factor(g$taxonname)
 
 # tabulate number of pedons by normalized series name
 table(g$taxonname)
