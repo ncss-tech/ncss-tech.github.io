@@ -355,6 +355,13 @@ par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name')
 ```
 
+Make sketches wider.
+```{r fig.height=5, fig.width=9}
+par(mar=c(4,3,2,2))
+explainPlotSPC(sp4, name='name', width=0.3)
+```
+
+
 Move soil surface at 0cm "down" 5cm.
 ```{r fig.height=5, fig.width=9}
 par(mar=c(4,3,2,2))
@@ -384,6 +391,46 @@ Leave room for an additional 2 profile sketches.
 par(mar=c(4,3,2,2))
 explainPlotSPC(sp4, name='name', n=length(sp4) + 2)
 ```
+
+
+### Small SoilProfileCollections
+Making quality figures with fewer than 5 soil profiles usually requires more customization of the basic call to `plotSPC`. In general, the following are a good starting point:
+ 
+ * shrink margins and disable clipping with `par`
+ * adjust output graphic device (e.g. `png()`) dimensions and resolution
+ * increase font size with `cex.names`
+ * adjust sketch width with `width`, typically within 0.15-0.35
+ * move depth axis to the left with negative `axis.line.offset` values
+
+
+Get some example data from the Official Series Descriptions.
+```{r, fig.width=5, fig.height=6}
+library(soilDB)
+x <- fetchOSD(c('appling', 'cecil', 'bonneau'))
+```
+
+Using 5x6 inch output device.
+```{r, fig.width=5, fig.height=6}
+# set margins and turn off clipping
+par(mar=c(0,2,0,4), xpd=NA)
+plotSPC(x[1, ], cex.names=1)
+```
+
+Using 7x6 inch output device, slight adjustments to `width` usually required.
+```{r, fig.width=7, fig.height=6}
+# set margins and turn off clipping
+par(mar=c(0,2,0,4), xpd=NA)
+plotSPC(x[1:2, ], cex.names=1, width=0.25)
+```
+
+Using 8x6 inch output device, slight adjustments to `axis.line.offset` and `width` are usually required.
+```{r, fig.width=8, fig.height=6}
+# set margins and turn off clipping
+par(mar=c(0,2,0,4), xpd=NA)
+plotSPC(x, cex.names=1, axis.line.offset = -0.1, width=0.3)
+```
+
+
 
 ## Relative Horizontal Positioning
 
@@ -552,6 +599,20 @@ addBracket(a, col='red', label.cex = 0.75, tick.length = 0, lwd=3)
 
 ### Notes
 These functions (`addBracket`, `addDiagnosticBracket`, and `addVolumeFraction`) will automatically compensate for alternative sketch ordering or relative positioning.
+
+
+
+## SVG Output for Use in Page Layout Tools
+Sketches for use in layout tools such as Adobe Illustrator or Inkscape should be stored in a vector file format. SVG is compatible with most software titles. WMF output is compatible with MS Office tools and can be written with the `win.metafile()` function.
+
+```{r eval=FALSE}
+svg(filename = 'e:/temp/fig.svg', width=7, height=6, pointsize = 12, family = 'sans')
+
+par(mar=c(0,2,0,4), xpd=NA)
+plotSPC(x, cex.names=1, axis.line.offset = -0.2, width=0.3)
+
+dev.off()
+```
 
 
 # Iterating Over Profiles in a Collection
