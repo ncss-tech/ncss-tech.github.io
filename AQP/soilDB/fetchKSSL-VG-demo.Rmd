@@ -17,7 +17,7 @@ options(width=100, stringsAsFactors=FALSE)
 
 
 # Introduction
-This is a simple demonstration of how to use (estimated) van Genuchten Model parameters from the KSSL snapshot (added 2016-11-17) as provided by [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html) to generate [water retention curves](https://en.wikipedia.org/wiki/Water_retention_curve). These parameters are based on a model fit using the [Rosetta software](https://www.ars.usda.gov/pacific-west-area/riverside-ca/us-salinity-laboratory/docs/rosetta-model/). 
+This is a simple demonstration of how to use (estimated) van Genuchten Model parameters from the KSSL snapshot (added 2016-11-17) as provided by [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html) to generate [water retention curves](https://en.wikipedia.org/wiki/Water_retention_curve). These parameters are based on a model fit using the [Rosetta software](https://www.ars.usda.gov/pacific-west-area/riverside-ca/us-salinity-laboratory/docs/rosetta-model/). See the [Rosetta Texture Class Averages](https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/) for additional documentation.
 
 A note from our KSSL staff:
 <div style="font-size: 80%; margin: 0px 10px 0px 10px; padding: 5px; border: 1px solid black;">The Rosetta computer program must have at a minimum the particle size distribution. Then it will use the following properties, if provided, bulk density, water content at 33 kPa, and water content at 1500 kPa.
@@ -38,9 +38,9 @@ install.packages('soilDB', dep=TRUE)
 
 You will also need the latest version of `soilDB` and `aqp`:
 ```{r eval=FALSE}
-install.packages('devtools', dep=TRUE)
-devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
-devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+install.packages('remotes', dep=TRUE)
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 
@@ -95,12 +95,13 @@ res <- lapply(1:nrow(s.vg.hz), function(i) {
   m <- KSSL_VG_model(VG_params = s.vg.hz[i, ], phi_min = 10^-3, phi_max=10^6)$VG_curve
   # copy generalized hz label
   m$hz <- s.vg.hz$hz[i]
+  # copy ID
+  m$.id <- s.vg.hz$labsampnum[i]
   return(m)
 })
 
 # copy over lab sample number as ID
-names(res) <- s.vg.hz$labsampnum
-res <- ldply(res)
+res <- do.call('rbind', res)
 
 # plot each curve, panel by genhz
 p.model <- xyplot(phi ~ theta | hz, groups=.id, data=res, type=c('l', 'g'), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression(Suction~~(kPa)), xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)), par.settings = list(superpose.line=list(col='RoyalBlue', lwd=1)), strip=strip.custom(bg=grey(0.85)), as.table=TRUE)
