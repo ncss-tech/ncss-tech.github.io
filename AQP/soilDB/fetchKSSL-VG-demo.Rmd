@@ -30,9 +30,8 @@ With a recent version of R (>= 2.15), it is possible to get all of the packages 
 # run these commands in the R console
 install.packages('latticeExtra', dep=TRUE)
 install.packages('plyr', dep=TRUE)
-install.packages('rvest', dep=TRUE)
-install.packages('httr', dep=TRUE)
 install.packages('reshape2', dep=TRUE)
+install.packages('aqp', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
 ```
 
