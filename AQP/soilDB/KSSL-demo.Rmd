@@ -20,7 +20,7 @@ options(width=100, stringsAsFactors=FALSE)
 This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to download [KSSL](http://ncsslabdatamart.sc.egov.usda.gov/) data from SoilWeb. These data are from the [September 2018 snapshot](https://github.com/dylanbeaudette/process-kssl-snapshot), and will be updated as future snapshots are released. Comparisons are made via graphical summaries of key soil properties with depth, using [data structures and functions](hhttp://ncss-tech.github.io/AQP/aqp/aqp-intro.html) from the [aqp](http://ncss-tech.github.io/AQP/) package.
 
 ## Installation
-With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+With a recent version of R (>= 3.5), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # stable packages from CRAN
 install.packages('maps', dep=TRUE)
@@ -61,7 +61,7 @@ lapply(s$morph, head)
 ```{r fig.width=10, fig.height=6}
 # check
 par(mar=c(0,0,0,0))
-plot(pedons, color='moist_soil_color', print.id=FALSE, name='hzn_desgn')
+plotSPC(pedons, color='moist_soil_color', print.id=FALSE, name='hzn_desgn')
 ```
 
 
@@ -78,7 +78,7 @@ horizons(pedons) <- h
 
 # check
 par(mar=c(0,0,3,0))
-plot(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
+plotSPC(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
 addVolumeFraction(pedons, 'total_frags_pct', pch=1, cex.min=0.25, cex.max = 0.5)
 ```
 
@@ -107,7 +107,7 @@ pedons$fragment_errors <- factor(pedons$total_frags_pct >= 100)
 # label pedons with user pedon ID
 # label horizons with total fragment %
 par(mar=c(0,0,3,5))
-plot(pedons, color='fragment_errors', name='total_frags_pct', label='pedon_id', cex.name=0.85)
+plotSPC(pedons, color='fragment_errors', name='total_frags_pct', label='pedon_id', cex.name=0.85)
 addVolumeFraction(pedons, 'total_frags_pct', pch=1, cex.min=0.25, cex.max = 0.5)
 ```
 
@@ -120,10 +120,9 @@ s$morph$phfrags[idx, ]
 ```
 
 # Fetch Data Associated with a Set of IDs
-As of `soilDB` version 2.5.3, `fetchKSSL()` is fully vectorized.
+As of `soilDB` version 2.5.3, `fetchKSSL()` is fully vectorized with the exception of `bbox`. Note that it is much more efficient to work with the KSSL snapshot when attempting to load large collections of data by ID.
 
-First, paste the following code into your script or console to initialize our helper functions.
-```{r}
+```{r, results='hide'}
 # pedons indexed by "pedlabsampnum" ID
 pls <- c("04N0610", "04N0611", "04N0612", "04N0613")
 
@@ -137,10 +136,10 @@ str(res, 2)
 pedons <- res$SPC
 
 # check: looks good
-plot(pedons, color='estimated_ph_h2o', name='hzn_desgn')
+plotSPC(pedons, color='estimated_ph_h2o', name='hzn_desgn')
 
 # check: looks good
-plot(pedons, color='moist_soil_color', name='hzn_desgn')
+plotSPC(pedons, color='moist_soil_color', name='hzn_desgn')
 ```
 
 
@@ -148,21 +147,54 @@ plot(pedons, color='moist_soil_color', name='hzn_desgn')
 Data can be queried by "taxonname"" (typically a soil series), using a geographic bounding-box in WGS84 referenced coordinates, or by MLRA. Taxonname matching is case-insensitive and based on the most current taxonname in NASIS. See `?fetchKSSL()` or [this GitHub repository](https://github.com/dylanbeaudette/process-kssl-snapshot) for details.
 
 In this example, we are downloading KSSL data for the [musick](https://soilseriessc.egov.usda.gov/OSD_Docs/M/MUSIC.html), [chaix](https://soilseries.sc.egov.usda.gov/OSD_Docs/C/CHAIX.html), and [holland](https://soilseries.sc.egov.usda.gov/OSD_Docs/H/HOLLAND.html) soils; commonly found on granitic rocks of the Sierra Nevada Mountain region of California.
-```{r get-data, fig.width=6, fig.height=7}
+```{r fig.width=6, fig.height=7}
 # load libraries
 library(aqp)
 library(soilDB)
 library(lattice)
 library(maps)
 
-# define plotting style
-tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
-
 # fetch KSSL data by series name
-musick <- fetchKSSL('musick')
-holland <- fetchKSSL('holland')
-chaix <- fetchKSSL('chaix')
+sn <- c('musick', 'holland', 'chaix')
+g <- fetchKSSL(series = sn, progress = FALSE)
 
+# compute weighted-mean particle diameter for later
+g$wmpd <- with(horizons(g), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
+
+# estimate soil depth based on horizon designations
+sdc <- getSoilDepthClass(g, name='hzn_desgn', top='hzn_top', bottom='hzn_bot')
+
+# splice-into site data
+site(g) <- sdc
+
+# summarize soil depth by taxonname
+tapply(g$depth, g$taxonname, summary)
+```
+
+
+Check for variation in `taxonname` and normalize accordingly. In this case we can just convert to all lower-case.
+```{r fig.width=6, fig.height=7}
+# check
+table(g$taxonname)
+
+# normalize via lower-case
+g$taxonname <- tolower(g$taxonname)
+
+# OK
+table(g$taxonname)
+```
+
+
+Sometimes it is useful to split a collection into individual objects. Do this now by `filter`-ing on taxonname.
+```{r fig.width=6, fig.height=7}
+musick <- filter(g, taxonname == 'musick')
+holland <- filter(g, taxonname == 'holland')
+chaix <- filter(g, taxonname == 'chaix')
+```
+
+
+
+```{r fig.width=6, fig.height=7}
 # generate a basemap of northern California, with county boundaries
 map('county', 'California', xlim=c(-123.25, -118.75), ylim=c(36.5, 41))
 # add long/lat axes
@@ -181,53 +213,19 @@ legend('topright', pch=21, pt.bg=c('RoyalBlue', 'DarkRed', 'DarkGreen'), legend=
 
 
 ## Profile Plots
-Generate "thematic" profile sketches by coloring horizons according to clay content.
-```{r plot-pedons, fig.width=10, fig.height=6}
-par(mar=c(0,1,5,1))
-plot(musick, name='hzn_desgn', color='clay')
-plot(holland, name='hzn_desgn', color='clay')
-plot(chaix, name='hzn_desgn', color='clay')
-```
+Generate "thematic" profile sketches by coloring horizons according to clay content, and gouped by taxonname
+```{r fig.width=15, fig.height=6}
+par(mar=c(0,0,3,1))
 
-
-## Combining Data
-Since the results from `fetchKSSL()` function always returns data in the same format, it is possible to stack the results of several KSSL queries using `rbind()`.
-```{r combine-data, fig.width=10, fig.height=6}
-# check "correlated as" names from each object
-table(musick$taxonname)
-table(holland$taxonname)
-table(chaix$taxonname)
-
-# since there are multiple permuations of each, normalize soil series name by replacement
-musick$taxonname <- 'musick'
-holland$taxonname <- 'holland'
-chaix$taxonname <- 'chaix'
-
-# stack datasets into a new SoilProfileCollection
-g <- rbind(chaix, musick, holland)
-
-# compute weighted-mean particle diameter
-g$wmpd <- with(horizons(g), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
-
-# convert taxonname to factor for groupedProfilePlot
+# convert taxonname to a factor for grouping
 g$taxonname <- factor(g$taxonname)
 
-# tabulate number of pedons by normalized series name
-table(g$taxonname)
-
-# plot the grouped object, with profiles arranged by taxonname
-par(mar=c(0,1,5,1))
-groupedProfilePlot(g, groups = 'taxonname', color='clay', group.name.offset = -10)
-
-# estimate soil depth based on horizon designations
-sdc <- getSoilDepthClass(g, name='hzn_desgn', top='hzn_top', bottom='hzn_bot')
-
-# splice-into site data
-site(g) <- sdc
-
-# summarize soil depth by taxonname
-tapply(g$depth, g$taxonname, summary)
+# suppress printing IDs and horizon designations
+groupedProfilePlot(g, groups = 'taxonname', color='clay', print.id=FALSE, name=NA)
+groupedProfilePlot(g, groups = 'taxonname', color='estimated_ph_h2o', print.id=FALSE, name=NA)
+groupedProfilePlot(g, groups = 'taxonname', color='wmpd', print.id=FALSE, name=NA)
 ```
+
 
 
 ## Aggregation
@@ -259,18 +257,21 @@ levels(g.slab$variable) <- c('Clay (%)', 'pH 1:1 H2O', 'Base Saturation at pH 8.
 ## Graphically Compare
 The slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread. "Contributing fraction" values (% of pedons with data at a given depth) are printed along the right-hand side of each panel. These values provide both an indication of how deep the soils are, and, how much confidence can be placed in the aggregate data at any given depth.
 ```{r plot, fig.width=10, fig.height=6}
+# define plotting style
+tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+
 # plot grouped, aggregate data
 xyplot(top ~ p.q50 | variable, groups=taxonname, data=g.slab, ylab='Depth',
-			 xlab='median bounded by 25th and 75th percentiles',
-			 lower=g.slab$p.q25, upper=g.slab$p.q75, ylim=c(155,-5),
-			 panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
-			 prepanel=prepanel.depth_function,
-			 cf=g.slab$contributing_fraction,
+       xlab='median bounded by 25th and 75th percentiles',
+       lower=g.slab$p.q25, upper=g.slab$p.q75, ylim=c(155,-5),
+       panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel=prepanel.depth_function,
+       cf=g.slab$contributing_fraction,
        par.strip.text=list(cex=0.8),
-			 strip=strip.custom(bg=grey(0.85)),
-			 layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
-			 par.settings=tps,
-			 auto.key=list(columns=3, lines=TRUE, points=FALSE)
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(4,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       par.settings=tps,
+       auto.key=list(columns=3, lines=TRUE, points=FALSE)
 )
 ```
 
