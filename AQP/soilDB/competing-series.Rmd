@@ -50,11 +50,6 @@ library(ape)
 library(scales)
 library(maps)
 
-
-# convenience function for getting KSSL data by soil series name
-getPedons <- function(x) {
-  suppressMessages(fetchKSSL(series=x))
-}
 ```
 
 ## Get Data
@@ -187,7 +182,7 @@ dd <- diana(d)
 Hang profile sketches from divisive hierarchical clustering of soil color signatures.
 ```{r fig.width=12, fig.height=5}
 par(mar=c(1,0,1,1))
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.15, cex.names=0.45)
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.2, cex.names=0.45)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ```
 
@@ -260,18 +255,14 @@ mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ## KSSL Data
 
 Get KSSL data from these series via `fetchKSSL`.
-```{r}
+```{r, results='hide'}
 # get associated KSSL data for these series
-kssl.data <- lapply(s.names, getPedons)
+kssl.data <- fetchKSSL(series = s.names)
 
-# some may not have any data, filter those out
-not.null <- which(! sapply(kssl.data, is.null))
-# combine into single SPC
-kssl.data <- union(kssl.data[not.null])
-
-# normalize soil series names
-for(i in s.names)
+# normalize soil series names via pattern matching and conversion to upper case
+for(i in s.names) {
   kssl.data$taxonname[grep(i, kssl.data$taxonname, ignore.case = TRUE)] <- toupper(i)
+}
 ```
 
 Tabulate number of KSSL pedons / series name.
