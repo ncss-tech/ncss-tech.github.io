@@ -1,37 +1,24 @@
 ---
+title: "Pair-Wise Distance Between Profiles and Mixed Variable Types"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
-  html_vignette:
-    mathjax: null
-    jquery: null
-    smart: no
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+keep_md: no
 ---
-
+  
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr, quietly = TRUE)
-
-opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=TRUE)
-options(width=100, stringsAsFactors=FALSE)
-
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
 
-Pair-Wise Distance Between Profiles<br>Mixed Variable Types
-=======================================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
-
 
 # Introduction
-
-
 
 
 # Setup R Envionment
@@ -60,35 +47,37 @@ library(RColorBrewer)
 # Sample Data
 While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
 
-```{r load-data, fig.width=9, fig.height=4, htmlcap='Pedons correlated to the Loafercreek soil series.'}
+```{r load-data, fig.width=9, fig.height=4}
 # load sample data from the soilDB package
 data(loafercreek, package = 'soilDB')
 
 # get a subset of profiles to work with
-x <- loafercreek[20:30, ]
+x <- loafercreek[1:20, ]
 ```
 
 
 # Methods
 
 ## Check Data
-```{r fig.width=10, fig.height=6, htmlcap=''}
-# check existing texture
+```{r fig.width=10, fig.height=6}
+# check existing textures
 table(x$texture_class)
 
-# order field texture according to plant available water low -> high
-# note: leaving out "in-lieu-of" texture classes for organic or bedrock
-x$texture_class <- factor(x$texture_class, ordered = TRUE, levels = c('sl', 'scl', 'l', 'sil', 'c', 'sic', 'cl', 'sicl'))
+# order field texture according to particle size
+# note: leaving out "in-lieu-of" texture classes for organic soil material and bedrock
+x$texture_class <- factor(x$texture_class, ordered = TRUE, levels = SoilTextureLevels())
+x$texture_class <- droplevels(x$texture_class)
+
+# make a copy without ordering
+x$texture_class_nominal <- factor(x$texture_class, ordered = FALSE)
+
+# order plasticity
+x$plasticity <- factor(x$plasticity, levels=c('nonplastic', 'slightly plastic', 'moderately plastic'))
 
 # graphical check
 par(mar=c(0,1,3,1))
-plot(x, color='texture_class', label='pedon_id', col.palette=brewer.pal(10, 'Spectral'))
-addVolumeFraction(x, 'total_frags_pct')
-
-# make a fake name with texture class + RF volume:
-x$fake.name <- ifelse(!is.na(x$texture_class), paste0(x$texture_class, ' - ', x$total_frags_pct),  '')
-plot(x, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.65, col.palette=brewer.pal(10, 'Spectral'))
-addVolumeFraction(x, 'total_frags_pct')
+plot(x, color='texture_class', label='pedon_id')
+plot(x, color='plasticity', label='pedon_id')
 ```
 
 ## Horizon Level Attributes
@@ -103,9 +92,26 @@ dd.hz <- diana(d.hz)
 
 # plot dendrogram + profiles
 par(mar=c(2,1,3,1))
-plotProfileDendrogram(x, dd.hz, scaling.factor = 0.75, y.offset = 5, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
+plotProfileDendrogram(x, dd.hz, scaling.factor = 0.75, y.offset = 5, width=0.2, color='texture_class', label='pedon_id', cex.name=0.65, col.palette=brewer.pal(10, 'Spectral'))
 addVolumeFraction(x, 'total_frags_pct')
 ```
+
+
+```{r fig.width=10, fig.height=6, htmlcap=''}
+# make an index to soil horizons (anything other than O|Cr|R)
+idx <- grep('O|Cr|R', x$hzname, invert = TRUE)
+
+# compute pair-wise distances using texture class (ordered factor) and rock frag volume
+d.hz <- profile_compare(x, vars=c('texture_class_nominal', 'total_frags_pct'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
+# divisive hierarchical clustering
+dd.hz <- diana(d.hz)
+
+# plot dendrogram + profiles
+par(mar=c(2,1,3,1))
+plotProfileDendrogram(x, dd.hz, scaling.factor = 0.75, y.offset = 5, width=0.2, color='texture_class', label='pedon_id', cex.name=0.65, col.palette=brewer.pal(10, 'Spectral'))
+addVolumeFraction(x, 'total_frags_pct')
+```
+
 
 
 ## Site and Horizon Level Attributes
@@ -141,3 +147,7 @@ par(mar=c(2,1,3,1))
 plotProfileDendrogram(x, dd.hz.site, scaling.factor = 0.008, y.offset = 0.1, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
 addVolumeFraction(x, 'total_frags_pct')
 ```
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.

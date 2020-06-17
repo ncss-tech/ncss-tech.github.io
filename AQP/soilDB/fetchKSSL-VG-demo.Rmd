@@ -54,6 +54,7 @@ library(soilDB)
 library(latticeExtra)
 library(plyr)
 library(reshape2)
+library(grid)
 
 # you can get the data like this:
 # s <- fetchKSSL(pedon_id = 'S08NV003003')
@@ -62,7 +63,7 @@ library(reshape2)
 vg.params <- data.frame(theta_r=0.0337, theta_s=0.4864, alpha=-1.5814, npar=0.1227)
 vg.model <- KSSL_VG_model(vg.params)
 
-p.model <- xyplot(phi ~ theta, data=vg.model$VG_curve, type=c('l', 'g'), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression(Suction~~(kPa)), xlab=expression("Volumetric Water Content" (cm^{3}/cm^{3})), par.settings = list(plot.line=list(col='RoyalBlue', lwd=2)))
+p.model <- xyplot(phi ~ theta, data=vg.model$VG_curve, type=c('l', 'g'), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression(Matric~~Potential~~(kPa)), xlab=expression("Volumetric Water Content" (cm^{3}/cm^{3})), par.settings = list(plot.line=list(col='RoyalBlue', lwd=2)))
 
 update(p.model, main='Estimated Water Retention Curve\nS08NV003003\n0-9cm', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
 
@@ -70,18 +71,31 @@ update(p.model, main='Estimated Water Retention Curve\nS08NV003003\n0-9cm', sub=
 
 
 ## Theoretical Water Retention Curves
-Average soil hydraulic parameters by USDA soil texture class, extracted from the [ROSETTA documentation](https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/).
-```{r fig.width=10, fig.height=8}
+Average soil hydraulic parameters by USDA soil texture class, extracted from the [ROSETTA documentation](https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/). Approximate water-retention data have been computed for an idealized volume of homogenous soil material via van Genuchten model.
+
+```{r, echo=FALSE}
+data("ROSETTA.centroids")
+kableExtra::kable_styling(knitr::kable(ROSETTA.centroids, row.names = FALSE, digits = 3), full_width = FALSE, font_size = 10)
+```
+
+
+```{r}
 # load average soil hydraulic parameters
 data("ROSETTA.centroids")
 
+# re-level texture class by approximate AWC
+ll <- ROSETTA.centroids$texture[order(ROSETTA.centroids$awc)]
+ROSETTA.centroids$texture <- factor(ROSETTA.centroids$texture, levels=ll)
+
 # iterate over horizons and generate VG model curve
 res <- lapply(1:nrow(ROSETTA.centroids), function(i) {
-  m <- KSSL_VG_model(VG_params = ROSETTA.centroids[i, ], phi_min = 10^-3, phi_max=10^6)$VG_curve
-  # copy generalized hz label
-  m$hz <- ROSETTA.centroids$hz[i]
-  # copy ID
-  m$texture_class <- ROSETTA.centroids$texture[i]
+  # fit model using parameters from centroids
+  vg <- KSSL_VG_model(VG_params = ROSETTA.centroids[i, ], phi_min = 10^-3, phi_max=10^6)
+  
+  # extract curve and add texture ID
+  m <- vg$VG_curve
+  m$texture <- ROSETTA.centroids$texture[i]
+  
   return(m)
 })
 
@@ -89,22 +103,49 @@ res <- lapply(1:nrow(ROSETTA.centroids), function(i) {
 res <- do.call('rbind', res)
 
 # check: OK
-str(res)
+head(res)
+```
 
 
-# visual check: OK
+
+```{r fig.width=10, fig.height=8}
+trellis.par.set(superpose.symbol=list(col=c('black', 'black', 'black'), fill=c('firebrick', 'orange', 'royalblue'), cex=1, pch=22))
+sk <- simpleKey(text=c('permanent wilting point', 'field capacity', 'saturation'), points = TRUE, columns=3)
+
 xyplot(
-  phi ~ theta | texture_class, data=res, 
+  phi ~ theta | texture, data=res, 
   type=c('l', 'g'), 
   scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), 
   yscale.components=yscale.components.logpower, 
-  ylab=expression(Suction~~(kPa)), 
+  ylab=expression(Matric~~Potential~~(-kPa)), 
   xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)), 
-  par.settings = list(superpose.line=list(col='RoyalBlue', lwd=2)), 
+  par.settings = list(plot.line=list(col='black', lwd=2)), 
   strip=strip.custom(bg=grey(0.85)), 
   as.table=TRUE,
-  main='van Genuchten Model Parameters fit by USDA-ARS Rosetta', 
-  sub='Class Avergages'
+  key=sk,
+  main='Idealized Water Retention\nUSDA-ARS ROSETTA Model Centroids', 
+  # sub='van Genuchten model',
+  subscripts = TRUE,
+  panel= function(x, y, subscripts=subscripts, ...) {
+    # idealized water retention curve
+    panel.xyplot(x, y, ...)
+    
+    # get texture (i.e. the current panel)
+    tx <- res$texture[subscripts][1]
+    # look-up centroid data for this texture
+    centroid.data <- ROSETTA.centroids[match(tx, ROSETTA.centroids$texture), ]
+    
+    # add PWP, note that y-scale is log_10-transformed
+    panel.points(x=centroid.data$pwp, y=log(1500, base = 10), col='black', fill='firebrick', cex=0.85, pch=22)
+    # add PWP, note that y-scale is log_10-transformed
+    panel.points(x=centroid.data$fc, y=log(33, base = 10), col='black', fill='orange', cex=0.85, pch=22)
+    # add SAT, note that y-scale is log_10-transformed
+    panel.points(x=centroid.data$sat, y=log(0.1, base = 10), col='black', fill='royalblue', cex=0.85, pch=22)
+    
+    # annotate with approx AWC
+    grid.text(sprintf('AWC: %s', round(centroid.data$awc, 3)), x = unit(0.95, 'npc'), y = unit(0.95, 'npc'), gp=gpar(cex=0.75), hjust=1)
+    
+  }
 )
 ```
 

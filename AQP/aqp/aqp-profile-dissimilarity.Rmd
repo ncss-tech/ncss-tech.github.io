@@ -1,7 +1,17 @@
-```{r setup, echo=FALSE, results='hide'}
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dpi=100, fig.align='center', dev='png', tidy=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+---
+title: "Soil Profile Distances"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output: html_vignette
+keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
+
 ## Introduction
 
 ### Interpreting Dendrograms
@@ -116,14 +126,18 @@ d.phylo <- as.phylo(as.hclust(d.diana))
 
 
 # plot: 2 figures side-by-side
-par(mfcol=c(1,2), mar=c(2,2,2,2))
+layout(matrix(c(1,2), nrow = 1), widths = c(0.6, 0.4))
+par(mar=c(1,1,1,1))
 # profiles
-plot(d, width=0.1, name='name')
+plotSPC(d, name='name', axis.line.offset = -1)
+
 # annotate shallow-mod.deep break
 abline(h=50, col='red', lty=2)
+
 # add dissimilarity matrix
 addtable2plot(0.8, 70, format(d.m, digits=2), display.rownames=TRUE, 
-xjust=0, yjust=0, cex=0.6, title='Total Dissimilarity')
+xjust=0, yjust=0, cex=0.75, title='Total Dissimilarity')
+
 # plot dendrogram in next panel
 plot(d.phylo, direction='down', adj=0.5, srt=0, 
 label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
@@ -132,7 +146,7 @@ label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
 
 ***********
 
-```{r demo-2}
+```{r, fig.width=8, fig.height=6}
 # continuing from example above...
 	
 # return dissimilarity matrices at each depth slice
@@ -172,10 +186,10 @@ horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
 # combine into panels of a single figure
 p.3 <- c('Slice-Wise Distance'=p.1, 'Cumulative Distance'=p.2)
 # setup plotting style
-trellis.par.set(
-	superpose.line=list(col=cols, lwd=2, lty=c(1,2,4)), strip.background=list(col=grey(0.85))
-	)
+tps <- list(superpose.line=list(col=cols, lwd=2, lty=c(1,2,4)), strip.background=list(col=grey(0.85)))
 # render figure
-print(p.3)
+print(update(p.3, par.settings=tps))
 ```
 
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
