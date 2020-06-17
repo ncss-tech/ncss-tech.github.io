@@ -79,6 +79,7 @@ kableExtra::kable_styling(knitr::kable(ROSETTA.centroids, row.names = FALSE, dig
 ```
 
 
+Develop theoretical water retention curves via van Genuchten model and texture class centroids.
 ```{r}
 # load average soil hydraulic parameters
 data("ROSETTA.centroids")
@@ -90,6 +91,7 @@ ROSETTA.centroids$texture <- factor(ROSETTA.centroids$texture, levels=ll)
 # iterate over horizons and generate VG model curve
 res <- lapply(1:nrow(ROSETTA.centroids), function(i) {
   # fit model using parameters from centroids
+  # model bounds are given in kPA of suction
   vg <- KSSL_VG_model(VG_params = ROSETTA.centroids[i, ], phi_min = 10^-3, phi_max=10^6)
   
   # extract curve and add texture ID
@@ -107,7 +109,7 @@ head(res)
 ```
 
 
-
+Plot water retention curves and annotate with permanent wilting point (approximately 1500kPa suction), field capacity (approximately 33kPa suction), and saturation (close to 0 kPa suction). Note that matric potential (typically negative pressure by convention) are displayed as suction (positive values).
 ```{r fig.width=10, fig.height=8}
 trellis.par.set(superpose.symbol=list(col=c('black', 'black', 'black'), fill=c('firebrick', 'orange', 'royalblue'), cex=1, pch=22))
 sk <- simpleKey(text=c('permanent wilting point', 'field capacity', 'saturation'), points = TRUE, columns=3)
@@ -115,7 +117,7 @@ sk <- simpleKey(text=c('permanent wilting point', 'field capacity', 'saturation'
 xyplot(
   phi ~ theta | texture, data=res, 
   type=c('l', 'g'), 
-  scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), 
+  scales=list(alternating=3, x=list(tick.number=6), y=list(log=10, tick.number=6)), 
   yscale.components=yscale.components.logpower, 
   ylab=expression(Matric~~Potential~~(-kPa)), 
   xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)), 
@@ -149,7 +151,8 @@ xyplot(
 )
 ```
 
-# A More Complex Example
+
+# Generate Curves for the Cecil Soil Series 
 
 Continuing from above, this time plotting water retention curves for all horizons associated with the [Cecil](http://casoilresource.lawr.ucdavis.edu/sde/?series=cecil) soil series. Horizon designations are [generalized](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html) for grouping of similar data. 
 ```{r fig.width=10, fig.height=6}
