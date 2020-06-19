@@ -42,7 +42,49 @@ library(soilDB)
 library(sharpshootR)
 library(cluster)
 library(RColorBrewer)
+library(ape)
 ```
+
+
+# Simple Example via Soil Texture
+```{r}
+# soil textures, sorted according to field book
+data("ROSETTA.centroids")
+
+# ordered vs. nominal texture classes
+tex.ordered <- ROSETTA.centroids$texture
+tex.nominal <- factor(ROSETTA.centroids$texture, levels=sort(as.character(ROSETTA.centroids$texture)), ordered = FALSE)
+
+# assemble into DF, note that stringsAsFactors=FALSE required
+x.1 <- data.frame(
+  p1=tex.ordered,
+  stringsAsFactors = FALSE
+  )
+
+x.2 <- data.frame(
+  p1=tex.nominal,
+  stringsAsFactors = FALSE
+)
+
+# copy texture classes to row names for automatic distance matrix / clustering labels
+row.names(x.1) <- x.1$p1                  
+row.names(x.2) <- x.2$p1
+
+# 1D clustering
+d.1 <- daisy(x.1[, 1, drop=FALSE], metric = 'gower') 
+d.2 <- daisy(x.2[, 1, drop=FALSE], metric = 'gower')
+
+## note differences
+# d.1
+# d.2
+
+# check: pair-wise distances should reflect information contained in ranks of ordinal representation
+par(mar=c(1,1,3,1), mfcol=c(1,2))
+plot(as.phylo(as.hclust(diana(d.1))), main='Ordinal', label.offset=0.01)
+plot(as.phylo(as.hclust(diana(d.2))), main='Nominal', label.offset=0.01)
+
+```
+
 
 # Sample Data
 While the methods outlined in this document can be applied to any collection of pedons, it is convenient to work with a standardized set of data. You can follow along with the analysis by copying code from the following blocks and running it in your **R** session. The sample data used in this document is based on soil profiles that have been correlated to the [Loafercreek](https://soilseries.sc.egov.usda.gov/OSD_Docs/L/LOAFERCREEK.html) soil series from the Sierra Nevada Foothill Region of California. Note that the internal structure of the `loafercreek` data is identical to the structure returned by [`fetchNASIS()` from the soilDB package](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html). All horizon-level values are pulled from the pedon horizon table of the pedons being analyzed.
@@ -52,7 +94,7 @@ While the methods outlined in this document can be applied to any collection of 
 data(loafercreek, package = 'soilDB')
 
 # get a subset of profiles to work with
-x <- loafercreek[1:20, ]
+x <- loafercreek[10:20, ]
 ```
 
 
@@ -69,47 +111,40 @@ x$texture_class <- factor(x$texture_class, ordered = TRUE, levels = SoilTextureL
 x$texture_class <- droplevels(x$texture_class)
 
 # make a copy without ordering
-x$texture_class_nominal <- factor(x$texture_class, ordered = FALSE)
-
-# order plasticity
-x$plasticity <- factor(x$plasticity, levels=c('nonplastic', 'slightly plastic', 'moderately plastic'))
+x$texture_class_nominal <- factor(x$texture_class, levels=sort(as.character(unique(x$texture_class)), decreasing = TRUE), ordered = FALSE)
 
 # graphical check
 par(mar=c(0,1,3,1))
 plot(x, color='texture_class', label='pedon_id')
-plot(x, color='plasticity', label='pedon_id')
+plot(x, color='texture_class_nominal', label='pedon_id')
+
+# make a fake horizon-level attr, until #7 is fixed
+x$constant <- rep(1, times=nrow(x))
 ```
 
 ## Horizon Level Attributes
 ```{r fig.width=10, fig.height=6, htmlcap=''}
-# make an index to soil horizons (anything other than O|Cr|R)
-idx <- grep('O|Cr|R', x$hzname, invert = TRUE)
 
-# compute pair-wise distances using texture class (ordered factor) and rock frag volume
-d.hz <- profile_compare(x, vars=c('texture_class', 'total_frags_pct'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
+# compute pair-wise distances using texture class (ordered factor)
+d.hz <- profile_compare(x, vars=c('texture_class', 'constant'), max_d=100, k=0, rescale.result=TRUE)
 # divisive hierarchical clustering
 dd.hz <- diana(d.hz)
 
 # plot dendrogram + profiles
-par(mar=c(2,1,3,1))
-plotProfileDendrogram(x, dd.hz, scaling.factor = 0.75, y.offset = 5, width=0.2, color='texture_class', label='pedon_id', cex.name=0.65, col.palette=brewer.pal(10, 'Spectral'))
-addVolumeFraction(x, 'total_frags_pct')
+par(mar=c(1,0,3,1))
+plotProfileDendrogram(x, dd.hz,  width=0.25, color='texture_class', label='pedon_id', cex.name=0.65)
 ```
 
 
 ```{r fig.width=10, fig.height=6, htmlcap=''}
-# make an index to soil horizons (anything other than O|Cr|R)
-idx <- grep('O|Cr|R', x$hzname, invert = TRUE)
-
-# compute pair-wise distances using texture class (ordered factor) and rock frag volume
-d.hz <- profile_compare(x, vars=c('texture_class_nominal', 'total_frags_pct'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
+# compute pair-wise distances using texture class (nominal factor)
+d.hz <- profile_compare(x, vars=c('texture_class_nominal', 'constant'), max_d=100, k=0, rescale.result=TRUE)
 # divisive hierarchical clustering
 dd.hz <- diana(d.hz)
 
 # plot dendrogram + profiles
-par(mar=c(2,1,3,1))
-plotProfileDendrogram(x, dd.hz, scaling.factor = 0.75, y.offset = 5, width=0.2, color='texture_class', label='pedon_id', cex.name=0.65, col.palette=brewer.pal(10, 'Spectral'))
-addVolumeFraction(x, 'total_frags_pct')
+par(mar=c(1,0,3,1))
+plotProfileDendrogram(x, dd.hz,  width=0.25, color='texture_class_nominal', label='pedon_id', cex.name=0.65)
 ```
 
 
@@ -138,7 +173,7 @@ mtext(text='Field Described Slope (m)', side=1, line=-4)
 # compute pair-wise distances using:
 # hz attributes: texture class (ordered factor) and rock frag volume
 # site attributes: surface slope and elevation
-d.hz.site <- profile_compare(x, vars=c('texture_class', 'total_frags_pct', 'slope_field', 'elev_field'), max_d=100, k=0, filter=idx, replace_na=TRUE, add_soil_flag=TRUE)
+d.hz.site <- profile_compare(x, vars=c('texture_class', 'total_frags_pct', 'slope_field', 'elev_field'), max_d=100, k=0)
 # divisive hierarchical clustering
 dd.hz.site <- diana(d.hz.site)
 
