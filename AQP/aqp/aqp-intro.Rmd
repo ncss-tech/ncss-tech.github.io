@@ -259,6 +259,13 @@ idx <- grep('shasta', profile_id(sp4), ignore.case=TRUE)
 sp4[idx, ]
 ```
 
+Simpler subsetting with `filter`
+```{r eval=FALSE}
+filter(sp4, group == 'A')
+filter(sp4, elevation < 1000)
+filter(sp4, grepl('shasta', id, ignore.case = TRUE))
+```
+
 
 The `subsetProfiles()` function can be used to subset collections based on criteria from both horizon and site level attributes. Several examples are given below.
 ```{r subsetting-2, eval=FALSE}
@@ -275,6 +282,7 @@ class(sp4[, 1]) # horizon 1 from each profile
 # filtering criteria from horizon and site level data
 subsetProfiles(sp4, h='clay < 20', s='group == "A"')
 ```
+
 
 
 # Concatenation of SoilProfileCollection Objects
@@ -328,8 +336,10 @@ x$g <- factor(x$g)
 str(x)
 
 # graphical check
-plot(x, color='hzID')
-groupedProfilePlot(x, 'g', color='hzID', group.name.offset = -15)
+# convert character horizon IDs into numeric
+x$zzz <- as.numeric(hzID(x))
+plotSPC(x, color='zzz')
+groupedProfilePlot(x, 'g', color='zzz', group.name.offset = -15)
 ```
 
 
@@ -833,7 +843,7 @@ plot(d.gsm.pedons.2, name='', color='p1', col.label='Contributing Fraction', col
 
 # Pair-Wise Dissimilarity
 Calculation of between-profile dissimilarity is performed using the `profile_compare()` function. Dissimilarity values depend on attributes selection (e.g. clay, CEC, pH , etc.), optional depth-weighting parameter (`k`), and a maximum depth of evaluation (`max_d`). This topic is further documented in a [related tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html), the function manual page (type `help(profile_compare)` in the **R** console), and [this paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
-```{r dissimilarity, fig.height=6, fig.width=8}
+```{r fig.height=6, fig.width=10}
 library(cluster)
 library(sharpshootR)
 
@@ -855,8 +865,13 @@ d.diana <- diana(d)
 
 # this function is from the sharpshootR package
 # requires some manual adjustments
-par(mar=c(1,1,5,1))
-plotProfileDendrogram(sp4, d.diana, scaling.factor = 0.8, y.offset = 5, width=0.25, color='ex_Ca_to_Mg')
+par(mar=c(0, 0, 4, 1))
+plotProfileDendrogram(sp4, d.diana, scaling.factor = 0.8, y.offset = 5, cex.names=0.7, width=0.3, color='ex_Ca_to_Mg')
+```
+
+Try again in `debug` mode to ensure that profiles are sorted correctly.
+```{r fig.height=6, fig.width=10}
+plotProfileDendrogram(sp4, d.diana, scaling.factor = 0.8, y.offset = 5, cex.names=0.7, width=0.3, color='ex_Ca_to_Mg', debug = TRUE)
 ```
 
 
