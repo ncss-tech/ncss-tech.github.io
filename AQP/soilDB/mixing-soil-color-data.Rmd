@@ -30,10 +30,10 @@ Make some example data.
 colors <- c('10YR 3/5', '5YR 5/6', '2.5Y 5/6')
 weights <- c(60, 30, 10)
 
-# combine into a data.frame and convert to sRGB
+# combine into a data.frame and convert to sRGB + CIE LAB
 x <- cbind(
   parseMunsell(colors, convertColors=FALSE),
-  parseMunsell(colors, return_triplets=TRUE),
+  parseMunsell(colors, return_triplets=TRUE, returnLAB=TRUE),
   pct=weights,
   col=parseMunsell(colors, convertColors=TRUE)
 )
@@ -49,11 +49,11 @@ x$id <- 1
 x$colormoistst <- "Dry"
 
 # simplify
-simplifyColorData(x, id.var='id')
+simplifyColorData(x, id.var='id', wt = 'pct')
 ```
 
 
-Demonstrate mixing soil colors in CIE LAB and sRGB color spaces via `mix_and_clean_colors()`.
+Demonstrate mixing soil colors in CIE LAB and sRGB color spaces via `estimateColorMixture()`.
 ```{r, fig.width=7, fig.height=2.5}
 mixColorDemo <- function(x) {
   x <- x[order(x$pct, decreasing = TRUE), ]
@@ -69,7 +69,7 @@ mixColorDemo <- function(x) {
   text(max(x.vals)+0.5, y.vals[1], '=', cex=2, lwd=2)
   
   # mix in both color spaces
-  mixed.lab <- mix_and_clean_colors(x, backTransform = TRUE)
+  mixed.lab <- estimateColorMixture(x, wt = 'pct', backTransform = TRUE)
   
   # add mixed colors
   points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=5, pch=15)
