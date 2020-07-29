@@ -183,8 +183,25 @@ Hang profile sketches from divisive hierarchical clustering of soil color signat
 ```{r fig.width=12, fig.height=5}
 par(mar=c(1,0,1,1))
 plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.2, cex.names=0.45)
+
+# annotate with family name
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ```
+
+
+Re-make, this time as a work of art. Note that the [Elvira](https://casoilresource.lawr.ucdavis.edu/sde/?series=elvira) sketch is missing a color for the Ap horizon due to a minor formatting error in the OSD (10YR2/1, e.g. missing a space). I adjusted the default color used by `plotSPC` to dark grey (<span style="background-color: `r grey(0.125)`;">&nbsp;&nbsp;&nbsp;</span>) as an act of artistic license.
+```{r fig.width=12, fig.height=5}
+# adjust margins and default colors
+par(mar=c(0,0,0,0), bg='black', fg='white')
+
+# hang profiles from dendrogram
+# note customization via arguments passed to plotSPC
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.4, cex.names=0.45, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE, name=NA, default.color = grey(0.125))
+
+# annotate with family name
+mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
+```
+
 
 ## Morphologic Differences
 

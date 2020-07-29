@@ -165,11 +165,18 @@ text(x$A, x$B, labels = hue.labels, cex=0.75)
 
 
 ## Color Contrast Charts
+Inspect the data used to generate the figures with the additional argument `returnData=TRUE`.
 
 Basic chart, single reference hue.
 ```{r fig.width=6, fig.height=8}
 contrastChart(m = '7.5YR 4/3', hues = c('7.5YR'))
 ```
+
+Threshold color chips by $\Delta{E_{00}}$.
+```{r fig.width=6, fig.height=8}
+contrastChart(m = '7.5YR 4/3', hues = c('7.5YR'), thresh = 15)
+```
+
 
 Multiple reference hues.
 ```{r fig.width=12, fig.height=8}
