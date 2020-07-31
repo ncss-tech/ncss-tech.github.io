@@ -13,19 +13,21 @@ output:
 This document describes how to setup an ODBC link between **R** and the local NASIS database. See [Chapter 2](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html) from the Statistics for Soil Scientists training for a demonstration.
 
 ## Open the ODBC Data Source Administrator
-1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. Select the 64bit ODBC application if you are using Windows 10. It should look like this:
+1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. Select the 64-bit ODBC application if you are using Windows 10. It should look like this:
 
 ![](odbc-01.png)
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
-  + Select the "SQL Server" driver. (64bit if prompted for a choice)
+  + Select the "SQL Server Native Client 11.0" driver.
   
   
 ![](odbc-02.png)
   
-  + Name the data source `nasis_local`, the data source description is optional.
+  + Name the data source `nasis_local`. The data source description is optional.
+
+![](odbc-03.png)
   
-  + The NASIS SQL server name is in the format `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the ["computer name" of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name) and `NASISSQLEXPRESS` denotes the local NASIS SQL Express server.
+  + The NASIS SQL server name is in the format `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the ["computer name" of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name) and `NASISSQLEXPRESS` is the local NASIS SQL Express server.
   
   + Your computer name is often on the asset tag sticker on the outside of your computer. 
   
@@ -33,32 +35,32 @@ This document describes how to setup an ODBC link between **R** and the local NA
     
 ![](odbc-06.png)
   
-  + Your computer name will look something like: `ARCCASON500002` -- where state, office and number will vary from computer to computer. _Be very careful when typing it in!_ This is a common source of error in setting up ODBC connection.
-  
-  + So, in summary, you will have something like _Server:_ `ARCCASON500002\NASISSQLEXPRESS` entered on the form pictured below.
+  + Your computer name will look something like: `ARCCASON5000002` -- where state, office and number will vary from computer to computer. _Be very careful when typing it in!_ This is a common source of error in setting up ODBC connection. You will have something like _Server:_ `ARCCASON5000002\NASISSQLEXPRESS` as entered on the form above.
 
 When finished click "Next".
 
-![](odbc-03.png)
-
-3. Choose the second option: "SQL Server authentication..." <br>**don't try and re-type these, just copy/paste**
+3. Under "Create a New Data Source to SQL Server" choose the second option: "SQL Server authentication..." <br>**don't try and re-type these, just copy/paste**
   + login: `NASISSQLRO` 
   + Windows 7 password: `nasisRe@d0n1y`
   + Windows 10 password: `nasisRe@d0n1y365`
 
 ![](odbc-04.png)
 
-4. On the next screen, select "Nasis-local" as the default data base.
+4. On the next screen, select "Nasis-local" as the default database. The connection you will be making is `READONLY`.
 
 ![](odbc-05.png)
 
-5. Click "Next" and then "Finish" the finalize the connection.
+5. Click "Next" and then "Finish". If you would like, you can test the connection to make sure it works.
 
-6. Close the ODBC control panel by clicking on 'OK'
-
+6. Close the ODBC control panel by clicking 'OK'
 
 ## Optionally Install Required Packages
-You will need to install the `RODBC` and `soilDB` packages if not present. You can check by trying to load either of these packages at the console. Or, install using the commands below if you are unsure.
+
+For the demonstration below, you will need to install the `RODBC` and `soilDB` R packages [if you have not already]. 
+
+You can check by trying to load either of these packages in the console using `library(RODBC)` for instance. 
+
+Install RODBC and other soil-themed packages using the commands below if you are unsure.
 
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN + dependencies
@@ -75,9 +77,12 @@ remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, b
 remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
-
 ## An example R session
-After installing the above packages, add some *sites+pedons* or *components* into the selected set and try loading them into your R session.
+
+After installing the above packages, add some *sites+pedons* or *components* into the selected set in NASIS.
+
+Then, try loading them into your R session.
+
 ```{r example, eval=FALSE}
 # load required libraries
 library(aqp)
