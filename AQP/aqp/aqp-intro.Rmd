@@ -637,7 +637,7 @@ sp4$n.hz <- profileApply(sp4, FUN=nrow)
 # compute the mean clay content by profile using an inline function
 sp4$mean.clay <- profileApply(sp4, FUN=function(i) mean(i$clay))
 # estimate soil depth based on horizon designation
-sp4$soil.depth <- profileApply(sp4, estimateSoilDepth, name='name', top='top', bottom='bottom')
+sp4$soil.depth <- profileApply(sp4, estimateSoilDepth, name='name')
 ```
 
 When `FUN` returns a vector of the same length as the number of horizons in a profile, `profileApply()` can be used to create new horizon-level attributes. For example, the change in clay content with depth could be calculated via:

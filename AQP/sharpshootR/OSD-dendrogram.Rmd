@@ -33,7 +33,7 @@ s <- fetchOSD(s.list)
 
 ```{r check-via-plotting, fig.width=16, fig.height=6}
 # estimate soil depth based on horizon designation
-s$soil.depth <- profileApply(s, estimateSoilDepth, name='hzname', top='top', bottom='bottom')
+s$soil.depth <- profileApply(s, estimateSoilDepth, name='hzname')
 
 # plot profiles, order by soil depth
 par(mar=c(0, 0, 0, 0))
