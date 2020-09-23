@@ -159,10 +159,14 @@ kable_styling(kable(s$competing[which(s$competing$series == 'CECIL'), ], format=
 
 
 
-Hillslope position (1D) and geomorphic component (2D) probabilities have been estimated by series by dividing the number of components assigned the each hillslope position or geomorphic component by the total number of components. The total number of components and Shannon entropy are also included in the summary.
+Hillslope position (2D) and geomorphic component (3D) probabilities have been estimated by series by dividing the number of components assigned the each hillslope position or geomorphic component by the total number of components. The total number of components and Shannon entropy are also included in the summary.
 ```{r echo=FALSE}
 kable_styling(kable(s$hillpos, format='html', digits = 2), font_size = 10, full_width = FALSE)
 kable_styling(kable(s$geomcomp, format='html', digits = 2), font_size = 10, full_width = FALSE)
+
+kable_styling(kable(s$mtnpos, format='html', digits = 2), font_size = 10, full_width = FALSE)
+kable_styling(kable(s$terrace, format='html', digits = 2), font_size = 10, full_width = FALSE)
+kable_styling(kable(s$flats, format='html', digits = 2), font_size = 10, full_width = FALSE)
 ```
 
 Parent material kind and origin probabilities have been estimated in a similar manner. The summaries are in long format due to the large set of possible `pmkind` and `pmorigin` classes.
