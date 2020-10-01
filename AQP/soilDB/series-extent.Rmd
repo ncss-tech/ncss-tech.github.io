@@ -43,16 +43,10 @@ Illustrate the extent of SSURGO map units associated with the Amador series.
 # load required libraries
 library(soilDB)
 library(rgdal)
-library(dismo)
 library(maps)
 library(RColorBrewer)
 ```
 
-
-Get series extent for the Amador series and plot on a Google Map.
-```{r example-1, eval=FALSE}
-seriesExtentAsGmap('amador')
-```
 
 Investigate the structure of soil series extent data.
 ```{r example-3}
@@ -128,7 +122,7 @@ writeOGR(s.extent.utm, dsn='.', layer='amador-pardee-san-joaquin-extent-utm', dr
 
 # Graphical Display of Joint Series Extent
 
-```{r, results='hide'}
+```{r, results = 'hide'}
 library(scales) # need this for alpha()
 
 # define some nice colors
@@ -152,6 +146,82 @@ lapply(l, function(i) {
 box()
 title(main='Joint Occurrence', line=1.25)
 mtext(side=1, text=as.character(Sys.Date()), line=0)
+```
+
+
+
+```{r, results='hide'}
+library(rasterVis)
+library(viridis)
+
+# using all siblings of a given soil series
+s <- 'zook'
+sib <- siblings(s)
+sib.names <- c(s, sib$sib$sibling)
+
+# get list of series extent grids
+# note these all have different bounding-boxes (raster extents)
+g <- lapply(sib.names, function(i) {
+  se <- suppressWarnings(seriesExtent(i, type = 'raster'))
+  # threshold at 15%
+  # se <- se >= 15
+  
+  return(se)
+})
+
+# extract the extent / BBOX for each
+e <- lapply(g, extent)
+# convert to Spatial Polygons
+e <- lapply(e, as, 'SpatialPolygons')
+
+# hack: assign each extent an ID so they can be merged
+for(i in 1:length(e)) {
+  e[[i]] <- spChFIDs(e[[i]], as.character(i))
+}
+
+# combine list of SP into single, multi-feature SP object
+p <- do.call('rbind', e)
+
+# graphical check, ok
+plot(p)
+
+# extend each series extent grid to the full extent / BBOX
+ge <- lapply(g, function(i) {
+  extend(i, extent(p))
+})
+
+# grids are conformal
+# convert to rasterStack for convenience
+# each layer has been thresholded to binary 0/1 raster
+ge <- stack(ge)
+
+# sum pixels across raster stack
+x <- stackApply(ge, indices = rep(1, times = nlayers(ge)), fun = sum, na.rm = TRUE)
+
+# set 0 to nodata
+x[x == 0] <- NA
+
+x <- x / maxValue(x)
+
+levelplot(
+  x,
+  col.regions=viridis,
+  main = 'Joint Occurrence',
+  margin = FALSE, 
+  scales = list(draw = FALSE)
+)
+
+# generalize via focal sum
+a <- aggregate(x, fact = 5, fun = sum, na.rm = TRUE)
+
+levelplot(
+  a,
+  col.regions=viridis,
+  main = 'Joint Occurrence',
+  margin = FALSE, 
+  scales = list(draw = FALSE)
+)
+
 ```
 
 

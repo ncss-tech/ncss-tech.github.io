@@ -7,6 +7,12 @@ output:
     mathjax: null
     jquery: null
     smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
@@ -23,9 +29,10 @@ This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQ
 With a recent version of R (>= 3.5), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # stable packages from CRAN
-install.packages('maps', dep=TRUE)
-install.packages('aqp', dep=TRUE)
-install.packages('soilDB', dep=TRUE)
+install.packages('maps', dep = TRUE)
+install.packages('aqp', dep = TRUE)
+install.packages('soilDB', dep = TRUE)
+install.packages('Gmedian', dep = TRUE)
 
 # latest versions from GitHub
 remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
@@ -33,7 +40,8 @@ remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependen
 ```
 
 
-# Quick Example: getting lab characterization (KSSL) and basic morphology (NASIS)
+# Quick Example
+
 KSSL and NASIS data are from the September 2018 snapshot. Details pending.
 ```{r}
 library(aqp)
@@ -119,7 +127,7 @@ idx <- which(s$morph$phfrags$labsampnum %in% c('82P02200', '82P02204'))
 s$morph$phfrags[idx, ]
 ```
 
-# Fetch Data Associated with a Set of IDs
+# Fetch Data by ID
 As of `soilDB` version 2.5.3, `fetchKSSL()` is fully vectorized with the exception of `bbox`. Note that it is much more efficient to work with the KSSL snapshot when attempting to load large collections of data by ID.
 
 ```{r, results='hide'}
@@ -142,6 +150,58 @@ plotSPC(pedons, color='estimated_ph_h2o', name='hzn_desgn')
 plotSPC(pedons, color='moist_soil_color', name='hzn_desgn')
 ```
 
+# Redoximorphic Features
+NEW as of 2020-10-01
+```{r fig.width = 9, fig.height = 3}
+library(stringr)
+
+# get data + morphology associated with the Drummer soil series
+x <- fetchKSSL(series = 'drummer', returnMorphologicData = TRUE)
+
+# convenience copy of the pedon/horizon/rmf data
+rmf <- x$morph$rmf
+
+# keep only moist colors
+rmf <- rmf[which(rmf$colormoistst == 'Moist'), ]
+
+# convert Munsell colors to hex notation
+rmf$color <- with(rmf, 
+     munsell2rgb(the_hue = colorhue, the_value = colorvalue, the_chroma = colorchroma)
+     )
+
+# quick check: OK
+par(mar = c(0, 0, 0, 0))
+previewColors(rmf$color)
+
+# sort RMF kind of frequency
+tab <- sort(table(rmf$rdxfeatkind), decreasing = TRUE)
+knitr::kable(tab)
+
+# set levels for later use
+rmf$rdxfeatkind <- factor(rmf$rdxfeatkind, levels = names(tab))
+
+# iterate over RMF kind and compute color quantiles
+z <- split(rmf, rmf$rdxfeatkind)
+
+cq <- lapply(z, function(i) {
+  colorQuantiles(soilColors = i$color)
+})
+
+# extract the L1 median colors
+L1 <- lapply(cq, '[[', 'L1')
+L1 <- do.call('rbind', L1)
+
+# make clean labels
+txt <- gsub(pattern = ' accumulation', replacement = '', x = row.names(L1), fixed = TRUE)
+chp <- str_split_fixed(string = L1$L1_chip, pattern = '\n', n = 2)
+txt <- sprintf("%s\n%s", chp[, 1], txt)
+
+# L1 color chips + annotation
+par(mar = c(0, 0, 3, 0))
+soilPalette(L1$L1_color, lab = txt)
+title('Drummer Redoximorphic Feature Summary\nL1 Median Colors and Closest Munsell Chip')
+```
+
 
 # Example Application
 Data can be queried by "taxonname"" (typically a soil series), using a geographic bounding-box in WGS84 referenced coordinates, or by MLRA. Taxonname matching is case-insensitive and based on the most current taxonname in NASIS. See `?fetchKSSL()` or [this GitHub repository](https://github.com/dylanbeaudette/process-kssl-snapshot) for details.
@@ -162,7 +222,7 @@ g <- fetchKSSL(series = sn, progress = FALSE)
 g$wmpd <- with(horizons(g), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
 
 # estimate soil depth based on horizon designations
-sdc <- getSoilDepthClass(g, name='hzn_desgn', top='hzn_top', bottom='hzn_bot')
+sdc <- getSoilDepthClass(g, name='hzn_desgn')
 
 # splice-into site data
 site(g) <- sdc
