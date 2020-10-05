@@ -7,21 +7,34 @@ output:
     mathjax: null
     jquery: null
     smart: no
-    keep_md: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
-library(knitr)
+library(knitr, quietly = TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
+# Examples with the Loafercreek sample data
 
-
+Load required packages, sample data, and subset of `horizon` attributes.
 ```{r fig.height=7, fig.width=7}
-library(soiltexture)
+# SoilProfileCollection methods
+# you will need the latest version of aqp
+# https://github.com/ncss-tech/aqp/
+library(aqp)
+# data-getting / sample data
 library(soilDB)
+# soil texture triangle
+library(soiltexture)
+# convenient alpha() function
 library(scales)
 
 # load sample data from soilDB package
@@ -29,7 +42,11 @@ data("loafercreek")
 
 # extract just horizon data
 h <- horizons(loafercreek)
+```
 
+
+Subset `sand`, `silt`, `clay` percentages and filter missing records or inconsistent fractions (e.g. add to more or less than 100%). Column names are adjusted to accommodate subsequent usage. 
+```{r fig.height=7, fig.width=7}
 # extract components of field texture, removing rows with missing data
 ssc <- h[, c('genhz', 'sand', 'silt', 'clay')]
 ssc <- na.omit(ssc)
@@ -50,31 +67,64 @@ ssc[idx, ]
 # maybe fix these later?
 ssc <- ssc[-idx, ]
 
-# initialize an empty triangle, quick demo of output
-TT.plot(class.sys = "USDA-NCSS.TT", cex.lab=0.75, cex.axis=0.75)
+# check: OK
+head(ssc)
+```
 
-
-# plot our data
-# note that there are many arguments used to ajust style
-TT.plot(
-  class.sys= "USDA-NCSS.TT",    # use "our" texture triangle
-  tri.data=ssc,                 # data.frame with sand, silt, clay values
-  main= "Loafercreek",          # title
-  tri.sum.tst=FALSE,            # do not test for exact sum(sand, silt, clay) == 100
-  cex.lab=0.75,                 # scaling of label text
-  cex.axis=0.75,                # scaling of axis
-  cex=0.5,                      # scaling of point symbols
-  col=alpha('royalblue', 0.5),  # color of point symbols, with 50% transparency
-  frame.bg.col='white',         # background color
-  class.lab.col='black',        # color for texture class labels
-  lwd.axis=2                    # line thickness for axis
-)
-
-
+```{r fig.height=3, fig.width=7}
 # split by generalized horizon name into a list of data.frames
 ssc.list <- split(ssc, ssc$GENHZ)
 
-# manually extract just A horizons
+record.count <- rev(sapply(ssc.list, nrow))
+
+par(mar = c(4.5, 3, 3, 1))
+dotchart(record.count, pch = 21, bg = 'royalblue', pt.cex = 1.5, xlab = 'Number of records', main = 'Loafercreek\nRecords per Generalized Horizon Label')
+```
+
+# Visualization via `soiltexture` Package
+
+An empty soil texture triangle, based particle size classes and abbreviations used by the US. Department of Agriculture, Natural Resources Conservation Service (USDA-NRCS) and National Cooperative Soil Survey (NCSS). This interface to ternary diagrams is provided by the excellent [`soiltexture`](https://CRAN.R-project.org/package=soiltexture) package by Julien Moeys.
+```{r fig.height=7, fig.width=7}
+TT.plot(
+  class.sys = "USDA-NCSS.TT",    # use "our" texture triangle
+  main = 'USDA-NRCS / NCSS',          # title
+  cex.lab = 0.75,                 # scaling of label text
+  cex.axis = 0.75,                # scaling of axis
+  frame.bg.col = 'white',         # background color
+  class.lab.col = 'black',        # color for texture class labels
+  lwd.axis = 1.5,
+  lwd.lab = 2,
+  arrows.show=TRUE
+)
+```
+
+Create a new figure, this  time saving the ternary diagram geometry for later (`TT` object). Data can be added as needed with the `TT.` family of functions.
+```{r fig.height=7, fig.width=7}
+# init figure and save geometry
+TT <- soiltexture::TT.plot(
+  class.sys = "USDA-NCSS.TT",    # use "our" texture triangle
+  main = 'Loafercreek\nall horizons',          # title
+  tri.sum.tst = FALSE,            # do not test for exact sum(sand, silt, clay) == 100
+  cex.lab = 0.75,                 # scaling of label text
+  cex.axis = 0.75,                # scaling of axis
+  frame.bg.col = 'white',         # background color
+  class.lab.col = 'black',        # color for texture class labels
+  lwd.axis = 1.5,
+  lwd.lab = 2,
+  arrows.show=TRUE
+)
+
+# add data
+# screen coordinates are available for later use
+xy <- TT.points(tri.data = ssc, geo = TT, tri.sum.tst = FALSE, cex=0.5, col=alpha('royalblue', 0.5))
+
+head(xy)
+```
+
+
+Subset data to `A` horizons, all with one call to `TT.plot`.
+```{r fig.height=7, fig.width=7}
+# local copy of `A` horizons
 x <- ssc.list$A
 
 # compose title using the current genhz
@@ -89,7 +139,7 @@ TT.plot(
   cex.lab=0.75,                 # scaling of label text
   cex.axis=0.75,                # scaling of axis
   cex=0.5,                      # scaling of point symbols
-  col=alpha('royalblue', 0.5),  # color of point symbols, with 50% transparency
+  col=alpha('darkgreen', 0.5),  # color of point symbols, with 50% transparency
   frame.bg.col='white',         # background color
   class.lab.col='black',        # color for texture class labels
   lwd.axis=2                    # line thickness for axis
@@ -97,4 +147,161 @@ TT.plot(
 ```
 
 
+# Describing Central Tendency and Spread
+
+A demonstration of [`textureTriangleSummary()`](http://ncss-tech.github.io/aqp/docs/reference/textureTriangleSummary.html), which displays approximate "ranges" (based on user-defined percentiles) in sand, silt, and clay percentages on the soil texture triangle in the form of a shaded polygon. The outline of the polygon is created by connecting (marginal) percentiles (typically 5th and 95th) of sand, silt, and clay fractions. The "Sample RV" is based on the (marginal) 50th percentiles (e.g. median sand, silt, and clay fractions).
+
+
+```{r fig.height=7, fig.width=7}
+# local copy of `A` horizons
+x <- ssc.list$A
+
+# visualize area bound by marginal percentiles of sand, silt, clay
+stats <- textureTriangleSummary(
+    x, pch = 1, cex = 0.5, 
+    range.alpha = 50, col = grey(0.5), legend = FALSE
+  )
+
+# marginal percentiles
+round(stats)
+```
+
+
+# Simulation
+Simulation of sand, silt, clay as a **composition** via [`bootstrapSoilTexture()`](http://ncss-tech.github.io/aqp/docs/reference/bootstrapSoilTexture.html).
+
+```{r fig.height=7, fig.width=7}
+# simulate some data and try again
+s <- bootstrapSoilTexture(x, n = 100, method = 'dirichlet')$samples
+
+# make the figure, ignore results
+textureTriangleSummary(
+  s, pch = 1, cex = 0.5, 
+  range.alpha = 75,
+  col = grey(0.5), legend = FALSE,
+  main = 'Dirichlet'
+)
+
+# get last triangle geometry
+TT <- TT.geo.get()
+TT.points(tri.data = x, geo = TT, tri.sum.tst = FALSE, cex=0.25, col='royalblue')
+
+# simple legend
+legend('top', 
+       legend = c('Source', 'Simulated'), 
+       pch = c(21, 1), 
+       col = c('black', 'black'), 
+       pt.bg = c('royalblue', NA), 
+       horiz = TRUE, bty = 'n'
+)
+```
+
+```{r fig.height=7, fig.width=7}
+# simulate some data and try again
+s <- bootstrapSoilTexture(x, n = 100, method = 'normal')$samples
+
+# make the figure, ignore results
+textureTriangleSummary(
+  s, pch = 1, cex = 0.5, 
+  range.alpha = 50, col = grey(0.5), legend = FALSE,
+  main = 'Normal'
+)
+
+# get last triangle geometry
+TT <- TT.geo.get()
+TT.points(tri.data = x, geo = TT, tri.sum.tst = FALSE, cex=0.25, col='royalblue')
+
+# simple legend
+legend('top', 
+       legend = c('Source', 'Simulated'), 
+       pch = c(21, 1), 
+       col = c('black', 'black'), 
+       pt.bg = c('royalblue', NA), 
+       horiz = TRUE, bty = 'n'
+)
+```
+
+## Investigate Simulation Stability
+To be continued.
+
+```{r fig.height=7, fig.width=7}
+# empty figure and geometry for later use
+TT <- soiltexture::TT.plot(
+  class.sys = "USDA-NCSS.TT",    # use "our" texture triangle
+  main = 'Simulation Stability\nNormal Distribution',          # title
+  tri.sum.tst = FALSE,            # do not test for exact sum(sand, silt, clay) == 100
+  cex.lab = 0.75,                 # scaling of label text
+  cex.axis = 0.75,                # scaling of axis
+  frame.bg.col = 'white',         # background color
+  class.lab.col = 'black',        # color for texture class labels
+  lwd.axis = 1.5,
+  lwd.lab = 2,
+  arrows.show=TRUE
+)
+
+# 100 replications
+s.n <- replicate(
+  100, 
+  bootstrapSoilTexture(x, n = 100, method = 'normal')$samples, simplify = FALSE
+)
+
+s.d <- replicate(
+  100, 
+  bootstrapSoilTexture(x, n = 100, method = 'dirichlet')$samples, simplify = FALSE
+)
+
+# internal function used to generate margin stats + bouding polygon
+res.n <- lapply(s.n, function(i) {
+  aqp:::.get.ssc.low.rv.high(ssc = i, p = c(0.05, 0.5, 0.95), delta = 1, TT.obj = TT)
+})
+
+res.d <- lapply(s.d, function(i) {
+  aqp:::.get.ssc.low.rv.high(ssc = i, p = c(0.05, 0.5, 0.95), delta = 1, TT.obj = TT)
+})
+
+
+# depict denisty via overlay with transparency
+trash <- sapply(res.n, function(i) {
+
+  # extract marginal median
+  .ssc <- as.data.frame(i$stats[2, 1:3, drop = FALSE])
+  
+  # add median as RV
+  TT.points(tri.data = .ssc, geo = TT, tri.sum.tst = FALSE, cex=0.5, col = alpha('firebrick', 0.2))
+  
+  # add bounding polygon
+  polygon(i$range$x, i$range$y, col=alpha('royalblue', 0.01), border = alpha('royalblue', 0.01))  
+})
+
+
+TT <- soiltexture::TT.plot(
+  class.sys = "USDA-NCSS.TT",    # use "our" texture triangle
+  main = 'Simulation Stability\nDirichlet Distribution',          # title
+  tri.sum.tst = FALSE,            # do not test for exact sum(sand, silt, clay) == 100
+  cex.lab = 0.75,                 # scaling of label text
+  cex.axis = 0.75,                # scaling of axis
+  frame.bg.col = 'white',         # background color
+  class.lab.col = 'black',        # color for texture class labels
+  lwd.axis = 1.5,
+  lwd.lab = 2,
+  arrows.show=TRUE
+)
+
+trash <- sapply(res.d, function(i) {
+
+  # extract marginal median
+  .ssc <- as.data.frame(i$stats[2, 1:3, drop = FALSE])
+  
+  # add median as RV
+  TT.points(tri.data = .ssc, geo = TT, tri.sum.tst = FALSE, cex=0.5, col = alpha('firebrick', 0.2))
+  
+  # add bounding polygon
+  polygon(i$range$x, i$range$y, col=alpha('royalblue', 0.01), border = alpha('royalblue', 0.01))  
+})
+```
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
