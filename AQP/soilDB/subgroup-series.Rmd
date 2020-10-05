@@ -4,9 +4,15 @@ author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
-  mathjax: null
-jquery: null
-smart: no
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
@@ -16,6 +22,8 @@ library(kableExtra, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
+
+# Introduction
 
 [Soil Taxonomy](https://www.nrcs.usda.gov/wps/portal/nrcs/main/soils/survey/class/taxonomy/) is a theoretical framework for organizing soil information, typically at scales coarser than most land management decisions. Soil series are a practical (but limited in geographic scope) framework for organizing soil/landscape combinations close to the scale of land management decisions.
 
@@ -33,14 +41,25 @@ library(latticeExtra)
 library(cluster)
 library(ape)
 
+# mapping a subgroup
+library(sp)
+library(sf)
+library(spData) 
+library(rasterVis)
+library(viridis)
+
 # subgroup explainer
 library(SoilTaxonomy)
 ```
 
+
+# Examples
 Get a snapshot of the Soil Classification database. This contains the current classification for all soil series.
 ```{r}
+# latest version, synced quarterly
+u <- 'https://github.com/ncss-tech/SoilTaxonomy/raw/master/databases/SC-database.csv.gz'
 tf <- tempfile()
-download.file('https://github.com/ncss-tech/SoilTaxonomy/raw/master/databases/SC-database.csv.gz', destfile = tf)
+download.file(u, destfile = tf)
 SC <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
 ```
 
@@ -53,7 +72,7 @@ s <- SC$soilseriesname[which(SC$tax_subgrp == 'abruptic durixeralfs')]
 osd <- fetchOSD(soils=s, extended = TRUE)
 ```
 
-
+## ST Explainer
 Explain subgroup taxa via [SoilTaxonomy](https://github.com/ncss-tech/SoilTaxonomy/tree/master/R_pkg) package.
 ```{r eval=FALSE}
 cat(explainST('abruptic durixeralfs'))
@@ -65,9 +84,44 @@ cat(explainST('abruptic durixeralfs'))
 ```
 </pre>
 
+
+## SoilWeb seriesTree Application
+![seriesTree figure](resources/seriesTree-example.png)
 Link to SoilWeb subgroup taxa tree for [abruptic durixeralfs](https://casoilresource.lawr.ucdavis.edu/seriesTree/?subgroup=abruptic%20durixeralfs).
 
 
+## Taxa Extent Maps
+
+```{r fig.height = 8, fig.width = 4}
+# get 800m extent map
+e <- taxaExtent('abruptic durixeralfs', level = 'subgroup')
+
+# aggregate via focal mean using 5x5 moving window
+# visualization purposes only
+a <- aggregate(e, fact = 5)
+
+data("us_states")
+us_states <- as(us_states, 'Spatial')
+us_states <- spTransform(us_states, CRS(projection(e)))
+us_states <- crop(us_states, e)
+
+# simple figure
+levelplot(
+  a, 
+  margin = FALSE, 
+  scales = list(draw = FALSE), 
+  col.regions = viridis, 
+  main = names(a),
+  sub = 'pixel values represent percent ofarea\nwithin 800m grid cells',
+  panel=function(...) {
+            panel.levelplot(...)
+            sp.polygons(us_states, col='black', lwd=2)
+          }
+)
+```
+
+
+## Data via soilDB::fetchOSD
 Cluster series based on annual climate summaries but don't plot it yet.
 ```{r}
 # control centers symbol and size here
@@ -82,7 +136,7 @@ mtext('Abruptic Durixeralfs', side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
 ```
 
-Annual climate summaries
+### Annual climate summaries
 ```{r fig.width=12, fig.height=8}
 # display annual climate summary
 trellis.par.set(plot.line=list(col='RoyalBlue'))
@@ -90,7 +144,7 @@ print(update(res$fig, layout=c(4,2), sub='Abruptic Durixeralfs'))
 ```
 
 
-Review SoilWeb metadata
+## SoilWeb metadata
 ```{r}
 kable_styling(kable(osd$soilweb.metadata, format = 'html', caption = 'SoilWeb Snapshot Metadata'), full_width = FALSE, font_size = 10)
 ```
@@ -98,49 +152,4 @@ kable_styling(kable(osd$soilweb.metadata, format = 'html', caption = 'SoilWeb Sn
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
-
-
-
-```{r echo=FALSE}
-# library(scales)
-# library(raster)
-# library(sp)
-
-# # define some nice colors
-# cols <- brewer.pal('Set1', n=3)
-# 
-# # get list of extents
-# l <- lapply(s, seriesExtent)
-# 
-# # get full extent
-# e <- lapply(lapply(l, raster::extent), as, 'SpatialPolygons')
-# 
-# # give each extent a unique ID
-# # required for rbind
-# for(i in seq_along(e)) {
-#   e[[i]] <- spChFIDs(e[[i]], as.character(i))
-#   }
-# 
-# # combine
-# e <- do.call('rbind', e)
-# 
-# # get combined extent
-# e <- as.vector(extent(e))
-# 
-# # map of CONUS
-# par(mar=c(1 ,1,1,1))
-# maps::map('state')
-# 
-# # rough estimation of joint density via transparency  / overlay
-# lapply(l, function(i) {
-#   plot(i, border=NA, col=alpha(cols[2], 0.85), add=TRUE)
-# })
-# 
-# # finish map
-# box()
-# title(main='Abruptic Durixeralfs', line=1.25)
-# 
-# 
-```
-
 
