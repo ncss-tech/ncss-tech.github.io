@@ -1,5 +1,5 @@
 ---
-title: "Mixing Soil Colors"
+title: "Simulating a Mixture of Soil Colors"
 author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
@@ -15,45 +15,56 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2,
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+# Background
+
+The following code is only a *rough estimation* of mixing soil material and not a physically-based model of subtractive mixing of pigments. [We will get there eventually](https://github.com/ncss-tech/aqp/issues/10).
+
 
 # Example
 
-Required packages.
+Required packages, be sure to ge tthe [latest versions from GitHub](https://github.com/ncss-tech/aqp).
 ```{r}
 library(aqp)
 library(soilDB)
 ```
 
 
-Make some example data.
+Pick some colors and assign weights:
+
+<span style="padding: 5px; background-color: `r parseMunsell('10YR 3/5')`; color: white;">`60% 10YR 3/5`</span> + <span style="padding: 5px; background-color: `r parseMunsell('5YR 5/6')`; color: white;">`30% 5YR 5/6`</span> + <span style="padding: 5px; background-color: `r parseMunsell('2.5Y 5/6')`; color: white;">`10% 2.5Y 5/6`</span> = <b>?</b>.
+
+The `parseMunsell` function is used 3 times to: 
+
+ 1. split Munsell notation into hue/value/chroma components
+ 2. convert to sRGB / CIELAB coordinates
+ 3. convert to sRGB hex notation.
 ```{r}
 colors <- c('10YR 3/5', '5YR 5/6', '2.5Y 5/6')
 weights <- c(60, 30, 10)
 
 # combine into a data.frame and convert to sRGB + CIE LAB
-x <- cbind(
+d <- cbind(
   parseMunsell(colors, convertColors=FALSE),
   parseMunsell(colors, return_triplets=TRUE, returnLAB=TRUE),
   pct=weights,
   col=parseMunsell(colors, convertColors=TRUE)
 )
 
-x
+d
 ```
 
 
-Add required columns for `simplifyColorData()`.
+Estimate mixture via weighted average in CIELAB color space. This is a nearly-perceptual color system so the weighted average is a *reasonable* estimate. Again, this is not as accurate as subtractive mixing of pigments via spectral data.
 ```{r}
-names(x)[1:3] <- paste0('color', names(x)[1:3])
-x$id <- 1
-x$colormoistst <- "Dry"
-
-# simplify
-simplifyColorData(x, id.var='id', wt = 'pct')
+(mx <- estimateColorMixture(d, wt = 'pct', backTransform = TRUE))
+mx.munsell <- sprintf("%s %s/%s", mx$colorhue, mx$colorvalue, mx$colorchroma)
 ```
 
+<span style="padding: 5px; background-color: `r parseMunsell('10YR 3/5')`; color: white;">`60% 10YR 3/5`</span> + <span style="padding: 5px; background-color: `r parseMunsell('5YR 5/6')`; color: white;">`30% 5YR 5/6`</span> + <span style="padding: 5px; background-color: `r parseMunsell('2.5Y 5/6')`; color: white;">`10% 2.5Y 5/6`</span> = <span style="padding: 5px; background-color: `r parseMunsell(mx.munsell)`; color: white;">`r mx.munsell`</span>.
 
-Demonstrate mixing soil colors in CIE LAB and sRGB color spaces via `estimateColorMixture()`.
+
+## Visualization Ideas
+Demonstrate mixing soil colors in CIE LAB color spaces via `estimateColorMixture()`.
 ```{r, fig.width=7, fig.height=2.5}
 mixColorDemo <- function(x) {
   x <- x[order(x$pct, decreasing = TRUE), ]
@@ -61,26 +72,59 @@ mixColorDemo <- function(x) {
   x.vals <- 1:n.cols
   y.vals <- rep(0, times=n.cols)
   cols <- rgb(x[, c('r', 'g', 'b')])
-  col.txt <- paste0(x$colorhue, ' ', x$colorvalue , '/', x$colorchroma, '\n(', x$pct, '%)')
+  col.txt <- paste0(x$hue, ' ', x$value , '/', x$chroma, '\n(', x$pct, '%)')
   
-  plot(x.vals, y.vals, col=cols, pch=15, cex=5, axes=FALSE, ylab='', xlab='', xlim=c(0.5, n.cols + 2.5))
-  text(x.vals, y.vals, col.txt, pos=1, offset=1.1, cex=0.75)
-  text(x.vals[-length(x.vals)]+0.5, y.vals, '+', cex=2, lwd=2)
-  text(max(x.vals)+0.5, y.vals[1], '=', cex=2, lwd=2)
+  plot(x.vals, y.vals, col=cols, pch=15, cex=10, axes=FALSE, ylab='', xlab='', xlim=c(0.5, n.cols + 2.5))
+  text(x.vals[-length(x.vals)] + 0.5, y.vals, '+', cex=2, lwd=2)
+  text(max(x.vals) + 0.5, y.vals[1], '=', cex=2, lwd=2)
   
-  # mix in both color spaces
+  text(x.vals, y.vals, col.txt, pos=1, offset=2.5, cex=0.75)
+  
+  # mix in CIELAB
   mixed.lab <- estimateColorMixture(x, wt = 'pct', backTransform = TRUE)
   
   # add mixed colors
-  points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=5, pch=15)
+  points(max(x.vals)+1, y.vals[1], col=rgb(mixed.lab[, c('r', 'g', 'b')]), cex=10, pch=15)
   col.txt <- paste0(mixed.lab$colorhue, ' ', mixed.lab$colorvalue , '/', mixed.lab$colorchroma)
-  text(max(x.vals)+1, y.vals[1], col.txt, pos=1, offset=1.1, cex=0.75)
+  text(max(x.vals)+1, y.vals[1], col.txt, pos=1, offset=2.5, cex=0.75)
 }
 
 
 par(mar=c(1,1,1,1))
-mixColorDemo(x)
+mixColorDemo(d)
 ```
+
+### Alternative Representation
+```{r, fig.width=9, fig.height=4}
+# simulate mixture
+mixed.lab <- estimateColorMixture(d, wt = 'pct', backTransform = TRUE)
+
+# color vector
+cols <- c(
+  d$col, 
+  rgb(mixed.lab[, c('r', 'g', 'b')])
+  )
+
+# label vector
+labs <- c(
+  colors,
+  paste0(mixed.lab$colorhue, ' ', mixed.lab$colorvalue , '/', mixed.lab$colorchroma)
+)
+
+# add weights
+labs <- sprintf("%s      (%s%%)", labs, c(weights, 100))
+
+# plot
+soilPalette(
+  colors = cols,
+  lab = labs,
+  lab.cex = 1
+  )
+```
+
+
+# Next Step: Mix via Munsell Spectra
+
 
 
 
