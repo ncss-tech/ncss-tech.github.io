@@ -123,6 +123,60 @@ soilPalette(
 ```
 
 
+# Mix a Lot
+
+This is very inefficient code.
+```{r fig.width=12, fig.height=4}
+s <- seq(from = 0, to = 100, by = 10)
+colors <- c('10YR 3/3', '2.5Y 6/4')
+
+z <- lapply(s, function(i) {
+  
+  wts <- c(i, 100 - i)
+  
+  d <- cbind(
+  parseMunsell(colors, convertColors=FALSE),
+  parseMunsell(colors, return_triplets=TRUE, returnLAB=TRUE),
+  pct = wts,
+  col = parseMunsell(colors, convertColors=TRUE)
+)
+  
+  mx <- estimateColorMixture(d, wt = 'pct', backTransform = TRUE)
+  
+  res <- data.frame(
+    m.x = colors[1],
+    m.y = colors[2],
+    col.x = parseMunsell(colors[1]),
+    col.y = parseMunsell(colors[2]),
+    wt.x = wts[1],
+    wt.y = wts[2],
+    mixed.chip = sprintf('%s %s/%s', mx$colorhue, mx$colorvalue, mx$colorchroma),
+    mixed.col = rgb(mx$r, mx$g, mx$b),
+    stringsAsFactors = FALSE
+  )
+  
+  res
+  
+  return(res)
+})
+
+z <- do.call('rbind', z)
+
+
+par(mar = c(1,1,1,1))
+plot(1:nrow(z), rep(1:nrow(z)), xlim = c(0.25, nrow(z) + 0.25), ylim = c(0, 0.8), axes = FALSE, xlab = '', ylab = '', type = 'n')
+
+rect(xleft = (1:nrow(z)) - 0.45, xright = (1:nrow(z)) + 0.45, ybottom = 0.25, ytop = 0.75, col = z$mixed.col, border = 'black', lwd = 2, lend = 2)
+
+text(1:nrow(z), 0.2, z$mixed.chip)
+text(1:nrow(z), 0.15, sprintf('%s/%s', z$wt.y, z$wt.x))
+```
+
+```{r fig.width=12, fig.height=4}
+colorContrastPlot(z$m.y, z$mixed.chip)
+colorContrastPlot(z$m.x, z$mixed.chip)
+```
+
 # Next Step: Mix via Munsell Spectra
 
 
