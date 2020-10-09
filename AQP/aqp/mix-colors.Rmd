@@ -1,0 +1,165 @@
+---
+title: "Mixing Munsell Colors in {aqp}"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+  jquery: null
+  smart: no
+  number_sections: yes
+  toc: yes
+  toc_depth: 3
+  toc_float:
+    collapsed: true
+    smooth_scroll: false
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly = TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+# Background
+
+I'd like to take a moment to demontrate that it is possible to simulate a plausible mixture of soil colors, using reference spectra for Munsell color chips. Key assumptions about the soil material to be "mixed":
+
+ * uniform water content
+ * uniform particle size distribution
+ * uniform mineralogy
+ * uniform aggregation
+ 
+It is rare that two soil samples (ideally peds) will meet all of those assumptions, but this is only a simulation.
+
+<span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <b>?</b>.
+
+[Related post on the Soil Taxonomy Forum](https://soiltxnmyforum.cals.vt.edu/forum/read.php?3,1984,1987#msg-1987).
+
+
+## Implementation
+Required packages, be sure to ge the [latest {aqp} from GitHub](https://github.com/ncss-tech/aqp).
+
+```{r}
+library(aqp)
+library(lattice)
+```
+
+Create a vector of colors to mix, and make a quick visualization.
+```{r fig.height=3.5, fig.width=6}
+colors <- c('5YR 2/2', '10YR 4/4')
+
+# color contrast
+par(bg = 'black', fg = 'white', mar = c(0, 0, 0, 0))
+colorContrastPlot(colors[1], colors[2])
+```
+
+Simulate a mixture via `aqp::mixMunsell`. See the [online documentation](http://ncss-tech.github.io/aqp/docs/reference/mixMunsell.html) for details on the method and [relevant citations](http://ncss-tech.github.io/aqp/docs/reference/munsell.spectra.html).
+```{r fig.height=2.5, fig.width=5}
+# just the closest match
+mixed <- mixMunsell(colors)
+
+# top 5 matches, descreasing order
+mixed.5 <- mixMunsell(colors, n = 5)
+```
+
+Left to right: original colors to mix and final mixture (`r mixed$munsell`).
+```{r fig.height=3, fig.width=6}
+par(bg = 'black', fg = 'white', mar = c(0, 0, 0, 0))
+soilPalette(parseMunsell(c(colors, mixed$munsell)), lab = c(colors, mixed$munsell))
+```
+
+Evaluate the top 5 mixture candidates (ranked by spectral distance) using metrics of [color contrast](http://ncss-tech.github.io/aqp/docs/reference/colorContrast.html). Note that color contrast does not always correlate with spectral distance.
+```{r fig.height=4, fig.width=8}
+par(bg = 'black', fg = 'white')
+colorContrastPlot(
+  m1 = rep(mixed$munsell, times = nrow(mixed.5)),
+  m2 = mixed.5$munsell,
+  labels = c('closest match', 'top 5 matches')
+  )
+```
+
+
+Demonstrate reference spectra for the source colors and final mixture.
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(colors)
+```
+
+## Results
+<span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <span style="padding: 5px; background-color: `r aqp::parseMunsell(mixed$munsell)`; color: white;">`r mixed$munsell`</span>.
+
+
+## TODO
+What do you think, is the mixture plausible? Experiments with real soil material + Nix Pro sensor measurements pending.
+
+
+# More Examples
+
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5)
+
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5)
+
+# is this right? can the resulting spectra be "higher" than the source?
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5)
+
+# label collision
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 5)
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 4, label.cex = 0.65)
+
+
+plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2), swatch.cex = 5)
+
+plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(1, 2))
+plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65)
+```
+
+Continuous mixture: does this make sense?
+```{r fig.height=2.5, fig.width=10}
+s <- seq(0, 1, by = 0.2)
+z <- lapply(s, function(i) {
+  
+  m <- mixMunsell(c('10YR 6/2', '5YR 5/6'), w = c(i, 1-i))
+  
+  return(m$munsell)
+})
+
+z <- do.call('c', z)
+
+par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
+soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, s, 1 - s))
+```
+
+How does `soilDB::estimateColorMixture` (wt average of CIELAB coordinates) compare? Not bad (~2 chips off), but the subtractive mixture seems more likely.
+```{r fig.height=3.5, fig.width=6}
+library(soilDB)
+
+colors <- c('10YR 6/2', '7.5YR 3/3')
+
+d <- cbind(
+  parseMunsell(colors, convertColors=FALSE),
+  parseMunsell(colors, return_triplets=TRUE, returnLAB=TRUE),
+  pct=c(0.5, 0.5),
+  col=parseMunsell(colors, convertColors=TRUE)
+)
+
+e1 <- estimateColorMixture(d, backTransform = TRUE)
+m1 <- mixMunsell(colors)
+
+par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
+colorContrastPlot(
+  m1$munsell,
+  sprintf('%s %s/%s', e1$colorhue, e1$colorvalue, e1$colorchroma),
+  labels = c('Subtractive Mixture', 'Weighted Average CIELAB')  
+  )
+```
+
+What does a $\Delta E_{00}$ of **4.55** mean in terms of "color chips" in a simulated color book?
+```{r fig.height=5, fig.width=10}
+contrastChart('10YR 6/2', hues = c('10YR', '7.5YR'), thresh = 4.55)
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.

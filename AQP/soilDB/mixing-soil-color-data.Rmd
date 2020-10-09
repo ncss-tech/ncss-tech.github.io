@@ -22,7 +22,7 @@ The following code is only a *rough estimation* of mixing soil material and not 
 
 # Example
 
-Required packages, be sure to ge tthe [latest versions from GitHub](https://github.com/ncss-tech/aqp).
+Required packages, be sure to ge the [latest versions from GitHub](https://github.com/ncss-tech/aqp).
 ```{r}
 library(aqp)
 library(soilDB)
