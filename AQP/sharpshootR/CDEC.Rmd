@@ -217,22 +217,18 @@ title.text <- sprintf("%s [%s]", s.info$site.meta$Name, s)
 # get data
 x <- CDECquery(id=s, sensor=45, interval='D', start='2000-01-01', end='2030-01-01')
 
-## NOTE: requires sharpshootR >= 1.4.02
 # plot
 par(mar=c(4.5, 4.5, 2.5, 1.5))
-PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2020)
+PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2019)
 ```
 
 Key elements:
 
-   * red line is the current water year's cumulative PPT trajectory
-   * red date and value are current date and cumulative PPT
-   * red box-whisker are 5-25-50-75-95th percentiles of cumulative PPT on current day of water year
-   * blue traces are cumulative PPT records corresponding to 5th, 25th, 50th, 75th, and 95th percentiles of historical (end of water-year) cumulative PPT
-   * blue box-whisker indicates 5-25-50-75-95th percentiles of starting water-day where cumulative PPT > 0.1 (units)
-
-
-
+ * red line is the current water year's cumulative PPT trajectory
+ * red date and value are current date and cumulative PPT
+ * red box-whisker are 5-25-50-75-95th percentiles of cumulative PPT on current day of water year
+ * blue traces are cumulative PPT records corresponding to 5th, 25th, 50th, 75th, and 95th percentiles of historical (end of water-year) cumulative PPT
+ * blue box-whisker indicates 5-25-50-75-95th percentiles of starting water-day where cumulative PPT > 0.1 (units)
 
 
 ### Visualization Ideas
