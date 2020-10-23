@@ -487,6 +487,56 @@ bwplot(cc ~ dE00, data=d,
 ```
 
 
+```{r fig.width=7, fig.height=4.5}
+bwplot(dV ~ dE00, data=d, 
+       subset = dH < 1 & dC < 1,
+       par.settings=tactile.theme(), 
+       xlab=expression(Delta*E['00']),
+       main='CIE Delta-E00 vs. Change in Munsell Value\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       sub = 'Constant Hue and Chroma',
+       scales=list(x=list(tick.number=10)), 
+       panel=function(...) {
+         panel.grid(h=3, v=-1)
+         panel.bwplot(...)
+       })
+
+bwplot(dH ~ dE00, data=d,
+       subset = dV < 1 & dC < 1,
+       par.settings=tactile.theme(), 
+       xlab=expression(Delta*E['00']),
+       main='CIE Delta-E00 vs. Change in Munsell Hue\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       sub = 'Constant Value and Chroma',
+       scales=list(x=list(tick.number=10)), 
+       panel=function(...) {
+         panel.grid(h=3, v=-1)
+         panel.bwplot(...)
+       })
+
+bwplot(dC ~ dE00, data=d, 
+       subset = dV < 1 & dH < 1,
+       par.settings=tactile.theme(), 
+       xlab=expression(Delta*E['00']),
+       main='CIE Delta-E00 vs. Change in Munsell Chroma\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       sub = 'Constant Hue and Value',
+       scales=list(x=list(tick.number=10)), 
+       panel=function(...) {
+         panel.grid(h=3, v=-1)
+         panel.bwplot(...)
+       })
+```
+
+
+```{r}
+idx.F <- which(d$cc == 'Faint' & d$dE00 > 12)
+idx.D <- which(d$cc == 'Distinct' & d$dE00 > 20)
+idx.P <- which(d$cc == 'Prominent' & d$dE00 < 20)
+
+
+kable(head(d[idx.F, ]), row.names = FALSE)
+```
+
+
+
 ```{r fig.width=8, fig.height=6}
 # plot(dE00 ~ dH, data=d)
 # plot(dE00 ~ dV, data=d)
