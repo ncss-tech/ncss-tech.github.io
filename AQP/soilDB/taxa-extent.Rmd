@@ -1,0 +1,219 @@
+---
+title: "Geographic Extent of Soil Taxa"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    fig_caption: yes
+    jquery: null
+    mathjax: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+# library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+# Introduction
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to access 800m
+
+
+
+# Installation
+Get required packages.
+```{r install-deps, eval=FALSE}
+# run these commands in the R console
+install.packages('soilDB', dep = TRUE)
+install.packages('mapview', dep = TRUE)
+install.packages('rgdal', dep = TRUE)
+install.packages('viridis', dep = TRUE)
+install.packages('raster', dep = TRUE)
+install.packages('rasterVis', dep = TRUE)
+install.packages('mapview', dep = TRUE)
+```
+
+
+# Examples 
+Illustrate the extent of SSURGO map units associated with the Amador series.
+```{r libraries, results='hide'}
+# load required libraries
+library(soilDB)
+
+library(raster)
+library(rasterVis)
+library(viridis)
+
+library(rgdal)
+library(mapview)
+
+library(sp)
+library(spData) 
+library(sf) 
+```
+
+
+
+Prepare 
+```{r}
+# CRS defs used by SEE grids
+crs_lower48 <- "+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+
+# use lower '48 state borders as context
+# transform to the CRS of the SEE taxa grids
+data("us_states")
+us_states <- as(us_states, 'Spatial')
+us_states <- spTransform(us_states, CRS(crs_lower48))
+
+# get a bbox for CONUS and expand by 100km = 100,000m
+b <- bbox(us_states)
+x.lim <- c(b[1, 1] - 1e5, b[1, 2] + 1e5)
+y.lim <- c(b[2, 1] - 1e5, b[2, 2] + 1e5)
+```
+
+
+All vertisols.
+```{r fig.height=6, fig.width=7}
+taxa <- 'vertisols'
+x <- taxaExtent(taxa, level = 'order')
+a <- aggregate(x, fact = 5)
+
+## CONUS + states
+## cropped to CONUS
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = names(a),
+  margin = FALSE, 
+  xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+```
+
+
+Xeralfs.
+```{r fig.height=6, fig.width=7}
+taxa <- 'xeralfs'
+x <- taxaExtent(taxa, level = 'suborder')
+a <- aggregate(x, fact = 5)
+
+## CONUS + states
+## cropped to CONUS
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = names(a),
+  margin = FALSE, 
+  xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+```
+
+
+Durixeralfs.
+```{r fig.height=6, fig.width=7}
+taxa <- 'durixeralfs'
+x <- taxaExtent(taxa, level = 'greatgroup')
+a <- aggregate(x, fact = 5)
+
+## cropped to raster extent
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = taxa,
+  margin = FALSE, 
+  # xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+```
+
+
+Abruptic durixeralfs.
+```{r fig.height=6, fig.width=7}
+taxa <- 'abruptic durixeralfs'
+x <- taxaExtent(taxa, level = 'subgroup')
+a <- aggregate(x, fact = 5)
+
+## cropped to raster extent
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = taxa,
+  margin = FALSE, 
+  # xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+```
+
+
+Cecil soil series.
+```{r fig.height=6, fig.width=7}
+s <- seriesExtent('cecil', type = 'raster')
+a <- aggregate(s, fact = 5)
+
+## cropped to CONUS
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = 'Cecil',
+  margin = FALSE, 
+  # xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+```
+
+
+
+
+
+## Interactive mapping from R
+This is based on the [mapview](https://r-spatial.github.io/mapview/) package.
+
+```{r}
+x <- taxaExtent('durixeralfs', level = 'greatgroup')
+a <- aggregate(x, fact = 5)
+
+mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
+```
+
+
+```{r}
+s <- seriesExtent('san joaquin', type = 'raster')
+a <- aggregate(s, fact = 5)
+
+mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
+```
+
+
+
+----------------------------
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

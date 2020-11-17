@@ -1,0 +1,161 @@
+---
+title: "L1 Profiles"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Data
+```{r fig.width = 8, fig.height=6}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+library(cluster)
+library(reshape2)
+library(latticeExtra)
+library(Gmedian)
+library(MASS)
+library(tactile)
+
+# get some interesting data
+x <- fetchKSSL('plainfield')
+
+# remove partial-profile records
+x <- filter(x, pedon_completeness_index > 3)
+x <- filter(x, pedon_key != '6678')
+
+# normalize taxonname for use as a grouping variable
+x$taxonname <- tolower(x$taxonname)
+
+# compute weighted-mean particle diameter (mm) for later
+x$wmpd <- with(horizons(x), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
+```
+
+# Aggregation
+```{r fig.width = 8, fig.height=6} 
+# aggregation formula
+fm <- taxonname ~ sand + silt + clay + estimated_ph_h2o + bs82 + wmpd
+
+# L1 medians
+z <- L1_profiles(x, fm = fm, method = 'constant', maxDepthConstant = 150)
+
+# marginal medians
+a <- slab(x, fm = fm)
+```
+
+## Sanity Check
+```{r fig.width = 8, fig.height=6}
+# check that sand + silt + clay sum to 100
+(z$ssc_total <- z$sand + z$silt + z$clay)
+```
+
+## Merge Marginal + L1
+```{r fig.width = 8, fig.height=6}
+## TODO: this involves a lot of dumb re-naming
+vars <- c("sand", "silt", "clay", "estimated_ph_h2o", "bs82", "wmpd")
+z.long <- melt(as(z, 'data.frame'), id.vars = c(idname(z), horizonDepths(z)), measure.vars = vars)
+
+new.vars <- c('variable', 'taxonname', 'top', 'bottom', 'p.q50', 'p.q25', 'p.q75', 'contributing_fraction')
+
+# re-name and adjust to match slab output
+names(z.long)[1] <- 'taxonname'
+names(z.long)[5] <- 'p.q50'
+z.long$p.q25 <- NA
+z.long$p.q75 <- NA
+# not sure how we can best utlize this
+z.long$contributing_fraction <- 0
+z.long <- z.long[, new.vars]
+
+g <- make.groups(
+  marginal = a[, new.vars],
+  L1 = z.long
+)
+```
+
+## Graphical Comparison
+```{r fig.width = 12, fig.height=6}
+# plotting style
+tps <- tactile.theme(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+
+# fancy panel names
+levels(g$variable) <- c('Sand (%)', 'Silt (%)', 'Clay (%)', 'pH 1:1 H2O', 'BS at pH 8.2 (%)', 'WMPD (mm)')
+
+# plot grouped, aggregate data
+xyplot(top ~ p.q50 | variable, groups = which, data=g, ylab='Depth',
+       main = 'Plainfield Lab Data',
+       xlab='median bounded by 25th and 75th percentiles',
+       lower = g$p.q25, upper = g$p.q75, ylim = c(155,-5),
+       panel = panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel = prepanel.depth_function,
+       # cf = g$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(6,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       auto.key = list(lines = TRUE, points = FALSE, columns = 2),
+       par.settings = tps
+)
+```
+
+# Pair-Wise Distances
+```{r fig.width = 12, fig.height=6}
+# merge SPCs: original + L1 profile
+x.z <- combine(list(x, z))
+
+# calculate soil texture class
+x.z$texture <- ssc_to_texcl(sand = x.z$sand, clay = x.z$clay)
+x.z$texture <- factor(x.z$texture, levels = SoilTextureLevels(which = 'codes'))
+
+# truncate the new collection to 150cm
+x.z <- trunc(x.z, 0, 150)
+
+# pair-wise eval of distances
+d <- profile_compare(x.z, vars = vars, max_d = 150, k = 0)
+# divisive hierarchical clustering
+hc <- diana(d)
+```
+
+## Hierarchical Clustering
+```{r fig.width = 12, fig.height=6}
+par(mar = c(0, 0, 3, 1))
+plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.65, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'texture', name.style = 'center-center')
+
+plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.65, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'wmpd', name.style = 'center-center')
+
+plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.65, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'bs82', name.style = 'center-center')
+```
+
+
+## nMDS
+```{r fig.width = 8, fig.height=8}
+# non-metric multidimensional scaling of distance matrix
+mds <- sammon(d)
+
+# viz
+par(mar = c(1, 1, 1, 1))
+plot(mds$points, type = 'n', axes = FALSE, xlab = '', ylab = '')
+abline(h = 0, v = 0, lty = 2, col = 'grey')
+text(mds$points, row.names(mds$points), font = 2, cex = 0.66)
+box()
+```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
+
+
