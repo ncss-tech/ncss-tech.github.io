@@ -1,0 +1,249 @@
+---
+title: "Visualization of Horizon Boundaries"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+# library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Introduction
+
+
+
+## Required Packages
+
+```{r eval = FALSE}
+# stable version + dependencies
+install.packages(c('aqp', 'soilDB'), dependencies = TRUE)
+
+# development version
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+```
+
+
+## Get Some Data
+
+```{r}
+# required libraries
+library(aqp)
+library(soilDB)
+
+# select soil series names
+soil.series <- c('leon', 'musick', 'clarksville', 'pardee', 'amador', 'lucy', 'dylan', 'tristan', 'pierre', 'drummer', 'zook')
+
+# get the data
+osds <- fetchOSD(soil.series)
+
+# encode horizon boundarydistinctness via vertical offset
+osds$hd <- hzDistinctnessCodeToOffset(
+  osds$distinctness, 
+  codes=c('very abrupt', 'abrupt', 'clear', 'gradual', 'diffuse')
+  )
+
+# encode horizon boundary topography via vertical offset
+osds$hzto <- hzTopographyCodeToOffset(
+  osds$topography, 
+  codes = c('smooth', 'wavy', 'irregular', 'broken')
+)
+
+# also encode horizon boundary topography las line type
+osds$hzto.lty <- hzTopographyCodeToLineType(
+  osds$topography,
+  codes = c('smooth', 'wavy', 'irregular', 'broken')
+)
+
+# label data source, used later 
+site(osds)$source <- 'OSD'
+
+# concise representation of hz bnd distinctness and topography
+# similar to field notes
+osds$bnd.code <- sprintf(
+  "%s%s",
+  substr(osds$distinctness, 1, 1),
+  substr(osds$topography, 1, 1)
+)
+
+# remove NA
+osds$bnd.code <- gsub('NANA', '', osds$bnd.code)
+```
+
+
+# Horizon Sketches in {aqp}
+A typical set of sketches, derived from the OSDs, is presented below. Note that horizon boundaries are depicted as horizontal lines—suggesting very abrupt/smooth (VS) horizon boundaries. We all know that VS horizon boundaries are not that common; can we do better? Examples used in this article have been sourced via fetchOSD() of the {soilDB} R package.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1), bg = 'black', fg = 'white')
+
+plotSPC(osds, width = 0.3, cex.id = 0.66, cex.names = 0.55) 
+```
+
+
+Using the horizon boundary data from the OSDs and encoding via “diagonals” (distinctness) and “chevrons” (topography), we see the following. Note that horizon boundary topography has also been encoded via line type for clarity. What do you think? Is this an improvement or just clutter? Feel free to contact me with questions, suggestions, or a completely different approach to increasing the information density of these sketches. The code used to generate these figures is posted on the {aqp} GitHub site.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1), bg = 'black', fg = 'white')
+
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.66, cex.names = 0.55, name = 'name', hz.boundary.lty = 'hzto.lty') 
+
+legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.05, bty = 'n', cex = 0.85)
+```
+
+
+# Encoding Horizon Distinctness and Topography
+Horizon boundary distinctness describes the vertical distance over which one horizon transitions to the next. Horizon boundary topography describes the complexity of the horizon boundary. In {aqp} these two features are encoded using diagonal lines (distinctness) and “chevrons” (topography). The following figure demonstrates several possible combinations of horizon boundary distinctness and topography. Horizon depths are marked with small green symbols. The magnitude of these effects can be controlled when converting text boundary codes (e.g. CW) into representative “offsets”. The default values have been selected based on an interpretation of our Field Book for Describing and Sampling Soils. The {aqp} manual contains a detailed explanation of usage and assumptions.
+
+
+```{r fig.width=8, fig.height=5}
+# a single series
+x <- filter(osds, id == 'DRUMMER')
+
+# # full set of boundary topography codes
+# g <- expand.grid(
+#   distinctness = c('V', 'A', 'C', 'G', 'D'),
+#   topography = c('S', 'W', 'I', 'B')
+# )
+
+# simplified set, for this example
+g <- expand.grid(
+  distinctness = c('A', 'C', 'G', 'D'),
+  topography = c('S', 'W', 'I')
+)
+
+
+# storage for intermediate results
+l <- list()
+# copies of the original OSD
+s <- duplicate(x, times = nrow(g))
+
+# iterate over all possible combinations
+# creating / modifying a copy of the OSD at each iteration
+for(i in 1:nrow(g)) {
+  # current profile
+  ss <- s[i, ]
+  # set for all horizons
+  horizons(ss)$hd <- hzDistinctnessCodeToOffset(g$distinctness[i])
+  horizons(ss)$ht <- hzTopographyCodeToOffset(g$topography[i])
+  horizons(ss)$ht.lty <- hzTopographyCodeToLineType(g$topography[i]) 
+  # save modified copy
+  l[[i]] <- ss  
+}
+
+# combine list elements -> SPC
+s <- combine(l)
+
+# associated horizon boundary codes
+s$source <- sprintf("%s%s", g$distinctness, g$topography)
+
+# make a figure
+par(mar=c(0,0,2,1), bg = 'black', fg = 'white')
+plotSPC(s, width=0.33, print.id=TRUE, hz.distinctness.offset = 'hd', hz.topography.offset = 'ht', label='source', cex.names=0.8, name = NA, color = NA, default.color = 'black', hz.boundary.lty = 'ht.lty')
+title('Horizon Boundary Types', line = 0, col.main = 'white')
+
+# label original horizon depths
+p.seq <- rep(1:length(s), each = nrow(s[1, ]))
+points(x = p.seq, y = s$bottom, pch = 15, col = 'green', cex = 0.5)
+
+# line type legend
+legend('bottom', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.1)
+```
+
+
+## Examples
+Horizon boundary distinctness demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the “diagonal” boundaries is constrained by the depths of adjacent horizons. 
+
+Horizon boundary topography demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the “chevron” is constrained by the depths of adjacent horizons.
+
+```{r fig.width=10, fig.height=5}
+# keep a single OSD for the demo
+x <- filter(osds, id == 'LEON')
+
+# safely duplicate these data 6 times
+# --> new IDs generated, old IDs saved into .oldID
+s <- duplicate(x, times = 6)
+
+# storage for intermediate SPC objs
+l <- list()
+
+# iterate over horizon distinctness depths
+hzdo <- c(0, 0.5, 2, 5, 15, 20)/2
+
+for(i in seq_along(hzdo)) {
+  # current profile
+  ss <- s[i, ]
+  # set for all horizons
+  ss$hd <- hzdo[i]
+  l[[i]] <- ss
+}
+
+# combine copies of the OSD, with hz distinctness examples
+s <- combine(l)
+
+# horizon distinctness codes
+s$source <- c('none', 'very abrupt', 'abrupt', 'clear', 'gradual', 'diffuse')
+
+# combine OSD with horizon distinctness demo profiles
+z <- combine(x, s)
+
+# plot
+par(mar = c(0, 0, 2, 1), bg = 'black', fg = 'white')
+plotSPC(z, width=0.33, print.id=TRUE, hz.distinctness.offset = 'hd', label='source', cex.names=0.75)
+title('Horizon Boundary Distinctness', line = 0, col.main = 'white')
+```
+
+
+```{r fig.width=10, fig.height=5}
+# safely duplicate these data 4 times
+# --> new IDs generated, old IDs saved into .oldID
+s <- duplicate(x, times = 4)
+
+# storage for intermediate SPC objs
+l <- list()
+
+# iterate over horizon topography offsets
+# theses aren't the default values but maybe should be
+hzto <- c(0, 5, 10, 25)
+
+for(i in seq_along(hzto)) {
+  # current profile
+  ss <- s[i, ]
+  # set for all horizons
+  ss$hzto <- hzto[i]
+  l[[i]] <- ss
+}
+
+# combine copies of the OSD, with hz topography examples
+s <- combine(l)
+
+# horizon distinctness codes
+s$source <- c('smooth', 'wavy', 'irregular', 'broken')
+
+
+# combine OSD with horizon topography demo profiles
+z <- combine(x, s)
+
+par(mar = c(0, 0, 2, 1), bg = 'black', fg = 'white')
+plotSPC(z, width=0.25, print.id=TRUE, hz.topography.offset = 'hzto', label='source', cex.names=0.75)
+title('Horizon Boundary Topography', line = 0, col.main = 'white')
+```
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
