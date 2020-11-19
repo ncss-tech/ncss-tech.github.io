@@ -7,7 +7,7 @@ output:
     mathjax: null
     jquery: null
     smart: no
-    number_sections: yes
+    number_sections: no
     toc: yes
     toc_depth: 3
     toc_float:
@@ -40,6 +40,14 @@ Soil properties must be described, in order, via `vars` argument. The API does n
 
 
 Consider using the [interactive version](https://www.handbook60.org/rosetta), with copy/paste functionality.
+
+## Related Documentation
+  
+  * [`ROSETTA()` function manual page](https://ncss-tech.github.io/soilDB/docs/reference/ROSETTA.html)
+  * [Water Retention Data from KSSL](https://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
+  * [SCAN/SNOTEL](https://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
+  * [Avergage ROSETTA Predictions by Soil Texture Class](https://ncss-tech.github.io/aqp/docs/reference/ROSETTA.centroids.html)
+
 
 # Setup
 Install all of the packages that this tutorial depends on via:
