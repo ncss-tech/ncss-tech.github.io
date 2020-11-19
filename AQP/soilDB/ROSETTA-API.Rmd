@@ -1,0 +1,215 @@
+---
+title: "ROSETTA Model API"
+author: "Dylan Beaudette, Richard Reid, Todd Skaggs"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+
+# Introduction
+This document outlines how to access a new, online, interfae to the ROSETTA model for predicting hydraulic parameters from soil properties. The ROSETTA API was developed by Dr. Todd Skaggs (USDA-ARS) and links to the work of Zhang and Schaap, (2017). The `ROSETTA` function in **soilDB** is one possible approach to using the API from R.
+
+The ROSETTA model relies on a minimum of 3 soil properties, with increasing (expected) accuracy as additional properties are included:
+
+  * required, sand, silt, clay: USDA soil texture separates (percentages) that sum to 100%
+
+  * optional, bulk density (any moisture basis): mass per volume after accounting for >2mm fragments, units of gm/cm3
+
+  * optional, volumetric water content at 33 kPa: roughly "field capacity" for most soils, units of cm^3/cm^3
+
+  * optional, volumetric water content at 1500 kPa: roughly "permanent wilting point" for most plants, units of cm^3/cm^3
+
+Soil properties must be described, in order, via `vars` argument. The API does not use the names but column ordering must follow: sand, silt, clay, bulk density, volumetric water content at 33kPa (1/3 bar), and volumetric water content at 1500kPa (15 bar).
+
+
+Consider using the [interactive version](https://www.handbook60.org/rosetta), with copy/paste functionality.
+
+# Setup
+Install all of the packages that this tutorial depends on via:
+```{r eval=FALSE}
+# run these commands in the R console
+install.packages('httr', dependencies =  TRUE)
+install.packages('jsonlite', dependencies =  TRUE)
+install.packages('latticeExtra', dependencies = TRUE)
+install.packages('tactile', dependencies =  TRUE)
+install.packages('soilDB', dependencies = TRUE)
+install.packages('aqp', dependencies = TRUE)
+```
+
+You will also need the latest version of `soilDB`:
+```{r eval=FALSE}
+install.packages('remotes', dep=TRUE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+
+# A Very Basic Example
+
+The following demonstrates how to push soil property data from SDA through the ROSETTA API.
+```{r}
+# required libraries
+library(soilDB)
+library(httr)
+library(jsonlite)
+
+# SQL to be submitted to SDA
+q <- "SELECT
+-- contextual data
+compname, comppct_r,
+-- horizon morphology
+hzname, hzdept_r, hzdepb_r, 
+-- parameters used by ROSETTA, may contain NULL
+sandtotal_r, silttotal_r, claytotal_r, dbthirdbar_r, 
+wthirdbar_r/100 AS wthirdbar_decimal, wfifteenbar_r/100 AS wfifteenbar_decimal
+-- tables of interest
+FROM 
+mapunit AS mu
+-- implicit filtering 
+INNER JOIN component AS co ON mu.mukey = co.mukey
+INNER JOIN chorizon AS ch ON co.cokey = ch.cokey
+-- single map unit
+WHERE mu.mukey = '373596'
+-- order for visual inspection
+ORDER BY co.cokey, ch.hzdept_r ASC;"
+
+# submit query to SDA
+x <- SDA_query(q)
+
+# attempting to use all possible soil properties
+vars <- c('sandtotal_r', 'silttotal_r', 'claytotal_r', 'dbthirdbar_r', 'wthirdbar_decimal', 'wfifteenbar_decimal')
+
+# call ROSETTA API 
+# automatic, best-available model type (m = "0")
+r <- ROSETTA(x, vars = vars, m = "0")
+```
+
+```{r echo = FALSE}
+# check results
+kableExtra::kable_styling(knitr::kable(r, row.names = FALSE, digits = 3), full_width = FALSE, font_size = 10)
+```
+
+
+# Theoretical Water Retention Curves
+Develop theoretical water retention curves (van Genuchten model) from soil texture class centroids.
+```{r}
+# required libraries
+library(aqp)
+library(latticeExtra)
+library(tactile)
+
+# make a table of soil textures
+# sand sand/silt/clay values at geometric centroids
+tex <- SoilTextureLevels()
+x <- texcl_to_ssc(tex)
+x <- cbind(x, tex)
+```
+
+```{r echo = FALSE}
+kableExtra::kable_styling(kable(head(x)), full_width = FALSE)
+```
+
+Submit example data to the ROSETTA API and generate theoretical water retention curves.
+```{r}
+r <- ROSETTA(x, vars = c('sand', 'silt', 'clay'), m = '2')
+
+# iterate over results and generate VG model curve
+res <- lapply(1:nrow(r), function(i) {
+  
+  # model bounds are given in kPA of suction
+  vg <- KSSL_VG_model(VG_params = r[i, ], phi_min = 10^-3, phi_max=10^6)
+  
+  # extract curve and add texture ID
+  m <- vg$VG_curve
+  m$texture <- r$tex[i]
+  
+  return(m)
+})
+
+# flatten to data.frame
+res <- do.call('rbind', res)
+```
+
+
+```{r echo = FALSE}
+kableExtra::kable_styling(kable(head(res), digits = 3), full_width = FALSE)
+```
+
+
+Plot water retention curves. Note that matric potential (typically negative pressure by convention) are displayed as suction (positive values).
+```{r fig.width=12, fig.height=6}
+tps <- tactile.theme(
+  plot.line=list(col='royalblue', lwd=2)
+  )
+
+xyplot(
+  phi ~ theta | texture, data = res, 
+  type = c('l', 'g'), 
+  scales = list(alternating=3, x=list(tick.number=6), y=list(log=10, tick.number=6)), 
+  yscale.components = yscale.components.logpower, 
+  ylab = expression(Matric~~Potential~~(-kPa)), 
+  xlab = expression(Volumetric~Water~Content~~(cm^3/cm^3)), 
+  par.settings = tps, 
+  strip = strip.custom(bg=grey(0.85)), 
+  as.table = TRUE,
+  layout = c(7, 3),
+  main='Idealized Water Retention'
+)
+```
+
+# Automatic Model Selection
+```{r}
+# data from Texas
+q <- "SELECT TOP 10 musym, co.cokey, compname, comppct_r,
+    hzname, hzdept_r, hzdepb_r, sandtotal_r, silttotal_r, claytotal_r, dbthirdbar_r,
+    wthirdbar_r/100 AS wthirdbar_decimal, wfifteenbar_r/100 AS wfifteenbar_decimal
+    FROM legend
+    INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+    INNER JOIN component co ON mu.mukey = co.mukey
+    INNER JOIN chorizon ch ON co.cokey = ch.cokey
+    WHERE legend.areasymbol LIKE 'TX%'
+    ORDER BY musym, co.cokey, ch.hzdept_r ASC;"
+
+x <- SDA_query(q)
+
+# simulate missing data
+x$dbthirdbar_r[1] <- NA
+x$wthirdbar_decimal[2] <- NA
+x$wfifteenbar_decimal[3] <- NA
+x$sandtotal_r[9] <- NA
+x[10, ] <- NA
+
+# attempting to use all possible soil properties
+vars <- c('sandtotal_r', 'silttotal_r', 'claytotal_r', 'dbthirdbar_r', 'wthirdbar_decimal', 'wfifteenbar_decimal')
+
+# automatic model selection by API
+# based on available data
+# m = "0"
+r <- ROSETTA(x, vars = vars)
+```
+
+```{r echo = FALSE}
+# check results
+kableExtra::kable_styling(knitr::kable(r, row.names = FALSE, digits = 3), full_width = FALSE, font_size = 10)
+```
+
+
+----------------------------
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
