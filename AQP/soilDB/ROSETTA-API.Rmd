@@ -46,6 +46,7 @@ Consider using the [interactive version](https://www.handbook60.org/rosetta), wi
   * [`ROSETTA()` function manual page](https://ncss-tech.github.io/soilDB/docs/reference/ROSETTA.html)
   * [Water Retention Data from KSSL](https://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
   * [SCAN/SNOTEL](https://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
+  * [Water Retention Curve Experiments](https://ncss-tech.github.io/AQP/aqp/water-retention-curves.html)
   * [Avergage ROSETTA Predictions by Soil Texture Class](https://ncss-tech.github.io/aqp/docs/reference/ROSETTA.centroids.html)
 
 

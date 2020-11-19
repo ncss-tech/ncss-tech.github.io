@@ -1,0 +1,215 @@
+---
+title: "Theoretical Water Retention Curves"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Setup
+```{r}
+library(aqp)
+library(soilDB)
+
+library(dendextend)
+library(cluster)
+library(ape)
+
+library(latticeExtra)
+library(grid)
+library(tactile)
+library(viridis)
+```
+
+# Theoretical Water Retention Curves
+Average soil hydraulic parameters by USDA soil texture class, extracted from the [ROSETTA documentation](https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/). Approximate water-retention data have been computed for an idealized volume of homogenous soil material via van Genuchten model.
+
+```{r, echo=FALSE}
+data("ROSETTA.centroids")
+kableExtra::kable_styling(knitr::kable(ROSETTA.centroids, row.names = FALSE, digits = 3), full_width = FALSE, font_size = 10)
+```
+
+
+Develop theoretical water retention curves via van Genuchten model and texture class centroids.
+```{r}
+# load average soil hydraulic parameters
+data("ROSETTA.centroids")
+
+# re-level texture class by approximate AWC
+ll <- ROSETTA.centroids$texture[order(ROSETTA.centroids$awc)]
+ROSETTA.centroids$texture <- factor(ROSETTA.centroids$texture, levels=ll)
+
+# iterate over horizons and generate VG model curve
+res <- lapply(1:nrow(ROSETTA.centroids), function(i) {
+  # fit model using parameters from centroids
+  # model bounds are given in kPA of suction
+  vg <- KSSL_VG_model(VG_params = ROSETTA.centroids[i, ], phi_min = 10^-3, phi_max=10^6)
+  
+  # extract curve and add texture ID
+  m <- vg$VG_curve
+  m$texture <- ROSETTA.centroids$texture[i]
+  
+  return(m)
+})
+
+# copy over lab sample number as ID
+res <- do.call('rbind', res)
+
+# check: OK
+head(res)
+```
+
+```{r fig.width = 9, fig.height = 5}
+tps <- tactile.theme(superpose.line=list(col=viridis::viridis(12), lwd=2))
+
+xyplot(
+  phi ~ theta, groups=texture, data=res, 
+  type=c('l', 'g'), 
+  scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), 
+  yscale.components=yscale.components.logpower, 
+  ylab=expression(Suction~~(kPa)), 
+  xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)), 
+  par.settings = tps, 
+  strip=strip.custom(bg=grey(0.85)), 
+  auto.key=list(columns=4, lines=TRUE, points=FALSE, cex=0.8)
+)
+```
+
+
+Plot water retention curves and annotate with permanent wilting point (approximately 1500kPa suction), field capacity (approximately 33kPa suction), and saturation (close to 0 kPa suction). Note that matric potential (typically negative pressure by convention) are displayed as suction (positive values).
+```{r fig.width=10, fig.height=8}
+
+trellis.par.set(superpose.symbol=list(col=c('black', 'black', 'black'), fill=c('firebrick', 'orange', 'royalblue'), cex=1, pch=22))
+
+sk <- simpleKey(text=c('permanent wilting point', 'field capacity', 'saturation'), points = TRUE, columns=3)
+
+xyplot(
+  phi ~ theta | texture, data=res, 
+  type=c('l', 'g'), 
+  scales=list(alternating=3, x=list(tick.number=6), y=list(log=10, tick.number=6)), 
+  yscale.components=yscale.components.logpower, 
+  ylab=expression(Matric~~Potential~~(-kPa)), 
+  xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)), 
+  par.settings = tactile.theme(plot.line=list(col='black', lwd=2)), 
+  strip=strip.custom(bg=grey(0.85)), 
+  as.table=TRUE,
+  key=sk,
+  main='Idealized Water Retention\nUSDA-ARS ROSETTA Model Centroids', 
+  # sub='van Genuchten model',
+  subscripts = TRUE,
+  panel= function(x, y, subscripts=subscripts, ...) {
+    # idealized water retention curve
+    panel.xyplot(x, y, ...)
+    
+    # get texture (i.e. the current panel)
+    tx <- res$texture[subscripts][1]
+    # look-up centroid data for this texture
+    centroid.data <- ROSETTA.centroids[match(tx, ROSETTA.centroids$texture), ]
+    
+    # add PWP, note that y-scale is log_10-transformed
+    panel.points(x=centroid.data$pwp, y=log(1500, base = 10), col='black', fill='firebrick', cex=0.85, pch=22)
+    # add PWP, note that y-scale is log_10-transformed
+    panel.points(x=centroid.data$fc, y=log(33, base = 10), col='black', fill='orange', cex=0.85, pch=22)
+    # add SAT, note that y-scale is log_10-transformed
+    panel.points(x=centroid.data$sat, y=log(0.1, base = 10), col='black', fill='royalblue', cex=0.85, pch=22)
+    
+    # annotate with approx AWC
+    grid.text(sprintf('AWC: %s', round(centroid.data$awc, 3)), x = unit(0.95, 'npc'), y = unit(0.95, 'npc'), gp=gpar(cex=0.75), hjust=1)
+    
+  }
+)
+```
+
+
+# Soil Texture Class
+
+Align (order) soil texture classes based on (average) estimated water retention parameters.
+```{r fig.width = 5, fig.height = 4}
+data("ROSETTA.centroids")
+
+# local copy
+x <- ROSETTA.centroids
+
+# cluster based on parameters
+m <- ROSETTA.centroids[, c('sat', 'fc', 'pwp')]
+row.names(m) <- x$texture
+h <- as.hclust(agnes(daisy(m)))
+
+# attemp to align with total AWC
+h <- dendextend::rotate(h, order(x$awc))
+h2 <- as.phylo(h)
+
+# check: OK!
+par(mar = c(0, 0, 0, 0))
+plot(h2, label.offset = 0.005)
+h$labels[h$order]
+```
+
+Explore several sorting strategies.
+```{r}
+# clustering approach
+x$texture_sort1 <- factor(x$texture, levels = rev(h$labels[h$order]))
+
+# just AWC
+x$texture_sort2 <- factor(x$texture, levels = x$texture[order(x$awc)])
+```
+
+Develop figures.
+```{r fig.width = 8, fig.height = 5}
+p.1 <- segplot(texture ~ pwp + fc, data=x, 
+        horizontal = TRUE, 
+        level = awc, col.regions=viridis,
+        main='Available Water Holding Capacity\nUSDA-ARS ROSETTA Model Centroids', 
+        sub='Sorted According to Field Book v3.0',
+        xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)),
+        par.settings = tactile.theme()
+)
+
+p.2 <- segplot(texture_sort1 ~ pwp + fc, data=x, 
+        horizontal = TRUE, level = awc, col.regions=viridis,
+        main='Available Water Holding Capacity\nUSDA-ARS ROSETTA Model Centroids',
+        sub='Sorted According to {PWP, FC, SAT} Values',
+        xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)),
+        par.settings = tactile.theme()
+)
+
+p.3 <- segplot(texture_sort2 ~ pwp + fc, data=x, horizontal = TRUE, 
+        level = awc, col.regions=viridis,
+        main='Available Water Holding Capacity\nUSDA-ARS ROSETTA Model Centroids',
+        sub='Sorted According to AWC',
+        xlab=expression(Volumetric~Water~Content~~(cm^3/cm^3)),
+        par.settings = tactile.theme()
+        )
+```
+
+```{r fig.width = 8, fig.height = 5, echo = FALSE}
+print(p.1)
+print(p.2)
+print(p.3)
+```
+
+
+
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
+
+
