@@ -169,6 +169,12 @@ kable_styling(kable(s$competing[which(s$competing$series == 'CECIL'), ], format=
 ```
 
 
+Geographically associated soils.
+```{r echo=FALSE}
+kable_styling(kable(s$geog_assoc_soils[which(s$geog_assoc_soils$series == 'CECIL'), ], format='html', digits = 2, row.names = FALSE), font_size = 10, full_width = FALSE)
+```
+
+
 
 Hillslope position (2D) and geomorphic component (3D) probabilities have been estimated by series by dividing the number of component records assigned the each hillslope position or geomorphic component by the total number of component records. The number of records used and Shannon entropy are included to asess uncertainty.
 
@@ -254,7 +260,9 @@ print(res$fig)
 ```
 
 
-# Series Siblings and Cousins
+# Siblings and Cousins
+
+## Geographically Associated Soils
 
 *TODO: write some definitions*
 
