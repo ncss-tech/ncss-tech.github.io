@@ -55,14 +55,15 @@ names(s)[2:3] <- c('top', 'bottom')
 # plot sketches and annotate with PSCS
 par(mar=c(1,1,1,1))
 # ommit pedon IDs for now
-plot(x, print.id=FALSE)
+plotSPC(x, print.id = TRUE)
 # add PSCS brackets as vertical var
 addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
 
 # check structure of diagnostic horizon data
 head(diagnostic_hz(x))
+
 # tabulate and sort
-sort(table(diagnostic_hz(x)$featkind))
+# sort(table(diagnostic_hz(x)$featkind))
 
 # add brackets for some diagnostic features
 addDiagnosticBracket(x, kind='argillic horizon', col='red')
