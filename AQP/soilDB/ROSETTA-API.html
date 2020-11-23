@@ -11,7 +11,7 @@
 
 <meta name="author" content="Dylan Beaudette, Richard Reid, Todd Skaggs" />
 
-<meta name="date" content="2020-11-19" />
+<meta name="date" content="2020-11-20" />
 
 <title>ROSETTA Model API</title>
 
@@ -1707,7 +1707,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">ROSETTA Model API</h1>
 <h4 class="author">Dylan Beaudette, Richard Reid, Todd Skaggs</h4>
-<h4 class="date">2020-11-19</h4>
+<h4 class="date">2020-11-20</h4>
 
 </div>
 
@@ -2139,7 +2139,7 @@ ls
 </tbody>
 </table>
 <p>Submit example data to the ROSETTA API and generate theoretical water retention curves.</p>
-<pre class="r"><code>r &lt;- ROSETTA(x, vars = c(&#39;sand&#39;, &#39;silt&#39;, &#39;clay&#39;), m = &#39;2&#39;)
+<pre class="r"><code>r &lt;- ROSETTA(x, vars = c(&#39;sand&#39;, &#39;silt&#39;, &#39;clay&#39;))
 
 # iterate over results and generate VG model curve
 res &lt;- lapply(1:nrow(r), function(i) {

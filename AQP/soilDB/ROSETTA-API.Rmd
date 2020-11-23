@@ -136,7 +136,7 @@ kableExtra::kable_styling(kable(head(x)), full_width = FALSE)
 
 Submit example data to the ROSETTA API and generate theoretical water retention curves.
 ```{r}
-r <- ROSETTA(x, vars = c('sand', 'silt', 'clay'), m = '2')
+r <- ROSETTA(x, vars = c('sand', 'silt', 'clay'))
 
 # iterate over results and generate VG model curve
 res <- lapply(1:nrow(r), function(i) {
