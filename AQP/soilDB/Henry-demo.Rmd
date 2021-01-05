@@ -33,6 +33,7 @@ install.packages('reshape', dep=TRUE)
 install.packages('dismo', dep=TRUE)
 install.packages('rgdal', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
+install.packages('sharpshootR', dep=TRUE)
 # get latest version from GitHub
 install.packages('devtools', dep=TRUE)
 devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
@@ -69,6 +70,7 @@ and aggregated to the following granularity:
 Query daily sensor data associated with the Sequoia / Kings Canyon soil survey.
 ```{r fig.width=6, fig.height=7, results='hide'}
 library(soilDB)
+library(sharpshootR)
 library(latticeExtra)
 library(RColorBrewer)
 library(plyr)
