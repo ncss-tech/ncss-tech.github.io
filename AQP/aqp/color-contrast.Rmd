@@ -457,6 +457,49 @@ colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), printMetrics = TRUE, d.cex =
 ```
 
 
+
+## Differences Between Adjacent Chips
+
+```{r}
+
+data(munsell)
+
+x <- subset(munsell, subset=value %in% 3:8 & chroma %in% 1:8 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+
+cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
+z <- combn(cols, 2)
+
+z <- data.frame(t(z), stringsAsFactors = FALSE)
+d <- colorContrast(z[[1]], z[[2]])
+
+
+s <- subset(d, subset = dH %in% c(0,1) & dV %in% c(0,1) & dC %in% c(0,1))
+nrow(s)
+
+head(s)
+quantile(s$dE00)
+
+s$code <- sprintf("%s-%s-%s", s$dH, s$dV, s$dC)
+
+adj <- lapply(split(s, s$code), function(i) {
+  qq <- round(quantile(i$dE00, probs = c(0.05, 0.95)))
+  data.frame(
+    dH = i$dH[1],
+    dV = i$dV[1],
+    dC = i$dC[1],
+    q05 = qq[1],
+    q95 = qq[2]
+  )
+    
+}
+)
+
+adj <- do.call('rbind', adj)
+
+knitr::kable(adj)
+```
+
+
 ## Example 2
 ```{r}
 library(rms)

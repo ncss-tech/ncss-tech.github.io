@@ -24,7 +24,27 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+
 # Introduction
+
+Borrowing content from the official [gSSURGO](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=nrcs142p2_053628#release) and [gNATSGO](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcseprd1464625) pages.
+
+## gSSURGO: gridded SSURGO
+The gSSURGO Database is derived from the official Soil Survey Geographic (SSURGO) Database. SSURGO generally has the most detailed level of soil geographic data developed by the National Cooperative Soil Survey (NCSS) in accordance with NCSS mapping standards. The tabular data represent the soil attributes and are derived from properties and characteristics stored in the National Soil Information System (NASIS). The gSSURGO data were prepared by merging the traditional vector-based SSURGO digital map data and tabular data into statewide extents, adding a statewide gridded map layer derived from the vector layer, and adding a new value-added look up table (Valu1) containing “ready to map” attributes. The gridded map layer is a file geodatabase raster in an ArcGIS file geodatabase. The raster and vector map data have a statewide extent. The raster map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area projection. Each cell (and polygon) is linked to a map unit identifier called the map unit key. A unique map unit key is used to link the raster cells and polygons to attribute tables. Due to file size, the raster layer for the conterminous United States is only available in a 30-meter resolution.
+
+
+## gNATSGO: gridded SSURGO / STATSGO / RSS
+The gNATSGO databases contain a raster of the soil map units and 70 related tables of soil properties and interpretations. They are designed to work with the SPSD gSSURGO ArcTools. Users can create full coverage thematic maps and grids of soil properties and interpretations for large geographic areas, such as the extent of a State or the conterminous United States. Please note that the State-wide geodatabases contain a 10 meter raster and the CONUS database contains a 30 meter raster.
+
+The gNATSGO database is composed primarily of SSURGO data, but STATSGO2 data was used to fill in the gaps. The RSSs are newer product with relatively limited spatial extent.  These RSSs were merged into the gNATSGO after combining the SSURGO and STATSGO2 data. The extent of RSS is expected to increase in the coming years.
+
+
+## An Experimental Web Coverage Service
+
+
+```
+http://soilmap2-1.lawr.ucdavis.edu/cgi-bin/mapserv?map=/soilmap2/website/wcs/mukey.map&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=gnatsgo&FORMAT=image/tiff&GEOTIFF:COMPRESSION=Deflate&SUBSETTINGCRS=EPSG:6350&FORMAT=GEOTIFF_FLOAT&SUBSET=x(-1365484,-1358915)&SUBSET=y(2869259,2873658)&RESOLUTION=x(30)&RESOLUTION=y(30)
+```
 
 
 ## Setup
@@ -37,9 +57,11 @@ remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALS
 
 ## Grid Selection
 ```{r eval = FALSE}
-x <- mukey.wcs(var = 'gSSURGO', aoi = c(-114.16, 47.65, -114.08, 47.68))
+# select gSSURGO grid
+x <- mukey.wcs(db = 'gssurgo', ...)
 
-x <- mukey.wcs(var = 'gNATSGO', aoi = c(-114.16, 47.65, -114.08, 47.68))
+# select gNATSGO grid
+x <- mukey.wcs(db = 'gnatsgo', ...)
 ```
 
 ## Caveats / Limitations
@@ -69,24 +91,26 @@ library(rasterVis)
 library(viridis)
 
 
-# AOI corners in WGS84 GCS
-# xmin, ymin, xmax, ymax
-a <- c(-114.16, 47.65, -114.08, 47.68)
+# aoi: bounding-box corners (xmin, ymin, xmax, ymax)
+# coordinate reference system of AOI (GCS WGS84 )
+a <- list(
+  aoi = c(-114.16, 47.65, -114.08, 47.68),
+  crs = '+init=EPSG:4326'
+)
 
 # too big for SDA geometry (>32Mb WKT serialization)
 # a <- c(-114.5, 47, -114, 47.5)
 
-# fetch gNATSGO map unit keys at native resolution
-x <- mukey.wcs(var = 'gSSURGO', aoi = a)
+# fetch gSSURGO map unit keys at native resolution (~30m)
+x <- mukey.wcs(db = 'gnatsgo', aoi = a)
 
-# fetch gSSURGO map unit keys at native resolution 
-# x <- mukey.wcs(var = 'gssurgo', aoi = a)
 
 # OK
 levelplot(
   x, 
   att = 'ID',
   main = 'gSSURGO map unit keys',
+  sub = 'Albers Equal Area Projection',
   margin = FALSE, 
   colorkey = FALSE, 
   col.regions = viridis
@@ -113,8 +137,9 @@ p <- spTransform(p, CRS(projection(x)))
 
 rgeos::gArea(p) * 0.000247105
 
-par(mar = c(0, 0, 2, 0))
+par(mar = c(1, 0, 2, 0))
 plot(p, main = 'SSURGO Polygons (SDA)')
+mtext('Albers Equal Area Projection', side = 1, line = -0.5)
 ```
 
 
@@ -187,55 +212,6 @@ levelplot(
 
 
 ```{r}
-# latest from GitHub
-library(soilDB)
-
-# wrangling polygons and CRS transformations
-library(sp)
-library(rgdal)
-
-# raster data visualization
-library(raster)
-library(rasterVis)
-library(viridis)
-
-
-# AOI corners in WGS84 GCS
-# xmin, ymin, xmax, ymax
-a <- c(-114.16, 47.65, -114.08, 47.68)
-
-# too big for SDA geometry (>32Mb WKT serialization)
-# a <- c(-114.5, 47, -114, 47.5)
-
-# fetch gNATSGO map unit keys at native resolution
-x <- mukey.wcs(var = 'gnatsgo', aoi = a)
-
-# fetch gSSURGO map unit keys at native resolution 
-# x <- mukey.wcs(var = 'gssurgo', aoi = a)
-
-# OK
-levelplot(x, att = 'ID', margin = FALSE, colorkey = FALSE, col.regions = viridis)
-
-# convert raster extent into vector 
-g <- as(extent(x), 'SpatialPolygons')
-proj4string(g) <- projection(x)
-
-# get intersecting SSURGO linework as SpatialPolygonsDataFrame from SDA
-p <- SDA_spatialQuery(g, what = 'geom', geomIntersection = TRUE)
-
-# transform to AEA CRS
-p <- spTransform(p, CRS(projection(x)))
-
-# plot together
-levelplot(
-  x, att = 'ID', margin = FALSE, colorkey = FALSE,
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.lines(p, col = 'white')
-  }
-)
-
 
 # thematic mapping via muaggatt table
 # available water storage to several depths
