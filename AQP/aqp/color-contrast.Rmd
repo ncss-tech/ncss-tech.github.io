@@ -461,34 +461,66 @@ colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), printMetrics = TRUE, d.cex =
 ## Differences Between Adjacent Chips
 
 ```{r}
-
+# fresh start
 data(munsell)
 
-x <- subset(munsell, subset=value %in% 3:8 & chroma %in% 1:8 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+# for now, most commonly used hue pages, but expanded to full range in value / chroma
+x <- subset(munsell, subset = hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
 
+# create all pair-wise combinations
 cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
 z <- combn(cols, 2)
 
+# convert to 2-column data.frame
+# ~ 674,541 combinations!
 z <- data.frame(t(z), stringsAsFactors = FALSE)
+
+## TODO: make this a new function
+
+# borrowed from aqp::colorContrast
+m1.pieces <- parseMunsell(z[[1]], convertColors = FALSE)
+m2.pieces <- parseMunsell(z[[2]], convertColors = FALSE)
+
+# convert to value and chroma to numeric
+m1.pieces[[2]] <- as.numeric(m1.pieces[[2]])
+m1.pieces[[3]] <- as.numeric(m1.pieces[[3]])
+m2.pieces[[2]] <- as.numeric(m2.pieces[[2]])
+m2.pieces[[3]] <- as.numeric(m2.pieces[[3]])
+
+# difference in number of hue chips, clock-wise, as specified in:
+# https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569
+dH <- abs(huePosition(m1.pieces[[1]]) - huePosition(m2.pieces[[1]]))
+# difference in number of value chips
+dV <- abs(m1.pieces[[2]] - m2.pieces[[2]])
+# difference in number of chroma chips
+dC <- abs(m1.pieces[[3]] - m2.pieces[[3]])
+
+## ^^^^ need a new function
+
+# just adjacent chips
+# ~ 11,498 combinations
+idx <- which(dH %in% c(0,1) & dV %in% c(0,1) & dC %in% c(0,1))
+z <- z[idx, ]
+
+# compute color contrast metrics on adjacent chips
 d <- colorContrast(z[[1]], z[[2]])
 
+# summaries
+quantile(d$dE00)
 
-s <- subset(d, subset = dH %in% c(0,1) & dV %in% c(0,1) & dC %in% c(0,1))
-nrow(s)
+# encode combinations
+d$code <- sprintf("%s-%s-%s", d$dH, d$dV, d$dC)
 
-head(s)
-quantile(s$dE00)
-
-s$code <- sprintf("%s-%s-%s", s$dH, s$dV, s$dC)
-
-adj <- lapply(split(s, s$code), function(i) {
-  qq <- round(quantile(i$dE00, probs = c(0.05, 0.95)))
+# compute select quantiles of dE00 by combination
+adj <- lapply(split(d, d$code), function(i) {
+  qq <- round(quantile(i$dE00, probs = c(0.05, 0.5, 0.95)))
   data.frame(
     dH = i$dH[1],
     dV = i$dV[1],
     dC = i$dC[1],
     q05 = qq[1],
-    q95 = qq[2]
+    q50 = qq[2],
+    q95 = qq[3]
   )
     
 }
@@ -496,7 +528,11 @@ adj <- lapply(split(s, s$code), function(i) {
 
 adj <- do.call('rbind', adj)
 
+# all combinations
 knitr::kable(adj)
+
+# just changes along a single dimension 
+knitr::kable(adj[row.names(adj) %in% c('0-0-1', '1-0-0', '0-1-0'), ])
 ```
 
 
