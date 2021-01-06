@@ -188,14 +188,19 @@ plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(1, 2))
 plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65)
 ```
 
+Check: "blue" + "yellow" = "green", yes.
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65)
+```
+
 
 ## Simulation of a continuous mixture
-Continuous mixture: does this make sense?
+Seems plausible.
 ```{r fig.height=2.5, fig.width=10}
 s <- seq(0, 1, by = 0.2)
 z <- lapply(s, function(i) {
   
-  m <- mixMunsell(c('10YR 6/2', '5YR 5/6'), w = c(i, 1-i))
+  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(i, 1-i))
   
   return(m$munsell)
 })

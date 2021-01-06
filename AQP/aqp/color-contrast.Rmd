@@ -141,7 +141,7 @@ hue.pos <- huePosition(hues)
 kable(head(cbind(hue.pos, hues)))
 ```
 
-Arranged in CIELAB colorspace, the ordering of hues looks like this.
+Arranged in CIELAB colorspace, the ordering of hues looks like this. The `huePositionPlot` function in {sharpshootR} will make this kind of figure for any combination of value and chroma.
 ```{r fig.width=7, fig.height=7, res=100}
 # make these into real colors by fixing value and chroma at '6'
 colors <- paste0(hues, ' 6/6')
