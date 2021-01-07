@@ -38,8 +38,18 @@ The ROSETTA model relies on a minimum of 3 soil properties, with increasing (exp
 
 Soil properties must be described, in order, via `vars` argument. The API does not use the names but column ordering must follow: sand, silt, clay, bulk density, volumetric water content at 33kPa (1/3 bar), and volumetric water content at 1500kPa (15 bar).
 
-
 Consider using the [interactive version](https://www.handbook60.org/rosetta), with copy/paste functionality.
+
+
+## Model Versions
+
+   * **Version 1:** Schaap, M.G., F.J. Leij, and M.Th. van Genuchten. 2001. ROSETTA: a computer program for estimating soil hydraulic parameters with hierarchical pedotransfer functions. Journal of Hydrology 251(3-4): 163-176. doi: 10.1016/S0022-1694(01)00466-8.
+   
+   * **Version 2:** Schaap, M.G., A. Nemes, and M.T. van Genuchten. 2004. Comparison of Models for Indirect Estimation of Water Retention and Available Water in Surface Soils. Vadose Zone Journal 3(4): 1455-1463. doi: https://doi.org/10.2136/vzj2004.1455.
+   
+   * **Version 3:** Zhang, Y., and M.G. Schaap. 2017. Weighted recalibration of the Rosetta pedotransfer model with improved estimates of hydraulic parameter distributions and summary statistics (Rosetta3). Journal of Hydrology 547: 39-53. doi: 10.1016/j.jhydrol.2017.01.004.
+
+
 
 ## Related Documentation
   
@@ -105,8 +115,7 @@ x <- SDA_query(q)
 vars <- c('sandtotal_r', 'silttotal_r', 'claytotal_r', 'dbthirdbar_r', 'wthirdbar_decimal', 'wfifteenbar_decimal')
 
 # call ROSETTA API 
-# automatic, best-available model type (m = "0")
-r <- ROSETTA(x, vars = vars, m = "0")
+r <- ROSETTA(x, vars = vars)
 ```
 
 ```{r echo = FALSE}
@@ -131,7 +140,7 @@ x <- cbind(x, tex)
 ```
 
 ```{r echo = FALSE}
-kableExtra::kable_styling(kable(head(x)), full_width = FALSE)
+kableExtra::kable_styling(knitr::kable(head(x)), full_width = FALSE)
 ```
 
 Submit example data to the ROSETTA API and generate theoretical water retention curves.
@@ -157,7 +166,7 @@ res <- do.call('rbind', res)
 
 
 ```{r echo = FALSE}
-kableExtra::kable_styling(kable(head(res), digits = 3), full_width = FALSE)
+kableExtra::kable_styling(knitr::kable(head(res), digits = 3), full_width = FALSE)
 ```
 
 
@@ -219,8 +228,9 @@ kableExtra::kable_styling(knitr::kable(r, row.names = FALSE, digits = 3), full_w
 ```
 
 
-# Differences Between Model Versions
+# Differences Between Versions
 
+## Water Retention Curves
 ```{r fig.width=12, fig.height=6}
 # make a table of soil textures
 # sand sand/silt/clay values at geometric centroids
@@ -228,10 +238,13 @@ tex <- SoilTextureLevels()
 x <- texcl_to_ssc(tex)
 x <- cbind(x, tex)
 
+# request results from all three versions
 r1 <- ROSETTA(x, vars = c('sand', 'silt', 'clay'), v = '1')
+r2 <- ROSETTA(x, vars = c('sand', 'silt', 'clay'), v = '2')
 r3 <- ROSETTA(x, vars = c('sand', 'silt', 'clay'), v = '3')
 
-r <- rbind(r1, r3)
+# stack
+r <- rbind(r1, r2, r3)
 
 # iterate over results and generate VG model curve
 res <- lapply(1:nrow(r), function(i) {
@@ -253,17 +266,18 @@ res <- lapply(1:nrow(r), function(i) {
 res <- do.call('rbind', res)
 
 # set factor levels / labels for model version
-res$version <- factor(res$.rosetta.version, levels = c('1', '3'), labels = c('ROSETTA 1', 'ROSETTA 3'))
+res$version <- factor(res$.rosetta.version, levels = c('1', '2', '3'), labels = c('ROSETTA 1', 'ROSETTA 2', 'ROSETTA 3'))
 
+# plot style adjustments
 tps <- tactile.theme(
   plot.line=list(col='royalblue', lwd = 2) 
 )
 
-
+# panels are soil texture classes
 xyplot(
   phi ~ theta | texture, data = res, groups = version,
   type = c('l', 'g'), 
-  auto.key = list(lines = TRUE, points = FALSE, columns = 2),
+  auto.key = list(lines = TRUE, points = FALSE, columns = 3),
   scales = list(alternating=3, x=list(tick.number=6), y=list(log=10, tick.number=6)), 
   yscale.components = yscale.components.logpower, 
   ylab = expression(Matric~~Potential~~(-kPa)), 
@@ -272,9 +286,59 @@ xyplot(
   strip = strip.custom(bg=grey(0.85)), 
   as.table = TRUE,
   layout = c(7, 3),
-  main='Idealized Water Retention'
+  main = 'Idealized Water Retention'
 )
 ```
+
+## Approximate AWC
+```{r}
+# iterate over results
+# generate VG model curve
+# compute a simplistic AWC
+awc <- lapply(1:nrow(r), function(i) {
+  
+  # model bounds are given in kPA of suction
+  vg <- KSSL_VG_model(VG_params = r[i, ], phi_min = 10^-3, phi_max=10^6)
+  
+  # extract VWC at specific matric potentials
+  d <- data.frame(
+    texture = r$tex[i], 
+    sat = vg$VG_function(0),
+    fc = vg$VG_function(33),
+    pwp = vg$VG_function(1500)
+  )
+  
+  # simplistic determination of AWC using 33 kPa -> 1500 kPa interval
+  d$awc <- with(d, fc - pwp)
+  
+  # save model version and texture class
+  d$.rosetta.version <- r$.rosetta.version[i]
+  d$tex <- r$tex[i]
+  
+  return(d)
+})
+
+awc <- do.call('rbind', awc)
+```
+
+```{r fig.width=10, fig.height=5}
+dotplot(
+  factor(.rosetta.version) ~ awc | tex, data = awc,
+  ylab = 'Rosetta Model Version', 
+  scales = list(alternating = 1, x = list(tick.number = 5, cex = 0.66, rot = 90)), 
+  xlab = expression(AWC~~(cm^3/cm^3)), 
+  par.settings = tps, 
+  strip = strip.custom(bg=grey(0.85)), 
+  as.table = TRUE,
+  layout = c(7, 3),
+  main='Simplistic AWC (FC - PWP)',
+  panel = function(...) {
+    panel.abline(v = seq(0, 0.25, by = 0.05), col = trellis.par.get()$dot.line$col)
+    panel.dotplot(...)
+  }
+)
+```
+
 
 ----------------------------
 This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
