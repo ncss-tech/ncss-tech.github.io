@@ -7,7 +7,7 @@ output:
     mathjax: null
     jquery: null
     smart: no
-    number_sections: yes
+    number_sections: no
     toc: yes
     toc_depth: 3
     toc_float:
@@ -29,11 +29,11 @@ options(width=100, stringsAsFactors=FALSE)
 
 Borrowing content from the official [gSSURGO](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=nrcs142p2_053628#release) and [gNATSGO](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcseprd1464625) pages.
 
-## gSSURGO: gridded SSURGO
+## gSSURGO
 The gSSURGO Database is derived from the official Soil Survey Geographic (SSURGO) Database. SSURGO generally has the most detailed level of soil geographic data developed by the National Cooperative Soil Survey (NCSS) in accordance with NCSS mapping standards. The tabular data represent the soil attributes and are derived from properties and characteristics stored in the National Soil Information System (NASIS). The gSSURGO data were prepared by merging the traditional vector-based SSURGO digital map data and tabular data into statewide extents, adding a statewide gridded map layer derived from the vector layer, and adding a new value-added look up table (Valu1) containing “ready to map” attributes. The gridded map layer is a file geodatabase raster in an ArcGIS file geodatabase. The raster and vector map data have a statewide extent. The raster map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area projection. Each cell (and polygon) is linked to a map unit identifier called the map unit key. A unique map unit key is used to link the raster cells and polygons to attribute tables. Due to file size, the raster layer for the conterminous United States is only available in a 30-meter resolution.
 
 
-## gNATSGO: gridded SSURGO / STATSGO / RSS
+## gNATSGO
 The gNATSGO databases contain a raster of the soil map units and 70 related tables of soil properties and interpretations. They are designed to work with the SPSD gSSURGO ArcTools. Users can create full coverage thematic maps and grids of soil properties and interpretations for large geographic areas, such as the extent of a State or the conterminous United States. Please note that the State-wide geodatabases contain a 10 meter raster and the CONUS database contains a 30 meter raster.
 
 The gNATSGO database is composed primarily of SSURGO data, but STATSGO2 data was used to fill in the gaps. The RSSs are newer product with relatively limited spatial extent.  These RSSs were merged into the gNATSGO after combining the SSURGO and STATSGO2 data. The extent of RSS is expected to increase in the coming years.
@@ -48,14 +48,14 @@ http://soilmap2-1.lawr.ucdavis.edu/cgi-bin/mapserv?map=/soilmap2/website/wcs/muk
 
 
 ## Setup
-
-
+Need the latest version of `soilDB`, along with all packages specfied below (CRAN versions fine).
 ```{r eval = FALSE}
 remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ```
 
 
 ## Grid Selection
+There are two options.
 ```{r eval = FALSE}
 # select gSSURGO grid
 x <- mukey.wcs(db = 'gssurgo', ...)
@@ -64,12 +64,17 @@ x <- mukey.wcs(db = 'gssurgo', ...)
 x <- mukey.wcs(db = 'gnatsgo', ...)
 ```
 
+
 ## Caveats / Limitations
 
-```{r eval = FALSE}
+Requests are limited to images sizes of 5000x5000 pixels, this is approximately 1x1 degrees at 30m.
 
+### To-Fix
+   * Ensure that data are not resampled unless a resolution other than 30m is requested.
+   * Currently the data come back *close* to 30m, usually 29.998-30.111. I'm not sure if this is something that has to be solved in the creation of the BBOX or if it is a Mapserver configuration issue. Still tinkering.
+   * Consider converting source mukey grids to COG-GeoTiff, this will require a newer version of GDAL.
+   * Simplify / unify soil data aggregation within SDA: this is much more generic than this WCS idea, but is a perfect use case.
 
-```
 
 
 # A Simple Demonstration
@@ -89,7 +94,10 @@ library(rgeos)
 library(raster)
 library(rasterVis)
 library(viridis)
+```
 
+
+```{r}
 
 # aoi: bounding-box corners (xmin, ymin, xmax, ymax)
 # coordinate reference system of AOI (GCS WGS84 )
@@ -118,9 +126,7 @@ levelplot(
 ```
 
 ## BBOX Specification
-
-
-## Grid Resolution Specification
+Bounding box corners (xmin, ymin, xmax, ymax).
 
 
 ## Fetching Polygons from SDA
@@ -159,7 +165,32 @@ levelplot(
 
 ```
 
+## Grid Resolution Specification
+Native vs. alternative resolutions (preview not aggregation).
 
+```{r}
+# part of CA
+a.CA <- list(
+  aoi = c(-121, 37, -120, 38),
+  crs = '+init=EPSG:4326'
+)
+
+# fetch gSSURGO map unit keys at ~~ 800m
+# nearest-neighbor resampling = this is a "preview"
+x.800 <- mukey.wcs(db = 'gssurgo', aoi = a.CA, res = 800)
+
+
+# OK
+levelplot(
+  x.800, 
+  att = 'ID',
+  main = 'A Preview of gSSURGO Map Unit Keys',
+  sub = 'Albers Equal Area Projection (800m)\nnearest-neighbor resampling',
+  margin = FALSE, 
+  colorkey = FALSE, 
+  col.regions = viridis
+  )
+```
 
 # Tabular Data from SDA 
 
@@ -205,12 +236,79 @@ levelplot(
 ```
 
 ## Map Unit Aggregatation Strategies
+A "soil data aggregation engine".
+
+   * SOD SQL templates
+   * R functions
+   * code from ArcGIS toolboxes
+   * ???
 
 
-# Related WCS (ISSR-800)
+# Related WCS
+
+## ISSR-800
+```{r}
+# part of CA
+a <- list(
+  aoi = c(-121, 37, -120, 38),
+  crs = '+init=EPSG:4326'
+)
+
+# floating point grids
+pH_05cm <- ISSR800.wcs(var = 'ph_05cm', aoi = a)
+pH_3060cm <- ISSR800.wcs(var = 'ph_3060cm', aoi = a)
+
+clay_05cm <- ISSR800.wcs(var = 'clay_05cm', aoi = a)
+clay_3060cm <- ISSR800.wcs(var = 'clay_3060cm', aoi = a)
+
+silt_3060cm <- ISSR800.wcs(var = 'silt_3060cm', aoi = a)
+sand_3060cm <- ISSR800.wcs(var = 'sand_3060cm', aoi = a)
+
+## NA encoding issues
+# 0 is a real value
+sar <- ISSR800.wcs(var = 'sar', aoi = a)
+
+# 16bit integer grids
+wei <- ISSR800.wcs(var = 'wei', aoi = a)
+
+# 8bit unsigned (BYTE) grids with RAT
+drainage_class <- ISSR800.wcs(var = 'drainage_class', aoi = a)
+weg <- ISSR800.wcs(var = 'weg', aoi = a)
+str <- ISSR800.wcs(var = 'str', aoi = a)
+```
+
+```{r}
+# compositional data may lose some fidelity due to marginal aggregation
+z <- sand_3060cm + silt_3060cm + clay_3060cm
+levelplot(z - 100)
+```
+
+```{r}
+levelplot(sar, margin = FALSE)
+
+levelplot(wei, margin = FALSE)
+
+levelplot(drainage_class, margin = FALSE)
+levelplot(weg, margin = FALSE)
+levelplot(str, margin = FALSE)
+```
+
+```{r fig.width = 10, fig.height=6}
+levelplot(stack(pH_05cm, pH_3060cm), margin = FALSE)
+
+levelplot(stack(clay_05cm, clay_3060cm), margin = FALSE)
+
+levelplot(stack(sand_3060cm, silt_3060cm, clay_3060cm), margin = FALSE)
+```
+
+
+## PRISM Stack
+
+## Others
 
 
 
+# TODO
 ```{r}
 
 # thematic mapping via muaggatt table
@@ -224,7 +322,9 @@ levelplot(
 # robust / complete / fast approach for getting / aggregating / linking via SDA
 
 
-
-
-
 ```
+
+----------------------------
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
+
