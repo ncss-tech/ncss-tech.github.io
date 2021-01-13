@@ -11,7 +11,7 @@
 
 <meta name="author" content="Dylan Beaudette, Richard Reid, Todd Skaggs" />
 
-<meta name="date" content="2021-01-07" />
+<meta name="date" content="2021-01-12" />
 
 <title>ROSETTA Model API</title>
 
@@ -1322,9 +1322,16 @@ background-color: #f5f5f5;
 }
 .lightable-classic {
 border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
 width: 100%;
 margin-bottom: 10px;
 margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
 }
 .lightable-classic caption {
 color: #222222;
@@ -1343,9 +1350,6 @@ color: #222222;
 .lightable-classic thead tr:last-child th {
 border-bottom: 0.10em solid #111111;
 }
-.lightable-classic tbody tr:last-child td {
-border-bottom: 0.14em solid #111111;
-}
 .lightable-classic.lightable-hover tbody tr:hover {
 background-color: #F9EEC1;
 }
@@ -1354,8 +1358,15 @@ background-color: #f5f5f5;
 }
 .lightable-classic-2 {
 border-top: 3px double #111111;
+border-bottom: 3px double #111111;
 width: 100%;
 margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
 }
 .lightable-classic-2 caption {
 color: #222222;
@@ -1392,6 +1403,12 @@ border: 1px solid #EEE;
 border-collapse: collapse;
 margin-bottom: 10px;
 }
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
 .lightable-material th {
 height: 56px;
 padding-left: 16px;
@@ -1425,6 +1442,12 @@ border-collapse: collapse;
 margin-bottom: 10px;
 background-color: #363640;
 }
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
 .lightable-material-dark th {
 height: 56px;
 padding-left: 16px;
@@ -1455,6 +1478,12 @@ width: 100%;
 margin-bottom: 10px;
 color: #444;
 }
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
 .lightable-paper thead tr:last-child th {
 color: #666;
 vertical-align: bottom;
@@ -1478,6 +1507,15 @@ background-color: #00000008;
 border: 0;
 }
 </style>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -1523,6 +1561,7 @@ h6 {
   text-align: left;
 }
 </style>
+
 
 
 
@@ -1707,7 +1746,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">ROSETTA Model API</h1>
 <h4 class="author">Dylan Beaudette, Richard Reid, Todd Skaggs</h4>
-<h4 class="date">2021-01-07</h4>
+<h4 class="date">2021-01-12</h4>
 
 </div>
 
@@ -1812,6 +1851,24 @@ hzdept_r
 hzdepb_r
 </th>
 <th style="text-align:right;">
+sandtotal_r
+</th>
+<th style="text-align:right;">
+silttotal_r
+</th>
+<th style="text-align:right;">
+claytotal_r
+</th>
+<th style="text-align:right;">
+dbthirdbar_r
+</th>
+<th style="text-align:right;">
+wthirdbar_decimal
+</th>
+<th style="text-align:right;">
+wfifteenbar_decimal
+</th>
+<th style="text-align:right;">
 theta_r
 </th>
 <th style="text-align:right;">
@@ -1852,6 +1909,24 @@ H1
 117
 </td>
 <td style="text-align:right;">
+94.4
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+1.60
+</td>
+<td style="text-align:right;">
+0.117
+</td>
+<td style="text-align:right;">
+0.049
+</td>
+<td style="text-align:right;">
 0.027
 </td>
 <td style="text-align:right;">
@@ -1888,6 +1963,24 @@ H2
 </td>
 <td style="text-align:right;">
 251
+</td>
+<td style="text-align:right;">
+61.0
+</td>
+<td style="text-align:right;">
+19.0
+</td>
+<td style="text-align:right;">
+20.0
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+<td style="text-align:right;">
+0.224
+</td>
+<td style="text-align:right;">
+0.134
 </td>
 <td style="text-align:right;">
 0.055
@@ -1928,6 +2021,24 @@ H1
 137
 </td>
 <td style="text-align:right;">
+94.9
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+4.5
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+<td style="text-align:right;">
+0.108
+</td>
+<td style="text-align:right;">
+0.040
+</td>
+<td style="text-align:right;">
 0.025
 </td>
 <td style="text-align:right;">
@@ -1966,6 +2077,24 @@ H2
 178
 </td>
 <td style="text-align:right;">
+55.4
+</td>
+<td style="text-align:right;">
+17.6
+</td>
+<td style="text-align:right;">
+27.0
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+<td style="text-align:right;">
+0.252
+</td>
+<td style="text-align:right;">
+0.181
+</td>
+<td style="text-align:right;">
 0.080
 </td>
 <td style="text-align:right;">
@@ -2002,6 +2131,24 @@ H3
 </td>
 <td style="text-align:right;">
 203
+</td>
+<td style="text-align:right;">
+60.2
+</td>
+<td style="text-align:right;">
+18.3
+</td>
+<td style="text-align:right;">
+21.5
+</td>
+<td style="text-align:right;">
+1.50
+</td>
+<td style="text-align:right;">
+0.221
+</td>
+<td style="text-align:right;">
+0.135
 </td>
 <td style="text-align:right;">
 0.060
@@ -2320,6 +2467,24 @@ hzdept_r
 hzdepb_r
 </th>
 <th style="text-align:right;">
+sandtotal_r
+</th>
+<th style="text-align:right;">
+silttotal_r
+</th>
+<th style="text-align:right;">
+claytotal_r
+</th>
+<th style="text-align:right;">
+dbthirdbar_r
+</th>
+<th style="text-align:right;">
+wthirdbar_decimal
+</th>
+<th style="text-align:right;">
+wfifteenbar_decimal
+</th>
+<th style="text-align:right;">
 theta_r
 </th>
 <th style="text-align:right;">
@@ -2366,6 +2531,24 @@ H1
 127
 </td>
 <td style="text-align:right;">
+94.4
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.117
+</td>
+<td style="text-align:right;">
+0.049
+</td>
+<td style="text-align:right;">
 0.058
 </td>
 <td style="text-align:right;">
@@ -2408,6 +2591,24 @@ H2
 </td>
 <td style="text-align:right;">
 203
+</td>
+<td style="text-align:right;">
+91.0
+</td>
+<td style="text-align:right;">
+1.0
+</td>
+<td style="text-align:right;">
+8.0
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.062
 </td>
 <td style="text-align:right;">
 0.058
@@ -2454,6 +2655,24 @@ H1
 117
 </td>
 <td style="text-align:right;">
+94.1
+</td>
+<td style="text-align:right;">
+1.4
+</td>
+<td style="text-align:right;">
+4.5
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+<td style="text-align:right;">
+0.106
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 0.055
 </td>
 <td style="text-align:right;">
@@ -2496,6 +2715,24 @@ H2
 </td>
 <td style="text-align:right;">
 137
+</td>
+<td style="text-align:right;">
+55.4
+</td>
+<td style="text-align:right;">
+17.6
+</td>
+<td style="text-align:right;">
+27.0
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+<td style="text-align:right;">
+0.252
+</td>
+<td style="text-align:right;">
+0.181
 </td>
 <td style="text-align:right;">
 0.080
@@ -2542,6 +2779,24 @@ H3
 157
 </td>
 <td style="text-align:right;">
+59.3
+</td>
+<td style="text-align:right;">
+13.7
+</td>
+<td style="text-align:right;">
+27.0
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+<td style="text-align:right;">
+0.261
+</td>
+<td style="text-align:right;">
+0.156
+</td>
+<td style="text-align:right;">
 0.056
 </td>
 <td style="text-align:right;">
@@ -2584,6 +2839,24 @@ H4
 </td>
 <td style="text-align:right;">
 203
+</td>
+<td style="text-align:right;">
+62.8
+</td>
+<td style="text-align:right;">
+19.2
+</td>
+<td style="text-align:right;">
+18.0
+</td>
+<td style="text-align:right;">
+1.50
+</td>
+<td style="text-align:right;">
+0.211
+</td>
+<td style="text-align:right;">
+0.122
 </td>
 <td style="text-align:right;">
 0.052
@@ -2630,6 +2903,24 @@ H1
 152
 </td>
 <td style="text-align:right;">
+23.3
+</td>
+<td style="text-align:right;">
+29.2
+</td>
+<td style="text-align:right;">
+47.5
+</td>
+<td style="text-align:right;">
+1.45
+</td>
+<td style="text-align:right;">
+0.369
+</td>
+<td style="text-align:right;">
+0.285
+</td>
+<td style="text-align:right;">
 0.099
 </td>
 <td style="text-align:right;">
@@ -2672,6 +2963,24 @@ H1
 </td>
 <td style="text-align:right;">
 38
+</td>
+<td style="text-align:right;">
+11.7
+</td>
+<td style="text-align:right;">
+69.8
+</td>
+<td style="text-align:right;">
+18.5
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+<td style="text-align:right;">
+0.286
+</td>
+<td style="text-align:right;">
+0.134
 </td>
 <td style="text-align:right;">
 0.050
@@ -2721,6 +3030,24 @@ H2
 NA
 </td>
 <td style="text-align:right;">
+63.2
+</td>
+<td style="text-align:right;">
+30.0
+</td>
+<td style="text-align:right;">
+1.35
+</td>
+<td style="text-align:right;">
+0.308
+</td>
+<td style="text-align:right;">
+0.165
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:right;">
@@ -2753,6 +3080,24 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:right;">
@@ -2909,7 +3254,7 @@ awc &lt;- do.call(&#39;rbind&#39;, awc)</code></pre>
 
 // add bootstrap table styles to pandoc tables
 function bootstrapStylePandocTables() {
-  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
 }
 $(document).ready(function () {
   bootstrapStylePandocTables();

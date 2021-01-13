@@ -58,10 +58,10 @@ remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALS
 There are two options.
 ```{r eval = FALSE}
 # select gSSURGO grid
-x <- mukey.wcs(db = 'gssurgo', ...)
+x <- mukey.wcs(aoi = aoi, db = 'gssurgo', ...)
 
 # select gNATSGO grid
-x <- mukey.wcs(db = 'gnatsgo', ...)
+x <- mukey.wcs(aoi = aoi, db = 'gnatsgo', ...)
 ```
 
 
@@ -110,7 +110,7 @@ a <- list(
 # a <- c(-114.5, 47, -114, 47.5)
 
 # fetch gSSURGO map unit keys at native resolution (~30m)
-x <- mukey.wcs(db = 'gnatsgo', aoi = a)
+x <- mukey.wcs(aoi = a, db = 'gnatsgo')
 
 
 # OK
@@ -177,7 +177,7 @@ a.CA <- list(
 
 # fetch gSSURGO map unit keys at ~~ 800m
 # nearest-neighbor resampling = this is a "preview"
-x.800 <- mukey.wcs(db = 'gssurgo', aoi = a.CA, res = 800)
+x.800 <- mukey.wcs(aoi = a.CA, db = 'gssurgo', res = 800)
 
 
 # OK
@@ -247,6 +247,16 @@ A "soil data aggregation engine".
 # Related WCS
 
 ## ISSR-800
+
+Available datasets.
+```{r, eval = FALSE}
+WCS_details(wcs = 'ISSR800')
+```
+
+```{r, echo = FALSE}
+kableExtra::kable_styling(knitr::kable(WCS_details(wcs = 'ISSR800'), row.names = FALSE), full_width = FALSE)
+```
+
 ```{r}
 # part of CA
 a <- list(
@@ -255,26 +265,30 @@ a <- list(
 )
 
 # floating point grids
-pH_05cm <- ISSR800.wcs(var = 'ph_05cm', aoi = a)
-pH_3060cm <- ISSR800.wcs(var = 'ph_3060cm', aoi = a)
+paws_total <- ISSR800.wcs(aoi = a, var = 'paws')
+paws_025cm <- ISSR800.wcs(aoi = a, var = 'paws_025cm')
+paws_050cm <- ISSR800.wcs(aoi = a, var = 'paws_050cm')
 
-clay_05cm <- ISSR800.wcs(var = 'clay_05cm', aoi = a)
-clay_3060cm <- ISSR800.wcs(var = 'clay_3060cm', aoi = a)
+pH_05cm <- ISSR800.wcs(aoi = a, var = 'ph_05cm')
+pH_3060cm <- ISSR800.wcs(aoi = a, var = 'ph_3060cm')
 
-silt_3060cm <- ISSR800.wcs(var = 'silt_3060cm', aoi = a)
-sand_3060cm <- ISSR800.wcs(var = 'sand_3060cm', aoi = a)
+clay_05cm <- ISSR800.wcs(aoi = a, var = 'clay_05cm')
+clay_3060cm <- ISSR800.wcs(aoi = a, var = 'clay_3060cm')
+
+silt_3060cm <- ISSR800.wcs(aoi = a, var = 'silt_3060cm')
+sand_3060cm <- ISSR800.wcs(aoi = a, var = 'sand_3060cm')
 
 ## NA encoding issues
 # 0 is a real value
-sar <- ISSR800.wcs(var = 'sar', aoi = a)
+sar <- ISSR800.wcs(aoi = a, var = 'sar')
 
 # 16bit integer grids
-wei <- ISSR800.wcs(var = 'wei', aoi = a)
+wei <- ISSR800.wcs(aoi = a, var = 'wei')
 
 # 8bit unsigned (BYTE) grids with RAT
-drainage_class <- ISSR800.wcs(var = 'drainage_class', aoi = a)
-weg <- ISSR800.wcs(var = 'weg', aoi = a)
-str <- ISSR800.wcs(var = 'str', aoi = a)
+drainage_class <- ISSR800.wcs(aoi = a, var = 'drainage_class')
+weg <- ISSR800.wcs(aoi = a, var = 'weg')
+str <- ISSR800.wcs(aoi = a, var = 'str')
 ```
 
 ```{r}
@@ -302,27 +316,32 @@ levelplot(stack(sand_3060cm, silt_3060cm, clay_3060cm), margin = FALSE)
 ```
 
 
+
+```{r}
+a <- list(
+  aoi = c(-114.20, 47.65, -114.10, 47.70),
+  crs = '+init=EPSG:4326'
+)
+
+series_name <- ISSR800.wcs(aoi = a, var = 'series_name')
+levelplot(series_name, margin = FALSE)
+
+
+greatgroup <- ISSR800.wcs(aoi = a, var = 'greatgroup')
+levelplot(greatgroup, margin = FALSE)
+
+
+texture_2550cm <- ISSR800.wcs(aoi = a, var = 'texture_2550cm')
+levelplot(texture_2550cm, margin = FALSE)
+
+lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
+levelplot(lcc_irrigated, margin = FALSE)
+```
+
 ## PRISM Stack
 
 ## Others
 
-
-
-# TODO
-```{r}
-
-# thematic mapping via muaggatt table
-# available water storage to several depths
-
-
-
-
-
-## next steps
-# robust / complete / fast approach for getting / aggregating / linking via SDA
-
-
-```
 
 ----------------------------
 This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
