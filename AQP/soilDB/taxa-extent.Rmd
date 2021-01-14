@@ -35,6 +35,7 @@ install.packages('viridis', dep = TRUE)
 install.packages('raster', dep = TRUE)
 install.packages('rasterVis', dep = TRUE)
 install.packages('mapview', dep = TRUE)
+install.packages('SoilTaxonomy', dep = TRUE)
 ```
 
 
@@ -221,7 +222,44 @@ a <- aggregate(s, fact = 5)
 mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
 ```
 
+## Aggregating and mapping multiple soil taxa
+This example demonstrates a way of using pattern matching on a soil taxonomic level to filter a list of soil taxa that can be aggregated into one raster and mapped.  For example, if we wanted to see all the Andisols and any Andic or Vitrandic subgroups we could use this process.  If the pattern match grab too much or isn't specific enough then you can use the same process to exclude taxa that should not be in the aggregated extent raster (ie. 'Kandic' elements).
 
+```{r}
+# load ST data from SoilTaxonomy package
+data("ST", package = 'SoilTaxonomy')
+
+# filter to include taxa based on a specified pattern
+idx <- grep('and', ST$tax_subgroup)
+STgroup <- ST$tax_subgroup[idx]
+length(STgroup)
+# filter to remove specified orders and any other based on pattern matching
+idx <- grep('ids|ods|ults|ox|els|kandi', STgroup)
+STgroup <- STgroup[-idx]
+length(STgroup)
+
+# inspect
+head(STgroup)
+
+# create a list
+m <- list()
+
+# loop thru list and fetch taxa extent rasters
+for (i in 1:length(STgroup)) {
+  m[[i]] <- taxaExtent(x=STgroup[i], level='subgroup', timeout = 60)
+}
+
+# merge list of rasters into one rasterlayer
+x <- do.call(merge, m)
+
+# give merged raster a name
+names(x) <- 'Andisols and Andic Subgroups'
+
+# slippy map
+if(requireNamespace("mapview")) {
+  mapview::mapview(x, col.regions = viridis::viridis, na.color = NA, use.layer.names = TRUE)
+}
+```
 
 ----------------------------
 This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
