@@ -4,10 +4,15 @@ author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
-  mathjax: null
-jquery: null
-smart: no
-keep_md: no
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 ---
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
@@ -27,7 +32,7 @@ library(colorspace)
 ```
 
 
-## Topics
+# Topics
 
   1. photos
   2. box photos
@@ -60,6 +65,9 @@ s$genhz <- factor(s$genhz, levels = guessGenHzLevels(s, "genhz")$levels)
 
 table(s$genhz, useNA = 'always')
 ```
+
+
+# Previewing Colors
 
 MDS representation of unique colors, based on CIE2000 distances.
 ```{r fig.width=5, fig.height=5, fig.align='center'}
@@ -99,6 +107,8 @@ previewColors(s$moist_soil_color[no.na.idx], method = 'manual', col.order = orde
 title('Clarksville Soil Colors')
 ```
 
+
+# Color Book Style Presentation
 Prepare for color book style representation.
 ```{r fig.width=8, fig.height=4}
 # remove horizons that are missing moist colors
@@ -165,7 +175,7 @@ useOuterStrips(pp, strip=strip.custom(bg=grey(0.85), par.strip.text=list(cex=0.8
 
 ```
 
-
+# Soil Color Aggregation 
 ```{r}
 a <- aggregateColor(s, "genhz", col = 'moist_soil_color')
 a.reduced <- aggregateColor(s, "genhz", col = 'moist_soil_color', k=8)
@@ -179,34 +189,47 @@ aggregateColorPlot(a.reduced, label.cex = 0.65, main = "Clarksville Moist Colors
 ```
 
 
-```{r fig.width=5, fig.height=7.5}
+# Color Quantiles
+```{r fig.width=7, fig.height=7}
 x <- colorQuantiles(na.omit(s$moist_soil_color))
-plotColorQuantiles(x)
+
+# result from plotColorQuantiles() is a lattice graphics object
+update(
+  plotColorQuantiles(x),
+  main = 'All Colors'
+)
 ```
 
 
-```{r fig.width=5, fig.height=7.5}
+Compute color quantiles by generalized horizon label.
+```{r fig.width=7, fig.height=7}
 h.by.genhz <- split(s$moist_soil_color, f = s$genhz)
 
 l <- lapply(h.by.genhz, function(i) {
   colorQuantiles(na.omit(i))
 })
 
-
+# print figures to current graphics device (multiple pages)
 for(i in names(l)) {
-  plotColorQuantiles(l[[i]], title=i)
+  # make figure
+  fig <- plotColorQuantiles(l[[i]])
+  # format title
+  main.txt <- sprintf("Generalized Horizon: %s", i)
+  # add figure title
+  fig <- update(fig, main = main.txt)
+  print(fig)
 }
 ```
 
 
 Reduce lists to `data.frame` objects for further use or reporting.
 ```{r}
-L1.data <- do.call('rbind', lapply(l, function(i) i$L1))
-m.data <- do.call('rbind', lapply(l, function(i) i$marginal))
+L1.data <- do.call('rbind', lapply(l, '[[', 'L1'))
+m.data <- do.call('rbind', lapply(l, '[[', 'marginal'))
 ```
 
 
-
+# Soil Color Palettes
 Examples for creating a soil-inspired palette of colors.
 ```{r fig.width=7, fig.height=1.5}
 # aggregate colors over all depths into 6 medoid colors
@@ -221,6 +244,26 @@ soilPalette(L1.data$L1_color, L1.data$L1_chip)
 
 # using 6 medoid colors
 soilPalette(a$scaled.data$a$moist_soil_color, a$scaled.data$a$munsell)
+```
+
+```{r fig.width=7, fig.height=4}
+L1.cols <- L1.data$L1_color
+medoid.cols <- a$scaled.data$a$moist_soil_color
+
+swatchplot(
+  list(
+    "L1 Median Colors" = L1.cols,
+    "Medoid Colors" = medoid.cols)
+)
+```
+
+```{r fig.width=7, fig.height=6}
+swatchplot(
+  list(
+    "L1 Median Colors" = L1.cols,
+    "Medoid Colors" = medoid.cols),
+  cvd = TRUE
+)
 ```
 
 
