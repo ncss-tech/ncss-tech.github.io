@@ -259,5 +259,71 @@ box()
 ```
 
 
+## Querying and loading spectra
+This example demonstrates how to load RaCA data for a regional area, subset it to specific soil taxa based on pattern matching, and load the spectra for a specific set of taxa.  
+```{r vnir1, fig.width=8, fig.height=4, results='hide', eval=TRUE}
+
+#load data by state without spectra
+r.state <- fetchRaCA(state='id')
+
+# subset and get rcasiteid's for sites with volcanic ash, andic and vitrandic subgroups
+idx <- grep('andic', r.state$pedons$tax_subgroup)
+length(idx)
+print(table(r.state$pedons$tax_subgroup[idx]))
+print(table(r.state$pedons$rcasiteid[idx]))
+
+rcaIDs <- r.state$pedons$rcasiteid[idx]
+rcIDs <- paste(rcaIDs, sep=', ')
+#r.state <- fetchRaCA(rcasiteid = rcIDs)
+
+# load spectra for specific RaCA siteIDs for the subset above
+s <- fetchRaCA(rcasiteid = rcIDs, get.vnir=TRUE)
+
+```
+
+## Working with VNIR spectra as SpectralDataFrames
+A very useful construct called a `SpectralDataFrame` and associated operations can be found in the [spectacles](https://github.com/pierreroudier/spectacles) package.  We will promote the downloaded RaCA spectra to a SpectralDataFrame by joining in associated data and attribute variables.  Once promoted to a SpectralDataFrame they can be split by horizon designation name and then aggregated to a mean spectra for each set of similarly designated horizons. Applying a logical genetic horizonation order (from soil surface to subsurface) to the aggregated spectra makes it easier to compare how the spectra vary with depth. 
+```{r vnir2, fig.width=8, fig.height=4, results='hide', eval=TRUE}
+library(ggplot2)
+library(spectacles)
+library(RColorBrewer)
+
+# convert spectra matrix to dataframe
+d <- as.data.frame(s$spectra)
+
+# assign rownames to id column
+d$id <- rownames(d)
+
+# create Spectra from the dataframe
+spectra(d) <- id ~ 350:2500
+
+# subset some data elements from the sample dataframe
+s1 <- s$sample[ , c('sample_id','rcapid','hzname','sample_top','sample_bottom')]
+rownames(s1) <- s1$sample_id
+names(s1) <- c('id', 'rcapid', 'hzname','sample_top','sample_bottom')
+
+# promote Spectra to a SpectralDataFrame object by joining in the associated data
+features(d, key='id') <- s1
+
+# split data into lists on horizon names (hzname)
+d1 <- split(d, d$hzname)
+print(table(d$hzname))
+# plot subset of 'A' horizons
+plot(d1$A)
+
+# aggregate spectra by taking the mean values across spectra within each hzname group
+d_ag <- aggregate_spectra(d, fun = mean, id = "hzname")
+
+# melt format for plotting with ggplot
+d2 <- melt_spectra(d_ag, attr = c('hzname','sample_top'))
+
+# set a logical horizon order for plotting
+hz_ordered <- c('Oi', 'Oe', 'A', 'Bw1', 'Bw2', '2Bt', '2Bw','2Bw2', '2Bw3', '2Bw4', '2BC', '2C', '2C1', '2C2')
+d2$hzname <- factor(d2$hzname, levels = hz_ordered)
+
+# plot
+ggplot(d2) + geom_line(aes(x = wl, y = nir, colour = hzname)) 
+```
+
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
