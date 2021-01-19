@@ -94,6 +94,9 @@ library(rgeos)
 library(raster)
 library(rasterVis)
 library(viridis)
+
+# soil classification
+library(aqp)
 ```
 
 
@@ -337,6 +340,53 @@ levelplot(texture_2550cm, margin = FALSE)
 lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
 levelplot(lcc_irrigated, margin = FALSE)
 ```
+
+
+### Classification
+```{r}
+# part of CA
+a <- list(
+  aoi = c(-121, 37, -120, 38),
+  crs = '+init=EPSG:4326'
+)
+
+# EC 0-25cm
+ec <- ISSR800.wcs(aoi = a, var = 'ec_025cm')
+
+# pH 0-25cm
+pH <- ISSR800.wcs(aoi = a, var = 'ph_025cm')
+
+# no ESP grid, use a constant value of 1%
+esp <- ec
+values(esp) <- 1
+
+# copy EC grid, replace values with classification in next step
+ss <- ec
+
+# resulting raster contains factor levels (integers) and labels
+values(ss) <- allocate(EC = values(ec), pH = values(pH), ESP = values(esp), to = 'FAO Salt Severity', droplevels = TRUE)
+
+# note factor details stored in raster attribute table (RAT)
+print(ss)
+
+# plot
+levelplot(ss, margin = FALSE, main = 'FAO Salt Severity')
+```
+
+
+For larger objects, consider the alternative.
+```{r eval = FALSE}
+ss <- overlay(
+  pH, ec, esp,
+  fun = function(.pH, .ec, .esp) {
+    res <- allocate(EC = .ec, pH = .pH, ESP = .esp, to = 'FAO Salt Severity', droplevels = FALSE)
+    return(res)
+  }
+)
+```
+
+
+
 
 ## PRISM Stack
 
