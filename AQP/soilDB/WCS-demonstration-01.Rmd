@@ -374,15 +374,22 @@ levelplot(ss, margin = FALSE, main = 'FAO Salt Severity')
 ```
 
 
-For larger objects, consider the alternative.
+For larger objects, consider the alternative. Hmm: `Error in setValues(out, vals) : values must be numeric, logical or factor`.
 ```{r eval = FALSE}
 ss <- overlay(
   pH, ec, esp,
   fun = function(.pH, .ec, .esp) {
+    
+    # this doesn't seem to help
+    # .ec <- ifelse(is.na(.ec), 0, .ec)
+    # .pH <- ifelse(is.na(.pH), 7, .pH)
+    
     res <- allocate(EC = .ec, pH = .pH, ESP = .esp, to = 'FAO Salt Severity', droplevels = FALSE)
     return(res)
   }
 )
+
+levelplot(ss, margin = FALSE, main = 'FAO Salt Severity')
 ```
 
 
