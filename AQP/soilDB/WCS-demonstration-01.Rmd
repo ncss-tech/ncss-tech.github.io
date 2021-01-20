@@ -300,6 +300,13 @@ z <- sand_3060cm + silt_3060cm + clay_3060cm
 levelplot(z - 100)
 ```
 
+Soil texture class 25-50cm.
+```{r}
+texture_2550cm <- ISSR800.wcs(aoi = a, var = 'texture_2550cm')
+levelplot(texture_2550cm, margin = FALSE)
+```
+
+
 ```{r}
 levelplot(sar, margin = FALSE)
 
@@ -320,26 +327,56 @@ levelplot(stack(sand_3060cm, silt_3060cm, clay_3060cm), margin = FALSE)
 
 
 
+### Soil / Land Classification
 ```{r}
 a <- list(
   aoi = c(-114.20, 47.65, -114.10, 47.70),
   crs = '+init=EPSG:4326'
 )
 
-series_name <- ISSR800.wcs(aoi = a, var = 'series_name')
-levelplot(series_name, margin = FALSE)
-
-
 greatgroup <- ISSR800.wcs(aoi = a, var = 'greatgroup')
 levelplot(greatgroup, margin = FALSE)
 
 
-texture_2550cm <- ISSR800.wcs(aoi = a, var = 'texture_2550cm')
-levelplot(texture_2550cm, margin = FALSE)
-
 lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
 levelplot(lcc_irrigated, margin = FALSE)
 ```
+
+
+### Soil Color
+```{r}
+a <- list(
+  aoi = c(-121, 37, -120, 38),
+  crs = '+init=EPSG:4326'
+)
+
+# most frequent soil series per grid cell
+series_name <- ISSR800.wcs(aoi = a, var = 'series_name')
+
+# extract unique soil series names
+rat <- levels(series_name)[[1]]
+
+# query morphology from OSDs
+osds <- fetchOSD(soils = rat$series_name)
+
+# extract soil color at 25cm
+s <- slice(osds, fm = 25 ~ soil_color, just.the.data = TRUE, strict = FALSE)
+
+# subset columns / re-name for simpler join
+s.colors <- s[, c(idname(osds), 'soil_color')]
+names(s.colors)[1] <- 'series_name'
+
+# join with original RAT / re-order columns for packing into raster object
+rat.new <- merge(rat, s.colors, by = 'series_name', sort = FALSE, all.x = TRUE)
+rat.new <- rat.new[, c('ID', 'series_name', 'soil_color')]
+
+# replace old RAT with new RAT containing soil colors
+levels(series_name) <- rat.new
+
+# simple figure
+levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorkey = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs', scales = list(draw = FALSE))
+```
+
 
 
 ### Classification
