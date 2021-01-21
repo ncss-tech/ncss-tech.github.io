@@ -231,7 +231,7 @@ par(mar=c(0,0,0,0), bg='black', fg='white')
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 1, width=0.35, cex.names=0.45, name='', dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 1, width=0.35, cex.names=0.45, name=NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE)
 ```
 
 
