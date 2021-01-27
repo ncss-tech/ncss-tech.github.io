@@ -17,7 +17,7 @@ options(width=100, stringsAsFactors=FALSE)
 ```
 
 ## Introduction
-This tutorial demonstrates how to use functions in the [sharpshootR](http://ncss-tech.github.io/AQP/sharpshootR/sharpshootR-Intro.html) package to derive centroids for PLSS location descriptions. Stay tuned for updates and more detailed examples.
+This tutorial demonstrates how to use functions in the [sharpshootR](https://github.com/ncss-tech/sharpshootR) package to derive centroids for PLSS location descriptions. Stay tuned for updates and more detailed examples.
 
 ## Background
 Before the days of GPS technology the system used for locating sampling sites was the [Public Lands Survey System (PLSS)](https://en.wikipedia.org/wiki/Public_Land_Survey_System) description method.  Locating the data was accomplished using several different methods.  Sometimes the data was marked on a topographic map or pin-pricked on aerial photographs and then the PLSS was also derived for these locations.  Other times it was not marked on maps at all and was only given a PLSS location.  PLSS locations can be taken down to various levels of accuracy, however, a common level of accuracy in the datasets seems to be description down to the quarter-quarter section level.  
@@ -27,7 +27,7 @@ knitr::include_graphics('./Systemic-numbering-PLSS.gif')
 ```
 Source: Public Domain, https://commons.wikimedia.org/w/index.php?curid=2741216
 
-
+A very informative story map can be found here describing organization of the PLSS system: https://esrilandinternal.maps.arcgis.com/apps/MapJournal/index.html?appid=8c595a36971349aba1cb4d9ef12892c0
 
 
 ### Installation
@@ -50,23 +50,24 @@ install.packages('devtools', dep=TRUE)
 devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
-## Building a text file of PLSS data
+## Building a comma-delimited text file of PLSS data
 Given that you have no spatial information other than the PLSS description, the first step is to build an organized file of the information. This is an example of the data and the format that I have constructed.  The functions below will know what to do with a format that follows this example. Building such a file can be a tedious task, but bringing legacy pedons into the spatial world is very important and well worth a focused effort.
 
-```{r}
-# load required packages
-library(sharpshootR)
-library(plyr)
-library(stringi)
-library(sp)
-library(plotKML)
+
+```{r, echo=FALSE}
+
 library(xtable)
 
-# set workspace
-setwd('C:/workspace/')
-
-# load data
-d <- read.csv(file='PLSS_locations.csv', stringsAsFactors = FALSE)
+# build some data
+d <- data.frame( 
+id=c('KORX7', 'KORX8', 'KORX9', 'KORX10', 'KOFO3AC', 'KOCA4'), 
+qq=c('SW', 'SW', 'SE', NA, 'NE', 'NW'), 
+q=c('NE', 'NW', 'SE', 'SE', 'SW', 'SW'),
+s=c(17, 32, 30, 25, 11, 27), 
+t=c('T36N', 'T35N', 'T35N', 'T35N', 'T32N', 'T24N'),
+r=c('R29W', 'R28W', 'R28W', 'R28W', 'R26W', 'R29W'),
+type=c('SN', 'SN', 'SN', 'SN', 'UP', 'UP'),
+m='MT20', stringsAsFactors = FALSE)
 
 # show format
 kable(d)
@@ -76,6 +77,13 @@ kable(d)
 First we load our data file and prepare the data for further use.  For example this particular dataset had some aspect values that were classed and some that were in numeric format.  We will assign the mid-points for the classed data and then convert the format to numeric for further use.  Circular degree aspect values are difficult to use, so we will convert them to radians and then do a cosine transformation.  Slope values also need to be converted from percent slope to slope degrees.
 
 ```{r}
+# load required packages
+library(sharpshootR)
+library(plyr)
+library(stringi)
+library(sp)
+library(plotKML)
+library(xtable)
 
 # use data included in the package to check for meridians by state
 idx <- grep('MT', plssMeridians$state)
@@ -99,11 +107,11 @@ The `PLSS2LL()` function relies on the GetTRS web service which is part of the f
 [BLM PLSS web services](https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/exts/CadastralSpecialServices/GetTRS).
 This function will return the XY lattitude and longitude coordinates for a given formatted PLSS code. If the coordinates are not returned you may need to truncate the plssid code down to just the section (removing the QQ or Q pieces) - see an example of this process below.
 
-Note: The function will return coordinates for most regular PLSS cases, however, depending on the area there can be widespread divergence from regular PLSS grids.  Knowing the regularity of the sectional grid for your area of interest is important.  One way to get an idea of this is to load the following .kmz file and view it in Google Earth:
+Note: The function will return coordinates for most regular PLSS cases, however, depending on the area there can be widespread divergence from regular sectional PLSS grids.  Knowing the regularity of the sectional grid for your area of interest is important.  One way to get an idea of this is to load the following .kmz file and view it in Google Earth:
 
 https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/kml/mapImage.kmz
 
-```{r}
+```{r, echo=FALSE, results='hide', warning=FALSE}
 
 # format PLSS codes
 d$plssid <-formatPLSS(d)
@@ -174,11 +182,6 @@ knitr::include_graphics('./GE-site-centroids.jpg')
 
 ## Taking it further
 Most soil survey data has additional site-level information such as slope percent, aspect (degrees or classes), and elevation for each site.  How do we use this information to take a centroid location and determine where in that section are the most likely locations of a site? For more information check out the next tutorial [deriving most-likely locations from centroids using additional site data]()
-
-
-## References
-[USGS PLSS Article](https://nationalmap.gov/small_scale/a_plss.html)
-
 
 
 

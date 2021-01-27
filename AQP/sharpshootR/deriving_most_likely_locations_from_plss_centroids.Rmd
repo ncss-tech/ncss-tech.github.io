@@ -53,7 +53,6 @@ install.packages('sp', dep=TRUE)
 install.packages('rgeos', dep=TRUE)
 install.packages('elevatr', dep=TRUE)
 install.packages('cluster', dep=TRUE)
-install.packages('ggmap', dep=TRUE)
 ```
 
 You will also need the latest version of `sharpshootR`:
@@ -65,6 +64,43 @@ devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_de
 ## Generating some PLSS centroids data
 You can use the `formatPLSS()` and the `PLSS2LL()` functions in the sharpshootR package and the [Georeferencing Legacy Pedon Data](http://ncss-tech.github.io/AQP/sharpshootR/georeferencing-legacy-pedon-data.html) tutorial to derive the centroids down to quarter-quarter section PLSS descriptions. The data that we will load below for this example will also include columns for slope, aspect, and elevation as transcribed from the original site and pedon data observations. 
 
+```{r, echo=FALSE}
+
+# # set workspace
+# setwd('C:/workspace/')
+# 
+# # load example data from package!!!
+# d <- read.csv(file='PLSS_centroid_sample_data.csv', sep =',', stringsAsFactors = FALSE)
+# 
+# # show format
+# head(d)
+
+library(xtable)
+
+# build some data
+d <- data.frame( 
+id=c('JAKECR', 'KOFI27'), 
+qq=c('SW', 'NE'), 
+q=c('NW', 'SW'),
+s=c(21, 10), 
+t=c('T8N', 'T26N'),
+r=c('R8W', 'R29W'),
+type=c('SN', 'SN'),
+m='MT20', 
+slope=c(8, 15),
+aspect=c('W.SW', 32),
+elevation=c(5460, 3540),
+lat=c(46.43493, 48.02308),
+lon=c(-112.6162, -115.3249), stringsAsFactors = FALSE)
+
+# show format
+kable(d)
+
+```
+
+## Deriving centroids from PLSS information
+First we load our data file and run some preparation steps to get it ready.  For example, this particular dataset had some aspect values that were classed and some that were in numeric format.  We will assign the classed data aspect degree mid-points and then convert the format from character to numeric data type.  Circular degree aspect values are difficult to use, so we will convert them to radians and then perform a cosine transformation on the data.  Slope values also need to be converted from percent slope to slope degrees.  We will also set up a label which indicates the level at which the PLSS coordinates were derived (quarter-quarter, quarter, or section) which can be use in the outputs later on.
+
 ```{r}
 # load required packages
 library(sharpshootR)
@@ -72,24 +108,9 @@ library(elevatr)
 library(raster)
 library(rgeos)
 library(cluster)
-library(ggmap)
 library(plyr)
 library(sp)
 
-# set workspace
-setwd('C:/workspace/')
-
-# load example data from package!!!
-d <- read.csv(file='PLSS_centroid_sample_data.csv', sep =',', stringsAsFactors = FALSE)
-
-# show format
-head(d)
-```
-
-## Deriving centroids from PLSS information
-First we load our data file and run some preparation steps to get it ready.  For example, this particular dataset had some aspect values that were classed and some that were in numeric format.  We will assign the classed data aspect degree mid-points and then convert the format from character to numeric data type.  Circular degree aspect values are difficult to use, so we will convert them to radians and then perform a cosine transformation on the data.  Slope values also need to be converted from percent slope to slope degrees.  We will also set up a label which indicates the level at which the PLSS coordinates were derived (quarter-quarter, quarter, or section) which can be use in the outputs later on.
-
-```{r}
 # data prep:  
 # assign any classed aspect strings a class mid-point
 d$aspect_deg <- ifelse((d$aspect == 'N'), '0', ifelse((d$aspect == 'N.NE'), '22', ifelse((d$aspect == 'NE'), '45', ifelse((d$aspect == 'E.NE'), '67', ifelse((d$aspect == 'E'), '90', ifelse((d$aspect == 'E.SE'), '112', ifelse((d$aspect == 'SE'), '135', ifelse((d$aspect == 'S.SE'), '157', ifelse((d$aspect == 'S'), '180', ifelse((d$aspect == 'S.SW'), '202', ifelse((d$aspect == 'SW'), '225', ifelse((d$aspect == 'W.SW'), '247', ifelse((d$aspect == 'W'), '270', ifelse((d$aspect == 'N.NW'), '292', ifelse((d$aspect == 'NW'), '315', ifelse((d$aspect == 'N.NW'), '337', d$aspect))))))))))))))))
@@ -166,18 +187,32 @@ plot(d1[idx.pt,], add=TRUE)
 x3 <- aggregate(x, fact=9)
 
 # create raster stack of slope and aspect - slope in percent!
-rs <- terrain(x3, opt=c('slope', 'aspect'), unit='degrees')
+rs <- terrain(x3, opt=c('slope'), unit='degrees')
+rs1 <- terrain(x3, opt=c('aspect'), unit='radians')
 # add elevation to raster stack and convert to feet
 rs$elevation <- x3*3.28
 # convert aspect degrees to radians
-rs$aspect <-  (rs$aspect * (180/pi))
+#rs1$aspect <-  (rs1$aspect * (180/pi))
 # transform to cos(aspect_rad) 
-rs$aspect <- cos(rs$aspect)
+#rs$aspect <- cos(rs$aspect)
+rs$aspect <- cos(rs1$aspect)
 
 # plots
-plot(rs)
 plot(rs$elevation)
 plot(d1[idx.pt,], add=TRUE)
+box()
+title(main="Elevation (ft)")
+```
+
+```{r, echo=FALSE}
+plot(rs$slope)
+plot(d1[idx.pt,], add=TRUE)
+box()
+title(main="Slope (deg)")
+plot(rs$aspect)
+plot(d1[idx.pt,], add=TRUE)
+box()
+title(main="Aspect (cos)")
 ```
 
 ### Sample raster at regular points and run distance calculation
@@ -204,8 +239,6 @@ a4 <- a2[-(nrow(a)+1), -c(1:nrow(a))]
 a$distance <- a4
 # get index to minimum distance value
 idx <- which.min(a$distance)
-# plot min distance point
-#points(a[idx, ], pch=0, cex=1, lwd=2, add=TRUE)
 
 # create a grid  based on our elevation grid
 r <- rs$elevation
@@ -218,7 +251,7 @@ r1[cellFromRow(r1, nrow(r1))] <- NA
 r1[cellFromCol(r1, 1)] <- NA
 r1[cellFromCol(r1, ncol(r1))] <- NA
 
-# remove edge effects - NA's from sampled data - warning this could be blowing up the row indexing!
+# remove edge effects - NA's introduced from sampled data
 idx <- complete.cases(a@data)
 a5 <- a[idx, ]
 
@@ -226,14 +259,9 @@ a5 <- a[idx, ]
 idx <- which( a5$distance < quantile(a5$distance)[2])
 plot(rs$elevation)
 points(a5[idx, ], pch=0, cex=1, lwd=2)
-
-# move coords for most-likely back into the original df 'd'
-# convert coordinates to DF with plssid, then join back to the original data
-# coords <- as.data.frame(coordinates(a[idx, ]))
-# coords$plssid <- d@data$plssid[idx.pt]
-# coords <- coords[, c(3,2,1)]
-# names(coords) <- c('plssid', 'lat1', 'lon1')
-# d6 <- join(d3, coords, by='plssid', type='left')
+plot(d1[idx.pt,], add=TRUE)
+box()
+title(main="Elevation (ft) with center point and most-likely areas with box symbols")
 ```
 
 
@@ -279,12 +307,6 @@ Most soil survey data has additional site-level information such as slope percen
 # save output to a directory folder with the site ID as the name
 
 ```
-
-## References
-[USGS PLSS Article](https://nationalmap.gov/small_scale/a_plss.html)
-
-
-
 
 
 ----------------------------
