@@ -9,10 +9,10 @@ output:
     smart: no
 ---
 
-```{r setup, echo=FALSE, results='hide', warning=FALSE}
+```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
+library(printr, warn.conflicts=FALSE, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -24,8 +24,6 @@ This tutorial demonstrates how to use functions in the [sharpshootR](http://ncss
 
 ## Background
 Before the days of GPS technology the system used for locating sampling sites was the [Public Lands Survey System (PLSS)](https://en.wikipedia.org/wiki/Public_Land_Survey_System) description method.  Locating the data was accomplished using several different methods.  Sometimes the data was marked on a topographic map or pin-pricked and labeled on aerial photographs and then the PLSS was also derived for these locations.  Other times it was not marked on maps at all and was only given a PLSS location.  We may be limited in our ability to spatially locate data based only on PLSS descriptions due to the inherent accuracy of the system and depending on what level the PLSS description was recorded.  At the section level we are talking about a square mile area while we are looking at a much smaller area for sites described to the quarter-quarter section level. Given a PLSS geometry we can identify areas slope gradient, slope aspect, and elevation within that section that are most similar to what was identified by the soil scientist during the original observation.  While this process still requires checking, it has the potential to get much closer to the actual locations of sites than we could get by only deriving the PLSS centroids.
-
-INSERT a scanned image of a marked topo location???
 
 ### Steps required to accomplish this task
 1) generate PLSS centroids for PLSS descriptions
@@ -64,17 +62,15 @@ devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_de
 ## Generating some PLSS centroids data
 You can use the `formatPLSS()` and the `PLSS2LL()` functions in the sharpshootR package and the [Georeferencing Legacy Pedon Data](http://ncss-tech.github.io/AQP/sharpshootR/georeferencing-legacy-pedon-data.html) tutorial to derive the centroids down to quarter-quarter section PLSS descriptions. The data that we will load below for this example will also include columns for slope, aspect, and elevation as transcribed from the original site and pedon data observations. 
 
-```{r, echo=FALSE}
-
-# # set workspace
-# setwd('C:/workspace/')
-# 
-# # load example data from package!!!
-# d <- read.csv(file='PLSS_centroid_sample_data.csv', sep =',', stringsAsFactors = FALSE)
-# 
-# # show format
-# head(d)
-
+```{r}
+# load required packages
+library(sharpshootR)
+library(elevatr)
+library(raster)
+library(rgeos)
+library(cluster)
+library(plyr)
+library(sp)
 library(xtable)
 
 # build some data
@@ -92,28 +88,41 @@ aspect=c('W.SW', 32),
 elevation=c(5460, 3540),
 lat=c(46.43493, 48.02308),
 lon=c(-112.6162, -115.3249), stringsAsFactors = FALSE)
+```
 
+```{r, echo=FALSE}
 # show format
 kable(d)
-
 ```
 
 ## Deriving centroids from PLSS information
 First we load our data file and run some preparation steps to get it ready.  For example, this particular dataset had some aspect values that were classed and some that were in numeric format.  We will assign the classed data aspect degree mid-points and then convert the format from character to numeric data type.  Circular degree aspect values are difficult to use, so we will convert them to radians and then perform a cosine transformation on the data.  Slope values also need to be converted from percent slope to slope degrees.  We will also set up a label which indicates the level at which the PLSS coordinates were derived (quarter-quarter, quarter, or section) which can be use in the outputs later on.
 
 ```{r}
-# load required packages
-library(sharpshootR)
-library(elevatr)
-library(raster)
-library(rgeos)
-library(cluster)
-library(plyr)
-library(sp)
-
 # data prep:  
 # assign any classed aspect strings a class mid-point
-d$aspect_deg <- ifelse((d$aspect == 'N'), '0', ifelse((d$aspect == 'N.NE'), '22', ifelse((d$aspect == 'NE'), '45', ifelse((d$aspect == 'E.NE'), '67', ifelse((d$aspect == 'E'), '90', ifelse((d$aspect == 'E.SE'), '112', ifelse((d$aspect == 'SE'), '135', ifelse((d$aspect == 'S.SE'), '157', ifelse((d$aspect == 'S'), '180', ifelse((d$aspect == 'S.SW'), '202', ifelse((d$aspect == 'SW'), '225', ifelse((d$aspect == 'W.SW'), '247', ifelse((d$aspect == 'W'), '270', ifelse((d$aspect == 'N.NW'), '292', ifelse((d$aspect == 'NW'), '315', ifelse((d$aspect == 'N.NW'), '337', d$aspect))))))))))))))))
+d$aspect_deg <- sapply(d$aspect, function(x) {
+                                    switch(x,
+                                      'N' = '0',
+                                      'N.NE' = '22',
+                                      'NE' = '45',
+                                      'E.NE' = '67',
+                                      'E' = '90',
+                                      'E.SE' = '112',
+                                      'SE' = '135',
+                                      'S.SE' = '157',
+                                      'S' = '180',
+                                      'S.SW' = '202',
+                                      'SW' = '225',
+                                      'W.SW' = '247',
+                                      'W' = '270',
+                                      'W.NW' = '292',
+                                      'NW' = '315',
+                                      'N.NW' = '337',
+                                      x
+                                    ) 
+                                  })
+
 # convert to numeric format
 d$aspect_deg <- as.numeric(d$aspect_deg)
 
@@ -130,7 +139,7 @@ d$slope_deg <- round(d$slope_deg, 0)
 d$flag <- ifelse(!is.na(d$qq), 'QQ', ifelse((is.na(d$qq) & !is.na(d$q)), 'Q', ifelse((is.na(d$qq) & is.na(d$q)), 'S', '')))
 
 # show data
-head(d)
+kable(d)
 ```
 
 
@@ -138,8 +147,8 @@ head(d)
 The `LL2PLSS()` function in the sharpshootR package relies on the GetLatLon functionality of the BLM PLSS web services returns the geometry for a given set of XY coordinates. [BLM PLSS web services](https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/exts/CadastralSpecialServices/GetLatLon)
 
 
-
 ```{r}
+# make a copy of the dataframe
 d1 <- d
 
 # initialize SPDF
@@ -150,37 +159,41 @@ proj4string(d1) <- '+proj=longlat +datum=WGS84'
 idx.pt <- 1
 d1@data[idx.pt, ]
 
+# get geometry for sectional area - note returnlevel = 'S'
+p.plss.sec <- LL2PLSS(d1$lon[idx.pt], d1$lat[idx.pt], returnlevel = 'S')
 
-# get corresponding geometry
+# get geometry for the quarter-quarter area corresponding to the point intersection
+# note default returnlevel='I' used because parameter is left unspecified
 p.plss <- LL2PLSS(d1$lon[idx.pt], d1$lat[idx.pt])
 
-# plot geometry and point
-plot(p.plss$geom)
+# plot section, quarter-quarter section, and point geometries together
+plot(p.plss.sec$geom)
 plot(d1[idx.pt,], add=TRUE)
+plot(p.plss$geom, add=TRUE)
 ```
 
 ### Fetch elevation data and crop to extent
 
 ```{r}
 # get elevation data for section geometry
-x <- get_elev_raster(p.plss$geom, z = 14, src = "aws")
+#x <- get_elev_raster(p.plss$geom, z = 14, src = "aws")
+x <- get_elev_raster(sf::st_as_sf(p.plss.sec$geom), z = 14, src = "aws")
 plot(x)
+plot(p.plss.sec$geom, add=TRUE)
 plot(p.plss$geom, add=TRUE)
 plot(d1[idx.pt,], add=TRUE)
 
 # extract extent
-d <- extent(p.plss$geom)
+e <- extent(p.plss$geom)
 # expand extent slightly
-dd <- d*1.20
-# crop to section geometry extent
+dd <- e*1.20
+# crop section to QQ-section geometry extent
 x <- crop(x, dd)
 plot(x)
 plot(d1[idx.pt,], add=TRUE)
 ```
 
 ### Resample and generate slope and aspect grids and create raster stack
-
-
 
 ```{r}
 # resample to 30m res
@@ -191,28 +204,25 @@ rs <- terrain(x3, opt=c('slope'), unit='degrees')
 rs1 <- terrain(x3, opt=c('aspect'), unit='radians')
 # add elevation to raster stack and convert to feet
 rs$elevation <- x3*3.28
-# convert aspect degrees to radians
-#rs1$aspect <-  (rs1$aspect * (180/pi))
 # transform to cos(aspect_rad) 
-#rs$aspect <- cos(rs$aspect)
 rs$aspect <- cos(rs1$aspect)
 
 # plots
 plot(rs$elevation)
 plot(d1[idx.pt,], add=TRUE)
 box()
-title(main="Elevation (ft)")
+title(main="Elevation(ft)")
 ```
 
 ```{r, echo=FALSE}
 plot(rs$slope)
 plot(d1[idx.pt,], add=TRUE)
 box()
-title(main="Slope (deg)")
+title(main="Slope(deg)")
 plot(rs$aspect)
 plot(d1[idx.pt,], add=TRUE)
 box()
-title(main="Aspect (cos)")
+title(main="Aspect(cos)")
 ```
 
 ### Sample raster at regular points and run distance calculation
@@ -261,36 +271,62 @@ plot(rs$elevation)
 points(a5[idx, ], pch=0, cex=1, lwd=2)
 plot(d1[idx.pt,], add=TRUE)
 box()
-title(main="Elevation (ft) with center point and most-likely areas with box symbols")
+title(main="Elev(ft): QQ-Sec area with center point & most-likely areas (boxes)")
+```
+
+
+
+```{r}
+# move coords for most-likely back into the original df 'd'
+# convert coordinates to dataframe, assign id column, sort and rename columns
+# then join back to the original data
+coords <- as.data.frame(coordinates(a5[idx, ]))
+coords$id <- d1@data$id[idx.pt]
+coords$dist <- a5$distance[idx]
+coords <- coords[, c(3,2,1,4)]
+names(coords) <- c('id', 'lat1', 'lon1', 'dist')
+d6 <- join(d, coords, by='id', type='left')
 ```
 
 
 ## Visual comparison of centroid versus most-likely minimum distance locations
-Generate a KML file and view the resulting centroid locations for the data in Google Earth.  It can be helpful to generate a label column for each placemark in the KML that will identify the site ID and the level of PLSS information used to derive the corresponding centroid locations.
+Generate a KML file via the [plotKML](https://github.com/cran/plotKML) package and view the resulting centroid location and the nearby mostly-likely locations for the data in Google Earth.
+Below we first generate a KML file for the centroid and then generate a second KML file for the most-likely locations and map those by applying a color palette to the distance values. This produces a kind of heatmap for the area that is most similar to the centroid based on site characteristics of slope, aspect, and elevation.
 
 ```{r eval=FALSE}
+# load library
+library(plotKML)
+
 # generate comparison kml files
 # subset to only ones with lat/long coords
 idx <- which(!is.na(d6$lat))
 d7 <- d6[idx, ]
-idx <- which(!is.na(d6$lat1))
-d8 <- d6[idx, ]
+# select first row as original centroid
+d7 <- d7[1, ]
 
-# initialize SPDF
+# initialize SPDF for centroid point
 coordinates(d7) <- ~ lon + lat
 proj4string(d7) <- '+proj=longlat +datum=NAD83'
 
-kml_file_path <- 'I:/MT634_KNF_data/R_MT634_KNF_PLSS_centroid.kml'
+kml_file_path <- 'C:/PLSS_locations/R_MT634_KNF_PLSS_centroid.kml'
 kml_open(file.name=kml_file_path, folder.name='Site_centroids', overwrite=TRUE)
-kml_layer.SpatialPoints(d7, title='Sites_MT634', colour='royalblue', labels=paste(d7$id, d7$flag, 'C', sep=' - '), shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
+kml_layer.SpatialPoints(d7, title='Sites_PLSS', colour='orange', labels=paste(d7$id, d7$flag, 'C', sep=' - '), shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
 kml_close(kml_file_path)
 
+# subset to only ones with lat/long coords
+idx <- which(!is.na(d6$lat1))
+d8 <- d6[idx, ]
+
+# initialize SPDF for minimum distance points
 coordinates(d8) <- ~ lon1 + lat1
 proj4string(d8) <- '+proj=longlat +datum=NAD83'
 
-kml_file_path <- 'I:/MT634_KNF_data/R_MT634_KNF_PLSS_minDist.kml'
+# add color palette
+data(SAGA_pal)
+
+kml_file_path <- 'C:/PLSS_locations/R_MT634_KNF_PLSS_minDist.kml'
 kml_open(file.name=kml_file_path, folder.name='Site_minDist', overwrite=TRUE)
-kml_layer.SpatialPoints(d8, title='Sites_MT634', colour='royalblue', labels=paste(d8$id, d8$flag, 'mD', sep=' - '), shape="http://maps.google.com/mapfiles/kml/pal2/icon18.png")
+kml_layer.SpatialPoints(d8, title='Sites_MT634', colour=d8$dist, colour_scale=SAGA_pal[[1]], labels=paste(round(d8$dist, 2), 'mD', sep=' - '), shape="http://maps.google.com/mapfiles/kml/shapes/square.png")
 kml_close(kml_file_path)
 
 ```
@@ -300,12 +336,11 @@ knitr::include_graphics('./GE_location_comparison.jpg')
 ```
 
 ## Conclusion
-Most soil survey data has additional site-level information such as slope percent, aspect (degrees or classes), and elevation for each site. This has been a demonstration of how to use this information to take a centroid location and shift it to the most-likely location based on a distance calculation of the similarity of the recorded site information with the corresponding raster values. 
+Most soil survey data has additional site-level information such as slope percent, aspect (degrees or classes), and elevation for each site. This has been a demonstration of how to use this information to take a centroid location and use these outputs as a decision-support system to shift a centroid to the most-likely location based on a distance calculation of the similarity of the recorded site information with the corresponding 30m raster values. 
 
 
 ```{r, eval=FALSE, fig.width=8, fig.height=8, echo=FALSE, results='hide', warning=FALSE}
 # save output to a directory folder with the site ID as the name
-
 ```
 
 
