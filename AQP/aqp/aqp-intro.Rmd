@@ -42,13 +42,12 @@ idcolumn ~ hz_top_column + hz_bottom_column
 In this tutorial we will use some sample data included with the `aqp` package, based on characterization data from 10 soils sampled on serpentinitic parent material as described in [McGahan et al, 2009](https://www.soils.org/publications/sssaj/articles/73/6/2087).
 ```{r creation}
 # load required packages, you may have to install these if missing:
-# install.packages('aqp', dep=TRUE)
+# install.packages('aqp', dep = TRUE)
 # remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 library(aqp)
 library(Hmisc)
 library(lattice)
 library(MASS)
-library(plyr)
 
 # load sample data set, a data.frame object with horizon-level data from 10 profiles
 data(sp4)
@@ -63,49 +62,55 @@ str(sp4)
 # 'bottom' is the name of the column containing horizon lower boundaries
 depths(sp4) <- id ~ top + bottom
 
+# register horizon designation column
+hzdesgnname(sp4) <- 'name'
+
 # check it out:
-class(sp4) # class name
+class(sp4)
 print(sp4)
 ```
 
 
 # Accessing, Setting, and Replacing Data
 "Accessor" functions are used to extract specific components from within `SoilProfileCollection` objects.
-```{r accessor-functions, eval=FALSE}
-# methods for object inspection
-idname(sp4) # self-explanitory
-hzidname(sp4)
-horizonDepths(sp4) # self-explanitory
-depth_units(sp4) # defaults to 'cm'
-metadata(sp4) # not much to start with
-profile_id(sp4) # vector of profile IDs
-hzID(sp4)
-horizonNames(sp4) # column names from horizon data
-siteNames(sp4) # column names from site data
 
-# further inspection with common function overloads
-length(sp4) # number of profiles in the collection
-nrow(sp4) # number of horizons in the collection
-names(sp4) # column names from site and horizon data, concatenated into a single vector
-min(sp4) # shallowest profile depth in collection
-max(sp4) # deepest profile depth in collection
-```
+   * Methods that return a column name. These are useful for extracting depths, horizon designations, IDs, etc. before taking an SPC apart for a specific task.
+
+      + `idname(sp4)`: extract profile ID name (column name used to init SPC)
+      + `hzidname(sp4)`: horizon ID name (typically automatically built at init time)
+      + `horizonDepths(sp4)`: horizon top / bottom depth names (used to init SPC)
+      + `hzdesgnname(sp4)`: horizon designation name (if set)
+
+   * Methods that return a vector of values.
+   
+      + `profile_id(sp4)`: profile IDs, in order
+      + `hzID(sp4)`: horizon IDs, in order
+      + `hzDesgn(sp4)`: horizon designations, in order
+      
+   * Methods that return site/horizon attribute column names.
+      
+      + `names(sp4)`: site + horizon names concatenated into a single vector
+      + `horizonNames(sp4)`: horizon names
+      + `siteNames(sp4)`: site names
+      
+  * Profile and horizon totals.
+  
+     + `length(sp4)`: number of profiles in collection
+     + `nrow(sp4)`: number of horizons in collection
+
+   * Other methods.
+      
+      + `depth_units(sp4)`: defaults to 'cm' at SPC creation
+      + `metadata(sp4)`
+
 
 
 Several accessor functions can also be used to define, modify, or replace components within `SoilProfileCollection` objects. For example, 
-```{r get-example, eval=FALSE}
+```{r  eval=FALSE}
+# get horizon data
 horizons(sp4)
-``` 
-will extract horizon data and 
 
-```{r set-example, eval=FALSE}
-# careful!
-horizons(sp4) <- x
-```
-
-will replace horizon data. Further examples include:
-```{r setter-functions, eval=FALSE}
-# get or set site data
+# get site data
 site(sp4)
 
 # get or set diagnostic horizons
@@ -267,7 +272,7 @@ filter(sp4, grepl('shasta', id, ignore.case = TRUE))
 ```
 
 
-The `subsetProfiles()` function can be used to subset collections based on criteria from both horizon and site level attributes. Several examples are given below.
+The `subset()` function can be used to subset collections based on criteria from both horizon and site level attributes. Several examples are given below.
 ```{r subsetting-2, eval=FALSE}
 # matrix-style subsetting
 sp4[1:2, ] # profiles 1--2 from the collection
@@ -280,7 +285,7 @@ class(sp4[1, ]) # profile 1 from the collection
 class(sp4[, 1]) # horizon 1 from each profile
 
 # filtering criteria from horizon and site level data
-subsetProfiles(sp4, h='clay < 20', s='group == "A"')
+subset(sp4, clay < 20 & group == 'A')
 ```
 
 
@@ -523,18 +528,28 @@ Annotation of depth-intervals can be accomplished using "brackets":
 # extract top/bottom depths associated with all A horizons
 # return as a single data.frame / profile
 f <- function(i) {
+  # horizons as a data.frame
   h <- horizons(i)
+  # index "A" horizons
   idx <- grep('^A', h$name)
-  res <- data.frame(top=min(h$top[idx]), bottom=max(h$bottom[idx], na.rm=TRUE))
+  # current profile ID
+  idn <- idname(i)
+  this.id <- h[[idn]]
+  
+  res <- data.frame(
+    id = this.id,
+    top = min(h$top[idx]), 
+    bottom = max(h$bottom[idx], na.rm=TRUE)
+  )
+  
+  # set profile ID name
+  names(res)[1] <- idn
+  
   return(res)
 }
 
 # apply function to each profile in sp4, result is a list
-a <- profileApply(sp4, f, simplify=FALSE)
-# convert list into data.frame
-a <- ldply(a)
-# set idname so that addBrackets can locate the correct profile
-names(a)[1] <- idname(sp4)
+a <- profileApply(sp4, f, simplify = FALSE, frameify = TRUE)
 
 a
 ```
@@ -792,11 +807,21 @@ Occasionally there is a need for converting data associated with soil horizons, 
 library(reshape2)
 library(RColorBrewer)
 
-# 9 random profiles with properties simulated via logistic power peak (LPP) function
-d <- ldply(1:9, random_profile, n=c(6, 7, 8), n_prop=1, method='LPP')
+# 9 random profiles
+# 1 simulated properties via logistic power peak (LPP) function
+# 6, 7, or 8 horizons per profile
+# result is a list of single-profile SPC
+d <- lapply(
+  as.character(1:9), 
+  random_profile, 
+  n = c(6, 7, 8), 
+  n_prop = 1, 
+  method = 'LPP',
+  SPC = TRUE
+)
 
-# promote to SPC
-depths(d) <- id ~ top + bottom
+# combine into single SPC
+d <- combine(d)
 
 # GSM depths
 gsm.depths <- c(0, 5, 15, 30, 60, 100, 200)
