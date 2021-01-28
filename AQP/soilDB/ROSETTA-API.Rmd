@@ -24,17 +24,17 @@ options(width=100, stringsAsFactors=FALSE)
 
 
 # Introduction
-This document outlines how to access a new, online, interfae to the ROSETTA model for predicting hydraulic parameters from soil properties. The ROSETTA API was developed by Dr. Todd Skaggs (USDA-ARS) and links to the work of Zhang and Schaap, (2017). The `ROSETTA` function in **soilDB** is one possible approach to using the API from R.
+This document outlines how to access a new, online, interface to the ROSETTA model for predicting hydraulic parameters from soil properties. The ROSETTA API was developed by Dr. Todd Skaggs (USDA-ARS) and links to the work of Zhang and Schaap, (2017). The `ROSETTA` function in **soilDB** is one possible approach to using the API from R.
 
 The ROSETTA model relies on a minimum of 3 soil properties, with increasing (expected) accuracy as additional properties are included:
 
   * required, sand, silt, clay: USDA soil texture separates (percentages) that sum to 100%
 
-  * optional, bulk density (any moisture basis): mass per volume after accounting for >2mm fragments, units of gm/cm3
+  * optional, bulk density (any moisture basis): mass per volume after accounting for >2mm fragments, units of $gram/cm^3$
 
-  * optional, volumetric water content at 33 kPa: roughly "field capacity" for most soils, units of cm^3/cm^3
+  * optional, volumetric water content at 33 kPa: roughly "field capacity" for most soils, units of $cm^3/cm^3$
 
-  * optional, volumetric water content at 1500 kPa: roughly "permanent wilting point" for most plants, units of cm^3/cm^3
+  * optional, volumetric water content at 1500 kPa: roughly "permanent wilting point" for most plants, units of $cm^3/cm^3$
 
 Soil properties must be described, in order, via `vars` argument. The API does not use the names but column ordering must follow: sand, silt, clay, bulk density, volumetric water content at 33kPa (1/3 bar), and volumetric water content at 1500kPa (15 bar).
 
@@ -75,7 +75,7 @@ install.packages('aqp', dependencies = TRUE)
 You will also need the latest version of `soilDB`:
 ```{r eval=FALSE}
 install.packages('remotes', dep=TRUE)
-remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade_dependencies=FALSE)
 ```
 
 

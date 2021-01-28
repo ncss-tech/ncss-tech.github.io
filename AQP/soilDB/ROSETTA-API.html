@@ -11,7 +11,7 @@
 
 <meta name="author" content="Dylan Beaudette, Richard Reid, Todd Skaggs" />
 
-<meta name="date" content="2021-01-12" />
+<meta name="date" content="2021-01-28" />
 
 <title>ROSETTA Model API</title>
 
@@ -1746,20 +1746,20 @@ div.tocify {
 
 <h1 class="title toc-ignore">ROSETTA Model API</h1>
 <h4 class="author">Dylan Beaudette, Richard Reid, Todd Skaggs</h4>
-<h4 class="date">2021-01-12</h4>
+<h4 class="date">2021-01-28</h4>
 
 </div>
 
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This document outlines how to access a new, online, interfae to the ROSETTA model for predicting hydraulic parameters from soil properties. The ROSETTA API was developed by Dr. Todd Skaggs (USDA-ARS) and links to the work of Zhang and Schaap, (2017). The <code>ROSETTA</code> function in <strong>soilDB</strong> is one possible approach to using the API from R.</p>
+<p>This document outlines how to access a new, online, interface to the ROSETTA model for predicting hydraulic parameters from soil properties. The ROSETTA API was developed by Dr. Todd Skaggs (USDA-ARS) and links to the work of Zhang and Schaap, (2017). The <code>ROSETTA</code> function in <strong>soilDB</strong> is one possible approach to using the API from R.</p>
 <p>The ROSETTA model relies on a minimum of 3 soil properties, with increasing (expected) accuracy as additional properties are included:</p>
 <ul>
 <li><p>required, sand, silt, clay: USDA soil texture separates (percentages) that sum to 100%</p></li>
-<li><p>optional, bulk density (any moisture basis): mass per volume after accounting for &gt;2mm fragments, units of gm/cm3</p></li>
-<li><p>optional, volumetric water content at 33 kPa: roughly “field capacity” for most soils, units of cm<sup>3/cm</sup>3</p></li>
-<li><p>optional, volumetric water content at 1500 kPa: roughly “permanent wilting point” for most plants, units of cm<sup>3/cm</sup>3</p></li>
+<li><p>optional, bulk density (any moisture basis): mass per volume after accounting for &gt;2mm fragments, units of <span class="math inline"><em>g</em><em>r</em><em>a</em><em>m</em>/<em>c</em><em>m</em><sup>3</sup></span></p></li>
+<li><p>optional, volumetric water content at 33 kPa: roughly “field capacity” for most soils, units of <span class="math inline"><em>c</em><em>m</em><sup>3</sup>/<em>c</em><em>m</em><sup>3</sup></span></p></li>
+<li><p>optional, volumetric water content at 1500 kPa: roughly “permanent wilting point” for most plants, units of <span class="math inline"><em>c</em><em>m</em><sup>3</sup>/<em>c</em><em>m</em><sup>3</sup></span></p></li>
 </ul>
 <p>Soil properties must be described, in order, via <code>vars</code> argument. The API does not use the names but column ordering must follow: sand, silt, clay, bulk density, volumetric water content at 33kPa (1/3 bar), and volumetric water content at 1500kPa (15 bar).</p>
 <p>Consider using the <a href="https://www.handbook60.org/rosetta">interactive version</a>, with copy/paste functionality.</p>
@@ -1794,7 +1794,7 @@ install.packages(&#39;soilDB&#39;, dependencies = TRUE)
 install.packages(&#39;aqp&#39;, dependencies = TRUE)</code></pre>
 <p>You will also need the latest version of <code>soilDB</code>:</p>
 <pre class="r"><code>install.packages(&#39;remotes&#39;, dep=TRUE)
-remotes::install_github(&quot;ncss-tech/soilDB&quot;, dependencies=FALSE, upgrade_dependencies=FALSE)</code></pre>
+remotes::install_github(&quot;ncss-tech/soilDB&quot;, dependencies = FALSE, upgrade_dependencies=FALSE)</code></pre>
 </div>
 <div id="a-very-basic-example" class="section level1">
 <h1>A Very Basic Example</h1>
