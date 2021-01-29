@@ -105,30 +105,9 @@ print(sp4)
 
 
 
-Several accessor functions can also be used to define, modify, or replace components within `SoilProfileCollection` objects. For example, 
-```{r  eval=FALSE}
-# get horizon data
-horizons(sp4)
-
-# get site data
-site(sp4)
-
-# get or set diagnostic horizons
-diagnostic_hz(sp4)
-
-# get or set restrictions
-restrictions(sp4)
-
-# get or set spatial coordinates
-coordinates(sp4)
-
-# get or set coordinate reference system in PROJ4 notation
-proj4string(sp4)
-```
-
 
 # Horizon and Site Data
-Typically, horizon and site data are the most important components of `SoilProfileCollection` objects. Both are internally stored as `data.frame` objects; with one or more rows (per profile ID) in the horizon table and one row (per profile ID) in the site table. Columns from either table can be accessed with the `$` style notation of `data.frames`. New data can be assigned to either table in the same manner, as long as the length of the new data is either:
+Typically, horizon and site data are the most important components of `SoilProfileCollection` objects. Both are internally stored as `data.frame`, `data.table`, or `tbl_df` objects; with one or more rows (per profile ID) in the horizon table and one row (per profile ID) in the site table. Columns from either table can be accessed with the `$` style notation of `data.frames`. New data can be assigned to either table in the same manner, as long as the length of the new data is either:
 
    1. same length as the number of profiles in the collection (target is the site table)
    2. same length as the number of horizons in the collection (target is the horizon table)
@@ -250,7 +229,7 @@ box()
 # Subsetting SoilProfileCollection Objects
 `SoilProfileCollection` objects can be subset using the familiar `[`-style notation used by matrix and `data.frame` objects, such that: `spc[i, j]` will return profiles identified by the integer vector `i`, and horizons identified by the integer vector `j`. Omitting either index will result in all profiles (`i` omitted) or all horizons (`j` omitted). Typically, site-level attributes will be used as the subsetting criteria. Functions that return an index to matches (such as `grep()` or `which()`) provide the link between attributes and an index to matching profiles. Some examples:
 
-```{r subsetting-1, eval=FALSE}
+```{r eval=FALSE}
 # explicit string matching
 idx <- which(sp4$group == 'A')
 
