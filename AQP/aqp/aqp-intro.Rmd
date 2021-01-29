@@ -190,7 +190,13 @@ pIDs <- names(rf.top)
 
 # carefully make data.frame
 # note: profile IDs must be stored in a column named for idname(sp4) -> 'id'
-rf <- data.frame(id=pIDs, top=rf.top, bottom=rf.bottom, kind='fake', stringsAsFactors=FALSE)
+rf <- data.frame(
+  id = pIDs, 
+  top = rf.top, 
+  bottom = rf.bottom, 
+  kind='fake', 
+  stringsAsFactors=FALSE
+)
 
 # overwrite any existing diagnostic horizon data
 restrictions(sp4) <- rf
@@ -203,8 +209,8 @@ restrictions(sp4)
 Spatial data can be explicitly stored within a `SoilProfileCollection` object and accessed with methods imported from the [sp](http://cran.at.r-project.org/web/packages/sp/index.html) package. The use of `sp` classes (in this case `SpatialPoints` and `SpatialPointsDataFrame` objects) simplifies operations such as [plotting spatial data, coordinate system transformations, and spatial queries](http://cran.at.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
 ```{r spatial, fig.width=4, fig.height=4}
 # generate some fake coordinates as site level attributes
-sp4$x <- rnorm(n=length(sp4), mean=354000, sd=100)
-sp4$y <- rnorm(n=length(sp4), mean=4109533, sd=100)
+sp4$x <- rnorm(n = length(sp4), mean = 354000, sd = 100)
+sp4$y <- rnorm(n = length(sp4), mean = 4109533, sd = 100)
 
 # initialize spatial coordinates
 coordinates(sp4) <- ~ x + y
@@ -223,6 +229,12 @@ sp4.sp <- as(sp4, 'SpatialPointsDataFrame')
 # plot the fake coordinates
 plot(sp4.sp)
 box()
+
+# in the presence of spatial data, subsetting can either result in 
+# 1. a new SoilProfileCollection (> 1 horizon / profile)
+# 2. a new SpatialPointsDataFrame (1 horizon / profile)
+class(sp4[1, ]) # profile 1 from the collection
+class(sp4[, 1]) # horizon 1 from each profile
 ```
 
 
@@ -243,29 +255,15 @@ idx <- grep('shasta', profile_id(sp4), ignore.case=TRUE)
 sp4[idx, ]
 ```
 
-Simpler subsetting with `filter`
+Simpler subsetting with `subset`:
 ```{r eval=FALSE}
-filter(sp4, group == 'A')
-filter(sp4, elevation < 1000)
-filter(sp4, grepl('shasta', id, ignore.case = TRUE))
+subset(sp4, group == 'A')
+subset(sp4, elevation < 1000)
+subset(sp4, grepl('shasta', id, ignore.case = TRUE))
 ```
 
 
-The `subset()` function can be used to subset collections based on criteria from both horizon and site level attributes. Several examples are given below.
-```{r subsetting-2, eval=FALSE}
-# matrix-style subsetting
-sp4[1:2, ] # profiles 1--2 from the collection
-sp4[, 1:2] # horizons 1--2 from each profile
 
-# in the presence of spatial data, subsetting can either result in 
-# 1. a new SoilProfileCollection (> 1 horizon / profile)
-# 2. a new SpatialPointsDataFrame (1 horizon / profile)
-class(sp4[1, ]) # profile 1 from the collection
-class(sp4[, 1]) # horizon 1 from each profile
-
-# filtering criteria from horizon and site level data
-subset(sp4, clay < 20 & group == 'A')
-```
 
 
 
@@ -282,7 +280,7 @@ s3 <- sp4[c(6, 8, 9), ]
 s <- combine(list(s1, s2, s3))
 
 # double-check result
-plot(s)
+plotSPC(s)
 ```
 
 
@@ -306,9 +304,9 @@ sp3$bottom <- NULL
 depths(sp1) <- id ~ top + bottom
 depths(sp3) <- newid ~ hztop + hzbottom
 
-# label each group
-sp1$g <- rep('sp1', times=length(sp1))
-sp3$g <- rep('sp3', times=length(sp3))
+# label each group via site-level attribute
+site(sp1)$g <- 'sp1'
+site(sp3)$g <- 'sp3'
 
 # combine
 x <- combine(list(sp1, sp3))
@@ -337,8 +335,16 @@ str(res, 1)
 ```
 
 
+## Duplication
+```{r fig.height=4, fig.width=8}
+d <- duplicate(sp4[1, ], times = 8)
+par(mar=c(0,2,0,4))
+plotSPC(d, color = 'ex_Ca_to_Mg')
+```
+
+
 # Plotting SoilProfileCollection Objects
-The `plot()` method for `SoilProfileCollection` objects generates sketches of profiles within the collection based on horizon boundaries, vertically aligned to an integer sequence from 1 to the number of profiles. Horizon names are automatically extracted from a horizon-level attribute `name` (if present), or via an alternate attributed given as an argument: `name='column.name'`. Horizon colors are automatically generated from the horizon-level attribute `soil_color`, or any other attribute of **R**-compatible color description given as an argument: `color='column.name'`. This function is highly customizable, therefore, it is prudent to consult `help(plotSPC)` from time to time. Soil colors in Munsell notation can be converted to **R**-compatible colors via `munsell2rgb()`.
+The `plotSPC()` method for `SoilProfileCollection` objects generates sketches of profiles within the collection based on horizon boundaries, vertically aligned to an integer sequence from 1 to the number of profiles. Horizon names are automatically extracted from a horizon-level attribute `name` (if present), or via an alternate attributed given as an argument: `name='column.name'`. Horizon colors are automatically generated from the horizon-level attribute `soil_color`, or any other attribute of **R**-compatible color description given as an argument: `color='column.name'`. This function is highly customizable, therefore, it is prudent to consult `help(plotSPC)` from time to time. Soil colors in Munsell notation can be converted to **R**-compatible colors via `munsell2rgb()`.
 
 ## Making Adjustments
 The `explainPlotSPC()` function is helpful for adjusting some of the more obscure arguments to `plotSPC()`.
@@ -464,20 +470,20 @@ Horizon-level attributes can be symbolized with color, in this case using the ho
 ```{r fig.height=4, fig.width=8}
 # plot again, this time using new colors
 par(mar=c(0,0,3,0)) # tighter figure margins
-plot(sp4, name='name', color='clay', col.label='Clay Content (%)')
+plotSPC(sp4, name='name', color='clay', col.label='Clay Content (%)')
 ```
 
 Use a different set of colors.
 ```{r fig.height=4, fig.width=8}
 # plot again, this time using new colors
 par(mar=c(0,0,3,0)) # tighter figure margins
-plot(sp4, name='name', color='clay', col.palette=viridis::viridis(10), col.label='Clay Content (%)')
+plotSPC(sp4, name='name', color='clay', col.palette=viridis::viridis(10), col.label='Clay Content (%)')
 ```
 
 Categorical properties can also be used to make a thematic sketch. Colors are interpolated when there are more classes than colors provided by `col.palette`.
 ```{r fig.height=4, fig.width=8}
 par(mar=c(0,0,3,0)) # tighter figure margins
-plot(sp4, name='name', color='name', col.palette=RColorBrewer::brewer.pal(5, 'Set1'), col.label='Original Horizon Name')
+plotSPC(sp4, name='name', color='name', col.palette=RColorBrewer::brewer.pal(5, 'Set1'), col.label='Original Horizon Name')
 ```
 
 Try with [generalized horizon labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html).
@@ -487,7 +493,7 @@ par(mar=c(0,0,3,0)) # tighter figure margins
 # generalize horizon names into 3 groups
 sp4$genhz <- generalize.hz(sp4$name, new = c('A', 'AB', 'Bt'), pat=c('A[0-9]?', 'AB', '^Bt'))
 
-plot(sp4, name='name', color='genhz', col.palette=RColorBrewer::brewer.pal(3, 'Spectral'), col.label='Generalized Horizon Name')
+plotSPC(sp4, name='name', color='genhz', col.palette=RColorBrewer::brewer.pal(3, 'Spectral'), col.label='Generalized Horizon Name')
 ```
 
 
@@ -495,7 +501,7 @@ Horizon-level attributes that represent a volume fraction (e.g. coarse-fragment 
 ```{r plotting-vol-fraction, fig.height=4, fig.width=8}
 par(mar=c(0,0,3,0)) # tighter figure margins
 sp4$frag_pct <- sp4$CF * 100 # convert fraction -> percent
-plot(sp4, name='name', color='frag_pct')
+plotSPC(sp4, name='name', color='frag_pct')
 addVolumeFraction(sp4, 'frag_pct') # symbolize volume fraction data
 ```
 
@@ -535,7 +541,7 @@ a
 
 ```{r fig.height=4, fig.width=8}
 par(mar=c(0,0,0,0)) # tighter figure margins
-plot(sp4, name='name')
+plotSPC(sp4, name='name')
 # annotate with brackets
 addBracket(a, col='red')
 ```
@@ -665,11 +671,12 @@ We can now use our some of our new site-level attributes to order the profiles w
 new.order <- order(sp4$wt.mean.ca.to.mg)
 # plot the data using our new order based on Ca:Mg
 par(mar=c(4,0,3,0)) # tighten figure margins
-plot(sp4, name='name', color='ex_Ca_to_Mg', plot.order=new.order)
+plotSPC(sp4, name='name', color='ex_Ca_to_Mg', plot.order=new.order)
 # add an axis labeled with the sorting criteria
 axis(1, at=1:length(sp4), labels=round(sp4$wt.mean.ca.to.mg, 3), cex.axis=0.75)
 mtext(1, line=2.25, text='Horizon Thickness Weighted Mean Ex. Ca:Mg', cex=0.75)
 ```
+
 
 
 # Slicing Soil Profile Collections
@@ -685,28 +692,52 @@ seq ~ .
 where `seq` is a sequence of integers (e.g. `0:15`, `c(5,10,15,20)`, etc.) and `var.1 + var.2 + var.3 + ...` are horizon-level attributes to slice. Both continuous and categorical variables can be named on the right-hand-side of the formula. The results returned by `slice()` is either a `SoilProfileCollection`, or `data.frame` when called with the optional argument `just.the.data=TRUE`. For example, to slice our sample data set into 1-cm intervals, from 0--15 cm:
 
 
-```{r slice, fig.height=4, fig.width=8}
+```{r fig.height=4, fig.width=8}
 # slice data
 sliced <- slice(sp4, fm= 0:15 ~ sand + silt + clay + name + ex_Ca_to_Mg)
 # check the result
 class(sliced)
 # plot sliced data
 par(mar=c(0,0,3,0)) # tighten figure margins
-plot(sliced, name='name', color='ex_Ca_to_Mg')
+plotSPC(sliced, name='name', color='ex_Ca_to_Mg')
 ```
 
 
-Once soil profile data have been sliced, it is simple to extract "chunks" of data by depth interval via matrix-style subsetting:
-
-```{r slice-subset, eval=FALSE}
+Once soil profile data have been sliced, it is simple to extract "chunks" of data by depth interval via `[`-subsetting:
+```{r eval=FALSE}
 # slice from 0 to max depth in the collection
 sliced <- slice(sp4, fm= 0:max(sp4) ~ sand + silt + clay + name + ex_Ca_to_Mg)
 # extract all data over the range of 5--10 cm:
-plot(sliced[, 5:10])
+plotSPC(sliced[, 5:10])
 # extract all data over the range of 25--50 cm:
-plot(sliced[, 25:50])
+plotSPC(sliced[, 25:50])
 # extract all data over the range of 10--20 and 40--50 cm:
-plot(sliced[, c(10:20, 40:50)])
+plotSPC(sliced[, c(10:20, 40:50)])
+```
+
+
+# Ragged Selection: `glom`
+Select all horizons that overlap the interval of 5-15cm.
+```{r fig.height=4, fig.width=8}
+# truncate to the interval 0-15cm
+clods <- profileApply(sp4, glom, z1 = 5, z2 = 15)
+clods <- combine(clods)
+# check
+par(mar=c(0,0,3,0)) # tighten figure margins
+plotSPC(clods, name='name', color='ex_Ca_to_Mg')
+
+rect(xleft = 0.5, ybottom = 15, xright = length(sp4) + 0.5, ytop = 0)
+```
+
+
+## Truncation: `trunc`
+Truncate the SPC to the interval of 5-15cm.
+```{r fig.height=4, fig.width=8}
+# truncate to the interval 0-15cm
+sp4.truncated <- trunc(sp4, 0, 15)
+# check
+par(mar=c(0,0,3,0)) # tighten figure margins
+plotSPC(sp4.truncated, name='name', color='ex_Ca_to_Mg')
 ```
 
 
@@ -826,8 +857,8 @@ d.gsm.pedons$hzname <- profileApply(d.gsm.pedons, function(i) {paste0('GSM-', 1:
 
 # compare original and aggregated
 par(mar=c(1,0,3,3), mfrow=c(2,1))
-plot(d, color='p1')
-plot(d.gsm.pedons, color='p1')
+plotSPC(d, color='p1')
+plotSPC(d.gsm.pedons, color='p1')
 ```
 
 Note that re-aligned data may not represent reality (and should therefore be used with caution) when the original soil depth is shallower than the deepest of the new (re-aligned) horizon depths. The `contributing_fraction` metric returned by `slab()` can be useful for assessing how much *real* data were used to generate the new set of re-aligned data.
@@ -838,10 +869,9 @@ depths(d.gsm.pedons.2) <- id ~ top + bottom
 
 # compare original and aggregated
 par(mar=c(1,0,3,3), mfrow=c(2,1))
-plot(d.gsm.pedons, name='', color='p1')
-plot(d.gsm.pedons.2, name='', color='p1', col.label='Contributing Fraction', col.palette=brewer.pal(10, 'Spectral'))
+plotSPC(d.gsm.pedons, name='', color='p1')
+plotSPC(d.gsm.pedons.2, name='', color='p1', col.label='Contributing Fraction', col.palette=brewer.pal(10, 'Spectral'))
 ```
-
 
 
 
@@ -907,7 +937,15 @@ depth_units(sp4) <- 'cm'
 ```
 
 
-# Object Structure and Coercion
+# Validity and Horizon Logic
+```{r, eval=FALSE}
+checkSPC(sp4)
+spc_in_sync(sp4)
+z <- rebuildSPC(sp4)
+checkHzDepthLogic(sp4)
+```
+
+# Coercion
 ```{r coercion, eval=FALSE}
 # check our work by viewing the internal structure
 str(sp4)
