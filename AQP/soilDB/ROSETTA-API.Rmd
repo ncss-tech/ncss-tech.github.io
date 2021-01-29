@@ -340,6 +340,103 @@ dotplot(
 ```
 
 
+# Bulk Density and Ksat
+
+```{r}
+library(scales)
+
+# data from Texas
+q <- "SELECT musym, co.cokey, compname, comppct_r,
+    hzname, hzdept_r, hzdepb_r, sandtotal_r, silttotal_r, claytotal_r, dbthirdbar_r,
+    wthirdbar_r/100 AS wthirdbar_decimal, wfifteenbar_r/100 AS wfifteenbar_decimal
+    FROM legend
+    INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+    INNER JOIN component co ON mu.mukey = co.mukey
+    INNER JOIN chorizon ch ON co.cokey = ch.cokey
+    WHERE legend.areasymbol = 'CA630'
+    ORDER BY musym, co.cokey, ch.hzdept_r ASC;"
+
+x <- SDA_query(q)
+
+
+# remove O horizons
+x <- x[grep('O', x = x$hzname, invert = TRUE), ]
+
+
+# attempting to use all possible soil properties
+vars <- c('sandtotal_r', 'silttotal_r', 'claytotal_r', 'dbthirdbar_r', 'wthirdbar_decimal', 'wfifteenbar_decimal')
+
+# get parameters
+r <- ROSETTA(x, vars = vars)
+
+
+
+
+# andosoils usually have higher bulk densities (1.3–1.7 g/cm3) than fine silts and clays (1.1 – 1.6 g/cm3) because they have larger, but fewer, pore spaces. ... Soils rich in organic matter (e.g. peaty soils) can have densities of less than 0.5 g/cm3.
+
+# "fluff" Db according to texture
+x$txt <- ssc_to_texcl(x$sandtotal_r, x$claytotal_r)
+table(x$txt)
+
+as.vector(scale(sort(unique(as.numeric(x$txt))), center = FALSE, scale = TRUE))
+
+
+mean.pct.decreast <- 0.1
+
+
+txt <- levels(x$txt)
+txt.relative.change <- rescale(1:length(ll), to = c(0.5, 1.5))
+names(txt.relative.change) <- txt
+
+1 - (mean.pct.decreast * txt.relative.change)
+
+x$scaled.txt.effect <- rescale(as.numeric(x$txt), to = c(0.5, 1.5))
+
+x$newDb <- x$dbthirdbar_r * (1 - (mean.pct.decreast * x$scaled.txt.effect))
+
+x$Db.diff <- x$dbthirdbar_r - x$newDb
+
+
+bwplot(txt ~ Db.diff, data = x, xlab = 'Simulated Decrease in Db')
+
+
+vars <- c('sandtotal_r', 'silttotal_r', 'claytotal_r', 'newDb', 'wthirdbar_decimal', 'wfifteenbar_decimal')
+r2 <- ROSETTA(x, vars = vars)
+```
+
+Finish this.
+```{r}
+z <- data.frame(r$hzname, Ksat = 10^r$ksat, Ksat_new = 10^r2$ksat)
+
+z$Ksat.diff <- z$Ksat_new - z$Ksat
+
+z$genhz <- generalize.hz(z$r.hzname, new = c('A Horizons', 'B Horizons'), pat = c('A', 'B'))
+
+tapply(z$Ksat.diff, z$genhz, quantile, probs = c(0.05, 0.5, 0.95), na.rm = TRUE)
+
+
+xyplot(
+  Ksat_new ~ Ksat | genhz, 
+  data = z, 
+  asp = 1, 
+  ylab = 'Adjusted Ksat (cm/day)',
+  xlab = 'Original Ksat (cm/day)',
+  subset = z$genhz != 'not-used', 
+  scales = list(alternating = 1, tick.number = 10, x = list(log = 10), y = list(log = 10)), 
+  par.settings = tactile.theme(),
+  xscale.components = xscale.components.log10ticks, 
+  yscale.components = yscale.components.log10ticks, 
+  panel = function(...) {
+    panel.grid(-1, -1)
+    panel.xyplot(...)
+    panel.abline(0, 1)
+  })
+
+
+```
+
+
+
 ----------------------------
 This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
 
