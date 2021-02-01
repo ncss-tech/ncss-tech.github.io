@@ -69,7 +69,7 @@ lapply(s$morph, head)
 ```{r fig.width=10, fig.height=6}
 # check
 par(mar=c(0,0,0,0))
-plotSPC(pedons, color='moist_soil_color', print.id=FALSE, name='hzn_desgn')
+plotSPC(pedons, color='moist_soil_color', print.id=FALSE, name='hzn_desgn', width = 0.3)
 ```
 
 
@@ -78,15 +78,12 @@ Simplification of fragment data is still a manual process.
 # simplify fragment data
 s.frags <- simplifyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
-# merge fragment data into SPC
-h <- horizons(pedons)
-h <- merge(h, s.frags, by='labsampnum', all.x=TRUE, sort=FALSE)
-horizons(pedons) <- h
-
+# merge fragment data into SPC via "left" join
+horizons(pedons) <- s.frags
 
 # check
 par(mar=c(0,0,3,0))
-plotSPC(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn')
+plotSPC(pedons, color='total_frags_pct', print.id=FALSE, name='hzn_desgn', width = 0.3)
 addVolumeFraction(pedons, 'total_frags_pct', pch=1, cex.min=0.25, cex.max = 0.5)
 ```
 
@@ -104,10 +101,8 @@ pedons <- s$SPC
 # simplify fragment data
 s.frags <- simplifyFragmentData(s$morph$phfrags, id.var='labsampnum')
 
-# merge fragment data into SPC
-h <- horizons(pedons)
-h <- merge(h, s.frags, by='labsampnum', all.x=TRUE, sort=FALSE)
-horizons(pedons) <- h
+# merge fragment data into SPC via left join
+horizons(pedons) <- s.frags
 
 # flag horizons with >= 100% total fragment volume
 pedons$fragment_errors <- factor(pedons$total_frags_pct >= 100)
@@ -128,7 +123,7 @@ s$morph$phfrags[idx, ]
 ```
 
 # Fetch Data by ID
-As of `soilDB` version 2.5.3, `fetchKSSL()` is fully vectorized with the exception of `bbox`. Note that it is much more efficient to work with the KSSL snapshot when attempting to load large collections of data by ID.
+As of `soilDB` version 2.5.3, `fetchKSSL()` is fully vectorized with the exception of `bbox`. Note that it is much more efficient to work with the KSSL snapshot when attempting to load large collections of data by ID. Note that pedon `04N0610` appears to have an error in the horizon depths near 150cm. This is due to the presence of a "grab sample" (sub-sample of the Cg3 horizon) that was submitted for characterization.
 
 ```{r, results='hide'}
 # pedons indexed by "pedlabsampnum" ID
@@ -144,10 +139,10 @@ str(res, 2)
 pedons <- res$SPC
 
 # check: looks good
-plotSPC(pedons, color='estimated_ph_h2o', name='hzn_desgn')
+plotSPC(pedons, color='estimated_ph_h2o', name='hzn_desgn', label = 'pedlabsampnum')
 
 # check: looks good
-plotSPC(pedons, color='moist_soil_color', name='hzn_desgn')
+plotSPC(pedons, color='moist_soil_color', name='hzn_desgn', label = 'pedlabsampnum')
 ```
 
 # Redoximorphic Features

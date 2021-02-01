@@ -1,6 +1,6 @@
 ---
 title: "Dealing With Troublesome Data"
-author: "D.E. Beaudette"
+author: "D.E. Beaudette and A.G. Brown"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -99,7 +99,7 @@ kable(bad.chk)
 ```
 
 
-```{r fig.width=8, fig.height=4.5}
+```{r fig.width=8, fig.height=5}
 # merge test results into site-level attributes of SoilProfileCollection
 site(bad) <- bad.chk
 # convert validity test to a factor
