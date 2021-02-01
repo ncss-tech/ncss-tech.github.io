@@ -30,7 +30,7 @@ library(reshape2)
 library(colorspace)
 
 # init vector of taxonnames to summarize
-soils <- c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot')
+soils <- c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse')
 ```
 
 
@@ -40,7 +40,7 @@ Optionally re-make cached data. Requires NASIS and relevant soils in the selecte
 x <- fetchNASIS(from='pedons', rmHzErrors = FALSE, nullFragsAreZero = FALSE)
 
 # convert vector of taxonnames into REGEX pattern for matching
-pat <- paste0(soils, collapse='|')
+pat <- paste0(soils, collapse = '|')
 
 # subset pedons that match our REGEX pattern
 idx <- grep(pat, x$taxonname, ignore.case = TRUE)
@@ -57,10 +57,12 @@ load(url('http://ncss-tech.github.io/AQP/aqp/profile-summary-SPC.rda'))
 # load(file='profile-summary-SPC.rda')
 
 # normalize taxonname via REGEX
-for(i in soils)
+for(i in soils) {
   x$taxonname[grep(i, x$taxonname, ignore.case = TRUE)] <- i
+}
+  
 
-# tabulate number of profiiles
+# tabulate number of profiles
 table(x$taxonname)
 
 # convert soil colors to CIE LAB colorspace
@@ -98,9 +100,9 @@ cols.srgb <- data.frame(coords(as(LAB(x.colors$d_L, x.colors$d_A, x.colors$d_B),
 
 x.colors$soil_color[not.na] <- with(cols.srgb[not.na, ], rgb(R, G, B, maxColorValue = 1))
 
-# aggregate bedrock depth probabilty by taxonname
+# aggregate bedrock depth probability by taxonname
 # at 90% level of confidence
-dp <- aggregateSoilDepth(x, 'taxonname', crit.prob=0.9)
+dp <- aggregateSoilDepth(x, groups = 'taxonname', crit.prob=0.9)
 
 # init a new SoilProfileCollection from aggregate data
 depths(x.colors) <- taxonname ~ top + bottom
@@ -108,7 +110,7 @@ depths(x.colors) <- taxonname ~ top + bottom
 site(x.colors) <- dp
 
 # generate index for new ordering
-new.order <- match(c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse', 'Hennekenot'), profile_id(x.colors))
+new.order <- match(c('Whiterock', 'Copperopolis', 'Amador', 'Auburn', 'Loafercreek', 'Argonaut', 'Crimeahouse'), profile_id(x.colors))
 
 # make a table of data for adding depth brackets to profile sketches
 # see ?addBracket for details
@@ -120,59 +122,84 @@ depth.brackets$label <- 'P(soil >= 90%)'
 ```
 
 ```{r plot-color, fig.width=14, fig.height=6}
-par(mar=c(1,0,3,0))
-plot(x.colors, divide.hz=FALSE, name='', plot.order=new.order, col.label='Soil Color', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
+par(mar=c(1, 0, 3, 1.5))
+
+plotSPC(
+  x.colors, 
+  divide.hz = FALSE, 
+  name = NA, 
+  plot.order = new.order, 
+  col.label = 'Soil Color',
+  lwd = 1.25,
+  axis.line.offset = -3,
+  cex.depth.axis = 1,
+  cex.id = 1
+)
+
 addBracket(depth.brackets, col='black', label.cex=0.85)
+
 title('Aggregate Soil Properties')
 ```
 
-```{r fig.width=14, fig.height=6}
-d <- profile_compare(x.colors, vars=c('d_L', 'd_A', 'd_B'), max_d=150, k=0)
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name='',  divide.hz=FALSE, y.offset=10, width=0.2)
+```{r fig.width=12, fig.height=6}
+d <- profile_compare(x.colors, vars = c('d_L', 'd_A', 'd_B'), max_d = 150, k = 0)
+
+plotProfileDendrogram(
+  x.colors, 
+  clust = diana(d), 
+  scaling.factor = 1, 
+  name = NA, 
+  divide.hz = FALSE,
+  y.offset = 10,
+  width = 0.2
+)
+
 addBracket(depth.brackets, col='black', label.cex=0.6)
+
 title('Aggregate Soil Properties')
 ```
 
 
 
-```{r plot-clay, fig.width=14, fig.height=6}
+```{r plot-clay, fig.width=12, fig.height=6}
 par(mar=c(1,0,3,0))
-plot(x.colors, divide.hz=FALSE, color='clay', name='', plot.order=new.order, col.label='Clay Content (%)', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
+
+plotSPC(x.colors, divide.hz=FALSE, color='clay', name=NA, plot.order=new.order, col.label='Clay Content (%)', lwd=1.25, axis.line.offset=-3, cex.depth.axis=1, cex.id=1)
 addBracket(depth.brackets, col='black', label.cex=0.85)
 
-plot(x.colors, divide.hz=FALSE, color='phfield', name='', plot.order=new.order, col.label='pH', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
+plot(x.colors, divide.hz=FALSE, color='phfield', name=NA, plot.order=new.order, col.label='pH', lwd=1.25, axis.line.offset=-3, cex.depth.axis=1, cex.id=1)
 addBracket(depth.brackets, col='black', label.cex=0.85)
 
-plot(x.colors, divide.hz=FALSE, color='total_frags_pct', name='', plot.order=new.order, col.label='Total Rock Fragment Volume (%)', lwd=1.25, axis.line.offset=-6, cex.depth.axis=1, cex.id=1)
+plot(x.colors, divide.hz=FALSE, color='total_frags_pct', name=NA, plot.order=new.order, col.label='Total Rock Fragment Volume (%)', lwd=1.25, axis.line.offset=-3, cex.depth.axis=1, cex.id=1)
 addVolumeFraction(x.colors, 'total_frags_pct')
 addBracket(depth.brackets, col='black', label.cex=0.85)
 ```
 
 
-```{r fig.width=14, fig.height=6}
+```{r fig.width=12, fig.height=6}
 d <- profile_compare(x.colors, vars=c('clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2)
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name = NA,  divide.hz=FALSE, y.offset=10, width = 0.25)
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2, color='clay')
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name = NA,  divide.hz=FALSE, y.offset=10, width = 0.25, color='clay')
 addBracket(depth.brackets, col='black', label.cex=0.6)
 addVolumeFraction(x.colors, 'total_frags_pct')
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2, color='phfield')
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name = NA,  divide.hz=FALSE, y.offset=10, width = 0.25, color='phfield')
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='',  divide.hz=FALSE, y.offset=10, width=0.2, color='total_frags_pct')
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name = NA,  divide.hz=FALSE, y.offset=10, width = 0.25, color='total_frags_pct')
 ```
 
-```{r fig.width=14, fig.height=6}
+```{r fig.width=12, fig.height=6}
 d <- profile_compare(x.colors, vars=c('d_L', 'clay', 'phfield', 'total_frags_pct'), max_d=150, k=0)
 
-plotProfileDendrogram(x.colors, diana(d), scaling.factor = 0.5, name='', divide.hz=FALSE, y.offset=10, width=0.2)
-addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
+plotProfileDendrogram(x.colors, diana(d), scaling.factor = 1, name = NA, divide.hz=FALSE, y.offset=10, width = 0.25)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.35)
 ```
 
 
 
-```{r fig.width=14, fig.height=6}
+```{r fig.width=12, fig.height=6}
 pig <- soilColorSignature(x.colors, r='d_r', g='d_g', b='d_b', RescaleLightnessBy = 1, method = 'colorBucket')
 # move row names over for distance matrix
 row.names(pig) <- pig$taxonname
@@ -183,11 +210,11 @@ d <- daisy(pig[, -1])
 dd <- diana(d)
 
 par(mar=c(1,1,1,1))
-plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.002, y.offset = 0.04, width=0.15, name='',  divide.hz=FALSE)
-addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
+plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.002, y.offset = 0.04, width = 0.25, name = NA,  divide.hz=FALSE)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.35)
 ```
 
-```{r fig.width=14, fig.height=6}
+```{r fig.width=12, fig.height=6}
 pig <- soilColorSignature(x.colors, r='d_r', g='d_g', b='d_b', RescaleLightnessBy = 1, method = 'depthSlices')
 # move row names over for distance matrix
 row.names(pig) <- pig$taxonname
@@ -196,11 +223,11 @@ d <- daisy(pig[, -1])
 dd <- diana(d)
 
 par(mar=c(1,1,1,1))
-plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.15, name='',  divide.hz=FALSE)
-addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
+plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.25, name = NA,  divide.hz=FALSE)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.35)
 ```
 
-```{r fig.width=14, fig.height=6}
+```{r fig.width=12, fig.height=6}
 pig <- soilColorSignature(x.colors, r='d_r', g='d_g', b='d_b', RescaleLightnessBy = 1, method = 'pam')
 # move row names over for distance matrix
 row.names(pig) <- pig$taxonname
@@ -209,8 +236,8 @@ d <- daisy(pig[, -1])
 dd <- diana(d)
 
 par(mar=c(1,1,1,1))
-plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.15, name='',  divide.hz=FALSE)
-addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.25)
+plotProfileDendrogram(x.colors, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.5, y.offset = 7, width=0.25, name = NA,  divide.hz=FALSE)
+addBracket(depth.brackets, col='black', label.cex=0.6, offset = -0.35)
 ```
 
 
