@@ -10,10 +10,10 @@ output:
 ---
 
 ## Introduction
-This document describes how to setup an ODBC link between **R** and the local NASIS database. See [Chapter 2](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html) from the Statistics for Soil Scientists training for a demonstration.
+This document describes how to setup an ODBC link between **R** and the local NASIS database.
 
 ## Open the ODBC Data Source Administrator
-1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) if you get lost. Select the 64-bit ODBC application if you are using Windows 10. It should look like this:
+1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) for detailed instructions on how to to find the ODBC Data Source Control Panel. Select the 64-bit ODBC application if you are using Windows 10. It should look like this.
 
 ![](odbc-01.png)
  
@@ -64,17 +64,17 @@ Install RODBC and other soil-themed packages using the commands below if you are
 
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN + dependencies
-install.packages("RODBC", dep=TRUE)
+install.packages("RODBC", dependencies = TRUE)
 
 # stable version from CRAN + dependencies
-install.packages("aqp", dep=TRUE)
-install.packages("soilDB", dep=TRUE)
-install.packages("sharpshootR", dep=TRUE)
+install.packages("aqp", dependencies = TRUE)
+install.packages("soilDB", dependencies = TRUE)
+install.packages("sharpshootR", dependencies = TRUE)
 
 # latest version off GitHub
-remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
-remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
-remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/aqp", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ```
 
 ## An example R session
@@ -89,11 +89,14 @@ library(aqp)
 library(soilDB)
 
 # fetch all pedons from the selected set in local NASIS database
-x <- fetchNASIS(from='pedons')
+x <- fetchNASIS(from = 'pedons')
 
-# make sketches of the first 10 pedons
+# index first 10 profiles (pedons)
+idx <- 1:pmin(length(x), 10)
+
+# make sketches of select profiles
 par(mar=c(0,0,0,0))
-plot(x[1:pmin(length(x), 10), ], name='hzname', label='taxonname')
+plot(x[idx, ], name = 'hzname', label = 'taxonname')
 ```
 
 Good job, that wasn't so hard. 
