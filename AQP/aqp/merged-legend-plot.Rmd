@@ -46,10 +46,10 @@ str(osd)
 ```
 
 # Method 1: Split Sketch into Groups
-We can easily combine the two KSSL-derived objects using `rbind()`. The colors and legend can be automatically generated from the entire set of (combined) `clay` values.
+We can easily combine the two KSSL-derived objects using `combine()`. The colors and legend can be automatically generated from the entire set of (combined) `clay` values.
 ```{r fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
 # combine similar SPCs into a new SPC
-g <- rbind(kssl.1, kssl.2)
+g <- combine(kssl.1, kssl.2)
 
 # there is some variabilty in capitalization: need to normalize these names
 table(g$taxonname)
