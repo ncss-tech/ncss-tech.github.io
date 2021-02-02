@@ -141,15 +141,14 @@ ggplot(s.sub, aes(x = month, group=series)) +
 
 
 ## Geomorphic Summaries
+Series are sorted according to hierarchical clustering of proportions and relative hydrologic position within an idealized landform (e.g. top to bottom). Most soil series (SSURGO components) are associated with a hillslope position and one or more landform-specific positions: hills, mountain slopes, terraces, and/or flats. Proportions can be interpreted as an aggregate representation of geomorphic membership. The values printed to the left (number of component records) and right (Shannon entropy) of stacked bars can be used to judge the reliability of trends. [Shannon entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) values close to 0 represent soil series with relatively consistent geomorphic association, while values close to 1 suggest lack thereof. Source: SSURGO component records.
 
-Compare hillslope position.
-```{r fig.width=12, fig.height=5, echo=FALSE}
+```{r fig.width=12, fig.height=6, echo=FALSE}
 res <- vizHillslopePosition(s.competing.data$hillpos)
 print(res$fig)
 ```
 
-Compare geomorphic component.
-```{r fig.width=12, fig.height=5, echo=FALSE}
+```{r fig.width=12, fig.height=6, echo=FALSE}
 res <- vizGeomorphicComponent(s.competing.data$geomcomp)
 print(res$fig)
 ```
