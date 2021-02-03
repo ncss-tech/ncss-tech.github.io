@@ -93,8 +93,8 @@ library(grid)
 library(plyr)
 
 # current data are:
-yr <- 2020
-mo <- 'March'
+yr <- 2021
+mo <- 'February'
 
 # Stanislaus River watershed
 course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
@@ -102,7 +102,7 @@ course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138
 
 ```{r results='hide'}
 # get historic data
-d.long_term <- ddply(course.data, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2020)})
+d.long_term <- ddply(course.data, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr = 1900, end_yr = yr)})
 
 # join-in metadata
 data(CDEC.snow.courses)
@@ -186,7 +186,7 @@ print(p4, more=FALSE, position=c(0.125,0,0.425,0.175))
 data(CDEC.snow.courses)
 
 # get historic data
-d.long_term <- ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr=1900, end_yr=2020)})
+d.long_term <- ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr = 1900, end_yr = yr)})
 
 # save local cache
 # save(d.long_term, file='long_term_data-cache.rda')
@@ -239,7 +239,9 @@ bwplot(emp.pctile ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.s
 
 bwplot(spi ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings=tps, scales=list(alternating=3, x=list(tick.number=10, rot=90)), subset=year > 1970 & month == mo, stats=custom.bwplot, panel=function(...) {panel.grid(-1, -1); panel.bwplot(...)})
 
-bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub='Period of Record: 1939-2020', ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
+por <- sprintf('Period of Record: 1939-%s', yr)
+
+bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub = por, ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
   panel.grid(-1, -1)
   panel.abline(h=0.5, lty=2, col='orange')
   panel.bwplot(x=x, y=y, ...)
