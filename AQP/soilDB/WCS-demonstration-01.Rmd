@@ -90,6 +90,10 @@ library(rgdal)
 # geometric calculations
 library(rgeos)
 
+# this is the future, will eventually replace much of 
+# sp, rgdal, geos methods used here
+library(sf)
+
 # raster data visualization
 library(raster)
 library(rasterVis)
@@ -101,20 +105,17 @@ library(aqp)
 
 
 ```{r}
-
-# aoi: bounding-box corners (xmin, ymin, xmax, ymax)
-# coordinate reference system of AOI (GCS WGS84 )
-a <- list(
-  aoi = c(-114.16, 47.65, -114.08, 47.68),
-  crs = '+init=EPSG:4326'
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
+  crs = st_crs(4326)
 )
 
-# too big for SDA geometry (>32Mb WKT serialization)
-# a <- c(-114.5, 47, -114, 47.5)
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
 
 # fetch gSSURGO map unit keys at native resolution (~30m)
 x <- mukey.wcs(aoi = a, db = 'gnatsgo')
-
 
 # OK
 levelplot(
@@ -129,11 +130,13 @@ levelplot(
 ```
 
 ## BBOX Specification
-Bounding box corners (xmin, ymin, xmax, ymax).
+Finish this.
 
 
 ## Fetching Polygons from SDA
 ```{r}
+## TODO: update to sf
+
 # convert raster extent into vector 
 g <- as(extent(x), 'SpatialPolygons')
 proj4string(g) <- projection(x)
@@ -165,7 +168,6 @@ levelplot(
     sp.lines(p, col = 'white')
   }
 )
-
 ```
 
 ## Grid Resolution Specification
@@ -173,15 +175,18 @@ Native vs. alternative resolutions (preview not aggregation).
 
 ```{r}
 # part of CA
-a.CA <- list(
-  aoi = c(-121, 37, -120, 38),
-  crs = '+init=EPSG:4326'
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a.CA <- st_bbox(
+  c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
+  crs = st_crs(4326)
 )
+
+# convert bbox to sf geometry
+a.CA <- st_as_sfc(a.CA)
 
 # fetch gSSURGO map unit keys at ~~ 800m
 # nearest-neighbor resampling = this is a "preview"
 x.800 <- mukey.wcs(aoi = a.CA, db = 'gssurgo', res = 800)
-
 
 # OK
 levelplot(
@@ -207,13 +212,11 @@ IS <- format_SQL_in_statement(ll$ID)
 # query SDA by mukey
 sql <- sprintf("SELECT mukey, aws025wta, aws050wta, aws0100wta, aws0150wta FROM muaggatt WHERE mukey IN %s", IS)
 tab <- SDA_query(sql)
-
 ```
 
 
 ## RAT Management
 ```{r}
-
 # merge AWS by mukey into raster attribute table (RAT)
 rat <- merge(ll, tab, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
 
@@ -262,36 +265,42 @@ kableExtra::kable_styling(knitr::kable(WCS_details(wcs = 'ISSR800'), row.names =
 
 ```{r}
 # part of CA
-a <- list(
-  aoi = c(-121, 37, -120, 38),
-  crs = '+init=EPSG:4326'
+
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a.CA <- st_bbox(
+  c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
+  crs = st_crs(4326)
 )
 
+# convert bbox to sf geometry
+a.CA <- st_as_sfc(a.CA)
+
+
 # floating point grids
-paws_total <- ISSR800.wcs(aoi = a, var = 'paws')
-paws_025cm <- ISSR800.wcs(aoi = a, var = 'paws_025cm')
-paws_050cm <- ISSR800.wcs(aoi = a, var = 'paws_050cm')
+paws_total <- ISSR800.wcs(aoi = a.CA, var = 'paws')
+paws_025cm <- ISSR800.wcs(aoi = a.CA, var = 'paws_025cm')
+paws_050cm <- ISSR800.wcs(aoi = a.CA, var = 'paws_050cm')
 
-pH_05cm <- ISSR800.wcs(aoi = a, var = 'ph_05cm')
-pH_3060cm <- ISSR800.wcs(aoi = a, var = 'ph_3060cm')
+pH_05cm <- ISSR800.wcs(aoi = a.CA, var = 'ph_05cm')
+pH_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'ph_3060cm')
 
-clay_05cm <- ISSR800.wcs(aoi = a, var = 'clay_05cm')
-clay_3060cm <- ISSR800.wcs(aoi = a, var = 'clay_3060cm')
+clay_05cm <- ISSR800.wcs(aoi = a.CA, var = 'clay_05cm')
+clay_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'clay_3060cm')
 
-silt_3060cm <- ISSR800.wcs(aoi = a, var = 'silt_3060cm')
-sand_3060cm <- ISSR800.wcs(aoi = a, var = 'sand_3060cm')
+silt_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'silt_3060cm')
+sand_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'sand_3060cm')
 
 ## NA encoding issues
 # 0 is a real value
-sar <- ISSR800.wcs(aoi = a, var = 'sar')
+sar <- ISSR800.wcs(aoi = a.CA, var = 'sar')
 
 # 16bit integer grids
-wei <- ISSR800.wcs(aoi = a, var = 'wei')
+wei <- ISSR800.wcs(aoi = a.CA, var = 'wei')
 
 # 8bit unsigned (BYTE) grids with RAT
-drainage_class <- ISSR800.wcs(aoi = a, var = 'drainage_class')
-weg <- ISSR800.wcs(aoi = a, var = 'weg')
-str <- ISSR800.wcs(aoi = a, var = 'str')
+drainage_class <- ISSR800.wcs(aoi = a.CA, var = 'drainage_class')
+weg <- ISSR800.wcs(aoi = a.CA, var = 'weg')
+str <- ISSR800.wcs(aoi = a.CA, var = 'str')
 ```
 
 ```{r}
@@ -302,7 +311,7 @@ levelplot(z - 100)
 
 Soil texture class 25-50cm.
 ```{r}
-texture_2550cm <- ISSR800.wcs(aoi = a, var = 'texture_2550cm')
+texture_2550cm <- ISSR800.wcs(aoi = a.CA, var = 'texture_2550cm')
 levelplot(texture_2550cm, margin = FALSE)
 ```
 
@@ -329,26 +338,35 @@ levelplot(stack(sand_3060cm, silt_3060cm, clay_3060cm), margin = FALSE)
 
 ### Soil / Land Classification
 ```{r}
-a <- list(
-  aoi = c(-114.20, 47.65, -114.10, 47.70),
-  crs = '+init=EPSG:4326'
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -114.20, xmax = -114.10, ymin = 47.65, ymax = 47.70), 
+  crs = st_crs(4326)
 )
 
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
+
+# get
 greatgroup <- ISSR800.wcs(aoi = a, var = 'greatgroup')
-levelplot(greatgroup, margin = FALSE)
-
-
 lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
+
+# plot
+levelplot(greatgroup, margin = FALSE)
 levelplot(lcc_irrigated, margin = FALSE)
 ```
 
 
 ### Soil Color
 ```{r}
-a <- list(
-  aoi = c(-121, 37, -120, 38),
-  crs = '+init=EPSG:4326'
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
+  crs = st_crs(4326)
 )
+
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
 
 # most frequent soil series per grid cell
 series_name <- ISSR800.wcs(aoi = a, var = 'series_name')
@@ -382,10 +400,15 @@ levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorke
 ### Classification
 ```{r}
 # part of CA
-a <- list(
-  aoi = c(-121, 37, -120, 38),
-  crs = '+init=EPSG:4326'
+
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
+  crs = st_crs(4326)
 )
+
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
 
 # EC 0-25cm
 ec <- ISSR800.wcs(aoi = a, var = 'ec_025cm')
