@@ -25,23 +25,22 @@ This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQ
 # Installation
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
-# run these commands in the R console
-install.packages('soilDB', dep=TRUE) # stable version from CRAN + dependencies
-install.packages('dismo', dep=TRUE)
+# run these commands in the R console to install required packages
+install.packages('soilDB', dep=TRUE)
 install.packages('RColorBrewer', dep=TRUE)
+install.packages('sf', dep=TRUE)
 install.packages('maps', dep=TRUE)
 install.packages('scales', dep=TRUE)
 install.packages('mapview', dep=TRUE)
-
-# you will need the latest version of soilDB
-devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 # Examples 
 Illustrate the extent of SSURGO map units associated with the Amador series.
-```{r libraries, results='hide'}
+```{r results='hide'}
 # load required libraries
 library(soilDB)
+library(sp)
+library(sf)
 library(rgdal)
 library(maps)
 library(RColorBrewer)
@@ -49,7 +48,7 @@ library(RColorBrewer)
 
 
 Investigate the structure of soil series extent data.
-```{r example-3}
+```{r }
 # the result is a SpatialPolygonsDataFrame object
 amador <- seriesExtent('amador')
 
@@ -64,12 +63,12 @@ slot(amador, 'data')
 ```
 
 ## Compare Amador, Pardee, and San Joaquin Extents
-```{r example-2, results='hide'}
-# define some nice colors
-cols <- brewer.pal('Set1', n=3)
-
+```{r results='hide'}
 # soil series of interest
 s <- c('amador', 'pardee', 'san joaquin')
+
+# define some nice colors
+cols <- brewer.pal('Set1', n = length(s))
 
 # iterate over vector of soil series names
 # and store spatial extents in a list
@@ -78,23 +77,12 @@ s.extent <- lapply(s, seriesExtent, timeout=120)
 # combine into a single SpatialPolygonsDataFrame
 s.extent <- do.call('rbind', s.extent)
 
-# plot the results:
-# set figure margins to 0
-par(mar=c(0,0,0,0))
+# convert into an sf object
+s.extent <- st_as_sf(s.extent)
 
-# plot select counties from California
-map(database='county', regions='california,calaveras|tuolumne|amador|san joaquin|stanislaus|merced|mariposa|sacramento')
-
-# add each soil series extent object
-for(i in 1:nrow(s.extent)) {
-  plot(s.extent[i, ], col=cols[i], add=TRUE)
-}
-
-# add a neatline around the map
-box()
-
-# make a simple legend
-legend('topright', col=cols, pch=15, legend=s.extent$series)
+# very simple plot method for sf objects
+# https://r-spatial.github.io/sf/articles/sf5.html
+plot(s.extent['series'], axes = FALSE, key.width = lcm(4.5), pal = cols)
 ```
 
 
@@ -102,26 +90,27 @@ legend('topright', col=cols, pch=15, legend=s.extent$series)
 This is based on the [mapview](https://r-spatial.github.io/mapview/) package.
 ```{r}
 library(mapview)
-mapview(amador)
+mapview(s.extent, zcol = 'series', legend = TRUE)
 ```
 
 ## Exporting Series Extent Data
 Save soil series extent data in multiple formats.
 ```{r example-4, eval=FALSE}
 # save using the coordinate reference system associated with this object (GCS WGS84)
-writeOGR(s.extent, dsn='.', layer='amador-pardee-san-joaquin-extent', driver='ESRI Shapefile')
+write_sf(s.extent, dsn='amador-pardee-san-joaquin-extent.shp')
 
 # save as KML for use in Google Earth
-writeOGR(s.extent, dsn='amador-pardee-san-joaquin-extent.kml', layer='amador-pardee-san-joaquin', driver='KML')
+# writeOGR(s.extent, dsn='amador-pardee-san-joaquin-extent.kml', layer='amador-pardee-san-joaquin', driver='KML')
 
 # project to UTM zone 10 NAD83 and save
-s.extent.utm <- spTransform(s.extent, CRS('+proj=utm +zone=10 +datum=NAD83'))
-writeOGR(s.extent.utm, dsn='.', layer='amador-pardee-san-joaquin-extent-utm', driver='ESRI Shapefile')
+# s.extent.utm <- spTransform(s.extent, CRS('+proj=utm +zone=10 +datum=NAD83'))
+# writeOGR(s.extent.utm, dsn='.', layer='amador-pardee-san-joaquin-extent-utm', driver='ESRI Shapefile')
 ```
 
 
 # Graphical Display of Joint Series Extent
 
+Using vector features, works with all SSURGO data.
 ```{r, results = 'hide'}
 library(scales) # need this for alpha()
 
@@ -130,17 +119,23 @@ cols <- brewer.pal('Set1', n=3)
 
 # list of series for investigation of joint occurrence
 s <- c('pentz', 'peters', 'pardee', 'amador', 'san joaquin', 'redding', 'auburn')
+
 # get list of extents
-l <- lapply(s, seriesExtent)
+e <- lapply(s, seriesExtent)
+
+# convert to sf objects
+e <- lapply(e, st_as_sf) 
+
+# flatten to single sf object
+e <- do.call('rbind', e)
 
 # map of CA
 par(mar=c(1,1,1,1))
 map('state', 'ca')
 
-# rough estimation of joint density via transparency  / overlay
-lapply(l, function(i) {
-  plot(i, border=NA, col=alpha(cols[2], 0.25), add=TRUE)
-  })
+# sf plot method
+# polygon extents are "stacked" with transparency
+plot(st_geometry(e), border = NA, col = alpha(cols[2], 0.25), add = TRUE)
 
 # finish map
 box()
@@ -171,6 +166,7 @@ g <- lapply(sib.names, function(i) {
 
 # extract the extent / BBOX for each
 e <- lapply(g, extent)
+
 # convert to Spatial Polygons
 e <- lapply(e, as, 'SpatialPolygons')
 
