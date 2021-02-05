@@ -128,7 +128,7 @@ soilPalette(
 colors <- c('10YR 3/5', '5YR 5/6', '2.5Y 5/6')
 weights <- c(60, 30, 10)
 
-plotColorMixture(colors, w = weights)
+plotColorMixture(x = colors, w = weights)
 ```
 
 
@@ -141,7 +141,7 @@ colors <- c('10YR 3/3', '2.5Y 6/4')
 
 z <- lapply(s, function(i) {
   
-  wts <- c(i, 100 - i)
+  wts <- c(100 - i, i)
   
   d <- cbind(
   parseMunsell(colors, convertColors=FALSE),
@@ -178,7 +178,7 @@ plot(1:nrow(z), rep(1:nrow(z)), xlim = c(0.25, nrow(z) + 0.25), ylim = c(0, 0.8)
 rect(xleft = (1:nrow(z)) - 0.45, xright = (1:nrow(z)) + 0.45, ybottom = 0.25, ytop = 0.75, col = z$mixed.col, border = 'black', lwd = 2, lend = 2)
 
 text(1:nrow(z), 0.2, z$mixed.chip)
-text(1:nrow(z), 0.15, sprintf('%s/%s', z$wt.y, z$wt.x))
+text(1:nrow(z), 0.15, sprintf('%s/%s', z$wt.x, z$wt.y))
 ```
 
 ```{r fig.width=12, fig.height=4}
@@ -195,7 +195,7 @@ colors <- c('10YR 3/3', '2.5Y 6/4')
 
 z <- lapply(s, function(i) {
   
-  wts <- c(i, 100 - i)
+  wts <- c(100 - i, i)
   mx <- mixMunsell(colors, w = wts)
   
   d <- data.frame(
@@ -222,9 +222,9 @@ plot(1:nrow(z), rep(1:nrow(z)), xlim = c(0.25, nrow(z) + 0.25), ylim = c(0, 0.8)
 rect(xleft = (1:nrow(z)) - 0.45, xright = (1:nrow(z)) + 0.45, ybottom = 0.25, ytop = 0.75, col = z$mixed.col, border = 'black', lwd = 2, lend = 2)
 
 text(1:nrow(z), 0.2, z$mixed.chip)
-text(1:nrow(z), 0.15, sprintf('%s/%s', z$wt.y, z$wt.x))
+text(1:nrow(z), 0.15, sprintf('%s/%s', z$wt.x, z$wt.y))
 
-text(1:nrow(z), 0.5, round(z$dist, 3), cex = 0.5, col = invertLabelColor(z$mixed.col))
+text(1:nrow(z), 0.5, round(z$dist, 3), cex = 0.75, col = invertLabelColor(z$mixed.col))
 ```
 
 ```{r fig.width=12, fig.height=4}

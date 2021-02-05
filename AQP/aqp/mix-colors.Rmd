@@ -193,6 +193,10 @@ Check: "blue" + "yellow" = "green", yes.
 plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65)
 ```
 
+Add weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit.
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+```
 
 ## Simulation of a continuous mixture
 Seems plausible.
@@ -200,7 +204,7 @@ Seems plausible.
 s <- seq(0, 1, by = 0.2)
 z <- lapply(s, function(i) {
   
-  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(i, 1-i))
+  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(1-i, i))
   
   return(m$munsell)
 })
@@ -208,7 +212,7 @@ z <- lapply(s, function(i) {
 z <- do.call('c', z)
 
 par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
-soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, s, 1 - s))
+soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
 ```
 
 ## Alternative color mixing strategies
