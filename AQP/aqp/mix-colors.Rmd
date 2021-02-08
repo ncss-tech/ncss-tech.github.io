@@ -251,5 +251,42 @@ What does a $\Delta E_{00}$ of **4.55** mean in terms of "color chips" in a simu
 contrastChart('10YR 6/2', hues = c('10YR', '7.5YR'), thresh = 4.55)
 ```
 
+
+```{r}
+library(aqp)
+library(lattice)
+library(tactile)
+
+data(munsell.spectra)
+
+# x <- munsell.spectra[munsell.spectra$hue == '10YR', ]
+# x <- munsell.spectra[munsell.spectra$hue == '10YR' & munsell.spectra$value > 4, ]
+x <- munsell.spectra[munsell.spectra$value  == 6 & munsell.spectra$chroma == 8, ]
+
+table(x$munsell)
+
+
+x$ID <- factor(x$munsell)
+cols <- parseMunsell(as.character(levels(x$ID)))
+
+tps <- tactile.theme(superpose.line = list(col = cols, lwd = 2))
+
+# final figure
+xyplot(
+  reflectance ~ wavelength, groups = ID, data = x, 
+  par.settings = tps,
+  # auto.key = list(cex = 0.5, lines = TRUE, points = FALSE, columns = 6),
+  type = c('l', 'g'),
+  ylab = 'Reflectance',
+  xlab = 'Wavelength (nm)',
+  scales = list(tick.number = 12),
+  xlim = c(370, 780)
+)
+
+```
+
+
+
+
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
