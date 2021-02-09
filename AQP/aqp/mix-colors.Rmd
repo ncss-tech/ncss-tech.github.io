@@ -84,7 +84,7 @@ Simulate a mixture via `mixMunsell`. See the [online documentation](http://ncss-
 # just the closest match
 mixed <- mixMunsell(colors)
 
-# top 5 matches, descreasing order
+# top 5 matches, decreasing order
 mixed.5 <- mixMunsell(colors, n = 5)
 ```
 
@@ -106,9 +106,9 @@ colorContrastPlot(
 
 ## Results
 
-Demonstrate reference spectra for the source colors and final mixture.
+Demonstrate reference spectra for the source colors and final mixture. The dashed line is the weighted geometric mean spectra.
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(colors)
+plotColorMixture(colors, showMixedSpec = TRUE)
 ```
 
 <span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <span style="padding: 5px; background-color: `r aqp::parseMunsell(mixed$munsell)`; color: white;">`r mixed$munsell`</span>.
@@ -118,7 +118,7 @@ What do you think, is the mixture plausible? Experiments with real soil material
 
 ## Counterintuitive Mixture Candidates
 
-Should the mixture of two `10YR` colors always result in a `10YR` mixture candidate? It seems like it should.
+Should the mixture of two `10YR` colors always result in a `10YR` mixture candidate? Not necessarily (blue + yellow = green).
 ```{r}
 m <- c('10YR 8/6', '10YR 2/2')
 x <- mixMunsell(m, n = 20)
@@ -129,7 +129,7 @@ x[1, ]
 
 The weighted geometric mean of the two spectra seems plausible:
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 8/6', '10YR 2/2'), swatch.cex = 5)
+plotColorMixture(c('10YR 8/6', '10YR 2/2'), swatch.cex = 5, showMixedSpec = TRUE)
 ```
 
 
@@ -137,32 +137,100 @@ Evaluate the top 20 mixture candidates in terms of spectral distance and $\Delta
 ```{r}
 z <- expand.grid(m1 = x$munsell[1], m2 = x$munsell)
 d <- colorContrast(z[[1]], z[[2]])
+
+n <- nrow(x)
+s <- 1:n
+cols <- parseMunsell(x$munsell)
 ```
 
 Prepare some figures to assist with the exploration.
 ```{r fig.width=8, fig.height=5}
-n <- nrow(x)
-s <- 1:n
-cols <- parseMunsell(x$munsell)
-
 par(mar = c(4.5, 4.5, 2, 1), bg = 'black', fg = 'white')
-plot(s, x$distance, type = 's', las = 1, ylab = 'Spectral Distance', xlab = 'Match Candidate', col.axis = 'white', col.lab = 'white')
+
+plot(s, x$distance, type = 'n', ylab = 'Spectral Distance', xlab = 'Match Candidate', col.axis = 'white', col.lab = 'white', axes = FALSE)
+grid()
+lines(s, x$distance, type = 's')
 points(s, x$distance, pch = 15, col = cols, cex= 4)
 text(s, x$distance, gsub(' ', '\n', x$munsell), cex = 0.5, col = invertLabelColor(cols))
-title(sprintf("Mixture: %s + %s", m[1], m[2]), col.main = 'white')
-
-# par(mar = c(4.5, 4.5, 1, 1), bg = 'black', fg = 'white')
-plot(s, d$dE00, type = 's', las = 1, ylab = expression(~Delta*E['00']), xlab = 'Match Candidate', col.axis = 'white', col.lab = 'white')
-points(s, d$dE00, pch = 15, col = cols, cex= 4)
-text(s, d$dE00, gsub(' ', '\n', x$munsell), cex = 0.5, col = invertLabelColor(cols))
-title(sprintf("Mixture: %s + %s", m[1], m[2]), col.main = 'white')
-
-plot(x$distance, d$dE00, xlab = 'Spectral Distance', ylab = expression(~Delta*E['00']), col.axis = 'white', col.lab = 'white', pch = 15, col = cols, cex= 4.5)
-text(x$distance, d$dE00, gsub(' ', '\n', x$munsell), cex = 0.66, col = invertLabelColor(cols))
+axis(side = 1, at = s, col.axis = 'white')
+axis(side = 2, col.axis = 'white', las = 1, cex.axis = 0.75)
 title(sprintf("Mixture: %s + %s", m[1], m[2]), col.main = 'white')
 ```
 
-More investigation required.
+
+```{r fig.width=8, fig.height=5}
+par(mar = c(4.5, 4.5, 2, 1), bg = 'black', fg = 'white')
+
+plot(s, d$dE00, type = 'n', ylab = expression(~Delta*E['00']), xlab = 'Match Candidate', col.axis = 'white', col.lab = 'white', axes = FALSE)
+grid()
+lines(s, d$dE00, type = 's')
+points(s, d$dE00, pch = 15, col = cols, cex= 4)
+text(s, d$dE00, gsub(' ', '\n', x$munsell), cex = 0.5, col = invertLabelColor(cols))
+axis(side = 1, at = s, col.axis = 'white')
+axis(side = 2, at = 0:15, col.axis = 'white', las = 1, cex.axis = 0.75)
+title(sprintf("Mixture: %s + %s", m[1], m[2]), col.main = 'white')
+```
+
+
+The relationship between spectral distance and $\Delta{E_{00}}$ is complex.
+```{r fig.width=8, fig.height=5}
+par(mar = c(4.5, 4.5, 2, 1), bg = 'black', fg = 'white')
+
+plot(x$distance, d$dE00, type = 'n', xlab = 'Spectral Distance', ylab = expression(~Delta*E['00']), col.axis = 'white', col.lab = 'white', axes = FALSE)
+grid()
+points(x$distance, d$dE00, pch = 15, col = cols, cex= 4.5)
+text(x$distance, d$dE00, gsub(' ', '\n', x$munsell), cex = 0.66, col = invertLabelColor(cols))
+axis(side = 1, col.axis = 'white')
+axis(side = 2, at = 0:15, col.axis = 'white', las = 1, cex.axis = 0.75)
+title(sprintf("Mixture: %s + %s", m[1], m[2]), col.main = 'white')
+```
+
+Try again, this time using the entire spectral library.
+```{r fig.width=8, fig.height=8}
+m <- c('10YR 8/6', '10YR 2/2')
+
+# return distances to entire spectral library
+x <- mixMunsell(m, n = 2486)
+
+# do not compare 1st mixture candidate to itself (dE00 = 0)
+z <- expand.grid(m1 = x$munsell[1], m2 = x$munsell[-1])
+d <- colorContrast(z[[1]], z[[2]])
+
+# color vector, note that we are skipping the first color
+cols <- parseMunsell(x$munsell[-1])
+
+par(mar = c(4.5, 4.5, 2, 1), bg = 'black', fg = 'white')
+
+# skip first mixture candidate
+plot(x$distance[-1], d$dE00, xlab = 'Spectral Distance', ylab = expression(~Delta*E['00']), col.axis = 'white', col.lab = 'white', las = 1, type = 'n', ylim = c(0, 50))
+
+grid()
+
+# skip first mixture candidate
+points(x$distance[-1], d$dE00, pch = 15, col = cols, cex = 0.5)
+title(sprintf("Mixture Candidates: %s + %s", m[1], m[2]), col.main = 'white')
+
+# add first mixture candidate
+points(x$distance[1], d$dE00[1], bg = cols[1], pch = 22)
+```
+
+
+Reasonable thresholds on spectral distance between mixture and mixture candidates.
+```{r fig.height=5.5, fig.width=10}
+# assuming threshold of dE00
+reasonable.matches <- d$m2[which(d$dE00 <= 5)]
+
+# find these colors in the mixture candidates
+idx <- which(x$munsell %in% reasonable.matches)
+
+# combine mixture candidates + contrast metrics
+z <- merge(x[idx, ], d, by.x = 'munsell', by.y = 'm2', sort = FALSE, incomparables = FALSE)
+
+# display
+colorContrastPlot(z$m1, z$munsell, labels = c('First Mixture Canidate', 'Subsequent Candidates'))
+```
+
+So: spectral distances to the first mixture candidate of $> 0.015$ may be unreliable. TBD.
 
 
 # Additional Examples
@@ -196,6 +264,11 @@ plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65)
 Add weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit.
 ```{r fig.height=5.5, fig.width=9}
 plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+```
+
+Top 3 mixture candidates
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, n = 3)
 ```
 
 ## Simulation of a continuous mixture
@@ -252,7 +325,7 @@ contrastChart('10YR 6/2', hues = c('10YR', '7.5YR'), thresh = 4.55)
 ```
 
 
-```{r}
+```{r fig.height=5.5, fig.width=9}
 library(aqp)
 library(lattice)
 library(tactile)
@@ -280,12 +353,39 @@ xyplot(
   ylab = 'Reflectance',
   xlab = 'Wavelength (nm)',
   scales = list(tick.number = 12),
-  xlim = c(370, 780)
+  xlim = c(370, 740)
 )
 
 ```
 
+## Interpreting Spectral (Gower) Distances
+TODO: pair-wise dE00 vs. pair-wise spectral distances.
+```{r fig.width = 8.5, fig.height=5}
+library(cluster)
 
+# spectral library
+data("munsell.spectra.wide")
+
+# remove 'wavelength' column and transpose
+z <- t(munsell.spectra.wide[, -1])
+
+# all pair-wise distances, using Gower's distance metric
+d <- daisy(z, metric = 'gower', stand = FALSE)
+# reduce distance matrix to vector
+d <- as.vector(d)
+
+# quick plot
+par(mfcol = c(1, 2), mar = c(4.5, 4, 3, 1))
+hist(d, main = 'All Spectra', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
+box()
+axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+
+hist(d[d < 0.1], main = 'Spectra d < 0.1', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = '', breaks = 50)
+box()
+axis(1, at = seq(0, 0.1, by = 0.01), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+```
 
 
 ----------------------------
