@@ -27,7 +27,7 @@ options(width=100, stringsAsFactors=FALSE)
 
 [Soil Taxonomy](https://www.nrcs.usda.gov/wps/portal/nrcs/main/soils/survey/class/taxonomy/) is a theoretical framework for organizing soil information, typically at scales coarser than most land management decisions. Soil series are a practical (but limited in geographic scope) framework for organizing soil/landscape combinations close to the scale of land management decisions.
 
-So, what is the practical manifestiation of a single subgroup from Soil Taxonomy (*abruptic durixeralfs*), in terms of soil series concepts?
+So, what is the practical manifestation of a single subgroup from Soil Taxonomy (*abruptic durixeralfs*), in terms of soil series concepts?
 
 The following code, links, and notes may serve as a starting point for those interested in learning more about Soil Taxonomy. This is a work in progress.
 ```{r}
@@ -38,8 +38,10 @@ library(sharpshootR)
 
 # used for visualization
 library(latticeExtra)
+library(tactile)
 library(cluster)
 library(ape)
+library(FactoMineR)
 
 # mapping a subgroup
 library(sp)
@@ -48,7 +50,7 @@ library(spData)
 library(rasterVis)
 library(viridis)
 
-# subgroup explainer
+# subgroup "explainer"
 library(SoilTaxonomy)
 ```
 
@@ -57,7 +59,7 @@ library(SoilTaxonomy)
 Get a snapshot of the Soil Classification database. This contains the current classification for all soil series.
 ```{r}
 # latest version, synced quarterly
-u <- 'https://github.com/ncss-tech/SoilTaxonomy/raw/master/databases/SC-database.csv.gz'
+u <- 'https://github.com/ncss-tech/SoilTaxonomy/raw/master/inst/extdata/SC-database.csv.gz'
 tf <- tempfile()
 download.file(u, destfile = tf)
 SC <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
@@ -69,7 +71,7 @@ Identify all of the soil series associated with a specific subgroup taxa: *abrup
 s <- SC$soilseriesname[which(SC$tax_subgrp == 'abruptic durixeralfs')]
 
 # get OSD morphology and extended summaries
-osd <- fetchOSD(soils=s, extended = TRUE)
+osd <- fetchOSD(soils = s, extended = TRUE)
 ```
 
 ## ST Explainer
@@ -141,6 +143,88 @@ mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = 
 # display annual climate summary
 trellis.par.set(plot.line=list(col='RoyalBlue'))
 print(update(res$fig, layout=c(4,2), sub='Abruptic Durixeralfs'))
+```
+
+
+### Geomorphic Descriptions
+```{r fig.height=5, fig.width=8.5}
+hs <- vizHillslopePosition(osd$hillpos)
+print(hs$fig)
+
+gc <- vizGeomorphicComponent(osd$geomcomp)
+print(gc$fig)
+
+tr <- vizTerracePosition(osd$terrace)
+print(tr$fig)
+```
+
+```{r fig.height=6.5, fig.width=6.5}
+hs.tab <- (osd$hillpos[, 2:6])
+row.names(hs.tab) <- osd$hillpos$series
+
+gc.tab <- (osd$geomcomp[, 2:7])
+row.names(gc.tab) <- osd$geomcomp$series
+
+hs.ca <- CA(hs.tab, graph = FALSE)
+gc.ca <- CA(gc.tab, graph = FALSE)
+
+
+plot(hs.ca, autoLab='yes', title='Hillslope Position', cex=0.75, col.col='firebrick', col.row='royalblue')
+plot(gc.ca, autoLab='yes', title='Geomorphic Component', cex=0.75, col.col='firebrick', col.row='royalblue')
+```
+
+
+## KSSL Data
+```{r fig.width=8, fig.height=5.5, results='hide'}
+# TODO: use SDA to get all that are available
+# TODO: L1 profile
+
+# this will miss all records that have been correlated to the subgroup but not series
+lab <- fetchKSSL(series = s, returnMorphologicData = TRUE, simplifyColors = TRUE)
+lab.spc <- lab$SPC 
+
+lab.spc$wmpd <- with(horizons(lab.spc), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
+
+# estimate soil depth based on horizon designations
+sdc <- getSoilDepthClass(lab.spc)
+
+# splice-into site data
+site(lab.spc) <- sdc
+
+
+site(lab.spc)$.grp <- factor('Abruptic Durixeralfs')
+a <- slab(lab.spc, .grp ~ clay + sand + wmpd + estimated_ph_h2o + bs82)
+
+# define plotting style
+tps <- tactile.theme(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+
+# plot grouped, aggregate data
+xyplot(top ~ p.q50 | variable, 
+       groups = .grp, 
+       data = a, 
+       ylab='Depth',
+       xlab='median bounded by 25th and 75th percentiles',
+       main = 'Abruptic Durixeralfs',
+       lower=a$p.q25, upper=a$p.q75, ylim=c(155,-5),
+       panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel=prepanel.depth_function,
+       cf=a$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(5,1), 
+       scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       par.settings=tps
+)
+```
+
+### Morphologic Summaries
+by heneralized horizon labels, depth intervals, ???.
+
+### ST Criteria via {aqp}
+```{r, eval = FALSE}
+hasDarkColors(lab.spc, dhuenm = 'd_hue', dvalnm = 'd_value', dchrnm = 'd_chroma', mhuenm = 'm_hue', mvalnm = 'm_value', mchrnm = 'm_chroma')
+
+profileApply(lab.spc, getArgillicBounds, clay.attr = 'clay', texcl.attr = 'lab_texture_class', simplify = FALSE)
 ```
 
 

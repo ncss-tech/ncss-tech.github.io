@@ -34,20 +34,22 @@ library(colorspace)
 
 # Topics
 
-  1. photos
-  2. box photos
-  3. aqp sketches vis `plotSPC()` and future `singleProfileSketch()`
-  4. `previewColors()`
-  5. `colorQuantiles()`
-  6. binning of soil profile photos via `colordist` package
-  7. `soilColorSignature()`
-  8. color mixing `mix_and_clean_colors()`
-  9. color RIC vis color book presentation
-  10. colors in context with common soil pigments
-  11. colors in context with full CIELAB space
-  12. examples of exotic colors: sulphides, manganese, etc.
-  13. poorly drained soils, reduced iron color ranges, gley pages
-  14. color by drainage class
+  * photos
+  * box photos
+  * aqp sketches via `plotSPC()`
+  * Munsell color spectra
+  * [`colorscience` package](https://cran.r-project.org/web/packages/colorscience/colorscience.pdf)
+  * `previewColors()`
+  * `colorQuantiles()`
+  * binning of soil profile photos via `colordist` package
+  * `soilColorSignature()`
+  * color mixing `mix_and_clean_colors()`
+  * color RIC vis color book presentation
+  * colors in context with common soil pigments
+  * colors in context with full CIELAB space
+  * examples of exotic colors: sulphides, manganese, etc.
+  * poorly drained soils, reduced iron color ranges, gley pages
+  * color by drainage class
 
 
 [Clarksville](https://casoilresource.lawr.ucdavis.edu/sde/?series=clarksville).
@@ -233,8 +235,8 @@ m.data <- do.call('rbind', lapply(l, '[[', 'marginal'))
 Examples for creating a soil-inspired palette of colors.
 ```{r fig.width=7, fig.height=1.5}
 # aggregate colors over all depths into 6 medoid colors
-s$grp <- rep('a', times=nrow(s))
-a <- aggregateColor(s, "grp", col = 'moist_soil_color', k = 6)
+site(s)$grp <- 'a'
+a <- aggregateColor(s, group = "grp", col = 'moist_soil_color', k = 6)
 
 # setup margins
 par(mar=c(0.25,0.25,0.25,0.25), bg='white')
