@@ -57,6 +57,47 @@ For the purposes of estimating (for example) a "mixed soil color within the top 
 So what is a reasonable answer to the following soil color mixture question: <span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <b>?</b>.
 
 
+## Munsell Spectral Library
+```{r fig.height=5.5, fig.width=9}
+library(aqp)
+library(lattice)
+library(tactile)
+
+# local copy of the Munsell chip spectral library
+# c/o http://www.munsellcolourscienceforpainters.com/
+# odd chroma spectra via interpolation
+# see ?munsell.spectra for details
+# try aqp:::.summarizeMunsellSpectraRanges()
+data(munsell.spectra)
+
+# all hues, limit to specific hue / chroma slice
+x <- munsell.spectra[munsell.spectra$value  == 6 & munsell.spectra$chroma == 8, ]
+
+# each Munsell chip has a 36-element spectra
+# ranging from 380-730 nm
+# table(x$munsell)
+
+# spectra IDs
+x$ID <- factor(x$munsell)
+# create a color / chip
+cols <- parseMunsell(as.character(levels(x$ID)))
+
+# plot style
+tps <- tactile.theme(superpose.line = list(col = cols, lwd = 2))
+
+# final figure
+xyplot(
+  reflectance ~ wavelength, groups = ID, data = x, 
+  par.settings = tps,
+  main = 'Value 6 / Chroma 8',
+  type = c('l', 'g'),
+  ylab = 'Reflectance',
+  xlab = 'Wavelength (nm)',
+  scales = list(tick.number = 12),
+  xlim = c(370, 740)
+)
+```
+
 ## Implementation
 Required packages, be sure to ge the [latest {aqp} from GitHub](https://github.com/ncss-tech/aqp).
 
@@ -116,8 +157,60 @@ plotColorMixture(colors, showMixedSpec = TRUE)
 What do you think, is the mixture plausible? Experiments with real soil material + Nix Pro sensor measurements pending.
 
 
-## Counterintuitive Mixture Candidates
+# Additional Examples
 
+## Tinkering with `plotColorMixture`
+
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5, showMixedSpec = TRUE)
+
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, showMixedSpec = TRUE)
+
+# is this right? can the resulting spectra be "higher" than the source?
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5, showMixedSpec = TRUE)
+
+# label collision
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+
+
+plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2), swatch.cex = 5, showMixedSpec = TRUE)
+
+plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(1, 2))
+plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+```
+
+Check: "blue" + "yellow" = "green", yes. Note weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit but close enough.
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+```
+
+
+Top 3 mixture candidates
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, n = 3)
+```
+
+## Simulation of a continuous mixture
+Seems plausible.
+```{r fig.height=2.5, fig.width=10}
+s <- seq(0, 1, by = 0.2)
+z <- lapply(s, function(i) {
+  
+  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(1-i, i))
+  
+  return(m$munsell)
+})
+
+z <- do.call('c', z)
+
+par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
+soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
+```
+
+
+
+## Interpreting Spectral (Gower) Distances
 Should the mixture of two `10YR` colors always result in a `10YR` mixture candidate? Not necessarily (blue + yellow = green).
 ```{r}
 m <- c('10YR 8/6', '10YR 2/2')
@@ -232,64 +325,39 @@ colorContrastPlot(z$m1, z$munsell, labels = c('First Mixture Canidate', 'Subsequ
 
 So: spectral distances to the first mixture candidate of $> 0.015$ may be unreliable. TBD.
 
+### Spectral Distance vs. dE00
+TODO: pair-wise dE00 vs. pair-wise spectral distances.
+```{r fig.width = 8.5, fig.height=5}
+library(cluster)
 
-# Additional Examples
+# spectral library
+data("munsell.spectra.wide")
 
-## Tinkering with `plotColorMixture`
+# remove 'wavelength' column and transpose
+z <- t(munsell.spectra.wide[, -1])
 
-```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5)
+# all pair-wise distances, using Gower's distance metric
+d <- daisy(z, metric = 'gower', stand = FALSE)
+# reduce distance matrix to vector
+d <- as.vector(d)
 
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5)
+# quick plot
+par(mfcol = c(1, 2), mar = c(4.5, 4, 3, 1))
+hist(d, main = 'All Spectra', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
+box()
+axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
 
-# is this right? can the resulting spectra be "higher" than the source?
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5)
-
-# label collision
-plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 5)
-plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 4, label.cex = 0.65)
-
-
-plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2), swatch.cex = 5)
-
-plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(1, 2))
-plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65)
+hist(d[d < 0.1], main = 'Spectra d < 0.1', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = '', breaks = 50)
+box()
+axis(1, at = seq(0, 0.1, by = 0.01), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
 ```
 
-Check: "blue" + "yellow" = "green", yes.
-```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65)
-```
 
-Add weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit.
-```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
-```
 
-Top 3 mixture candidates
-```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, n = 3)
-```
-
-## Simulation of a continuous mixture
-Seems plausible.
-```{r fig.height=2.5, fig.width=10}
-s <- seq(0, 1, by = 0.2)
-z <- lapply(s, function(i) {
-  
-  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(1-i, i))
-  
-  return(m$munsell)
-})
-
-z <- do.call('c', z)
-
-par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
-soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
-```
-
-## Alternative color mixing strategies
-How does `soilDB::estimateColorMixture` (wt average of CIELAB coordinates) compare? Not bad (~2 chips off), but the subtractive mixture seems more likely.
+# Alternative color mixing strategies
+How does `soilDB::estimateColorMixture` (weighted mean of CIELAB coordinates) compare? Not bad (~2 chips off), but the subtractive mixture seems more likely.
 ```{r fig.height=3.5, fig.width=6}
 library(soilDB)
 
@@ -325,67 +393,7 @@ contrastChart('10YR 6/2', hues = c('10YR', '7.5YR'), thresh = 4.55)
 ```
 
 
-```{r fig.height=5.5, fig.width=9}
-library(aqp)
-library(lattice)
-library(tactile)
 
-data(munsell.spectra)
-
-# x <- munsell.spectra[munsell.spectra$hue == '10YR', ]
-# x <- munsell.spectra[munsell.spectra$hue == '10YR' & munsell.spectra$value > 4, ]
-x <- munsell.spectra[munsell.spectra$value  == 6 & munsell.spectra$chroma == 8, ]
-
-table(x$munsell)
-
-
-x$ID <- factor(x$munsell)
-cols <- parseMunsell(as.character(levels(x$ID)))
-
-tps <- tactile.theme(superpose.line = list(col = cols, lwd = 2))
-
-# final figure
-xyplot(
-  reflectance ~ wavelength, groups = ID, data = x, 
-  par.settings = tps,
-  # auto.key = list(cex = 0.5, lines = TRUE, points = FALSE, columns = 6),
-  type = c('l', 'g'),
-  ylab = 'Reflectance',
-  xlab = 'Wavelength (nm)',
-  scales = list(tick.number = 12),
-  xlim = c(370, 740)
-)
-
-```
-
-## Interpreting Spectral (Gower) Distances
-TODO: pair-wise dE00 vs. pair-wise spectral distances.
-```{r fig.width = 8.5, fig.height=5}
-library(cluster)
-
-# spectral library
-data("munsell.spectra.wide")
-
-# remove 'wavelength' column and transpose
-z <- t(munsell.spectra.wide[, -1])
-
-# all pair-wise distances, using Gower's distance metric
-d <- daisy(z, metric = 'gower', stand = FALSE)
-# reduce distance matrix to vector
-d <- as.vector(d)
-
-# quick plot
-par(mfcol = c(1, 2), mar = c(4.5, 4, 3, 1))
-hist(d, main = 'All Spectra', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
-box()
-axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
-axis(2, las = 1, cex.axis = 0.75)
-
-hist(d[d < 0.1], main = 'Spectra d < 0.1', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = '', breaks = 50)
-box()
-axis(1, at = seq(0, 0.1, by = 0.01), cex.axis = 0.75)
-axis(2, las = 1, cex.axis = 0.75)
-```
 
 
 ----------------------------
