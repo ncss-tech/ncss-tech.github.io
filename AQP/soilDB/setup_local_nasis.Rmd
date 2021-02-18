@@ -49,10 +49,14 @@ When you are done, you will have something similar to what was as entered on the
 
 When finished click "Next".
 
-3. Under "Create a New Data Source to SQL Server" choose the second option: "SQL Server authentication..." <br>**don't try and re-type these, just copy/paste**
-  + login: `NASISSQLRO` 
-  + Windows 7 password: `nasisRe@d0n1y`
-  + Windows 10 password: `nasisRe@d0n1y365`
+3. Under "Create a New Data Source to SQL Server" 
+
+ - Choose the THIRD option: "_With SQL Server authentication using a login ID and password entered by the user_" 
+ 
+ - Enter Login ID and password. **Don't try and re-type these, just copy/paste**
+   + Login ID: `NASISSQLRO` 
+   + Windows 7 password: `nasisRe@d0n1y`
+   + Windows 10 password: `nasisRe@d0n1y365`
 
 ![](odbc-04.png)
 
@@ -64,9 +68,7 @@ When finished click "Next".
 
 6. Close the ODBC control panel by clicking 'OK'
 
-If you are doing this as part of a pre-course assignment, you do not need to do the following optional demonstration. However, it is a good way to verify everything is working correctly.
-
-Return back to the assignment and contact your mentors if you have any trouble.
+If you are doing this as part of a pre-course assignment, you do not need to do the following optional demonstration. However, it is a good way to verify everything is working correctly. You can return back to the assignment, but contact your mentor if you have any trouble.
 
 ---
 
@@ -107,12 +109,3 @@ plot(x[1:10, ], name = 'hzname', label = 'taxonname')
 If you want to do more with SoilProfileCollections, profile sketches, and soil data wrangling check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/).
 
 Details on loading NASIS data into R can be found in [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
-
-
-
-
-
-
-
-
-
