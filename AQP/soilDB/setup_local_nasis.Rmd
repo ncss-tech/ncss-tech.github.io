@@ -13,29 +13,39 @@ output:
 This document describes how to setup an ODBC link between **R** and the local NASIS database.
 
 ## Open the ODBC Data Source Administrator
-1. Go to the Start Menu and search for 'ODBC'. See [this page](http://msdn.microsoft.com/en-us/library/ms188691.aspx) for detailed instructions on how to to find the ODBC Data Source Control Panel. Select the 64-bit ODBC application if you are using Windows 10. It should look like this.
+
+1. Go to the Start Menu and search for 'ODBC'. Select "_ODBC Data Sources (64-bit)_" if you are using Windows 10. It should look like this:
 
 ![](odbc-01.png)
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
-  + Select the "SQL Server Native Client 11.0" driver.
+
+  + Select the "ODBC Driver 13 for SQL Server" driver.
   
   
 ![](odbc-02.png)
   
-  + Name the data source `nasis_local`. The data source description is optional.
+  + Name the data source `nasis_local`. A data source description is optional.
 
 ![](odbc-03.png)
   
-  + The NASIS SQL server name is in the format `XXXXXX\NASISSQLEXPRESS`, where `XXXXXX` is the ["computer name" of your local machine](http://windows.microsoft.com/en-us/windows7/find-your-computer-name) and `NASISSQLEXPRESS` is the local NASIS SQL Express server.
+  + The NASIS SQL server name is in the format `XXXXXX\NASISSQLEXPRESS`
+  
+    - `XXXXXX` is your "computer name" 
+  
+    - `NASISSQLEXPRESS` is the local NASIS SQL Express server.
   
   + Your computer name is often on the asset tag sticker on the outside of your computer. 
   
-  + On Windows 10, you can view your computer name by opening the _Control Panel_ and selecting "System" _OR_ by searching "This PC" in the _Start Menu_, right-clicking it, and selecting "Properties" . You need the value found under "Computer name:" (highlighted below).
+On Windows 10, you can view your computer name by opening the _Control Panel_ and selecting "System" _OR_ by searching "This PC" in the _Start Menu_, right-clicking it, and selecting "Properties" . You need the value found under "Computer name:" (highlighted below).
     
 ![](odbc-06.png)
   
-  + Your computer name will look something like: `ARCCASON5000002` -- where state, office and number will vary from computer to computer. _Be very careful when typing it in!_ This is a common source of error in setting up ODBC connection. You will have something like _Server:_ `ARCCASON5000002\NASISSQLEXPRESS` as entered on the form above.
+  + Your computer name will look something like: `ARCCASON5000002` -- where state, office and number will vary from computer to computer. _Be very careful when typing it in!_ This is a common source of error in setting up ODBC connection. 
+  
+When you are done, you will have something similar to what was as entered on the form above:
+
+ - _Server:_ `ARCCASON5000002\NASISSQLEXPRESS` 
 
 When finished click "Next".
 
@@ -54,18 +64,17 @@ When finished click "Next".
 
 6. Close the ODBC control panel by clicking 'OK'
 
-## Optionally Install Required Packages
+If you are doing this as part of a pre-course assignment, you do not need to do the following optional demonstration. However, it is a good way to verify everything is working correctly.
 
-For the demonstration below, you will need to install the `RODBC` and `soilDB` R packages [if you have not already]. 
+Return back to the assignment and contact your mentors if you have any trouble.
 
-You can check by trying to load either of these packages in the console using `library(RODBC)` for instance. 
+---
 
-Install RODBC and other soil-themed packages using the commands below if you are unsure.
+## Optional: Test Connection with `soilDB` and set up USDA-NRCS / NCSS soil packages
+
+Install soil-themed packages and their dependencies using the commands below if you have not done so already.
 
 ```{r install-packages, eval=FALSE}
-# stable version from CRAN + dependencies
-install.packages("RODBC", dependencies = TRUE)
-
 # stable version from CRAN + dependencies
 install.packages("aqp", dependencies = TRUE)
 install.packages("soilDB", dependencies = TRUE)
@@ -77,11 +86,10 @@ remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALS
 remotes::install_github("ncss-tech/sharpshootR", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ```
 
-## An example R session
+After installing the above packages, load some pedons into your local database and selected set. Use a NASIS query such as _POINT - Pedon/Site/NCSSlabdata by upedonid and taxonname_
+in _NSSC Pangaea_.
 
-After installing the above packages, add some *sites+pedons* or *components* into the selected set in NASIS.
-
-Then, try loading them into your R session.
+Then, try loading them into your R session and making a "sketch" of the profiles.
 
 ```{r example, eval=FALSE}
 # load required libraries
@@ -91,17 +99,12 @@ library(soilDB)
 # fetch all pedons from the selected set in local NASIS database
 x <- fetchNASIS(from = 'pedons')
 
-# index first 10 profiles (pedons)
-idx <- 1:pmin(length(x), 10)
-
-# make sketches of select profiles
-par(mar=c(0,0,0,0))
-plot(x[idx, ], name = 'hzname', label = 'taxonname')
+# make sketches of the first 10 pedons
+par(mar = c(0,0,0,0))
+plot(x[1:10, ], name = 'hzname', label = 'taxonname')
 ```
 
-Good job, that wasn't so hard. 
-
-Now is a good time to check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/).
+If you want to do more with SoilProfileCollections, profile sketches, and soil data wrangling check out [some of the tutorials on the AQP website](http://ncss-tech.github.io/AQP/).
 
 Details on loading NASIS data into R can be found in [this tutorial](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
 
