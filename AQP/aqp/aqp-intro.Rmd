@@ -319,9 +319,11 @@ str(x)
 
 # graphical check
 # convert character horizon IDs into numeric
-x$zzz <- as.numeric(hzID(x))
-plotSPC(x, color='zzz')
-groupedProfilePlot(x, 'g', color='zzz', group.name.offset = -15)
+x$.horizon_ids_numeric <- as.numeric(hzID(x))
+
+par(mar = c(0, 0, 3, 1))
+plotSPC(x, color='.horizon_ids_numeric', col.label = 'Horizon ID')
+groupedProfilePlot(x, 'g', color='.horizon_ids_numeric', col.label = 'Horizon ID', group.name.offset = -15)
 ```
 
 
@@ -412,22 +414,22 @@ x <- fetchOSD(c('appling', 'cecil', 'bonneau'))
 Using 5x6 inch output device.
 ```{r, fig.width=5, fig.height=6}
 # set margins and turn off clipping
-par(mar=c(0,2,0,4), xpd=NA)
-plotSPC(x[1, ], cex.names=1)
+par(mar = c(0,2,0,4), xpd = NA)
+plotSPC(x[1, ], cex.names = 1)
 ```
 
 Using 7x6 inch output device, slight adjustments to `width` usually required.
 ```{r, fig.width=7, fig.height=6}
 # set margins and turn off clipping
-par(mar=c(0,2,0,4), xpd=NA)
-plotSPC(x[1:2, ], cex.names=1, width=0.25)
+par(mar = c(0,2,0,4), xpd = NA)
+plotSPC(x[1:2, ], cex.names = 1, width = 0.25)
 ```
 
 Using 8x6 inch output device, slight adjustments to `axis.line.offset` and `width` are usually required.
 ```{r, fig.width=8, fig.height=6}
 # set margins and turn off clipping
-par(mar=c(0,2,0,4), xpd=NA)
-plotSPC(x, cex.names=1, axis.line.offset = -0.1, width=0.3)
+par(mar = c(0,2,0,4), xpd = NA)
+plotSPC(x, cex.names = 1, axis.line.offset = -0.1, width = 0.3)
 ```
 
 
@@ -439,28 +441,28 @@ Relative horizontal positioning via `relative.pos` argument. Can be used with `p
 ```{r fig.height=5, fig.width=9}
 par(mar=c(4,3,2,2))
 pos <- jitter(1:length(sp4))
-explainPlotSPC(sp4, name='name', relative.pos=pos)
+explainPlotSPC(sp4, name = 'name', relative.pos = pos)
 ```
 
 Relative positioning works well when the vector of positions is close to the default spacing along an integer sequence, but not when positions are closer than the width of a profile sketch.
 ```{r fig.height=5, fig.width=9}
-par(mar=c(4,3,2,2))
+par(mar = c(4,3,2,2))
 pos <- c(1, 1.2, 3, 4, 5, 5.2, 7, 8, 9, 10)
-explainPlotSPC(sp4, name='name', relative.pos=pos)
+explainPlotSPC(sp4, name = 'name', relative.pos = pos)
 ```
 
 The `fixOverlap()` function can be used to find a suitable arrangement of profiles based on a compromise between the suggested relative positions and minimization of overlap. This is an iterative procedure, based on random perturbations of overlapping profiles, therefore it is possible for the algorithm to stop at a sub-optimal configuration. Results can be controlled using `set.seed()`.
 ```{r fig.height=5, fig.width=9}
-par(mar=c(4,3,2,2))
+par(mar = c(4,3,2,2))
 new.pos <- fixOverlap(pos)
-explainPlotSPC(sp4, name='name', relative.pos=new.pos)
+explainPlotSPC(sp4, name = 'name', relative.pos = new.pos)
 ```
 
 There are several parameters available for optimizing horizontal position in the presence of overlap. See `?fixOverlap` for details and further examples. The [SPC plotting ideas tutorial](http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html) contains several practical examples.
 ```{r fig.height=5, fig.width=9}
-par(mar=c(4,3,2,2))
+par(mar = c(4,3,2,2))
 new.pos <- fixOverlap(pos, thresh = 0.7)
-explainPlotSPC(sp4, name='name', relative.pos=new.pos)
+explainPlotSPC(sp4, name = 'name', relative.pos = new.pos)
 ```
 
 
@@ -499,10 +501,14 @@ plotSPC(sp4, name='name', color='genhz', col.palette=RColorBrewer::brewer.pal(3,
 
 Horizon-level attributes that represent a volume fraction (e.g. coarse-fragment percentage) can be added to an existing figure:
 ```{r plotting-vol-fraction, fig.height=4, fig.width=8}
-par(mar=c(0,0,3,0)) # tighter figure margins
-sp4$frag_pct <- sp4$CF * 100 # convert fraction -> percent
+# tighter figure margins
+par(mar=c(0,0,3,0)) 
+# convert fraction -> percent
+sp4$frag_pct <- sp4$CF * 100
+
 plotSPC(sp4, name='name', color='frag_pct')
-addVolumeFraction(sp4, 'frag_pct') # symbolize volume fraction data
+# symbolize volume fraction data
+addVolumeFraction(sp4, colname = 'frag_pct')
 ```
 
 
@@ -511,31 +517,16 @@ addVolumeFraction(sp4, 'frag_pct') # symbolize volume fraction data
 Annotation of depth-intervals can be accomplished using "brackets":
 ```{r plotting-depth-interval}
 # extract top/bottom depths associated with all A horizons
-# return as a single data.frame / profile
-f <- function(i) {
-  # horizons as a data.frame
-  h <- horizons(i)
-  # index "A" horizons
-  idx <- grep('^A', h$name)
-  # current profile ID
-  idn <- idname(i)
-  this.id <- h[[idn]]
-  
-  res <- data.frame(
-    id = this.id,
-    top = min(h$top[idx]), 
-    bottom = max(h$bottom[idx], na.rm=TRUE)
-  )
-  
-  # set profile ID name
-  names(res)[1] <- idn
-  
-  return(res)
-}
 
-# apply function to each profile in sp4, result is a list
-a <- profileApply(sp4, f, simplify = FALSE, frameify = TRUE)
+# see ?DepthOf
+tops <- profileApply(sp4, FUN = minDepthOf, pattern = '^A', hzdesgn = 'name', top = TRUE)
+bottoms <- profileApply(sp4, FUN = maxDepthOf, pattern = '^A', hzdesgn = 'name', top = FALSE)
+IDs <- profile_id(sp4)
 
+# assemble data.frame
+a <- data.frame(id = IDs, top = tops, bottom = bottoms)
+
+# check: OK
 a
 ```
 
@@ -629,15 +620,15 @@ dev.off()
 The `profileApply()` function is an extension of the familiar *apply()* family of functions that operate on vectors (`sapply` and `tapply`), matrices (`apply`), and lists (`lapply`)-- extended to `SoilProfileCollection` objects. The function named in the `FUN` argument is evaluated once for each profile in the collection, typically returning a single value per profile. In this case, the ordering of the results would match the ordering of values in the site level attribute table.
 ```{r profileApply-1}
 # max() returns the depth of a soil profile
-sp4$soil.depth <- profileApply(sp4, FUN=max)
+sp4$soil.depth <- profileApply(sp4, FUN = max)
 # max() with additional argument give max depth to non-missing 'clay'
-sp4$soil.depth.clay <- profileApply(sp4, FUN=max, v='clay')
+sp4$soil.depth.clay <- profileApply(sp4, FUN = max, v = 'clay')
 # nrow() returns the number of horizons
-sp4$n.hz <- profileApply(sp4, FUN=nrow)
+sp4$n.hz <- profileApply(sp4, FUN = nrow)
 # compute the mean clay content by profile using an inline function
 sp4$mean.clay <- profileApply(sp4, FUN=function(i) mean(i$clay))
 # estimate soil depth based on horizon designation
-sp4$soil.depth <- profileApply(sp4, estimateSoilDepth, name='name')
+sp4$soil.depth <- profileApply(sp4, estimateSoilDepth, name = 'name')
 ```
 
 When `FUN` returns a vector of the same length as the number of horizons in a profile, `profileApply()` can be used to create new horizon-level attributes. For example, the change in clay content with depth could be calculated via:

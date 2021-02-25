@@ -299,8 +299,8 @@ title('Horizon Boundary Topography', line = 0, col.main = 'white')
 # TODO: generalize this
 hdn <- horizonDepths(osds)
 
-# extract relevant pieces
-s <- horizons(osds)[, c(idname(osds), hdn[1], hdn[2], 'hd')]
+# extract relevant pieces: profile ID, top, bottom, horizon distinctness information
+s <- horizons(osds)[, c(idname(osds), hdn, 'hd')]
 
 # TODO: truncate at adjacent horizon depths
 # bracket bounds

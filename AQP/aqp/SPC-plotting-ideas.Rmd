@@ -24,6 +24,7 @@ library(soilDB)
 library(aqp)
 library(sharpshootR)
 library(sp)
+library(scales)
 
 # sample data from soilDB packaeg
 data("loafercreek")
@@ -35,7 +36,7 @@ x <- loafercreek[1:10, ]
 par(mar=c(1,1,2,1))
 
 # profile sketches
-plot(x, label='pedon_id', id.style='side')
+plotSPC(x, label='pedon_id', id.style='side')
 
 # group profiles by hillslope position
 groupedProfilePlot(x, 'hillslopeprof', label='pedon_id', id.style='side')
@@ -70,6 +71,7 @@ addDiagnosticBracket(x, kind='argillic horizon', col='red')
 addDiagnosticBracket(x, kind='paralithic contact', col='black')
 ```
 
+Align profiles to an elevation gradient, regular spacing of sketches.
 ```{r fig.width=8, fig.height=5}
 # experiment with re-ordering sketches
 # order according to elevation as described in the field
@@ -78,7 +80,7 @@ new.order
 
 # plot profiles in the new order
 par(mar=c(4.5,1,1,1))
-plot(x, plot.order=new.order, print.id=FALSE)
+plotSPC(x, plot.order=new.order, print.id=TRUE)
 
 # the "brackets" will automatically follow the new ordering
 addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
@@ -89,6 +91,28 @@ addDiagnosticBracket(x, kind='paralithic contact', col='black')
 axis(side=1, at = 1:length(x), labels = x$elev_field[new.order], line = 1)
 mtext('Elevation (m)', side = 1, line = 3.25)
 ```
+
+Align profiles to an elevation gradient, relative spacing of sketches. Note that figure elements need to be explicitly ordered with `[new.order]`.
+```{r fig.width=8, fig.height=5}
+pos <- rescale(x$elev_field, to = c(1, length(x)))
+pos <- fixOverlap(pos, thresh = 0.65)
+
+new.order <- order(x$elev_field)
+
+# plot profiles in the new order
+par(mar=c(4.5,1,1,1))
+plotSPC(x, plot.order = new.order, print.id = TRUE, relative.pos = pos[new.order])
+
+# the "brackets" will automatically follow the new ordering
+addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, kind='argillic horizon', col='red')
+
+# add an axis with elevation associated with each profile
+axis(side=1, at = pos[new.order], labels = x$elev_field[new.order], line = 1)
+mtext('Elevation (m) | Not to Scale', side = 1, line = 3.25)
+```
+
+
 
 
 Test out some new features in `aqp`.
@@ -141,14 +165,12 @@ par(mar=c(4.5,4,1,1))
 plotTransect(x, grad.var.name = 'elev_field', crs = CRS('+proj=utm +zone=10 +datum=NAD83'))
 ```
 
-```{r fig.width=8, fig.height=4}
+```{r fig.width=10, fig.height=4}
 ## better example from CA792
-# this requires the latest soilDB from github
-# devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 data("mineralKing")
 
 par(mar=c(1,1,2,1))
-groupedProfilePlot(mineralKing, groups='taxonname', print.id=FALSE)
+groupedProfilePlot(mineralKing, groups='taxonname', print.id=FALSE, group.name.offset = c(-5, -10))
 ```
 
 
@@ -170,17 +192,21 @@ Tinker with *relative* sketch positioning.
 ```{r fig.width=8, fig.height=8}
 # standard transect plot, profile sketches arranged along integer sequence
 plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname')
-
-# default behavior, attempt adjustments to prevent over-plot and preserve relative spacing
-# use set.seed() to fix outcome
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative')
+title('Regular Spacing')
 
 # attempt relative positioning based on scaled distances, no corrections for overlap
 # profiles are clustered in space and therefore over-plot
 plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = FALSE)
+title('Relative Spacing | No Overlap Fix')
+
+# default behavior, attempt adjustments to prevent over-plot and preserve relative spacing
+# use set.seed() to fix outcome
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative')
+title('Relative Spacing | Default Overlap Fix')
 
 # customize arguments to aqp::fixOverlap()
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = list(maxIter=6000, trace=TRUE, adj=0.2, thresh=0.7))
+plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = list(maxIter=6000, adj=0.2, thresh=0.7))
+title('Relative Spacing | Custom Overlap Fix')
 ```
 
 
@@ -213,10 +239,6 @@ x.pos <- 1:length(gopheridge)
 points(x.pos, gopheridge$max.clay.depth, col='white', pch=21, cex=0.75, bg='black')
 ```
 
-```{r}
-##
-# see ?sp5 examples
-```
 
 
 
