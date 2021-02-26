@@ -60,6 +60,7 @@ library(reshape2)
 library(plyr)
 library(latticeExtra)
 library(maps)
+library(RColorBrewer)
 
 # get basic sensor metadata for several SCAN/SNOTEL sites
 m <- SCAN_site_metadata(site.code=c(2072,356,2148,2187))
