@@ -1,0 +1,153 @@
+---
+title: "Pair-Wise Distances by Generalized Horizon Labels"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+```
+
+
+Example data.
+```{r, fig.width=12, fig.height=6}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+library(cluster)
+library(dendextend)
+
+
+data("loafercreek")
+x <- loafercreek[1:20, ]
+
+par(mar = c(0, 0, 0, 0))
+plotSPC(x, width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, print.id = FALSE)
+```
+
+
+Apply generalized horizon labels (GHL).
+```{r}
+# new labels
+n <- c('O', 'A', 'B', 'Bt', 'BC', 'Cr', 'R')
+p <- c('O', 'A', 'B', 'Bt', 'BC', 'Cr', 'R')
+
+# note additional argument
+horizons(x)$genhz <- generalize.hz(x$hzname, new = n, pat=p, perl=TRUE)
+x$genhz <- ordered(x$genhz)
+
+table(x$genhz)
+```
+
+
+Remove profiles with "not-used" GHL.
+```{r, fig.width=12, fig.height=6}
+x$flag <- profileApply(x, function(i) {
+  any(i$genhz == 'not-used')
+})
+
+y <- subset(x, !flag)
+
+table(y$genhz)
+
+par(mar = c(0, 0, 3, 0))
+plotSPC(y, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', print.id = FALSE)
+```
+
+
+Add empty horizons to bottom of the profiles < 150cm deep, label with 'R' GHL.
+```{r, fig.width=12, fig.height=6}
+# extend with empty horizons
+z <- fillHzGaps(y, to_top = NA, to_bottom = 150)
+
+# label as 'R'
+z$hzname[is.na(z$genhz)] <- 'R'
+z$genhz[is.na(z$genhz)] <- 'R'
+
+# truncate all profiles to 150cm
+z <- trunc(z, z1 = 0, z2 = 150)
+
+par(mar = c(0, 0, 3, 0))
+plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', print.id = FALSE)
+```
+
+
+Arrange profiles by depth to contact.
+```{r, fig.width=12, fig.height=6}
+# add soil depth information to site
+sdc <- getSoilDepthClass(z)
+site(z) <- sdc
+
+par(mar = c(0, 0, 3, 0))
+plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, plot.order = order(z$depth), col.label = 'Generalized Horizon Label', print.id = FALSE)
+```
+
+
+Pair-wise distances using `genhz`.
+```{r}
+# note funky syntax required to trick profile_compare... will be fixed soon
+d <- profile_compare(z, vars = c('genhz', 'genhz'), max_d = 150, k = 0, rescale.result = TRUE)
+
+# divisive hierarchical clustering
+h <- as.hclust(diana(d))
+
+# attempt sorting dendrogram by soil depth
+h <- dendextend::rotate(h, order(z$depth))
+```
+
+
+
+```{r, fig.width=12, fig.height=8}
+par(mar = c(0, 0, 3, 0))
+plotProfileDendrogram(z, clust = h, scaling.factor = 0.0095, y.offset = 0.05, color = 'genhz', width = 0.3, name.style = 'center-center', col.label = 'Generalized Horizon Label', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, print.id = FALSE)
+
+# lsp <- get("last_spc_plot", envir = aqp.env)
+# abline(h = (150 * lsp$scaling.factor) + lsp$y.offset, lty = 2)
+```
+
+
+Use distance from 1st profile as a virtual transect.
+```{r, fig.width=12, fig.height=6}
+m <- as.matrix(d)
+
+set.seed(10101)
+pos <- alignTransect(m[1, ], x.min = 1, x.max = length(z), thresh = 0.4)
+```
+
+Ordering.
+```{r, fig.width=12, fig.height=6}
+par(mar = c(4, 0, 3, 0))
+
+plotSPC(z, plot.order = pos$order, color = 'genhz', width = 0.25, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', print.id = FALSE)
+
+points(x = 1, y = -5, pch = '*', cex = 3, col = 'firebrick')
+
+axis(1, at = 1:length(z), labels = round(pos$grad, 3), line = 0, cex.axis = 0.85)
+mtext("Distance from 1st Profile (not to scale)", side = 1, line = 2.25)
+```
+
+Relative positions.
+```{r, fig.width=12, fig.height=6}
+par(mar = c(4, 0, 3, 1))
+
+plotSPC(z, plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.2, name.style = 'center-center', name = NA, col.label = 'Generalized Horizon Label', print.id = FALSE)
+
+points(x = 1, y = -5, pch = '*', cex = 3, col = 'firebrick')
+
+axis(1, at = pos$relative.pos, labels = round(pos$grad, 3), line = 0, cex.axis = 0.66)
+mtext("Distance from 1st Profile", side = 1, line = 2.25)
+```
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
+
+

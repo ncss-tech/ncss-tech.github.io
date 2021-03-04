@@ -4,10 +4,14 @@ author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
-  mathjax: null
-jquery: null
-smart: no
-keep_md: no
+    jquery: null
+    smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
 ---
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
