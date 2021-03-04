@@ -147,6 +147,48 @@ mtext("Distance from 1st Profile", side = 1, line = 2.25)
 ```
 
 
+```{r}
+library(MASS)
+
+mds <- sammon(d)
+
+# row.names(mds$points) == profile_id(z)
+
+# 
+xoff <- aqp:::.rescaleRange(mds$points[, 1], x0 = 1, x1 = length(z))
+yoff <- aqp:::.rescaleRange(mds$points[, 2], x0 = -10, x1 = max(z))
+
+# plot(mds$points)
+# abline(h = 0, v = 0)
+
+# plot(xoff, yoff)
+# abline(v = mean(xoff), h = mean(yoff), lty = 2)
+
+set.seed(10110)
+pos <- alignTransect(xoff, x.min = 1, x.max = length(z), thresh = 0.3)
+
+```
+
+Detailed / messy.
+```{r, fig.width=8, fig.height=8}
+par(mar = c(0.25, 0.25, 3.5, 0.25))
+plotSPC(z, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.2, name.style = 'center-center', cex.names = 0.45, hz.depths = TRUE, col.label = 'Generalized Horizon Label', print.id = TRUE, scaling.factor = 0.5)
+
+box()
+```
+
+Less information / clean.
+```{r, fig.width=8, fig.height=8}
+par(mar = c(0.25, 0.25, 3.5, 0.25))
+plotSPC(z, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.2, name.style = 'center-center', hz.depths = FALSE, name = NA, col.label = 'Generalized Horizon Label', print.id = FALSE, scaling.factor = 0.5)
+
+grid(nx = 10, ny = 10)
+abline(v = mean(xoff), h = mean(yoff), lty = 2)
+
+box()
+```
+
+
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
 

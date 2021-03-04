@@ -537,6 +537,17 @@ plotSPC(sp4, name='name')
 addBracket(a, col='red')
 ```
 
+Labels.
+```{r, fig.height=4, fig.width=8}
+# add a label for each bracket
+a$label <- site(sp4)$id
+# tighter figure margins
+par(mar=c(0,0,0,0))
+plotSPC(sp4, name='name')
+# note that depth brackets "know which profiles to use"
+addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
+```
+
 It is possible to arrange profile sketches by site-level grouping variable:
 ```{r, fig.height=4, fig.width=8}
 # use improvised site-level attribute 'group' 
@@ -550,9 +561,11 @@ There need not be brackets for all profiles in a collection:
 ```{r, fig.height=4, fig.width=8}
 # add a label for each bracket
 a.sub <- a[1:4, ]
+
 # tighter figure margins
 par(mar=c(0,0,0,0))
 groupedProfilePlot(sp4, groups='group')
+
 # note that depth brackets "know which profiles to use"
 addBracket(a.sub, col='red')
 ```
@@ -568,17 +581,14 @@ groupedProfilePlot(sp4, groups='group')
 addBracket(a, col='red')
 ```
 
-Further customization of brackets:
+Manually define bottom depth
 ```{r, fig.height=4, fig.width=8}
-# add a label for each bracket
-a$label <- site(sp4)$id
 # tighter figure margins
 par(mar=c(0,0,0,0))
 groupedProfilePlot(sp4, groups='group')
 # note that depth brackets "know which profiles to use"
 addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
 ```
-
 
 Further customization of brackets:
 ```{r, fig.height=4, fig.width=8}
