@@ -234,6 +234,42 @@ par(mar=c(0,0,0,0), bg='black', fg='white')
 plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 1, width=0.35, cex.names=0.45, name=NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE)
 ```
 
+## Soil Profile Sketch Ordination
+Arrange OSD sketches according to locations defined by non-metric multidimensional scaling (ordination) of pair-wise distances. Needs work.
+```{r, fig.width=8, fig.height=6}
+library(MASS)
+
+# add tiny amount for 0-distance pairs (duplicate profiles)
+mds <- sammon(d + 0.001)$points
+
+# ensure ordering is preserved:
+# profile IDs -> distance matrix -> nMDS
+all(row.names(mds) == profile_id(s))
+
+# re-scale nMDS axis 1 to the typical horizontal scale used by plotSPC 
+xoff <- aqp:::.rescaleRange(mds[, 1], x0 = 1, x1 = length(s))
+
+# re-scale nMDS axis 2 to the typical vertical scale used by plotSPC  
+yoff <- aqp:::.rescaleRange(mds[, 2], x0 = -10, x1 = max(s))
+
+par(mar = c(0.25, 0.25, 0.25, 0.25), bg='black', fg='white')
+
+plotSPC(s, y.offset = yoff, relative.pos = xoff, width = 0.25, name.style = 'center-center', hz.depths = FALSE, col.label = 'Generalized Horizon Label', print.id = TRUE, name = NA, scaling.factor = 0.5, shrink = TRUE)
+```
+
+Arrange OSD sketches according to (approximate) locations defined by non-metric multidimensional scaling (ordination) of pair-wise distances.
+```{r, fig.width=10, fig.height=8}
+# use re-scaled nMDS coordinates as virtual transect
+# adjust to reduce overlap
+set.seed(10110)
+pos <- alignTransect(xoff, x.min = 1, x.max = length(s) + 4, thresh = 0.7)
+
+par(mar = c(0.25, 0.25, 0.25, 0.25))
+
+plotSPC(s, n = length(s) + 4, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, width = 0.25, name.style = 'center-center', hz.depths = FALSE, col.label = 'Generalized Horizon Label', print.id = TRUE, scaling.factor = 1.5, shrink = TRUE)
+
+box()
+```
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
