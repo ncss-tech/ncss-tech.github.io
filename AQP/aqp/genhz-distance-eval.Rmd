@@ -11,59 +11,72 @@ output:
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE, fig.align = 'center')
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
 
-Example data.
+Question: is it possible to generate a reasonable sorting of soil profiles (a `SoilProfileCollection`) using pair-wise distances computed only from generalized horizon labels (GHL)? I think that it might, as long as these labels are encoded as [ordered factors](http://ncss-tech.github.io/AQP/aqp/profile-compare-factors.html). We can use `profile_compare` to test this hypothesis. One might attempt such a comparison within a collection of similar soils where the only reliable data available are horizon depths and designations.
+
+We will be using a subset of the the `loafercreek` sample data from the {soilDB} package.
 ```{r, fig.width=12, fig.height=6}
+# latest version from github
 library(aqp)
 library(soilDB)
 library(sharpshootR)
 
 library(cluster)
 library(dendextend)
-
+library(MASS)
 
 data("loafercreek")
-x <- loafercreek[1:20, ]
 
+# profiles 20-40
+x <- loafercreek[20:40, ]
+
+# modify default arguments for some flair
 par(mar = c(0, 0, 0, 0))
 plotSPC(x, width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, print.id = FALSE)
 ```
 
 
-Apply generalized horizon labels (GHL).
+Apply generalized horizon labels using overly-simplistic rules. This is only a demonstration.
 ```{r}
 # new labels
 n <- c('O', 'A', 'B', 'Bt', 'BC', 'Cr', 'R')
+# GHL patterns
 p <- c('O', 'A', 'B', 'Bt', 'BC', 'Cr', 'R')
 
 # note additional argument
-horizons(x)$genhz <- generalize.hz(x$hzname, new = n, pat=p, perl=TRUE)
+horizons(x)$genhz <- generalize.hz(x$hzname, new = n, pat = p)
+
+# the most important step, genhz must be encoded as an ordered factor
 x$genhz <- ordered(x$genhz)
 
+# check frequency of GHL assignment
 table(x$genhz)
 ```
 
 
-Remove profiles with "not-used" GHL.
+Remove profiles containing horizons assigned to the "not-used" GHL.
 ```{r, fig.width=12, fig.height=6}
 x$flag <- profileApply(x, function(i) {
   any(i$genhz == 'not-used')
 })
 
+# SPC-aware version of subset()
 y <- subset(x, !flag)
 
+# check: ok
 table(y$genhz)
+
 
 par(mar = c(0, 0, 3, 0))
 plotSPC(y, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', print.id = FALSE)
 ```
 
 
-Add empty horizons to bottom of the profiles < 150cm deep, label with 'R' GHL.
+Add empty horizons to bottom of the profiles with bottom-most horizon depth < 150cm, label with 'R' GHL. Truncate deeper profiles to 150cm. See `?fillHzGaps` and `?trunc` for details.
 ```{r, fig.width=12, fig.height=6}
 # extend with empty horizons
 z <- fillHzGaps(y, to_top = NA, to_bottom = 150)
@@ -80,7 +93,7 @@ plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.dept
 ```
 
 
-Arrange profiles by depth to contact.
+Arrange profiles by depth to contact using `plot.order` argument to `plotSPC`. See `?getSoilDepthClass` and `?estimateSoilDepth` for details on estimating soil depth.
 ```{r, fig.width=12, fig.height=6}
 # add soil depth information to site
 sdc <- getSoilDepthClass(z)
@@ -91,7 +104,7 @@ plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.dept
 ```
 
 
-Pair-wise distances using `genhz`.
+Compute pair-wise distances between profiles using `genhz` (an ordered factor) to a maximum depth of 150cm. See `?profile_compare` and `?daisy` for details. Divisive hierarchical clustering is applied to the distance matrix, with a final re-ordering step according to soil depth (`dendextend::rotate)`.
 ```{r}
 # note funky syntax required to trick profile_compare... will be fixed soon
 d <- profile_compare(z, vars = c('genhz', 'genhz'), max_d = 150, k = 0, rescale.result = TRUE)
@@ -104,25 +117,22 @@ h <- dendextend::rotate(h, order(z$depth))
 ```
 
 
-
+`plotProfileDendrogram` from the sharpshootR package aligns profile sketches with the terminal leaves of a dendrogram.
 ```{r, fig.width=12, fig.height=8}
 par(mar = c(0, 0, 3, 0))
 plotProfileDendrogram(z, clust = h, scaling.factor = 0.0095, y.offset = 0.05, color = 'genhz', width = 0.3, name.style = 'center-center', col.label = 'Generalized Horizon Label', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, print.id = FALSE)
-
-# lsp <- get("last_spc_plot", envir = aqp.env)
-# abline(h = (150 * lsp$scaling.factor) + lsp$y.offset, lty = 2)
 ```
 
 
-Use distance from 1st profile as a virtual transect.
+Use distance from 1st profile as a virtual transect via `alignTransect`, `fixOverlap` attempts to spread-out profiles along the x-axis to reduce overlap. 
 ```{r, fig.width=12, fig.height=6}
 m <- as.matrix(d)
 
 set.seed(10101)
-pos <- alignTransect(m[1, ], x.min = 1, x.max = length(z), thresh = 0.4)
+pos <- alignTransect(m[1, ], x.min = 1, x.max = length(z), thresh = 0.5)
 ```
 
-Ordering.
+Distance from 1st profile (left-most, marked with a red **asterisk**) used to order collection along an integer sequence.
 ```{r, fig.width=12, fig.height=6}
 par(mar = c(4, 0, 3, 0))
 
@@ -134,7 +144,7 @@ axis(1, at = 1:length(z), labels = round(pos$grad, 3), line = 0, cex.axis = 0.85
 mtext("Distance from 1st Profile (not to scale)", side = 1, line = 2.25)
 ```
 
-Relative positions.
+Distance from 1st profile (left-most, marked with a red **asterisk**) used to place profiles at relative distances along the x-axis.
 ```{r, fig.width=12, fig.height=6}
 par(mar = c(4, 0, 3, 1))
 
@@ -146,44 +156,82 @@ axis(1, at = pos$relative.pos, labels = round(pos$grad, 3), line = 0, cex.axis =
 mtext("Distance from 1st Profile", side = 1, line = 2.25)
 ```
 
+Create an ordination from pair-wise distances using non-metric multidimensional scaling (`MASS::sammon`).
+```{r fig.width=8, fig.height=4.5}
+# add tiny amount for 0-distance pairs (duplicate profiles)
+mds <- sammon(d + 0.001)$points
 
-```{r}
-library(MASS)
-
-mds <- sammon(d)
-
-# row.names(mds$points) == profile_id(z)
-
-# 
-xoff <- aqp:::.rescaleRange(mds$points[, 1], x0 = 1, x1 = length(z))
-yoff <- aqp:::.rescaleRange(mds$points[, 2], x0 = -10, x1 = max(z))
-
-# plot(mds$points)
-# abline(h = 0, v = 0)
-
-# plot(xoff, yoff)
-# abline(v = mean(xoff), h = mean(yoff), lty = 2)
-
-set.seed(10110)
-pos <- alignTransect(xoff, x.min = 1, x.max = length(z), thresh = 0.3)
-
+# ensure ordering is preserved:
+# profile IDs -> distance matrix -> nMDS
+all(row.names(mds) == profile_id(z))
 ```
 
-Detailed / messy.
-```{r, fig.width=8, fig.height=8}
+Re-scale nMDS coordinates to typical coordinate system used by `plotSPC`.
+```{r fig.width=6, fig.height=5}
+# re-scale nMDS axis 1 to the typical horizontal scale used by plotSPC 
+xoff <- aqp:::.rescaleRange(mds[, 1], x0 = 1, x1 = length(z))
+
+# re-scale nMDS axis 2 to the typical vertical scale used by plotSPC  
+yoff <- aqp:::.rescaleRange(mds[, 2], x0 = -10, x1 = max(z))
+```
+
+Place ("hang") soil profile sketches according to nMDS ordination (points). Overlap is a problem.
+```{r, fig.width=8, fig.height=6}
 par(mar = c(0.25, 0.25, 3.5, 0.25))
-plotSPC(z, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.2, name.style = 'center-center', cex.names = 0.45, hz.depths = TRUE, col.label = 'Generalized Horizon Label', print.id = TRUE, scaling.factor = 0.5)
+plotSPC(z, y.offset = yoff, relative.pos = xoff, color = 'genhz', width = 0.25, name.style = 'center-center', hz.depths = FALSE, name = NA, col.label = 'Generalized Horizon Label', print.id = FALSE, scaling.factor = 0.75)
+
+points(xoff, yoff, pch = 16)
+
+grid(nx = 10, ny = 10)
+abline(v = mean(pos$relative.pos), h = mean(yoff), lty = 2)
 
 box()
 ```
 
-Less information / clean.
-```{r, fig.width=8, fig.height=8}
+Demonstrate the effect of `alignTransect` and `fixOverlap` on relative postion along nMDS axis 1.
+```{r fig.width=6, fig.height=5}
+# use re-scaled nMDS coordinates as virtual transect
+# adjust to reduce overlap
+# with an expansion of the x-axis out to length(z) + 5
+set.seed(10110)
+pos <- alignTransect(xoff, x.min = 1, x.max = length(z) + 5, thresh = 0.65)
+
+par(mar = c(3, 3, 1, 1))
+plot(cbind(pos$relative.pos, yoff[pos$order]), pch = 1, las = 1, axes = FALSE, ylab = '', xlab = '')
+grid(nx= 20, ny = 20)
+mtext('nMDS axis 1', side = 1, line = 1)
+mtext('nMDS axis 2', side = 2, line = 1)
+
+points(cbind(pos$grad, yoff[pos$order]), pch = 16)
+
+# arrows connect original, scaled nMDS axis 1 -> adjusted-for-overlap nMDS axis 1
+arrows(
+  x1 = pos$relative.pos, y1 = yoff[pos$order],
+  x0 = pos$grad, y0 = yoff[pos$order],
+  len = 0.05  
+)
+
+box()
+```
+
+Place soil profile sketches according to approximate positions within nMDS ordination (points). Note the use of `n` argument to `plotSPC`, adding extra "room" on the x-axis. A very large output device is required for legible text.
+```{r, fig.width=8, fig.height=6}
 par(mar = c(0.25, 0.25, 3.5, 0.25))
-plotSPC(z, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.2, name.style = 'center-center', hz.depths = FALSE, name = NA, col.label = 'Generalized Horizon Label', print.id = FALSE, scaling.factor = 0.5)
+plotSPC(z, n = length(z) + 5, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.25, name.style = 'center-center', cex.names = 0.45, hz.depths = TRUE, col.label = 'Generalized Horizon Label', print.id = TRUE, scaling.factor = 0.75)
+
+# add adjusted nMDS points
+points(pos$relative.pos, yoff[pos$order], pch = 16, cex = 0.75)
+
+box()
+```
+
+Another approach, leaving out all of the text annotation. Morphologic patterns and their similarity are clear.
+```{r, fig.width=8, fig.height=6}
+par(mar = c(0.25, 0.25, 3.5, 0.25))
+plotSPC(z, n = length(z) + 5, y.offset = yoff[pos$order], plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.25, name.style = 'center-center', hz.depths = FALSE, name = NA, col.label = 'Generalized Horizon Label', print.id = FALSE, scaling.factor = 0.75)
 
 grid(nx = 10, ny = 10)
-abline(v = mean(xoff), h = mean(yoff), lty = 2)
+abline(v = mean(pos$relative.pos), h = mean(yoff), lty = 2)
 
 box()
 ```
