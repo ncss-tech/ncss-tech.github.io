@@ -88,7 +88,7 @@ m2 <- c('5YR 3/4', '7.5YR 4/4', '2.5YR 2/2', '7.5YR 6/3', '10YR 2/1', '5GY 3/4')
 colorContrastPlot(m1, m2)
 ```
 
-Simulated redoximorphic feature colors, constrast classes and $\Delta{E_{00}}$.
+Simulated redoximorphic feature colors, contrast classes and $\Delta{E_{00}}$.
 ```{r fig.width=8, fig.height=4}
 m1 <- paste0('7.5YR 4/', 2:8)
 m2 <- rep('10YR 5/2', times=length(m1))
