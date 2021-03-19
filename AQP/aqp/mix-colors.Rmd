@@ -16,7 +16,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, fig.align = 'center', dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -60,6 +60,9 @@ So what is a reasonable answer to the following soil color mixture question: <sp
 library(aqp)
 library(lattice)
 library(tactile)
+library(sharpshootR)
+library(gower)
+library(venn)
 
 # local copy of the Munsell chip spectral library
 # c/o http://www.munsellcolourscienceforpainters.com/
@@ -102,6 +105,10 @@ Required packages, be sure to ge the [latest {aqp} from GitHub](https://github.c
 ```{r}
 library(aqp)
 library(lattice)
+library(tactile)
+library(sharpshootR)
+library(gower)
+library(venn)
 ```
 
 Create a vector of colors to mix, and evaluate [color contrast metrics](https://ncss-tech.github.io/AQP/aqp/color-contrast.html).
@@ -153,6 +160,17 @@ plotColorMixture(colors, showMixedSpec = TRUE)
 <span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <span style="padding: 5px; background-color: `r aqp::parseMunsell(mixed$munsell)`; color: white;">`r mixed$munsell`</span>.
 
 What do you think, is the mixture plausible? Experiments with real soil material + Nix Pro sensor measurements pending.
+
+### Experimenting with Color Mixtures
+The `colorMixtureVenn` function from the sharpshootR package is a handy way to view simulated mixtures of 2-7 colors.
+```{r fig.height=5, fig.width=5}
+colorMixtureVenn(colors)
+
+colorMixtureVenn(c('10YR 8/1', '2.5YR 3/6', '10YR 2/2'))
+```
+
+
+
 
 
 # Additional Examples
