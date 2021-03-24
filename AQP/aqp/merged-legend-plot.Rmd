@@ -47,7 +47,7 @@ str(osd)
 
 # Method 1: Split Sketch into Groups
 We can easily combine the two KSSL-derived objects using `combine()`. The colors and legend can be automatically generated from the entire set of (combined) `clay` values.
-```{r fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
+```{r fig.width=14, fig.height=8}
 # combine similar SPCs into a new SPC
 g <- combine(kssl.1, kssl.2)
 
@@ -64,55 +64,34 @@ groupedProfilePlot(g, groups = 'taxonname', name='hzn_desgn', color='clay', labe
 
 
 # Method 2: Plot SPC Objects of Variable Provenance
-`SoilProfileCollection` objects from any source can be included into the same sketch using `plotMultipleSPC()`. However, the symbology of soil property values via color must be manually defined.
-
-## Create "Merged" Color Scheme
-```{r}
-# color ramp function
-cr <- colorRamp(rev(brewer.pal(10, 'Spectral')))
-
-# get the full range of clay
-combined.data <- c(kssl.1$clay, kssl.2$clay)
-combined.range <- range(combined.data, na.rm = TRUE)
-
-# NA-padded value -> color mapping for full range of some horizon attribute
-mapColor <- function(x, r, col.ramp) {
-  c.rgb <- cr(scales::rescale(x, from=r))
-  cc <- which(complete.cases(c.rgb))
-  cols <- rep(NA, times=nrow(c.rgb))
-  cols[cc] <- rgb(c.rgb[cc, ], maxColorValue=255)
-  return(cols)
-}
-
-# convert non-NA values into colors
-kssl.1$.color <- mapColor(kssl.1$clay, combined.range, cr)
-kssl.2$.color <- mapColor(kssl.2$clay, combined.range, cr)
-
-# generate combined range / colors for legend
-pretty.vals <- pretty(combined.data, n = 8)
-legend.data <- list(legend=pretty.vals, col=rgb(cr(scales::rescale(pretty.vals)), maxColorValue=255))
-
-# assemble into list
-spc.list <- list(osd, kssl.1, kssl.2)
-```
+`SoilProfileCollection` objects from any source can be included into the same sketch using `plotMultipleSPC()`.
 
 
 ## Plot
-```{r fig.width=14, fig.height=8, htmlcap='Merged clay content legends.'}
+```{r fig.width=14, fig.height=8}
+# assemble list of SPCs
+spc.list <- list(
+  osd, 
+  kssl.1, 
+  kssl.2
+)
+
 # assemble list of arguments to plotSPC for each object
 # note the use of .color for pre-computed value->color 
 args.list <- list(
-  list(name='hzname', color='soil_color', id.style='side'), 
-  list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side'), 
-  list(name='hzn_desgn', color='.color', label='pedon_id', id.style='side')
+  list(name = 'hzname', color = 'soil_color', id.style = 'side'), 
+  list(name = 'hzn_desgn', label = 'pedon_id', id.style = 'side'), 
+  list(name = 'hzn_desgn', label = 'pedon_id', id.style = 'side')
   )
 
 par(mar=c(1,1,3,3))
-plotMultipleSPC(spc.list, group.labels=c('OSD', 'Sobrante', 'Auburn'), args=args.list)
-
-# legend is the combined legend
-mtext(side=3, text='Clay Content (%)', font=2, line=1.6)
-legend('bottom', legend=legend.data$legend, col=legend.data$col, bty='n', pch=15, horiz=TRUE, xpd=TRUE, inset=c(0, 0.99))
+plotMultipleSPC(
+  spc.list, 
+  group.labels = c('OSD', 'Sobrante', 'Auburn'), 
+  args = args.list, 
+  merged.legend = 'clay', merged.legend.title = 'Clay Content (%)',
+  max.depth = 140, label.offset = 5
+)
 ```
 
 
