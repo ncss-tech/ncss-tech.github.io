@@ -100,7 +100,7 @@ xyplot(
 ```
 
 ## Implementation
-Required packages, be sure to ge the [latest {aqp} from GitHub](https://github.com/ncss-tech/aqp).
+Required packages, be sure to get the [latest {aqp} and {sharpshootR} from GitHub](https://github.com/ncss-tech/aqp).
 
 ```{r}
 library(aqp)
@@ -166,7 +166,11 @@ The `colorMixtureVenn` function from the sharpshootR package is a handy way to v
 ```{r fig.height=5, fig.width=5}
 colorMixtureVenn(colors)
 
-colorMixtureVenn(c('10YR 8/1', '2.5YR 3/6', '10YR 2/2'))
+chips <- c('10YR 8/1', '2.5YR 3/6', '10YR 2/2')
+colorMixtureVenn(chips)
+
+chips <- c('2.5YR 8/2', '2.5B 3/6', '2.5G 4/4', '2.5R 4/8', '2.5Y 6/10')
+colorMixtureVenn(chips, ellipse = TRUE)
 ```
 
 
