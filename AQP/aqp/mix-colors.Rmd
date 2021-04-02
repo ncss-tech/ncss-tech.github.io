@@ -345,8 +345,9 @@ colorContrastPlot(z$m1, z$munsell, labels = c('First Mixture Canidate', 'Subsequ
 
 So: spectral distances to the first mixture candidate of $> 0.015$ may be unreliable. TBD.
 
-### Spectral Distance vs. dE00
-TODO: pair-wise dE00 vs. pair-wise spectral distances.
+
+
+### Spectral Distance
 ```{r fig.width = 8.5, fig.height=5}
 library(cluster)
 
@@ -358,22 +359,167 @@ z <- t(munsell.spectra.wide[, -1])
 
 # all pair-wise distances, using Gower's distance metric
 d <- daisy(z, metric = 'gower', stand = FALSE)
-# reduce distance matrix to vector
-d <- as.vector(d)
 
 # quick plot
 par(mfcol = c(1, 2), mar = c(4.5, 4, 3, 1))
-hist(d, main = 'All Spectra', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
+hist(as.vector(d), main = 'All Spectra', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
 box()
 axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
 axis(2, las = 1, cex.axis = 0.75)
 
-hist(d[d < 0.1], main = 'Spectra d < 0.1', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = '', breaks = 50)
+hist(as.vector(d)[as.vector(d) < 0.1], main = 'Spectra d < 0.1', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = '', breaks = 50)
 box()
 axis(1, at = seq(0, 0.1, by = 0.01), cex.axis = 0.75)
 axis(2, las = 1, cex.axis = 0.75)
 ```
 
+
+### Spectral Differences: Adjacent Chips
+Use spectra differences between adjacent chips to determine a reasonable threshold. 
+```{r fig.width = 8.5, fig.height=5}
+
+# Munsell LUT
+data(munsell)
+
+# start with a copy
+x <- munsell
+x$munsell <- sprintf('%s %s/%s', x$hue, x$value, x$chroma)
+
+## TODO: consider further subsetting to specific hues
+
+# only create pair-wise combinations for available spectra
+# 2442 chips
+idx <- which(x$munsell %in% dimnames(z)[[1]])
+x <- x[idx, ]
+
+
+# create all pair-wise combinations
+# ~ 2,980,461 combinations!
+x.comb <- combn(x$munsell, 2)
+
+# convert to 2-column data.frame
+x.comb <- data.frame(t(x.comb), stringsAsFactors = FALSE)
+
+## TODO: make this a new function
+## TODO: the following takes a while
+
+# borrowed from aqp::colorContrast
+m1.pieces <- parseMunsell(x.comb[[1]], convertColors = FALSE)
+m2.pieces <- parseMunsell(x.comb[[2]], convertColors = FALSE)
+
+# convert to value and chroma to numeric
+m1.pieces[[2]] <- as.numeric(m1.pieces[[2]])
+m1.pieces[[3]] <- as.numeric(m1.pieces[[3]])
+m2.pieces[[2]] <- as.numeric(m2.pieces[[2]])
+m2.pieces[[3]] <- as.numeric(m2.pieces[[3]])
+
+# difference in number of hue chips, clock-wise, as specified in:
+# https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569
+dH <- abs(huePosition(m1.pieces[[1]]) - huePosition(m2.pieces[[1]]))
+# difference in number of value chips
+dV <- abs(m1.pieces[[2]] - m2.pieces[[2]])
+# difference in number of chroma chips
+dC <- abs(m1.pieces[[3]] - m2.pieces[[3]])
+
+## ^^^^ need a new function
+
+# encode combinations
+x.comb$code <- sprintf("%s-%s-%s", dH, dV, dC)
+
+# just adjacent chips
+
+# first-pass, single increments
+# ~ 17,060 combinations
+idx <- which(dH %in% c(0,1) & dV %in% c(0,1) & dC %in% c(0,1))
+x.comb <- x.comb[idx, ]
+
+# second-pass, single chip changes only
+# ~ 4,378 combinations
+idx <- which(x.comb$code %in% c('1-0-0', '0-1-0', '0-0-1'))
+x.comb <- x.comb[idx, ]
+
+
+# expand distance matrix to full form
+m <- as.matrix(d)
+
+# extract pair-wise distances for adjacent chips only
+d.adj <- sapply(1:nrow(x.comb), FUN = function(i) {
+  m[x.comb$X1[i], x.comb$X2[i]]
+})
+
+par(mfcol = c(1, 2), mar = c(4.5, 4, 3, 1))
+hist(as.vector(d), main = 'All Spectra', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
+box()
+axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+
+hist(d.adj, main = 'Adjacent Munsell Chips', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50)
+box()
+axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+
+quantile(d.adj)
+```
+
+
+```{r fig.width = 12.5, fig.height=5}
+idx.hue <- which(x.comb$code == '1-0-0')
+idx.value <- which(x.comb$code == '0-1-0')
+idx.chroma <- which(x.comb$code == '0-0-1')
+
+# evaluate by hue
+d.adj.hue <- sapply(idx.hue, FUN = function(i) {
+  m[x.comb$X1[i], x.comb$X2[i]]
+})
+
+# evaluate by value
+d.adj.value <- sapply(idx.value, FUN = function(i) {
+  m[x.comb$X1[i], x.comb$X2[i]]
+})
+
+# evaluate by chroma
+d.adj.chroma <- sapply(idx.chroma, FUN = function(i) {
+  m[x.comb$X1[i], x.comb$X2[i]]
+})
+
+par(mfcol = c(1, 3), mar = c(4.5, 4, 3, 1))
+
+hist(d.adj.value, main = 'Adjacent Munsell Chips (Value)', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50, xlim = c(0, 0.3))
+box()
+axis(1, at = seq(0, 0.5, by = 0.05), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+
+hist(d.adj.hue, main = 'Adjacent Munsell Chips (Hue)', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50, xlim = c(0, 0.3))
+box()
+axis(1, at = seq(0, 0.5, by = 0.05), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+
+hist(d.adj.chroma, main = 'Adjacent Munsell Chips (Chroma)', axes = FALSE, xlab = 'Spectral Distance (Gower)', ylab = 'Frequency', breaks = 50, xlim = c(0, 0.3))
+box()
+axis(1, at = seq(0, 0.5, by = 0.05), cex.axis = 0.75)
+axis(2, las = 1, cex.axis = 0.75)
+
+
+```
+
+### Comparison with dE000
+```{r fig.width=8, fig.height=8}
+x.comb$code <- factor(x.comb$code)
+cc <- colorContrast(x.comb$X1, x.comb$X2)
+
+par(mar = c(4.5, 4.5, 2, 1), bg = 'black', fg = 'white')
+
+plot(d.adj, cc$dE00, type = 'n', xlab = 'Spectral Distance', ylab = expression(~Delta*E['00']), col.axis = 'white', col.lab = 'white', axes = FALSE)
+grid()
+points(d.adj, cc$dE00, pch = 15, col = as.numeric(x.comb$code) + 1, cex = 0.5)
+
+axis(side = 1, col.axis = 'white')
+axis(side = 2, at = 0:15, col.axis = 'white', las = 1, cex.axis = 0.75)
+title('Adjacent Munsell Chips', col.main = 'white')
+
+legend('bottomright', legend = levels(x.comb$code), pch = 15, col = 2:4, bty = 'n')
+
+```
 
 
 # Alternative color mixing strategies
