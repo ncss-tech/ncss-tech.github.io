@@ -105,10 +105,12 @@ Required packages, be sure to get the [latest {aqp} and {sharpshootR} from GitHu
 ```{r}
 library(aqp)
 library(lattice)
+library(latticeExtra)
 library(tactile)
 library(sharpshootR)
 library(gower)
 library(venn)
+library(cluster)
 ```
 
 Create a vector of colors to mix, and evaluate [color contrast metrics](https://ncss-tech.github.io/AQP/aqp/color-contrast.html).
@@ -343,11 +345,9 @@ z <- merge(x[idx, ], d, by.x = 'munsell', by.y = 'm2', sort = FALSE, incomparabl
 colorContrastPlot(z$m1, z$munsell, labels = c('First Mixture Canidate', 'Subsequent Candidates'))
 ```
 
-So: spectral distances to the first mixture candidate of $> 0.015$ may be unreliable. TBD.
 
-
-
-### Spectral Distance
+### Interpreting Spectral (Gower) Distance
+Note that these distances are always within 0-1.
 ```{r fig.width = 8.5, fig.height=5}
 library(cluster)
 
@@ -385,13 +385,10 @@ data(munsell)
 x <- munsell
 x$munsell <- sprintf('%s %s/%s', x$hue, x$value, x$chroma)
 
-## TODO: consider further subsetting to specific hues
-
-# only create pair-wise combinations for available spectra
+# only chips with available spectra
 # 2442 chips
 idx <- which(x$munsell %in% dimnames(z)[[1]])
 x <- x[idx, ]
-
 
 # create all pair-wise combinations
 # ~ 2,980,461 combinations!
@@ -399,6 +396,8 @@ x.comb <- combn(x$munsell, 2)
 
 # convert to 2-column data.frame
 x.comb <- data.frame(t(x.comb), stringsAsFactors = FALSE)
+
+head(x.comb)
 
 ## TODO: make this a new function
 ## TODO: the following takes a while
@@ -426,9 +425,9 @@ dC <- abs(m1.pieces[[3]] - m2.pieces[[3]])
 # encode combinations
 x.comb$code <- sprintf("%s-%s-%s", dH, dV, dC)
 
-# just adjacent chips
+# select adjacent chips (single hue, value, or chroma)
 
-# first-pass, single increments
+# first-pass, delta = 1
 # ~ 17,060 combinations
 idx <- which(dH %in% c(0,1) & dV %in% c(0,1) & dC %in% c(0,1))
 x.comb <- x.comb[idx, ]
@@ -437,13 +436,15 @@ x.comb <- x.comb[idx, ]
 # ~ 4,378 combinations
 idx <- which(x.comb$code %in% c('1-0-0', '0-1-0', '0-0-1'))
 x.comb <- x.comb[idx, ]
+```
 
-
-# expand distance matrix to full form
+```{r fig.width = 8.5, fig.height=5}
+# expand full distance matrix to upper/diag/lower
 m <- as.matrix(d)
 
-# extract pair-wise distances for adjacent chips only
+# vector of pair-wise distances for adjacent chips only
 d.adj <- sapply(1:nrow(x.comb), FUN = function(i) {
+  # distance by pair
   m[x.comb$X1[i], x.comb$X2[i]]
 })
 
@@ -500,6 +501,16 @@ axis(1, at = seq(0, 0.5, by = 0.05), cex.axis = 0.75)
 axis(2, las = 1, cex.axis = 0.75)
 
 
+##
+adj.spec.dist <- make.groups(
+  all = data.frame(x = d.adj),
+  hue = data.frame(x = d.adj.hue),
+  value = data.frame(x = d.adj.value),
+  chroma = data.frame(x = d.adj.chroma)
+)
+
+bwplot(which ~ x, data = adj.spec.dist, par.settings = tactile.theme())
+
 ```
 
 ### Comparison with dE000
@@ -507,17 +518,32 @@ axis(2, las = 1, cex.axis = 0.75)
 x.comb$code <- factor(x.comb$code)
 cc <- colorContrast(x.comb$X1, x.comb$X2)
 
-par(mar = c(4.5, 4.5, 2, 1), bg = 'black', fg = 'white')
 
-plot(d.adj, cc$dE00, type = 'n', xlab = 'Spectral Distance', ylab = expression(~Delta*E['00']), col.axis = 'white', col.lab = 'white', axes = FALSE)
-grid()
-points(d.adj, cc$dE00, pch = 15, col = as.numeric(x.comb$code) + 1, cex = 0.5)
-
-axis(side = 1, col.axis = 'white')
-axis(side = 2, at = 0:15, col.axis = 'white', las = 1, cex.axis = 0.75)
-title('Adjacent Munsell Chips', col.main = 'white')
-
-legend('bottomright', legend = levels(x.comb$code), pch = 15, col = 2:4, bty = 'n')
+xyplot(
+  cc$dE00 ~ d.adj,
+  groups = x.comb$code,
+  main = 'Adjacent Munsell Chips',
+  scales = list(
+    x = list(log = 10)
+  ),
+  par.settings = tactile.theme(
+    background = list(col = 'black'),
+    axis.line = list(col = 'white'),
+    axis.text = list(col = 'white'),
+    add.text = list(col = 'white'),
+    par.main.text = list(col = 'white'),
+    par.xlab.text = list(col = 'white'),
+    par.ylab.text = list(col = 'white'),
+    superpose.symbol = list(pch = 15, cex = 1, alpha = 0.5)
+  ),
+  xscale.components = xscale.components.log10.3,
+  xlab = 'Spectral Distance', ylab = expression(~Delta*E['00']),
+  auto.key = list(columns = 3, lines = FALSE, points = TRUE, cex = 1),
+  panel = function(...) {
+    panel.grid(h = -1, v = -1, lty = 3)
+    panel.xyplot(...)
+  }
+)
 
 ```
 
@@ -541,7 +567,7 @@ m1 <- mixMunsell(colors)
 ```
 
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(colors)
+plotColorMixture(colors, showMixedSpec = TRUE)
 ```
 
 ```{r fig.height=3.5, fig.width=6}
