@@ -214,12 +214,19 @@ levelplot(
 # get unique mukeys from grid
 ll <- levels(x)[[1]]
 
-# convert into an SQL "IN" statement
-IS <- format_SQL_in_statement(ll$ID)
+tab <- get_SDA_muaggatt(mukeys = ll$ID)
 
-# query SDA by mukey
-sql <- sprintf("SELECT mukey, aws025wta, aws050wta, aws0100wta, aws0150wta FROM muaggatt WHERE mukey IN %s", IS)
-tab <- SDA_query(sql)
+tab <- get_SDA_hydric(mukeys = ll$ID)
+
+tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
+
+tab <- get_SDA_pmgroupname(mukeys = ll$ID, simplify = TRUE)
+
+tab <- get_SDA_property(mukeys = ll$ID, property = 'om_r', method = 'DOMINANT COMPONENT (NUMERIC)', top_depth = 0, bottom_depth = 25)
+
+
+## TODO: SOC stock estimates
+
 ```
 
 
