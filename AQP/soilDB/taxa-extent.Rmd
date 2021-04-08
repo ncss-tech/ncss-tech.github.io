@@ -195,6 +195,49 @@ levelplot(
 
 
 
+## Formative Elements
+```{r fig.height=6, fig.width=7}
+x <- taxaExtent('pale', level = 'greatgroup', formativeElement = TRUE)
+a <- raster::aggregate(x, fact = 5)
+
+## CONUS + states
+## cropped to CONUS
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = names(a),
+  margin = FALSE, 
+  xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+
+x <- taxaExtent('grossarenic', level = 'subgroup', formativeElement = TRUE)
+a <- raster::aggregate(x, fact = 5)
+
+## CONUS + states
+## cropped to CONUS
+levelplot(
+  a,
+  # maxpixels = 1e5,
+  main = names(a),
+  margin = FALSE, 
+  xlim = x.lim, ylim = y.lim,
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.polygons(us_states, col = 'black', lwd = 2)
+  }
+)
+
+```
+
+
 
 ## Interactive mapping from R
 This is based on the [mapview](https://r-spatial.github.io/mapview/) package.
