@@ -43,6 +43,7 @@ install.packages('SoilTaxonomy', dep = TRUE)
 ```{r libraries, results='hide'}
 # load required libraries
 library(soilDB)
+library(SoilTaxonomy)
 
 library(raster)
 library(rasterVis)
@@ -268,7 +269,7 @@ mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
 ## Aggregating and mapping multiple soil taxa
 This example demonstrates a way of using pattern matching on a soil taxonomic level to filter a list of soil taxa that can be aggregated into one raster and mapped.  For example, if we wanted to see all the Andisols and any Andic or Vitrandic subgroups we could use this process.  If the pattern match grabs taxa that shouldn't be include then you can use the same process to exclude taxa that should not be in the aggregated extent raster (ie. 'Kandic' elements).
 
-```{r}
+```{r eval = FALSE}
 # load ST data from SoilTaxonomy package
 data("ST", package = 'SoilTaxonomy')
 
