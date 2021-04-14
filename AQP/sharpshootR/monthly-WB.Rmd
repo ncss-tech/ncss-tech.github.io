@@ -17,19 +17,69 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
-## Data Sources
+## Setup
+You will need these packages.
+```{r}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+# special installation instructions:
+# http://hydromad.catchment.org/#installation
+library(hydromad)
+```
+
+## Simple Example
+Simulate monthly water balances for 50cm of sandy loam vs. 50cm of silt loam soil material in a xeric/thermic climate.
+```{r fig.width=16, fig.height=6.5}
+data("ROSETTA.centroids")
+
+idx <- which(ROSETTA.centroids$texture %in% c('sandy loam', 'silt loam'))
+vars <- c('texture', 'pwp', 'fc', 'sat', 'awc')
+
+knitr::kable(
+  ROSETTA.centroids[idx, vars],
+  row.names = FALSE
+)
+
+# xeric/thermic climate
+PET <- c(0,0,5,80,90,120,130,140,110,90,20,5)
+PPT <- c(0, 150, 200, 120, 20, 0, 0, 0, 10, 20, 30, 60)
+
+# 50cm of soil material -> convert to mm
+thick <- 50 * 10
+
+# total water storage for sandy loam texture soil material
+AWC.sand <- round(0.1049114 * thick)
+
+# total water storage for silt loam texture soil material
+AWC.loam <- round(0.2080796 * thick)
+
+# simulate water balances:
+# * run for 5 cycles
+# * start in January
+# * start with "completely dry" soil conditions
+# * keep only the last cycle
+wb.sand <- monthlyWB(AWC.sand, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
+wb.loam <- monthlyWB(AWC.loam, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
+
+# compare
+par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
+plotWB(WB = wb.sand, AWC = AWC.sand)
+title('50cm of sandy loam texture soil material', line = 3)
+
+plotWB(WB = wb.loam, AWC = AWC.loam)
+title('50cm of silt loam texture soil material', line = 3)
+```
+
+
+## Real Data
 
 Series-level summaries of climate provided by [`fetchOSD()`](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html).
 
 AWC estimated from SSURGO data, via SDA.
 
 ```{r}
-library(aqp)
-library(soilDB)
-library(sharpshootR)
-library(hydromad)
-
-
 s <- 'Amador'
 x <- fetchOSD(s, extended = TRUE)
 
