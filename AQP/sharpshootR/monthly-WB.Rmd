@@ -1,0 +1,171 @@
+---
+title: "A Simple Monthly Water Balance Simulation"
+author: "D.E. Beaudette and J.M. Skovlin"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE, cache=TRUE)
+```
+
+## Data Sources
+
+Series-level summaries of climate provided by [`fetchOSD()`](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html).
+
+AWC estimated from SSURGO data, via SDA.
+
+```{r}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+library(hydromad)
+
+
+s <- 'Amador'
+x <- fetchOSD(s, extended = TRUE)
+
+# get representative, profile-total AWC from SSURGO
+sql <- sprintf("
+SELECT chorizon.cokey AS cokey, 
+SUM(awc_r * (hzdepb_r - hzdept_r)) AS ws 
+FROM 
+legend JOIN mapunit ON legend.lkey = mapunit.lkey
+JOIN component ON mapunit.mukey = component.mukey
+JOIN chorizon ON component.cokey = chorizon.cokey 
+WHERE compname = '%s'
+AND areasymbol != 'US'
+GROUP BY chorizon.cokey;", s
+)
+
+# get via SDA
+res <- SDA_query(sql)
+
+# median AWC in mm
+# over all components correlated to named series 
+AWC <- round(median(res$ws, na.rm = TRUE) * 10)
+
+
+# monthly climate data from series summary
+PPT <- x$climate.monthly$q05[x$climate.monthly$variable == 'Precipitation (mm)']
+PET <- x$climate.monthly$q50[x$climate.monthly$variable == 'Potential ET (mm)']
+```
+
+## Examples
+```{r fig.width=10, fig.height=6}
+# tighter margins
+par(mar=c(4,4,2,1), bg = 'white')
+
+# water-year
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep=3)
+x.wb[x.wb$mo == 'Sep', ]
+
+# plot
+plotWB(WB = x.wb, AWC = AWC)
+
+# alternative representation
+plotWB(WB = x.wb, AWC = AWC, showAWC = 'above')
+```
+
+```{r fig.width=10, fig.height=6}
+# tighter margins
+par(mar=c(4,4,2,1), bg = 'white')
+
+# water year
+# last iteration
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep = 3, keep_last = TRUE)
+plotWB(WB = x.wb, AWC = AWC)
+
+# convert total ETa into inches
+sum(x.wb$ET) * 0.03937
+```
+
+```{r fig.width=10, fig.height=6.5}
+# tighter margins
+par(mar=c(4,4,2,1), bg = 'white')
+
+# calendar year
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 5)
+x.wb[x.wb$mo == 'Jan', ]
+plotWB(WB = x.wb, AWC = AWC)
+```
+
+```{r fig.width=8, fig.height=5.5}
+# tighter margins
+par(mar=c(4,4,2,1), bg = 'white')
+
+# calendar year
+# last iteration
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
+plotWB(WB = x.wb, AWC = AWC)
+```
+
+## Comparisons
+
+Abstract into a function, and use to compare multiple soils / climatic parameters. A more efficient approach would load all of the data then iterate over chunks.
+```{r fig.width=14, fig.height=12}
+# x: soil series name
+compareMonthlyWB <- function(x) {
+  
+  # get climate data
+  osd <- fetchOSD(x, extended = TRUE)
+  
+  # get representative, profile-total AWC from SSURGO
+  sql <- sprintf("
+SELECT chorizon.cokey AS cokey, 
+SUM(awc_r * (hzdepb_r - hzdept_r)) AS ws 
+FROM 
+legend JOIN mapunit ON legend.lkey = mapunit.lkey
+JOIN component ON mapunit.mukey = component.mukey
+JOIN chorizon ON component.cokey = chorizon.cokey 
+WHERE compname = '%s'
+AND areasymbol != 'US'
+GROUP BY chorizon.cokey;", x
+  )
+  
+  # get via SDA
+  res <- suppressMessages(SDA_query(sql))
+  
+  # median AWC in mm
+  # over all components correlated to named series 
+  AWC <- round(median(res$ws, na.rm = TRUE) * 10)
+  
+  
+  # monthly climate data from series summary
+  PPT <- osd$climate.monthly$q05[osd$climate.monthly$variable == 'Precipitation (mm)']
+  PET <- osd$climate.monthly$q50[osd$climate.monthly$variable == 'Potential ET (mm)']
+  
+  # do water balance simulation
+  x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
+  
+  # compose WB figure
+  plotWB(WB = x.wb, AWC = AWC)
+  
+  # annotate with series name / family level classification
+  s <- site(osd$SPC)
+  txt <- sprintf("%s\n%s", s$id, s$family)
+  title(txt, line = 3, cex.main = 1)
+}
+
+
+# custom margins / multi-figure
+par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
+
+# iterate over these soil series names
+soils <- c('amador', 'lucy', 'drummer', 'pierre')
+for(i in soils) {
+  compareMonthlyWB(i)
+}
+
+```
+
+----------------------------
+This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
