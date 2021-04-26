@@ -42,7 +42,9 @@ knitr::kable(
   row.names = FALSE
 )
 
-# xeric/thermic climate
+# near Sonora, CA
+# thermic / xeric climate
+# units are mm
 PET <- c(0,0,5,80,90,120,130,140,110,90,20,5)
 PPT <- c(0, 150, 200, 120, 20, 0, 0, 0, 10, 20, 30, 60)
 
@@ -65,10 +67,10 @@ wb.loam <- monthlyWB(AWC.loam, PPT, PET, S_init = 0, starting_month = 1, rep = 5
 
 # compare
 par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
-plotWB(WB = wb.sand, AWC = AWC.sand)
+plotWB(WB = wb.sand, legend.cex = 0.75)
 title('50cm of sandy loam texture soil material', line = 3)
 
-plotWB(WB = wb.loam, AWC = AWC.loam)
+plotWB(WB = wb.loam, legend.cex = 0.75)
 title('50cm of silt loam texture soil material', line = 3)
 ```
 
@@ -119,10 +121,7 @@ x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep=3)
 x.wb[x.wb$mo == 'Sep', ]
 
 # plot
-plotWB(WB = x.wb, AWC = AWC)
-
-# alternative representation
-plotWB(WB = x.wb, AWC = AWC, showAWC = 'above')
+plotWB(WB = x.wb)
 ```
 
 ```{r fig.width=10, fig.height=6}
@@ -132,20 +131,10 @@ par(mar=c(4,4,2,1), bg = 'white')
 # water year
 # last iteration
 x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep = 3, keep_last = TRUE)
-plotWB(WB = x.wb, AWC = AWC)
+plotWB(WB = x.wb)
 
 # convert total ETa into inches
 sum(x.wb$ET) * 0.03937
-```
-
-```{r fig.width=10, fig.height=6.5}
-# tighter margins
-par(mar=c(4,4,2,1), bg = 'white')
-
-# calendar year
-x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 5)
-x.wb[x.wb$mo == 'Jan', ]
-plotWB(WB = x.wb, AWC = AWC)
 ```
 
 ```{r fig.width=8, fig.height=5.5}
@@ -155,7 +144,7 @@ par(mar=c(4,4,2,1), bg = 'white')
 # calendar year
 # last iteration
 x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
-plotWB(WB = x.wb, AWC = AWC)
+plotWB(WB = x.wb)
 ```
 
 ## Comparisons
@@ -197,7 +186,7 @@ GROUP BY chorizon.cokey;", x
   x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
   
   # compose WB figure
-  plotWB(WB = x.wb, AWC = AWC)
+  plotWB(WB = x.wb, legend.cex = 0.9)
   
   # annotate with series name / family level classification
   s <- site(osd$SPC)
