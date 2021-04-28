@@ -51,6 +51,8 @@ PPT <- c(0, 150, 200, 120, 20, 0, 0, 0, 10, 20, 30, 60)
 # 50cm of soil material -> convert to mm
 thick <- 50 * 10
 
+## TODO: awc vs. sat at monthly time-steps
+
 # total water storage for sandy loam texture soil material
 AWC.sand <- round(0.1049114 * thick)
 
@@ -62,9 +64,11 @@ AWC.loam <- round(0.2080796 * thick)
 # * start in January
 # * start with "completely dry" soil conditions
 # * keep only the last cycle
-wb.sand <- monthlyWB(AWC.sand, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
-wb.loam <- monthlyWB(AWC.loam, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
+wb.sand <- monthlyWB(AWC.sand, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, a.ss = 0)
+wb.loam <- monthlyWB(AWC.loam, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, a.ss = 0)
+```
 
+```{r fig.width=16, fig.height=6.5}
 # compare
 par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
 plotWB(WB = wb.sand, legend.cex = 0.75)
@@ -73,6 +77,17 @@ title('50cm of sandy loam texture soil material', line = 3)
 plotWB(WB = wb.loam, legend.cex = 0.75)
 title('50cm of silt loam texture soil material', line = 3)
 ```
+
+```{r fig.width=16, fig.height=6}
+# compare
+par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
+plotWB_lines(WB = wb.sand)
+title('50cm of sandy loam texture soil material', line = 3)
+
+plotWB_lines(WB = wb.loam)
+title('50cm of silt loam texture soil material', line = 3)
+```
+
 
 
 ## Real Data
