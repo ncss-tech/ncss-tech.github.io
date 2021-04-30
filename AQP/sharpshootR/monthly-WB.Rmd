@@ -17,6 +17,10 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
+## Introduction
+
+
+
 ## Setup
 You will need these packages.
 ```{r}
@@ -42,35 +46,56 @@ knitr::kable(
   row.names = FALSE
 )
 
-# xeric/thermic climate
-PET <- c(0,0,5,80,90,120,130,140,110,90,20,5)
+# near Sonora, CA
+# thermic / xeric climate
+# units are mm
+PET <- c(0, 0, 5,80, 90, 120, 130, 140, 110, 90, 20, 5)
 PPT <- c(0, 150, 200, 120, 20, 0, 0, 0, 10, 20, 30, 60)
 
 # 50cm of soil material -> convert to mm
 thick <- 50 * 10
 
 # total water storage for sandy loam texture soil material
-AWC.sand <- round(0.1049114 * thick)
+AWC.sl <- round(0.1049114 * thick)
 
 # total water storage for silt loam texture soil material
-AWC.loam <- round(0.2080796 * thick)
+AWC.sil <- round(0.2080796 * thick)
 
 # simulate water balances:
 # * run for 5 cycles
 # * start in January
 # * start with "completely dry" soil conditions
 # * keep only the last cycle
-wb.sand <- monthlyWB(AWC.sand, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
-wb.loam <- monthlyWB(AWC.loam, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
+wb.sl <- monthlyWB(AWC.sl, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, a.ss = 0)
+wb.sil <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, a.ss = 0)
+```
 
+All values are mm. U: surplus, S: soil water storage, ET: actual ET, D: deficit.
+```{r}
+kable(wb.sil, digits = 2, row.names = FALSE)
+```
+
+
+```{r fig.width=16, fig.height=6.5}
 # compare
 par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
-plotWB(WB = wb.sand, AWC = AWC.sand)
+plotWB(WB = wb.sl, legend.cex = 0.75)
 title('50cm of sandy loam texture soil material', line = 3)
 
-plotWB(WB = wb.loam, AWC = AWC.loam)
+plotWB(WB = wb.sil, legend.cex = 0.75)
 title('50cm of silt loam texture soil material', line = 3)
 ```
+
+```{r fig.width=16, fig.height=6}
+# compare
+par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
+plotWB_lines(WB = wb.sl)
+title('50cm of sandy loam texture soil material', line = 3)
+
+plotWB_lines(WB = wb.sil)
+title('50cm of silt loam texture soil material', line = 3)
+```
+
 
 
 ## Real Data
@@ -110,42 +135,17 @@ PET <- x$climate.monthly$q50[x$climate.monthly$variable == 'Potential ET (mm)']
 ```
 
 ## Examples
-```{r fig.width=10, fig.height=6}
-# tighter margins
-par(mar=c(4,4,2,1), bg = 'white')
-
-# water-year
-x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep=3)
-x.wb[x.wb$mo == 'Sep', ]
-
-# plot
-plotWB(WB = x.wb, AWC = AWC)
-
-# alternative representation
-plotWB(WB = x.wb, AWC = AWC, showAWC = 'above')
-```
-
-```{r fig.width=10, fig.height=6}
+```{r fig.width=8, fig.height=6}
 # tighter margins
 par(mar=c(4,4,2,1), bg = 'white')
 
 # water year
 # last iteration
 x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep = 3, keep_last = TRUE)
-plotWB(WB = x.wb, AWC = AWC)
+plotWB(WB = x.wb)
 
 # convert total ETa into inches
 sum(x.wb$ET) * 0.03937
-```
-
-```{r fig.width=10, fig.height=6.5}
-# tighter margins
-par(mar=c(4,4,2,1), bg = 'white')
-
-# calendar year
-x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 5)
-x.wb[x.wb$mo == 'Jan', ]
-plotWB(WB = x.wb, AWC = AWC)
 ```
 
 ```{r fig.width=8, fig.height=5.5}
@@ -155,7 +155,7 @@ par(mar=c(4,4,2,1), bg = 'white')
 # calendar year
 # last iteration
 x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
-plotWB(WB = x.wb, AWC = AWC)
+plotWB(WB = x.wb)
 ```
 
 ## Comparisons
@@ -197,7 +197,7 @@ GROUP BY chorizon.cokey;", x
   x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
   
   # compose WB figure
-  plotWB(WB = x.wb, AWC = AWC)
+  plotWB(WB = x.wb, legend.cex = 0.9)
   
   # annotate with series name / family level classification
   s <- site(osd$SPC)
