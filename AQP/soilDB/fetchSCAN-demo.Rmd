@@ -56,6 +56,7 @@ Each SCAN / SNOTEL station may have a different set of sensors.
 # load required packages
 library(aqp)
 library(soilDB)
+library(sharpshootR)
 library(reshape2)
 library(plyr)
 library(latticeExtra)
@@ -319,7 +320,7 @@ Previously the VG parameters had to be obtained manually from [these reports](ht
 s <- fetchKSSL(pedon_id = 'S08NV003003')
 
 # VG parameters now returned by fetchKSSL() as of 2016-11-17
-kable(horizons(s)[, c('hzn_desgn', 'hzn_top', 'hzn_bot', 'theta_r', 'theta_s', 'alpha', 'npar')])
+knitr::kable(horizons(s)[, c('hzn_desgn', 'hzn_top', 'hzn_bot', 'theta_r', 'theta_s', 'alpha', 'npar')])
 ```
 
 ### Conversion of VWC to Matric Potential: Single Depth
@@ -353,6 +354,55 @@ p.points <- xyplot(phi ~ theta, data=sms.q, type='p', par.settings = list(plot.s
 update(p.model + p.points, main='Select Percentiles of Data Measured at 20cm', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
 ```
 
+Add permanent wilting point, field capacity, and saturation.
+```{r, fig.width=10, fig.height=6}
+# PWP, FC, SAT (close to 0 suction)
+sms.q <- data.frame(phi = c(1500, 33.33, 1), na.rm=TRUE)
+sms.q$theta <- vg.hz$VG_function(sms.q$phi)
+row.names(sms.q) <- c('PWP', 'FC', 'SAT')
+
+p.points <- xyplot(phi ~ theta, data=sms.q, type='p', par.settings = list(plot.symbol=list(col='orange', pch=16, cex=1.25)), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression("Suction " (kPa)), xlab=expression("Volumetric Water Content " (cm^3/cm^3)), panel=function(x, y, ...) {
+  panel.xyplot(x, y, ...)
+  panel.text(x, y, row.names(sms.q), adj=c(0,-0.75), cex=0.65)
+})
+
+update(p.model + p.points, main='Critical Points, 20cm', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
+```
+
+Estimate soil moisture state (Newhall model conventions) using water retention curve benchmarks above.
+```{r fig.width=12, fig.height=9}
+# VWC are encoded as percent (0-100)
+# must convert to fraction (0-1)
+# using water retention curve benchmarks from above
+sms$state <- estimateSoilMoistureState(sms$value / 100, U = 0, sat = 0.45, fc = 0.25, pwp = 0.10, style = 'newhall')
+
+table(sms$state)
+
+# colors / style
+ll <- levels(sms$state)
+n.states <- length(ll)
+ms.colors <- brewer.pal(n.states, 'Spectral')
+
+suppressWarnings(
+  trellis.par.set(list(superpose.polygon=list(col=ms.colors, border=ms.colors)))
+)
+
+sK <- simpleKey(text = ll, space='top', columns=n.states, rectangles = TRUE, points=FALSE, cex=1)
+
+levelplot(
+  state ~ doy * factor(year) | factor(depth), main='Daily Soil Moisture State',
+  data=sms, layout=c(1,5), 
+  col.regions = colorRampPalette(brewer.pal(n.states, 'Spectral'), interpolate = 'spline', space = 'Lab'),
+  key = sK,
+  colorkey = FALSE,
+  as.table=TRUE, 
+  scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
+  par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
+  xlab='Julian Day', ylab='Year'
+)
+
+```
+
 
 ### Conversion of VWC to Matric Potential: All Depths
 This time we will iterate over all sensors, develop water retention curves, and convert VWV to water potential values. Note that this approach will only work with a `SoilProfileCollection` object that contains a *single* profile.
@@ -374,6 +424,7 @@ sms.phi <- ldply(sms.list, function(i) {
   
   # estimate phi
   if(!is.null(vg.hz$VG_inverse_function))
+    # convert percent -> fraction
     i$phi <- vg.hz$VG_inverse_function(i$value / 100.0)
   else
     i$phi <- NA
