@@ -11,7 +11,7 @@
 
 <meta name="author" content="D.E. Beaudette" />
 
-<meta name="date" content="2021-02-04" />
+<meta name="date" content="2021-05-21" />
 
 <title>cLHS and Sampling for Soil Survey</title>
 
@@ -48,6 +48,15 @@ if (!!window.navigator.userAgent.match("MSIE 8")) {
 !function(a){"use strict";a.matchMedia=a.matchMedia||function(a){var b,c=a.documentElement,d=c.firstElementChild||c.firstChild,e=a.createElement("body"),f=a.createElement("div");return f.id="mq-test-1",f.style.cssText="position:absolute;top:-100em",e.style.background="none",e.appendChild(f),function(a){return f.innerHTML='&shy;<style media="'+a+'"> #mq-test-1 { width: 42px; }</style>',c.insertBefore(e,d),b=42===f.offsetWidth,c.removeChild(e),{matches:b,media:a}}}(a.document)}(this),function(a){"use strict";function b(){u(!0)}var c={};a.respond=c,c.update=function(){};var d=[],e=function(){var b=!1;try{b=new a.XMLHttpRequest}catch(c){b=new a.ActiveXObject("Microsoft.XMLHTTP")}return function(){return b}}(),f=function(a,b){var c=e();c&&(c.open("GET",a,!0),c.onreadystatechange=function(){4!==c.readyState||200!==c.status&&304!==c.status||b(c.responseText)},4!==c.readyState&&c.send(null))};if(c.ajax=f,c.queue=d,c.regex={media:/@media[^\{]+\{([^\{\}]*\{[^\}\{]*\})+/gi,keyframes:/@(?:\-(?:o|moz|webkit)\-)?keyframes[^\{]+\{(?:[^\{\}]*\{[^\}\{]*\})+[^\}]*\}/gi,urls:/(url\()['"]?([^\/\)'"][^:\)'"]+)['"]?(\))/g,findStyles:/@media *([^\{]+)\{([\S\s]+?)$/,only:/(only\s+)?([a-zA-Z]+)\s?/,minw:/\([\s]*min\-width\s*:[\s]*([\s]*[0-9\.]+)(px|em)[\s]*\)/,maxw:/\([\s]*max\-width\s*:[\s]*([\s]*[0-9\.]+)(px|em)[\s]*\)/},c.mediaQueriesSupported=a.matchMedia&&null!==a.matchMedia("only all")&&a.matchMedia("only all").matches,!c.mediaQueriesSupported){var g,h,i,j=a.document,k=j.documentElement,l=[],m=[],n=[],o={},p=30,q=j.getElementsByTagName("head")[0]||k,r=j.getElementsByTagName("base")[0],s=q.getElementsByTagName("link"),t=function(){var a,b=j.createElement("div"),c=j.body,d=k.style.fontSize,e=c&&c.style.fontSize,f=!1;return b.style.cssText="position:absolute;font-size:1em;width:1em",c||(c=f=j.createElement("body"),c.style.background="none"),k.style.fontSize="100%",c.style.fontSize="100%",c.appendChild(b),f&&k.insertBefore(c,k.firstChild),a=b.offsetWidth,f?k.removeChild(c):c.removeChild(b),k.style.fontSize=d,e&&(c.style.fontSize=e),a=i=parseFloat(a)},u=function(b){var c="clientWidth",d=k[c],e="CSS1Compat"===j.compatMode&&d||j.body[c]||d,f={},o=s[s.length-1],r=(new Date).getTime();if(b&&g&&p>r-g)return a.clearTimeout(h),h=a.setTimeout(u,p),void 0;g=r;for(var v in l)if(l.hasOwnProperty(v)){var w=l[v],x=w.minw,y=w.maxw,z=null===x,A=null===y,B="em";x&&(x=parseFloat(x)*(x.indexOf(B)>-1?i||t():1)),y&&(y=parseFloat(y)*(y.indexOf(B)>-1?i||t():1)),w.hasquery&&(z&&A||!(z||e>=x)||!(A||y>=e))||(f[w.media]||(f[w.media]=[]),f[w.media].push(m[w.rules]))}for(var C in n)n.hasOwnProperty(C)&&n[C]&&n[C].parentNode===q&&q.removeChild(n[C]);n.length=0;for(var D in f)if(f.hasOwnProperty(D)){var E=j.createElement("style"),F=f[D].join("\n");E.type="text/css",E.media=D,q.insertBefore(E,o.nextSibling),E.styleSheet?E.styleSheet.cssText=F:E.appendChild(j.createTextNode(F)),n.push(E)}},v=function(a,b,d){var e=a.replace(c.regex.keyframes,"").match(c.regex.media),f=e&&e.length||0;b=b.substring(0,b.lastIndexOf("/"));var g=function(a){return a.replace(c.regex.urls,"$1"+b+"$2$3")},h=!f&&d;b.length&&(b+="/"),h&&(f=1);for(var i=0;f>i;i++){var j,k,n,o;h?(j=d,m.push(g(a))):(j=e[i].match(c.regex.findStyles)&&RegExp.$1,m.push(RegExp.$2&&g(RegExp.$2))),n=j.split(","),o=n.length;for(var p=0;o>p;p++)k=n[p],l.push({media:k.split("(")[0].match(c.regex.only)&&RegExp.$2||"all",rules:m.length-1,hasquery:k.indexOf("(")>-1,minw:k.match(c.regex.minw)&&parseFloat(RegExp.$1)+(RegExp.$2||""),maxw:k.match(c.regex.maxw)&&parseFloat(RegExp.$1)+(RegExp.$2||"")})}u()},w=function(){if(d.length){var b=d.shift();f(b.href,function(c){v(c,b.href,b.media),o[b.href]=!0,a.setTimeout(function(){w()},0)})}},x=function(){for(var b=0;b<s.length;b++){var c=s[b],e=c.href,f=c.media,g=c.rel&&"stylesheet"===c.rel.toLowerCase();e&&g&&!o[e]&&(c.styleSheet&&c.styleSheet.rawCssText?(v(c.styleSheet.rawCssText,e,f),o[e]=!0):(!/^([a-zA-Z:]*\/\/)/.test(e)&&!r||e.replace(RegExp.$1,"").split("/")[0]===a.location.host)&&("//"===e.substring(0,2)&&(e=a.location.protocol+e),d.push({href:e,media:f})))}w()};x(),c.update=x,c.getEmValue=t,a.addEventListener?a.addEventListener("resize",b,!1):a.attachEvent&&a.attachEvent("onresize",b)}}(this);
 };
 </script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
 <script>
 
 /**
@@ -220,11 +229,6 @@ color: #d14;
     </style>
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
-</style>
 <script type="text/javascript">
 if (window.hljs) {
   hljs.configure({languages: []});
@@ -237,32 +241,6 @@ if (window.hljs) {
 
 
 
-<style type="text/css">
-h1 {
-  font-size: 34px;
-}
-h1.title {
-  font-size: 38px;
-}
-h2 {
-  font-size: 30px;
-}
-h3 {
-  font-size: 24px;
-}
-h4 {
-  font-size: 18px;
-}
-h5 {
-  font-size: 16px;
-}
-h6 {
-  font-size: 12px;
-}
-.table th:not([align]) {
-  text-align: left;
-}
-</style>
 
 
 
@@ -273,10 +251,6 @@ h6 {
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
-}
-code {
-  color: inherit;
-  background-color: rgba(0, 0, 0, 0.04);
 }
 img {
   max-width:100%;
@@ -293,6 +267,9 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
+pre code {
+  padding: 0;
+}
 </style>
 
 
@@ -305,7 +282,6 @@ summary {
   max-height: 500px;
   min-height: 44px;
   overflow-y: auto;
-  background: white;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -369,13 +345,13 @@ summary {
 
 
 
-<div class="fluid-row" id="header">
+<div id="header">
 
 
 
 <h1 class="title toc-ignore">cLHS and Sampling for Soil Survey</h1>
 <h4 class="author">D.E. Beaudette</h4>
-<h4 class="date">2021-02-04</h4>
+<h4 class="date">2021-05-21</h4>
 
 </div>
 
@@ -389,7 +365,7 @@ summary {
 </ol>
 <p>We aren’t working in the realm of designed experiments, so the need for “IID” samples is relaxed and the free-sampling approach is not invalid. However, we are (now) working in the realm of regression / supervised classification where full coverage of data-space is critical for any extrapolation. Therefore, I see plenty of room for a progressively-evaluated, hybrid approach that draws from both ends of the spectrum:</p>
 <pre>
-Pure statistical sampling (e.g. cLHS)
+Pure statistical sampling
 &quot;I know nothing about the area, the soils, or pedogenesis in general&quot;.
 |
 |
@@ -444,7 +420,7 @@ Pure subjective selection based on (possibly imperfect) tacit knowledge
 <li>cluster via favorite method (PAM is quite efficient)</li>
 <li>extrapolate cluster concepts via supervised classification of cluster labels</li>
 </ol></li>
-<li>Multiple groups of cLHS samples: e.g. tailored to specific suites of landforms or sub-regions within the modelling domain. For example, 3 groups: 1) rugged mountains, 2) dissected hills and foothills, and 3) flood plains. This make sense conceptually: how reasonable is it to “ask for” 100 site that efficiently covers the entire distribution of covariates over all three sub-regions?</li>
+<li>Multiple groups of cLHS samples: e.g. tailored to specific suites of landforms or sub-regions within the modeling domain. For example, 3 groups: 1) rugged mountains, 2) dissected hills and foothills, and 3) flood plains. This make sense conceptually: how reasonable is it to “ask for” 100 sites that efficiently covers the entire distribution of covariates over all three sub-regions?</li>
 <li>Collection of short notes on why/why not cLHS points were actually used, with a short description as to why. Based on my experience and conversations with Jay, point locations are often in transitional zones representative of nothing. The location may be an efficient (simultaneous) distributional landmark, but not relevant at the scale of a map unit or even component.</li>
 </ol>
 </div>
@@ -462,12 +438,23 @@ Pure subjective selection based on (possibly imperfect) tacit knowledge
 </div>
 <div id="similarity-bioclim" class="section level2">
 <h2>Similarity: BIOCLIM</h2>
-<ol style="list-style-type: decimal">
-<li>expert interpretation of cLHS points, in the office: a. does this point seem representative of anything b. is it in an odd place c. access considerations d. would navigating to this point take me past several other “interesting” sampling locations</li>
+<ul>
+<li>expert interpretation of cLHS points, in the office:
+<ol style="list-style-type: lower-alpha">
+<li>does this point seem representative of anything</li>
+<li>is it in an odd place</li>
+<li>access considerations</li>
+<li>would navigating to this point take me past several other “interesting” sampling locations</li>
+</ol></li>
 <li>index of local variance: does a representative buffer around each cLHS point contain a larger total variance (on average) than similar points that have been selected as representative of larger landscape features</li>
 <li>multivariate similarity surface analysis: after initial experimentation, the BIOCLIM approach seems more stable than MESS. Unfortunately, neither of these methods work with nominal / ordinal data. Gower’s distance is one possible alternative, but computation time may be prohibitive.</li>
-<li>comparisons of similarity surfaces generated from three approaches: a. samples collected within MU delineations b. purposive sampling points c. cLHS sampling points</li>
-</ol>
+<li>comparisons of similarity surfaces generated from three approaches:
+<ol style="list-style-type: lower-alpha">
+<li>samples collected within MU delineations</li>
+<li>purposive sampling points</li>
+<li>cLHS sampling points</li>
+</ol></li>
+</ul>
 <p>More and more, it seems like cLHS is an effective strategy for sampling suggestions within a thoughtfully constrained domain: landform elements, lithologic units, hillslope sequence—i.e. below the level at which an experienced soil scientist is able to stratify the landscape. Or, used to decimate an otherwise exhaustive sampling (e.g. 1 sample / acre from all MU delineations) of a covariate stack into the most compact, but still efficient, subset for model calibration.</p>
 <hr />
 <p>Note: these images use different color scales.</p>
@@ -516,7 +503,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
   $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
+    $(this).parent().toggleClass('nav-tabs-open');
   });
 });
 </script>
