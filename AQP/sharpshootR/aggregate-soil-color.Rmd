@@ -73,7 +73,7 @@ While the methods outlined in this document can be applied to any collection of 
 data(loafercreek, package = 'soilDB')
 # graphical check
 par(mar=c(0,0,0,4))
-plot(loafercreek, name='', print.id=FALSE, cex.names=0.8, axis.line.offset=-1, max.depth=100, divide.hz=FALSE)
+plotSPC(loafercreek, name = NA, print.id = FALSE, cex.names = 0.8, axis.line.offset = -1, max.depth = 100, divide.hz = FALSE)
 ```
 
 
@@ -139,7 +139,7 @@ depths(sp3) <- id ~ top + bottom
 pam1 <- function(x,k) list(cluster = pam(x, k, cluster.only=TRUE, stand=TRUE))
 d <- horizons(sp3)[, c('clay', 'cec', 'ln_tc')]
 
-# emipirically determine optimal number of clusters
+# empirically determine optimal number of clusters
 g <- clusGap(d, FUN=pam1, K.max=10)
 plot(g)
 
@@ -149,7 +149,7 @@ plot(silhouette(sp3.clara))
 
 # check clustering vector on profile sketches
 sp3$genhz <- sp3.clara$clustering
-plot(sp3, name='genhz')
+plotSPC(sp3, name='genhz')
 
 # color signatures by cluster of horizon
 aggregateColorPlot(aggregateColor(sp3, 'genhz'))
