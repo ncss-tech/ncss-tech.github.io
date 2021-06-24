@@ -214,15 +214,21 @@ levelplot(
 # get unique mukeys from grid
 ll <- levels(x)[[1]]
 
-tab <- get_SDA_muaggatt(mukeys = ll$ID)
+tab <- get_SDA_property(mukeys = ll$ID, property = 'Corrosion of Steel', method = 'DOMINANT CONDITION')
 
-tab <- get_SDA_hydric(mukeys = ll$ID)
+tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
 
-tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
 
-tab <- get_SDA_pmgroupname(mukeys = ll$ID, simplify = TRUE)
+# tab <- get_SDA_muaggatt(mukeys = ll$ID)
 
-tab <- get_SDA_property(mukeys = ll$ID, property = 'om_r', method = 'DOMINANT COMPONENT (NUMERIC)', top_depth = 0, bottom_depth = 25)
+# tab <- get_SDA_hydric(mukeys = ll$ID)
+
+# tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
+
+# tab <- get_SDA_pmgroupname(mukeys = ll$ID, simplify = TRUE)
+
+
+
 
 
 ## TODO: SOC stock estimates
@@ -232,24 +238,24 @@ tab <- get_SDA_property(mukeys = ll$ID, property = 'om_r', method = 'DOMINANT CO
 
 ## RAT Management
 ```{r}
-# merge AWS by mukey into raster attribute table (RAT)
+## TODO: NA is not encoded into the raster correctly, why?
+
+# re-create raster attribute table with aggregate soil properties
 rat <- merge(ll, tab, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
 
 # re-pack RAT
 levels(x) <- rat
 
-# check: note RAT
+# check: RAT has been integrated into the RasterLayer object
 x
 
-# raster + RAT --> grid of values
-# when more than a single attribute, result is a raster stack
-# note this is a raster stack with 4 layers
-(aws <- deratify(x))
+# convert raster + RAT --> grid of values
+(corsteel <- deratify(x, att = 'corsteel'))
 
 # graphical check
 levelplot(
-  aws, 
-  main = 'gNATSGO WCS + SDA',
+  corsteel, 
+  main = 'Corrosion of Steel',
   margin = FALSE, 
   scales = list(draw = FALSE), 
   col.regions = viridis
@@ -326,7 +332,10 @@ levelplot(z - 100, margin = FALSE)
 Soil texture class 25-50cm.
 ```{r}
 texture_2550cm <- ISSR800.wcs(aoi = a.CA, var = 'texture_2550cm')
-levelplot(texture_2550cm, margin = FALSE)
+
+# use colors from RAT
+cols <- levels(texture_2550cm)[[1]]$hex
+levelplot(texture_2550cm, att = 'class', margin = FALSE, col.regions = cols)
 ```
 
 
