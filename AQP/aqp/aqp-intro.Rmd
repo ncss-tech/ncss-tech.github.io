@@ -267,7 +267,7 @@ subset(sp4, grepl('shasta', id, ignore.case = TRUE))
 
 
 
-# Concatenation of SoilProfileCollection Objects
+# Splitting, Duplication, and Selection of Unique Profiles
 `SoilProfileCollection` objects are combined by passing a list of objects to the `combine` function. Ideally all objects share the same internal structure, profile ID, horizon ID, depth units, and other parameters of a `SoilProfileCollection`. Manually subset the example data into 3 pieces, compile into a list, and then `combine` back together.
  
 ```{r concatenation, eval=FALSE}
@@ -344,6 +344,39 @@ par(mar=c(0,2,0,4))
 plotSPC(d, color = 'ex_Ca_to_Mg')
 ```
 
+## Selecting Unique Profiles
+```{r fig.height=4, fig.width=8}
+# an example soil profile  
+x <- data.frame(
+id = 'A',
+name = c('A', 'E', 'Bhs', 'Bt1', 'Bt2', 'BC', 'C'),
+top = c(0, 10, 20, 30, 40, 50, 100),
+bottom = c(10, 20, 30, 40, 50, 100, 125),
+z = c(8, 5, 3, 7, 10, 2, 12)
+)
+
+# init SPC
+depths(x) <- id ~ top + bottom
+
+# horizon depth variability for simulation
+horizons(x)$.sd <- 2
+
+# duplicate several times
+x.dupes <- duplicate(x, times = 5)
+
+# simulate some new profiles based on example
+x.sim <- perturb(x, n = 5, thickness.attr = '.sd')
+
+# graphical check
+par(mar=c(0,2,0,4))
+
+# inspect unique results
+plotSPC(unique(x.dupes, vars = c('top', 'bottom')), name.style = 'center-center')
+
+# uniqueness is a function of variable selection
+plotSPC(unique(x.sim, vars = c('top', 'bottom')), name.style = 'center-center')
+plotSPC(unique(x.sim, vars = c('name')), name.style = 'center-center')
+```
 
 # Plotting SoilProfileCollection Objects
 The `plotSPC()` method for `SoilProfileCollection` objects generates sketches of profiles within the collection based on horizon boundaries, vertically aligned to an integer sequence from 1 to the number of profiles. Horizon names are automatically extracted from a horizon-level attribute `name` (if present), or via an alternate attributed given as an argument: `name='column.name'`. Horizon colors are automatically generated from the horizon-level attribute `soil_color`, or any other attribute of **R**-compatible color description given as an argument: `color='column.name'`. This function is highly customizable, therefore, it is prudent to consult `help(plotSPC)` from time to time. Soil colors in Munsell notation can be converted to **R**-compatible colors via `munsell2rgb()`.

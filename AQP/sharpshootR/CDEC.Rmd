@@ -349,7 +349,11 @@ levelplot(capacity ~ year * month, data=new.melones.monthly, col.regions=cols, x
 ```
 
 
+### Rate of Change in New Melones Res.
+```r
 
+
+```
 
 
 
