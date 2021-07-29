@@ -68,6 +68,7 @@ s <- combine(
   s
 )
 
+
 # neat
 par(mar=c(0,0,0,0))
 plotSPC(s, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, width = 0.3)
@@ -85,21 +86,52 @@ s <- perturb(
   min.thickness = 5
 )
 
+s <- trunc(s, 0, 150)
+
 # looks like a cake
 par(mar=c(0,0,0,0), fg=NA)
 plotSPC(s, print.id = FALSE, name = NA, divide.hz = FALSE, plot.depth.axis = FALSE, width=0.55, x.idx.offset = 2)
 
 # another
-x <- fetchOSD('drummer')
-x$hd <- hzDistinctnessCodeToOffset(
-  x$distinctness, 
-  codes = c('very abrupt', 'abrupt', 'clear', 'gradual', 'diffuse')
+s <- perturb(
+  subset(x, id == 'MUSICK'), 
+  n = 50, 
+  boundary.attr = 'hd', 
+  min.thickness = 5
 )
 
-s <- perturb(x, n = 50, boundary.attr = 'hd', min.thickness = 5)
+s <- trunc(s, 0, 150)
 
 par(mar=c(0,0,0,0), fg=NA)
 plotSPC(s, print.id=FALSE, name=NA, divide.hz = FALSE, plot.depth.axis = FALSE, width=0.55, x.idx.offset = 2)
+```
+
+
+```{r fig.width=12, fig.height=6}
+musick <- subset(x, id == 'MUSICK')
+musick$hd <- 5
+
+# simulate
+s <- perturb(
+  musick, 
+  id = sprintf("%03d", 1:50),
+  boundary.attr = 'hd', 
+  min.thickness = 5
+)
+
+s <- trunc(s, 0, 150)
+
+hzn.id <- hzdesgnname(s)
+hzn <- hzDesgn(s[1, ])
+s$genhz <- generalize.hz(s[[hzn.id]], new = hzn, pat = hzn)
+
+d <- profile_compare(s, vars = c('genhz', 'genhz'), max_d = 150, k = 0)
+new.order <- as.hclust(diana(d))$order
+
+# looks like a cake
+par(mar=c(0,0,0,0), fg=NA)
+plotSPC(s, print.id = FALSE, name = NA, divide.hz = FALSE, plot.depth.axis = FALSE, width=0.55, x.idx.offset = 2, plot.order = new.order)
+
 ```
 
 
