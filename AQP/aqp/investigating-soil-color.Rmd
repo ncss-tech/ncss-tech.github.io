@@ -111,8 +111,20 @@ title('Clarksville Soil Colors')
 
 
 # Color Book Style Presentation
-Prepare for color book style representation.
-```{r fig.width=8, fig.height=4}
+Color book style range for colors, frequency is inversely proportional to transparency.
+```{r fig.width=9, fig.height=8.5}
+# prepare vectors of Munsell chips + groups (generalized horizon labels)
+m <- paste0(s$m_hue, ' ', s$m_value, '/', s$m_chroma)
+g <- s$genhz
+
+colorChart(m, g = g, chip.cex = 2)
+colorChart(m, g = g, chip.cex = 2, annotate = TRUE)
+```
+
+
+
+Other ideas.
+```{r eval=FALSE}
 # remove horizons that are missing moist colors
 h <- horizons(s)
 idx <- which(complete.cases(h[, c('m_hue', 'm_value', 'm_chroma', 'genhz')]))
@@ -122,10 +134,7 @@ h <- h[idx, ]
 h$m_munsell <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
 h$m_hue <- factor(h$m_hue, levels = c('10Y', '2.5Y', '10YR', '7.5YR', '5YR', '2.5YR'))
 h$m_hue <- factor(h$m_hue)
-```
 
-Not quite right...
-```{r eval=FALSE}
 xyplot(m_value ~ m_chroma | m_hue, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), xlab='Chroma', ylab='Value', layout=c(length(levels(h$m_hue)),1), strip=strip.custom(bg=grey(0.85)), panel=function(x, y, subscripts=subscripts, ...) {
   
   p.data <- data.frame(x=x, y=y, col=h$moist_soil_color[subscripts], m=h$m_munsell[subscripts], stringsAsFactors = FALSE)
@@ -138,10 +147,8 @@ xyplot(m_value ~ m_chroma | m_hue, as.table=TRUE, data=h, subscripts = TRUE, xli
   panel.grid(-1, -1)
   panel.xyplot(p.data$x, p.data$y, pch=22, col='black', fill=p.data$col, cex=4 * sqrt(p.data$freq))
 })
-```
 
-Not quite right...
-```{r eval=FALSE, fig.width=8, fig.height=7}
+
 pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), xlab='Chroma', ylab='Value', subset=genhz != 'not-used', panel=function(x, y, subscripts=subscripts, ...) {
   
   p.data <- data.frame(x=x, y=y, col=h$moist_soil_color[subscripts], m=h$m_munsell[subscripts], stringsAsFactors = FALSE)
@@ -158,24 +165,7 @@ pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscrip
 useOuterStrips(pp, strip=strip.custom(bg=grey(0.85)), strip.left = strip.custom(bg=grey(0.85)))
 ```
 
-Color book style range for colors, frequency is inversely proportional to transparency.
-```{r fig.width=8, fig.height=7}
-pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscripts = TRUE, xlim=c(0.5,8.5), ylim=c(0.5,8.5), scales=list(alternating=3, tick.number=8, y=list(rot=0)), main='Clarksville Moist Colors', xlab='Chroma', ylab='Value', subset=genhz != 'not-used', panel=function(x, y, subscripts=subscripts, ...) {
-  
-  p.data <- data.frame(x=x, y=y, col=h$moist_soil_color[subscripts], m=h$m_munsell[subscripts], stringsAsFactors = FALSE)
-  tab <- prop.table(table(p.data$m, useNA = 'always'))
-  tab <- as.data.frame(tab)
-  names(tab) <- c('m', 'freq')
-  p.data <- join(p.data, tab, by='m', type='left')
-  p.data <- na.omit(p.data)
-  p.data <- subset(p.data, subset=freq > 0.05)
-  panel.grid(-1, -1)
-  panel.xyplot(p.data$x, p.data$y, pch=15, col=scales::alpha(p.data$col, 0.25), cex=2)
-})
 
-useOuterStrips(pp, strip=strip.custom(bg=grey(0.85), par.strip.text=list(cex=0.85)), strip.left = strip.custom(bg=grey(0.85), par.strip.text=list(rot=0)))
-
-```
 
 # Soil Color Aggregation 
 ```{r}
@@ -189,6 +179,13 @@ par(mar = c(4.5, 2.5, 4.5, 0))
 aggregateColorPlot(a.reduced, label.cex = 0.65, main = "Clarksville Moist Colors\nGeneralized Horizons\n8 Colors per Group", print.n.hz = TRUE)
 
 ```
+
+
+# Soil Color Simulation
+```{r}
+
+```
+
 
 
 # Color Quantiles
