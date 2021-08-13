@@ -111,20 +111,23 @@ title('Clarksville Soil Colors')
 
 
 # Color Book Style Presentation
-Color book style range for colors, frequency is inversely proportional to transparency.
+Color book style range for colors, frequency is represented as chip size.
 ```{r fig.width=9, fig.height=8.5}
 # prepare vectors of Munsell chips + groups (generalized horizon labels)
 m <- paste0(s$m_hue, ' ', s$m_value, '/', s$m_chroma)
 g <- s$genhz
 
 colorChart(m, g = g, chip.cex = 2)
-colorChart(m, g = g, chip.cex = 2, annotate = TRUE)
+```
+
+Constant chip size, annotate with chip frequency.
+```{r fig.width=9, fig.height=8.5}
+colorChart(m, g = g, chip.cex = 2, size = FALSE, annotate = TRUE)
 ```
 
 
 
-Other ideas.
-```{r eval=FALSE}
+```{r eval=FALSE, echo = FALSE}
 # remove horizons that are missing moist colors
 h <- horizons(s)
 idx <- which(complete.cases(h[, c('m_hue', 'm_value', 'm_chroma', 'genhz')]))
@@ -182,8 +185,18 @@ aggregateColorPlot(a.reduced, label.cex = 0.65, main = "Clarksville Moist Colors
 
 
 # Soil Color Simulation
-```{r}
+```{r fig.width = 8, fig.height = 4}
+# simulation parameters
+p <- list(
+  list(m = '7.5YR 4/6', thresh = 10, hues = c('5YR', '7.5YR', '10YR'))
+)
 
+# simulation
+sim <- simulateColor(method = 'dE00', n = 100, parameters = p)
+
+# present via color chart / tabulation
+pp <- colorChart(sim[[1]], annotate = FALSE, chip.cex = 3)
+update(pp, asp = 1, main = 'RV Color: 7.5YR 4/6\ndE00 threshold < 8')
 ```
 
 
