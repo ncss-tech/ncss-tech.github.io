@@ -26,7 +26,7 @@ options(width=100, stringsAsFactors=FALSE)
 
 
 # Introduction
-A web coverage service (WCS) is provided for the gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils). These grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:6350). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geodatabases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
+A web coverage service (WCS) is provided for the gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils). These grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:5070). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geodatabases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
 
 A similar WCS is provided for the [ISSR-800 soil property grids](https://casoilresource.lawr.ucdavis.edu/soil-properties/).
 
