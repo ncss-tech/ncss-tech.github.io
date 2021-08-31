@@ -66,8 +66,8 @@ AWC.sil <- round(0.2080796 * thick)
 # * start in January
 # * start with "completely dry" soil conditions
 # * keep only the last cycle
-wb.sl <- monthlyWB(AWC.sl, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, a.ss = 0)
-wb.sil <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, a.ss = 0)
+wb.sl <- monthlyWB(AWC.sl, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
+wb.sil <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
 ```
 
 All values are mm. U: surplus, S: soil water storage, ET: actual ET, D: deficit.
