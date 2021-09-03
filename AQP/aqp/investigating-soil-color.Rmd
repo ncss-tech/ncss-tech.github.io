@@ -185,7 +185,7 @@ aggregateColorPlot(a.reduced, label.cex = 0.65, main = "Clarksville Moist Colors
 
 
 # Soil Color Simulation
-```{r fig.width = 8, fig.height = 4}
+```{r fig.width = 8.5, fig.height = 4}
 # simulation parameters
 p <- list(
   list(m = '7.5YR 4/6', thresh = 10, hues = c('5YR', '7.5YR', '10YR'))
