@@ -918,6 +918,7 @@ library(sharpshootR)
 # start fresh
 data(sp4)
 depths(sp4) <- id ~ top + bottom
+hzdesgnname(sp4) <- 'name'
 
 # eval dissimilarity:
 # using Ex-Ca:Mg and CEC at pH 7
@@ -928,7 +929,7 @@ d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
 # check distance matrix:
 round(d, 1)
 
-# vizualize dissimilarity matrix via divisive hierarchical clustering
+# visualize dissimilarity matrix via divisive hierarchical clustering
 d.diana <- diana(d)
 
 # this function is from the sharpshootR package
