@@ -20,6 +20,7 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 The following can be used to evaluate the influence of sampling density on the stability of estimates derived from a raster data source. Adjust `mu` (map unit polygons), `mu.set` (select map unit symbols), and `r` (raster data source) accordingly.
 ```{r}
 library(latticeExtra)
+library(tactile)
 library(plyr)
 library(rgdal)
 library(raster)
@@ -33,7 +34,7 @@ mu <-  readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a', s
 r <- readAll(raster('E:/gis_data/ca630/ca630_slope/hdr.adf'))
 
 # subset to just those map units we are interested in
-mu.set <- c('5012', '5201', '7089', '3058', '6053', '6054')
+mu.set <- c('5012', '5201', '7089', '3058', '6054', '7083')
 mu <- mu[mu$MUSYM %in% mu.set, ]
 
 # add a unique polygon ID
@@ -105,7 +106,7 @@ The following figure demonstrates the relationship between stability and samplin
 # custom tick, label, and line positions
 h.lines <- c(0:4, seq(5, 30, by=2))
 # custom plot style
-tps <- list(superpose.symbol=list(pch=15, cex=1.5), superpose.line=list(lwd=2))
+tps <- tactile.theme(superpose.symbol=list(pch=15, cex=1.5), superpose.line=list(lwd=2))
 
 xyplot(stability ~ factor(sampling.density), groups=.id, data=mu.stability, type=c('b'), scales=list(alternating=3, y=list(at=h.lines)), ylab='Percent of Population Median', xlab='Sampling Density (pts/ac.)', strip=strip.custom(bg=grey(0.85)), main='90% Confidence in Stability of (Sample) Median', auto.key=list(columns=3, lines=TRUE, points=FALSE), par.settings=tps, panel=function(...) {
   panel.abline(h=h.lines, v=1:4, lty=3, col='grey')
