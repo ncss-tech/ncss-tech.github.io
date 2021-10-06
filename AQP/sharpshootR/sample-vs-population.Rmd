@@ -74,7 +74,7 @@ library(spdep)
 set.seed(1010101)
 x <- rnorm(1000, mean=15, sd=2)
 
-# make example reproduceable
+# make example reproducible
 set.seed(1010101)
 s <- sample(x, size = 50, replace = FALSE)
 
@@ -135,19 +135,19 @@ if(FALSE) {
 
 
 
-```{r echo=FALSE, results='hide', fig.width=8, fig.height=6, fig.cap='Sampling a single map unit polygon (63 acres) at several target densities. Raster data are from a 10m slope (%) map; 2546 pixels within this polygon.'}
-mu.example <- mu[3, ]
+```{r echo=FALSE, results='hide', fig.width=8, fig.height=6, fig.cap='Sampling a single map unit polygon (43 acres) at several target densities. Raster data are from a 10m slope (%) map; 1760 pixels within this polygon.'}
+mu.example <- mu[9, ]
 
 ## mu area: ~ 63 ac.
 # sapply(slot(mu.example, 'polygons'), slot, 'area') * 2.47e-4
 
 ## num pixels: ~ 2546
-# length(extract(r.slope, mu.example)[[1]])
+# length(raster::extract(r.slope, mu.example)[[1]])
 
 par(mfrow=c(2,2), mar=c(1,1,5,5))
 for(i in c(0.1, 0.5, 1, 2)) {
   s.example <- constantDensitySampling(mu.example, n.pts.per.ac=i, min.samples=1, polygon.id='pID')
-  plot(crop(r.slope, mu.example), col=viridis(10), axes=FALSE, main=paste0(i, ' pts/ac.\n', nrow(s.example), ' samples'))
+  plot(raster::crop(r.slope, mu.example), col=viridis(10), axes=FALSE, main=paste0(i, ' pts/ac.\n', nrow(s.example), ' samples'))
   plot(mu.example, add=TRUE, lwd=2)
   points(s.example, pch=21, cex=0.75, col='white')
 }
