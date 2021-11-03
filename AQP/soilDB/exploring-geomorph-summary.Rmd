@@ -1,0 +1,178 @@
+---
+title: "Exploring Geomorphic Summaries"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Setup
+```{r install-deps, eval=FALSE}
+# stable packages from CRAN
+install.packages('aqp')
+install.packages('soilDB')
+install.packages('sharpshootR')
+install.packages('FactoMineR')
+install.packages('cowplot')
+
+# latest versions from GitHub
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+
+
+# Hillslope Position / Soil Morphology
+```{r eval=TRUE}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+# soil of interest
+# https://casoilresource.lawr.ucdavis.edu/gmap/?loc=44.10219,-122.38589,z14
+s <- 'peavine'
+
+# all siblings
+sib <- siblings(s)
+
+# all soils of interest
+soils <- c(s, sib$sib$sibling)
+
+# get morphology + extended summaries
+osds <- fetchOSD(soils, extended = TRUE)
+```
+
+```{r fig.width=10, fig.height=6}
+res <- vizHillslopePosition(osds$hillpos)
+
+# re-order hillslope proportions according to clustering
+hp <- osds$hillpos[res$order, ]
+nm <- names(hp[, 2:6])
+
+knitr::kable(osds$hillpos[res$order, ], digits = 2, row.names = FALSE, format = 'html')
+```
+
+```{r fig.width=10, fig.height=6}
+print(res$fig)
+```
+
+```{r fig.width=12, fig.height=6}
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(osds$SPC, scaling.factor = 0.015, width = 0.28, name.style = 'center-center')
+```
+
+```{r fig.width=6, fig.height=1.5}
+# colors
+par(mar = c(1, 1, 1, 1))
+hp.cols <- RColorBrewer::brewer.pal(n = 5, name = 'Set1')[c(2, 3, 4, 5, 1)]
+soilPalette(hp.cols, lab = nm)
+```
+
+## Composite Figures
+
+### Version 1: Lines
+```{r fig.width=12, fig.height=8}
+par(mar = c(0.5, 0, 0, 2))
+layout(matrix(c(1,2)), widths = c(1,1), heights = c(2,1))
+plotProfileDendrogram(osds$SPC, res$clust, dend.y.scale = 3, scaling.factor = 0.012, y.offset = 0.2, width = 0.32, name.style = 'center-center', cex.names = 0.7, shrink = TRUE, cex.id = 0.55)
+
+matplot(y = hp[, 2:6], type = 'b', lty = 1, pch = 16, axes = FALSE, col = hp.cols, xlab = '', ylab = '', xlim = c(0.5, length(osds$SPC) + 1))
+# grid(nx = 0, ny = NULL)
+axis(side = 4, line = -1, las = 1, cex.axis = 0.7)
+# axis(side = 2, line = -3, las = 1, cex.axis = 0.7)
+legend('topleft', legend = rev(nm), col = rev(hp.cols), pch = 16, bty = 'n', cex = 0.8, pt.cex = 2, horiz = TRUE, inset = c(0.01, 0.01))
+mtext('Probability', side = 2, line = -2, font = 2)
+```
+
+
+### Version 2: Stacked Bars
+```{r fig.width=10, fig.height=8}
+par(mar = c(0.5, 0, 0, 2))
+layout(matrix(c(1,2)), widths = c(1,1), heights = c(2,1))
+plotProfileDendrogram(osds$SPC, res$clust, dend.y.scale = 3, scaling.factor = 0.012, y.offset = 0.2, width = 0.32, name.style = 'center-center', cex.names = 0.7, shrink = TRUE, cex.id = 0.55)
+
+sp <- c(1.5, rep(1, times = length(osds$SPC) - 1))
+barplot(height = t(as.matrix(hp[, 2:6])), beside = FALSE, width = 0.5, space = sp, col = hp.cols,  axes = FALSE, xlab = '', ylab = '', xlim = c(0.5, length(osds$SPC) + 1), ylim = c(0, 1.2))
+
+legend(x = 0.75, y = 1.2, legend = rev(nm), col = rev(hp.cols), pch = 15, bty = 'n', cex = 0.8, pt.cex = 1.25, horiz = TRUE)
+mtext('Probability', side = 2, line = -2, font = 2)
+
+```
+
+
+
+# Correspondance Analysis
+```{r}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+library(FactoMineR)
+library(cowplot)
+
+# a classic catena
+soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
+s <- fetchOSD(soils, extended = TRUE)
+
+# create visualizations
+hs <- vizHillslopePosition(s$hillpos)
+gc <- vizGeomorphicComponent(s$geomcomp)
+```
+
+```{r fig.width=10, fig.height=8}
+# montage figures
+plot_grid(hs$fig, gc$fig, nrow = 2, rel_heights = c(0.5, 0.5))
+```
+
+## CA from Soil Series Geomorphic Summaries
+Data are from SSURGO components.
+```{r fig.width=8, fig.height=8}
+hs.tab <- (s$hillpos[, 2:6])
+row.names(hs.tab) <- s$hillpos$series
+
+gc.tab <- (s$geomcomp[, 2:7])
+row.names(gc.tab) <- s$geomcomp$series
+
+# perform CA
+hs.ca <- CA(hs.tab, graph = FALSE)
+gc.ca <- CA(gc.tab, graph = FALSE)
+```
+
+```{r fig.width=8, fig.height=8}
+# plot
+plot(hs.ca, autoLab='yes', title='Hillslope Position', cex=0.75, col.col='firebrick', col.row='royalblue')
+plot(gc.ca, autoLab='yes', title='Geomorphic Component', cex=0.75, col.col='firebrick', col.row='royalblue')
+```
+
+```{r fig.width=10, fig.height=10}
+## combine lattice + ggplot graphics
+
+p2 <- plot(hs.ca, autoLab='yes', title='Hillslope Position', cex=0.75, col.col='firebrick', col.row='royalblue')
+
+plot_grid(hs$fig, p2, nrow = 2, rel_heights = c(0.4, 0.6))
+
+```
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
