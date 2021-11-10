@@ -185,9 +185,15 @@ colorMixtureVenn(chips, ellipse = TRUE)
 
 ```{r fig.height=5.5, fig.width=9}
 plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5, showMixedSpec = TRUE)
+```
 
+Compare "reference" (default) vs. "exact" mixing methods.
+```{r fig.height=5.5, fig.width=9}
 plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, mixingMethod = 'exact')
+```
 
+```{r fig.height=5.5, fig.width=9}
 # is this right? can the resulting spectra be "higher" than the source?
 plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5, showMixedSpec = TRUE)
 
@@ -204,7 +210,8 @@ plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex =
 
 Check: "blue" + "yellow" = "green", yes. Note weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit but close enough.
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference')
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, mixingMethod = 'exact')
 ```
 
 
@@ -219,7 +226,7 @@ Seems plausible.
 s <- seq(0, 1, by = 0.2)
 z <- lapply(s, function(i) {
   
-  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(1-i, i))
+  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(1-i, i), mixingMethod = 'exact')
   
   return(m$munsell)
 })
@@ -233,13 +240,18 @@ soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
 
 
 ## Interpreting Spectral (Gower) Distances
-Should the mixture of two `10YR` colors always result in a `10YR` mixture candidate? Not necessarily (blue + yellow = green).
+Should the mixture of two `10YR` colors always result in a `10YR` mixture candidate? Depends on the mixing method
 ```{r}
 m <- c('10YR 8/6', '10YR 2/2')
-x <- mixMunsell(m, n = 20)
 
-# it isn't
-x[1, ]
+knitr::kable(
+  rbind(
+    mixMunsell(m, mixingMethod = 'reference'),
+    mixMunsell(m, mixingMethod = 'exact'),
+    mixMunsell(m, mixingMethod = 'estimate')
+  ),
+  digits = 2
+)
 ```
 
 The weighted geometric mean of the two spectra seems plausible:
@@ -250,6 +262,9 @@ plotColorMixture(c('10YR 8/6', '10YR 2/2'), swatch.cex = 5, showMixedSpec = TRUE
 
 Evaluate the top 20 mixture candidates in terms of spectral distance and $\Delta{E_{00}}$ relative to the most likely match.
 ```{r}
+m <- c('10YR 8/6', '10YR 2/2')
+x <- mixMunsell(m, n = 20)
+
 z <- expand.grid(m1 = x$munsell[1], m2 = x$munsell)
 d <- colorContrast(z[[1]], z[[2]])
 
