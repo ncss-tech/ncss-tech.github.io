@@ -75,18 +75,16 @@ Requests are limited to images sizes of 5000x5000 pixels, this is approximately 
    * Ensure that data are not resampled unless a resolution other than 30m is requested.
    * Currently the data come back *close* to 30m, usually 29.998-30.111. I'm not sure if this is something that has to be solved in the creation of the BBOX or if it is a Mapserver configuration issue. Still tinkering.
    * Consider converting source mukey grids to COG-GeoTiff, this will require a newer version of GDAL.
-   * Simplify / unify soil data aggregation within SDA: this is much more generic than this WCS idea, but is a perfect use case.
 
 
-# A Simple Demonstration
-
-## Setup
+# Setup
 Need the latest version of `soilDB`, along with all packages specified below (CRAN versions fine).
 ```{r eval = FALSE}
+install.packages('soilDB')
 remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ```
 
-
+Load required package.
 ```{r}
 # latest from GitHub
 library(soilDB)
@@ -112,6 +110,9 @@ library(aqp)
 ```
 
 
+# The gSSURGO and gNATSGO Map Unit Key Grids
+
+Use the `mukey.wcs()` function to access chunks of the CONUS map unit key grids, based on some representation of an area of interest (AOI). The AOI can be defined manually, as below, or automatically extracted from `Spatial*`, `RasterLayer`, `sf`, `sfc` or `bbox` objects. The resulting grid of integers isn't all that useful by itself; join data from Soil Data Access (SDA) or local files (by map unit key) to create thematic maps. Note: the gSSURGO and gNATSGO grids are updated annually, and typically in-sync with the live version of the data hosted by SDA (updated Oct 1st) by early November. Map unit keys can change over time, especially in soil survey areas that were updated during the last fiscal year.
 ```{r}
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
 a <- st_bbox(
@@ -125,7 +126,7 @@ a <- st_as_sfc(a)
 # fetch gSSURGO map unit keys at native resolution (~30m)
 x <- mukey.wcs(aoi = a, db = 'gssurgo')
 
-# OK
+# looks good
 levelplot(
   x, 
   att = 'ID',
@@ -139,22 +140,22 @@ levelplot(
 
 
 
-## Fetching Polygons from SDA
+## SSURGO Polygons from SDA
+It is possible to retrieve small areas of vector geometry (SSURGO polygons) from SDA with the `SDA_spatialQuery()` function. These data are stored and delivered in a geographic coordinate system (WGS84). Overlaying the SSURGO polygons and map unit key grids will require a simple transformation.
 ```{r}
-## TODO: update to sf
-
+# note: SDA_spatialQuery() expects an sp object
 # convert raster extent into vector 
 g <- as(extent(x), 'SpatialPolygons')
 proj4string(g) <- projection(x)
 
 # get intersecting SSURGO linework as SpatialPolygonsDataFrame from SDA
-p <- SDA_spatialQuery(g, what = 'geom', geomIntersection = TRUE)
+p <- SDA_spatialQuery(g, what = 'mupolygon', geomIntersection = TRUE)
 
 # transform to AEA CRS
 p <- spTransform(p, CRS(projection(x)))
 
 # compute area and convert square meters to acres
-rgeos::gArea(p) * 0.000247105
+# rgeos::gArea(p) * 0.000247105
 
 par(mar = c(1, 0, 2, 0))
 plot(p, main = 'SSURGO Polygons (SDA)')
@@ -162,7 +163,7 @@ mtext('Albers Equal Area Projection', side = 1, line = -0.5)
 ```
 
 
-Overlay on gSSURGO grid.
+That looks about right.
 ```{r}
 levelplot(
   x, att = 'ID', 
@@ -178,7 +179,7 @@ levelplot(
 ```
 
 ## Grid Resolution Specification
-Native vs. alternative resolutions (preview not aggregation).
+Requesting map unit key grids at a resolution other than 30m is possible, but only suitable for a quick "preview" of the data. For example, it is possible to get a much larger chunk of data by requesting grids at 800m. However, pixels are selected by nearest-neighbor and not generalized to the coarser scale. In short: don't use the resulting data for anything other than a simple preview.
 
 ```{r}
 # part of CA
@@ -208,60 +209,118 @@ levelplot(
   )
 ```
 
-# Tabular Data from SDA 
+
+
+# Examples
+
+
+## Several horizon-level soil properties
 
 ```{r}
-# get unique mukeys from grid
-ll <- levels(x)[[1]]
+# https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.57666,-96.70175,z14
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -96.7696, xmax = -96.6477, ymin = 36.5477, ymax = 36.6139), 
+  crs = st_crs(4326)
+)
 
-tab <- get_SDA_property(mukeys = ll$ID, property = 'Corrosion of Steel', method = 'DOMINANT CONDITION')
-
-tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
-
-
-# tab <- get_SDA_muaggatt(mukeys = ll$ID)
-
-# tab <- get_SDA_hydric(mukeys = ll$ID)
-
-# tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
-
-# tab <- get_SDA_pmgroupname(mukeys = ll$ID, simplify = TRUE)
-
-```
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
 
 
-## TODO SOC Stock Estimates
+# keyboard shortcuts at:
+# https://casoilresource.lawr.ucdavis.edu/gmap/
+# 'b' copy bounding-box
+# 'p' copy center coordinate
+
+# read-in AOI from shape file or similar
+# a <- st_read('file.shp')
 
 
+# fetch gSSURGO map unit keys at native resolution (~30m)
+mu <- mukey.wcs(aoi = a, db = 'gssurgo')
+
+# check: OK
+levelplot(
+  mu, 
+  att = 'ID', 
+  margin = FALSE, 
+  colorkey = FALSE, 
+  scales = list(draw = FALSE),
+  col.regions = viridis
+)
+
+# get unique map unit keys
+ll <- levels(mu)[[1]]
+
+# get / aggregate specific horizon-level properties from SDA
+# be sure to see the manual page for this function
+p <-  get_SDA_property(property = c("dbthirdbar_r", "awc_r", "ph1to1h2o_r"),
+                       method = "Dominant Component (Numeric)", 
+                       mukeys = ll$ID,
+                       top_depth = 0,
+                       bottom_depth = 25)
 
 
+# check: OK
+head(p)
+
+#  convert areasymbol into a factor easy plotting later
+p$areasymbol <- factor(p$areasymbol)
 
 
-
-## RAT Management
-```{r}
-## TODO: NA is not encoded into the raster correctly, why?
-
-# re-create raster attribute table with aggregate soil properties
-rat <- merge(ll, tab, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+# combine unique mukey + data from SDA into a new raster attribute table (RAT)
+rat <- merge(ll, p, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
 
 # re-pack RAT
-levels(x) <- rat
+levels(mu) <- rat
 
-# check: RAT has been integrated into the RasterLayer object
-x
-
-# convert raster + RAT --> grid of values
-(corsteel <- deratify(x, att = 'corsteel'))
+# convert raster + RAT --> stack of values
+Db <- deratify(mu, att = "dbthirdbar_r")
+AWC <- deratify(mu, att = "awc_r")
+pH <- deratify(mu, att = "ph1to1h2o_r")
+ssa <- deratify(mu, att = "areasymbol")
 
 # graphical check
+
 levelplot(
-  corsteel, 
-  main = 'Corrosion of Steel',
+  ssa,
+  main = 'Soil Survey Area',
   margin = FALSE, 
   scales = list(draw = FALSE), 
-  col.regions = viridis
-  )
+  col.regions = viridis,
+  maxpixels = 1e5
+)
+
+
+# note implicit simplification via maxpixels
+levelplot(
+  Db, 
+  main = '1/3 Bar Bulk Density (g/cm^3)\n0-25cm\nDominant Component',
+  margin = FALSE, 
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  maxpixels = 1e5
+)
+
+levelplot(
+  AWC, 
+  main = 'AWC (cm/cm) 0-25cm\nDominant Component',
+  margin = FALSE, 
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  maxpixels = 1e5
+)
+
+levelplot(
+  pH, 
+  main = 'pH 1:1 H2O 0-25cm\nDominant Component',
+  margin = FALSE, 
+  scales = list(draw = FALSE), 
+  col.regions = viridis,
+  maxpixels = 1e5
+)
+
 ```
 
 
@@ -322,16 +381,72 @@ levelplot(
 
 ```
 
+## Component level properties
+Steel corrosion potential.
+```{r}
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
+  crs = st_crs(4326)
+)
 
-## Map Unit Aggregatation Strategies
-A "soil data aggregation engine".
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
 
-   * SOD SQL templates
-   * R functions
-   * code from ArcGIS toolboxes (python)
+# fetch gSSURGO map unit keys at native resolution (~30m)
+x <- mukey.wcs(aoi = a, db = 'gssurgo')
+
+# get unique mukeys from grid
+ll <- levels(x)[[1]]
+
+tab <- get_SDA_property(mukeys = ll$ID, property = 'Corrosion of Steel', method = 'DOMINANT CONDITION')
+
+tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
 
 
-# Related WCS
+# re-create raster attribute table with aggregate soil properties
+rat <- merge(ll, tab, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# re-pack RAT
+levels(x) <- rat
+
+# check: RAT has been integrated into the RasterLayer object
+x
+
+# convert raster + RAT --> grid of values
+(corsteel <- deratify(x, att = 'corsteel'))
+
+# graphical check
+levelplot(
+  corsteel, 
+  main = 'Corrosion of Steel',
+  margin = FALSE, 
+  scales = list(draw = FALSE), 
+  col.regions = viridis
+  )
+```
+
+
+## TODO SOC Stock Estimates
+
+## Additional interfaces to SDA with aggregation
+
+```{r eval=FALSE}
+
+# tab <- get_SDA_muaggatt(mukeys = ll$ID)
+
+# tab <- get_SDA_hydric(mukeys = ll$ID)
+
+# tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
+
+# tab <- get_SDA_pmgroupname(mukeys = ll$ID, simplify = TRUE)
+
+```
+
+
+
+
+# Other Relevant WCS
 
 ## ISSR-800
 
