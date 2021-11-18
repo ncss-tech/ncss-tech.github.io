@@ -110,7 +110,7 @@ library(aqp)
 ```
 
 
-# The gSSURGO and gNATSGO Map Unit Key Grids
+# Map Unit Key Grids
 
 Use the `mukey.wcs()` function to access chunks of the CONUS map unit key grids, based on some representation of an area of interest (AOI). The AOI can be defined manually, as below, or automatically extracted from `Spatial*`, `RasterLayer`, `sf`, `sfc` or `bbox` objects. The resulting grid of integers isn't all that useful by itself; join data from Soil Data Access (SDA) or local files (by map unit key) to create thematic maps. Note: the gSSURGO and gNATSGO grids are updated annually, and typically in-sync with the live version of the data hosted by SDA (updated Oct 1st) by early November. Map unit keys can change over time, especially in soil survey areas that were updated during the last fiscal year.
 ```{r}
