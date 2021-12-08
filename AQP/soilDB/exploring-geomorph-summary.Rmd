@@ -67,8 +67,10 @@ res <- vizHillslopePosition(osds$hillpos)
 # re-order hillslope proportions according to clustering
 hp <- osds$hillpos[res$order, ]
 nm <- names(hp[, 2:6])
+```
 
-knitr::kable(osds$hillpos[res$order, ], digits = 2, row.names = FALSE, format = 'html')
+```{r echo = FALSE}
+kable_styling(kable(osds$hillpos[res$order, ], digits = 2, row.names = FALSE, format = 'html'), font_size = 10, full_width = FALSE)
 ```
 
 ```{r fig.width=10, fig.height=6}
@@ -172,6 +174,46 @@ plot_grid(hs$fig, p2, nrow = 2, rel_heights = c(0.4, 0.6))
 
 ```
 
+
+
+# Next Steps
+Work with source data, cross-tabulate 2D / 3D proportions when possible. Not possible with flattened summaries delivered by `fetchOSD`.
+```{r echo = FALSE, eval=FALSE}
+
+hs.tab <- (s$hillpos[, 2:7])
+gc.tab <- (s$geomcomp[, 2:8])
+
+
+hs.tab <- round(sweep(hs.tab[, -6], MARGIN = 1, STATS = hs.tab$n, FUN = '*'))
+hs.tab$series <- s$hillpos$series
+
+gc.tab <- round(sweep(gc.tab[, -7], MARGIN = 1, STATS = gc.tab$n, FUN = '*'))
+gc.tab$series <- s$geomcomp$series
+
+# g <- merge(hs.tab, gc.tab, by = 'series', sort = FALSE)
+
+
+hs.counts <- lapply(split(hs.tab, hs.tab$series), function(i) {
+  i.s <- i$series
+  i$series <- NULL
+  u <- rep(names(i), times = as.vector(unlist(i)))
+  data.frame(series = i.s, u)
+})
+
+gc.counts <- lapply(split(gc.tab, gc.tab$series), function(i) {
+  i.s <- i$series
+  i$series <- NULL
+  u <- rep(names(i), times = as.vector(unlist(i)))
+  data.frame(series = i.s, u)
+})
+
+
+# this won't work... we need paired observations
+tab <- table(hs.counts$ALTAVISTA$u, gc.counts$ALTAVISTA$u)
+
+# perform CA as series at a time
+ca <- CA(tab, graph = FALSE)
+```
 
 
 ----------------------------
