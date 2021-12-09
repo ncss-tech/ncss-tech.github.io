@@ -176,44 +176,33 @@ plot_grid(hs$fig, p2, nrow = 2, rel_heights = c(0.4, 0.6))
 
 
 
-# Next Steps
-Work with source data, cross-tabulate 2D / 3D proportions when possible. Not possible with flattened summaries delivered by `fetchOSD`.
-```{r echo = FALSE, eval=FALSE}
+# Multiple Factor Analysis
+This is close, but doesn't represent the cross-tabulation of 2D vs. 3D by series. Not sure how to interpret it though. 
 
-hs.tab <- (s$hillpos[, 2:7])
-gc.tab <- (s$geomcomp[, 2:8])
+https://journal.r-project.org/archive/2013/RJ-2013-003/RJ-2013-003.pdf
+```{r fig.width=10, fig.height=10}
 
+# prepare 2D table
+hs.tab <- (s$hillpos[, 1:6])
+# prepare 3D table
+gc.tab <- (s$geomcomp[, 1:7])
 
-hs.tab <- round(sweep(hs.tab[, -6], MARGIN = 1, STATS = hs.tab$n, FUN = '*'))
-hs.tab$series <- s$hillpos$series
-
-gc.tab <- round(sweep(gc.tab[, -7], MARGIN = 1, STATS = gc.tab$n, FUN = '*'))
-gc.tab$series <- s$geomcomp$series
-
-# g <- merge(hs.tab, gc.tab, by = 'series', sort = FALSE)
-
-
-hs.counts <- lapply(split(hs.tab, hs.tab$series), function(i) {
-  i.s <- i$series
-  i$series <- NULL
-  u <- rep(names(i), times = as.vector(unlist(i)))
-  data.frame(series = i.s, u)
-})
-
-gc.counts <- lapply(split(gc.tab, gc.tab$series), function(i) {
-  i.s <- i$series
-  i$series <- NULL
-  u <- rep(names(i), times = as.vector(unlist(i)))
-  data.frame(series = i.s, u)
-})
+# inner join
+# this is the column-wise concatenation of two cross-tabulations
+g <- merge(hs.tab, gc.tab, by = 'series', sort = FALSE)
+row.names(g) <- g$series
+g$series <- NULL
 
 
-# this won't work... we need paired observations
-tab <- table(hs.counts$ALTAVISTA$u, gc.counts$ALTAVISTA$u)
+# multiple factor analysis
+m <- MFA(g, group = c(5, 6), type = c('f', 'f'), name.group = c('2D', '3D'), graph = FALSE)
 
-# perform CA as series at a time
-ca <- CA(tab, graph = FALSE)
+# now... how can this be interpreted?
+plot(m, type = 'ind', partial = 'all')
+plot(m, type = 'ind')
 ```
+
+
 
 
 ----------------------------
