@@ -7,7 +7,7 @@ output:
     mathjax: null
     jquery: null
     smart: no
-    number_sections: yes
+    number_sections: no
     toc: yes
     toc_depth: 3
     toc_float:
@@ -20,7 +20,7 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina = 1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -50,6 +50,7 @@ library(sharpshootR)
 # soil of interest
 # https://casoilresource.lawr.ucdavis.edu/gmap/?loc=44.10219,-122.38589,z14
 s <- 'peavine'
+# s <- 'clarion'
 
 # all siblings
 sib <- siblings(s)
@@ -120,6 +121,29 @@ mtext('Probability', side = 2, line = -2, font = 2)
 
 ```
 
+
+# 3D Surface Shape
+```{r fig.width=10, fig.height=6}
+res <- vizSurfaceShape(osds$shape_across, title = 'Surface Shape (Across)')
+
+# re-order proportions according to clustering
+ss <- osds$shape_across[res$order, ]
+nm <- names(ss[, 2:6])
+```
+
+```{r echo = FALSE}
+kable_styling(kable(osds$shape_across[res$order, ], digits = 2, row.names = FALSE, format = 'html'), font_size = 10, full_width = FALSE)
+```
+
+```{r fig.width=10, fig.height=6}
+print(res$fig)
+```
+
+```{r fig.width=12, fig.height=6}
+par(mar = c(0.5, 0, 1.5, 2))
+plotProfileDendrogram(osds$SPC, res$clust, dend.y.scale = 3, scaling.factor = 0.012, y.offset = 0.2, width = 0.32, name.style = 'center-center', cex.names = 0.7, shrink = TRUE, cex.id = 0.55)
+title('Surface Shape (Across)')
+```
 
 
 # Correspondance Analysis
