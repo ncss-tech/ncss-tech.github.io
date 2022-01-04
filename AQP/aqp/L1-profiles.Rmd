@@ -18,7 +18,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -38,8 +38,8 @@ library(tactile)
 x <- fetchKSSL('plainfield')
 
 # remove partial-profile records
-x <- filter(x, pedon_completeness_index > 3)
-x <- filter(x, pedon_key != '6678')
+x <- subset(x, pedon_completeness_index > 3)
+x <- subset(x, pedon_key != '6678')
 
 # normalize taxonname for use as a grouping variable
 x$taxonname <- tolower(x$taxonname)
@@ -70,7 +70,7 @@ a <- slab(x, fm = fm)
 ```{r fig.width = 8, fig.height=6}
 ## TODO: this involves a lot of dumb re-naming
 vars <- c("sand", "silt", "clay", "estimated_ph_h2o", "bs82", "wmpd")
-z.long <- melt(as(z, 'data.frame'), id.vars = c(idname(z), horizonDepths(z)), measure.vars = vars)
+z.long <- reshape2::melt(as(z, 'data.frame'), id.vars = c(idname(z), horizonDepths(z)), measure.vars = vars)
 
 new.vars <- c('variable', 'taxonname', 'top', 'bottom', 'p.q50', 'p.q25', 'p.q75', 'contributing_fraction')
 
