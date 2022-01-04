@@ -371,11 +371,11 @@ x.sim <- perturb(x, n = 5, thickness.attr = '.sd')
 par(mar=c(0,2,0,4))
 
 # inspect unique results
-plotSPC(unique(x.dupes, vars = c('top', 'bottom')), name.style = 'center-center')
+plotSPC(unique(x.dupes, vars = c('top', 'bottom')), name.style = 'center-center', width = 0.15)
 
 # uniqueness is a function of variable selection
 plotSPC(unique(x.sim, vars = c('top', 'bottom')), name.style = 'center-center')
-plotSPC(unique(x.sim, vars = c('name')), name.style = 'center-center')
+plotSPC(unique(x.sim, vars = c('name')), name.style = 'center-center', width = 0.15)
 ```
 
 # Plotting SoilProfileCollection Objects
@@ -714,7 +714,7 @@ mtext(1, line=2.25, text='Horizon Thickness Weighted Mean Ex. Ca:Mg', cex=0.75)
 
 
 # Slicing Soil Profile Collections
-Collections of soil profiles can be sliced (or re-sampled) into regular depth-intervals with the `slice()` function. The slicing structure and variables of interest are defined via formula notation:
+Collections of soil profiles can be sliced (or re-sampled) into regular depth-intervals with the `dice()` function. The slicing structure and variables of interest are defined via formula notation:
 
 ```{r slice-formula, eval=FALSE}
 # slice select horizon-level attributes
@@ -723,30 +723,30 @@ seq ~ var.1 + var.2 + var.3 + ...
 seq ~ .
 ```
 
-where `seq` is a sequence of integers (e.g. `0:15`, `c(5,10,15,20)`, etc.) and `var.1 + var.2 + var.3 + ...` are horizon-level attributes to slice. Both continuous and categorical variables can be named on the right-hand-side of the formula. The results returned by `slice()` is either a `SoilProfileCollection`, or `data.frame` when called with the optional argument `just.the.data=TRUE`. For example, to slice our sample data set into 1-cm intervals, from 0--15 cm:
+where `seq` is a sequence of integers (e.g. `0:15`, `c(5,10,15,20)`, etc.) and `var.1 + var.2 + var.3 + ...` are horizon-level attributes to slice. Both continuous and categorical variables can be named on the right-hand-side of the formula. The results returned by `dice()` is either a `SoilProfileCollection`, or `data.frame` when called with the optional argument `SPC = FALSE`. For example, to slice our sample data set into 1-cm intervals, from 0--15 cm:
 
 
 ```{r fig.height=4, fig.width=8}
-# slice data
-sliced <- slice(sp4, fm= 0:15 ~ sand + silt + clay + name + ex_Ca_to_Mg)
+# resample to 1cm slices
+s <- dice(sp4, fm= 0:15 ~ sand + silt + clay + name + ex_Ca_to_Mg)
 # check the result
-class(sliced)
+class(s)
 # plot sliced data
-par(mar=c(0,0,3,0)) # tighten figure margins
-plotSPC(sliced, name='name', color='ex_Ca_to_Mg')
+par(mar = c(0,0,3,0)) # tighten figure margins
+plotSPC(s, color = 'ex_Ca_to_Mg')
 ```
 
 
 Once soil profile data have been sliced, it is simple to extract "chunks" of data by depth interval via `[`-subsetting:
 ```{r eval=FALSE}
 # slice from 0 to max depth in the collection
-sliced <- slice(sp4, fm= 0:max(sp4) ~ sand + silt + clay + name + ex_Ca_to_Mg)
+s <- dice(sp4, fm= 0:max(sp4) ~ sand + silt + clay + name + ex_Ca_to_Mg)
 # extract all data over the range of 5--10 cm:
-plotSPC(sliced[, 5:10])
+plotSPC(s[, 5:10])
 # extract all data over the range of 25--50 cm:
-plotSPC(sliced[, 25:50])
+plotSPC(s[, 25:50])
 # extract all data over the range of 10--20 and 40--50 cm:
-plotSPC(sliced[, c(10:20, 40:50)])
+plotSPC(s[, c(10:20, 40:50)])
 ```
 
 
@@ -789,13 +789,13 @@ The depth structure ("slabs") over which summaries are computed is defined with 
 # across the entire collection, 
 # from 0--10 cm
 # computing the mean value ignoring missing data
-slab(sp4, fm= ~ sand + silt + clay, slab.structure=c(0,10), slab.fun=mean, na.rm=TRUE)
+slab(sp4, fm = ~ sand + silt + clay, slab.structure = c(0,10), slab.fun = mean, na.rm = TRUE)
 
 # again, this time within groups defined by a site-level attribute:
-slab(sp4, fm= group ~ sand + silt + clay, slab.structure=c(0,10), slab.fun=mean, na.rm=TRUE)
+slab(sp4, fm = group ~ sand + silt + clay, slab.structure=c(0,10), slab.fun=mean, na.rm = TRUE)
 
 # again, this time over several depth ranges
-slab(sp4, fm= ~ sand + silt + clay, slab.structure=c(0,10,25,40), slab.fun=mean, na.rm=TRUE)
+slab(sp4, fm =  ~ sand + silt + clay, slab.structure = c(0,10,25,40), slab.fun=mean, na.rm = TRUE)
 
 # again, this time along 1-cm slices, computing quantiles
 agg <- slab(sp4, fm= ~ Mg + Ca + ex_Ca_to_Mg + CEC_7 + clay)
