@@ -10,9 +10,20 @@ output:
 ---
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE, fig.align = 'center')
-options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+library(knitr, quietly=TRUE)
+
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background = '#F7F7F7', 
+  fig.align = 'center', 
+  dev = 'svglite', 
+  fig.ext = ".svg", 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+
+options(width = 100, stringsAsFactors = FALSE)
 ```
 
 
@@ -20,7 +31,6 @@ Question: is it possible to generate a reasonable sorting of soil profiles (a `S
 
 We will be using a subset of the the `loafercreek` sample data from the {soilDB} package.
 ```{r, fig.width=12, fig.height=6}
-# latest version from github
 library(aqp)
 library(soilDB)
 library(sharpshootR)
@@ -30,6 +40,8 @@ library(dendextend)
 library(MASS)
 
 data("loafercreek")
+hzdesgnname(loafercreek) <- 'hzname'
+
 
 # profiles 20-40
 x <- loafercreek[20:40, ]

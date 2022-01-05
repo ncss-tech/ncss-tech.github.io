@@ -16,9 +16,19 @@ output:
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-# setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background = '#F7F7F7', 
+  fig.align = 'center', 
+  dev = 'svglite', 
+  fig.ext = ".svg", 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -207,7 +217,7 @@ restrictions(sp4)
 
 # Spatial Data
 Spatial data can be explicitly stored within a `SoilProfileCollection` object and accessed with methods imported from the [sp](http://cran.at.r-project.org/web/packages/sp/index.html) package. The use of `sp` classes (in this case `SpatialPoints` and `SpatialPointsDataFrame` objects) simplifies operations such as [plotting spatial data, coordinate system transformations, and spatial queries](http://cran.at.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
-```{r spatial, fig.width=4, fig.height=4}
+```{r}
 # generate some fake coordinates as site level attributes
 sp4$x <- rnorm(n = length(sp4), mean = 354000, sd = 100)
 sp4$y <- rnorm(n = length(sp4), mean = 4109533, sd = 100)
@@ -226,10 +236,6 @@ proj4string(sp4)
 # see ?SpatialPointsDataFrame for details
 sp4.sp <- as(sp4, 'SpatialPointsDataFrame')
 
-# plot the fake coordinates
-plot(sp4.sp)
-box()
-
 # in the presence of spatial data, subsetting can either result in 
 # 1. a new SoilProfileCollection (> 1 horizon / profile)
 # 2. a new SpatialPointsDataFrame (1 horizon / profile)
@@ -241,6 +247,8 @@ class(sp4[, 1]) # horizon 1 from each profile
 # Subsetting SoilProfileCollection Objects
 `SoilProfileCollection` objects can be subset using the familiar `[`-style notation used by matrix and `data.frame` objects, such that: `spc[i, j]` will return profiles identified by the integer vector `i`, and horizons identified by the integer vector `j`. Omitting either index will result in all profiles (`i` omitted) or all horizons (`j` omitted). Typically, site-level attributes will be used as the subsetting criteria. Functions that return an index to matches (such as `grep()` or `which()`) provide the link between attributes and an index to matching profiles. Some examples:
 
+## Profiles
+Using the *i* index, select one or more profiles by numeric index. An index greater than the number of profiles will return an empty `SoilProfileCollection` object.
 ```{r eval=FALSE}
 # explicit string matching
 idx <- which(sp4$group == 'A')
@@ -249,21 +257,32 @@ idx <- which(sp4$group == 'A')
 idx <- which(sp4$elevation < 1000)
 
 # regular expression, matches any profile ID containing 'shasta'
-idx <- grep('shasta', profile_id(sp4), ignore.case=TRUE)
+idx <- grep('shasta', profile_id(sp4), ignore.case = TRUE)
 
 # perform subset based on index
 sp4[idx, ]
 ```
 
-Simpler subsetting with `subset`:
+In an interactive session, it is often simpler to use `subset()` directly:
 ```{r eval=FALSE}
 subset(sp4, group == 'A')
 subset(sp4, elevation < 1000)
 subset(sp4, grepl('shasta', id, ignore.case = TRUE))
 ```
 
+## Horizons by Index
+Using the *j* index, select the 2nd horizon from each profile in the collection. Use with caution, asking for a horizon beyond the length of any profile in the collection will result in an error.
+```{r eval = FALSE}
+sp4[, 2]
+```
 
 
+## Horizons by Keyword
+Using the *k* index, select the `.FIRST` first or `.LAST` horizons (by profile) within a collection. Note that `.FIRST` and `.LAST` are special keywords used by the `SoilProfileCollection` subset methods.
+```{r eval = FALSE}
+sp4[, , .FIRST]
+sp4[, , .LAST]
+```
 
 
 
@@ -338,9 +357,10 @@ str(res, 1)
 
 
 ## Duplication
+Duplicate the first profile in `sp4` (colusa) 8 times, resulting in a new `SoilProfileCollection` object containing unique profile IDs.
 ```{r fig.height=4, fig.width=8}
 d <- duplicate(sp4[1, ], times = 8)
-par(mar=c(0,2,0,4))
+par(mar = c(0,2,0,1))
 plotSPC(d, color = 'ex_Ca_to_Mg')
 ```
 
@@ -357,6 +377,7 @@ z = c(8, 5, 3, 7, 10, 2, 12)
 
 # init SPC
 depths(x) <- id ~ top + bottom
+hzdesgnname(x) <- 'name'
 
 # horizon depth variability for simulation
 horizons(x)$.sd <- 2
@@ -532,14 +553,15 @@ plotSPC(sp4, name='name', color='genhz', col.palette=RColorBrewer::brewer.pal(3,
 ```
 
 
-Horizon-level attributes that represent a volume fraction (e.g. coarse-fragment percentage) can be added to an existing figure:
+Horizon-level attributes that represent a volume fraction (e.g. coarse-fragment percentage) can be added to an existing figure. See `?addVolumeFraction` for additional customization ideas.
 ```{r plotting-vol-fraction, fig.height=4, fig.width=8}
 # tighter figure margins
 par(mar=c(0,0,3,0)) 
 # convert fraction -> percent
 sp4$frag_pct <- sp4$CF * 100
 
-plotSPC(sp4, name='name', color='frag_pct')
+# label horizons with fragment percent
+plotSPC(sp4, name = 'frag_pct', color = 'frag_pct')
 # symbolize volume fraction data
 addVolumeFraction(sp4, colname = 'frag_pct')
 ```
@@ -564,10 +586,10 @@ a
 ```
 
 ```{r fig.height=4, fig.width=8}
-par(mar=c(0,0,0,0)) # tighter figure margins
-plotSPC(sp4, name='name')
+par(mar = c(0,0,0,0))
+plotSPC(sp4)
 # annotate with brackets
-addBracket(a, col='red')
+addBracket(a, col='red', offset = -0.4)
 ```
 
 Labels.
@@ -578,7 +600,7 @@ a$label <- site(sp4)$id
 par(mar=c(0,0,0,0))
 plotSPC(sp4, name='name')
 # note that depth brackets "know which profiles to use"
-addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
+addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25, offset = -0.4)
 ```
 
 It is possible to arrange profile sketches by site-level grouping variable:
@@ -587,7 +609,7 @@ It is possible to arrange profile sketches by site-level grouping variable:
 par(mar=c(0,0,0,0)) # tighter figure margins
 groupedProfilePlot(sp4, groups='group')
 # note that depth brackets "know" which profiles to use
-addBracket(a, col='red')
+addBracket(a, col='red', offset = -0.4)
 ```
 
 There need not be brackets for all profiles in a collection:
@@ -600,7 +622,7 @@ par(mar=c(0,0,0,0))
 groupedProfilePlot(sp4, groups='group')
 
 # note that depth brackets "know which profiles to use"
-addBracket(a.sub, col='red')
+addBracket(a.sub, col='red', offset = -0.4)
 ```
 
 
@@ -611,7 +633,7 @@ a$bottom <- NA
 par(mar=c(0,0,0,0))
 groupedProfilePlot(sp4, groups='group')
 # note that depth brackets "know which profiles to use"
-addBracket(a, col='red')
+addBracket(a, col='red', offset = -0.4)
 ```
 
 Manually define bottom depth
@@ -620,7 +642,7 @@ Manually define bottom depth
 par(mar=c(0,0,0,0))
 groupedProfilePlot(sp4, groups='group')
 # note that depth brackets "know which profiles to use"
-addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25)
+addBracket(a, col='red', label.cex = 0.75, missing.bottom.depth = 25, offset = -0.4)
 ```
 
 Further customization of brackets:
@@ -637,7 +659,7 @@ par(mar=c(0,0,0,0))
 plotSPC(sp4, max.depth = 75)
 
 # add restrictions using vertical bars
-addBracket(a, col='red', label.cex = 0.75, tick.length = 0, lwd=3)
+addBracket(a, col='red', label.cex = 0.75, tick.length = 0, lwd=3, offset = -0.4)
 ```
 
 
@@ -650,9 +672,10 @@ These functions (`addBracket`, `addDiagnosticBracket`, and `addVolumeFraction`) 
 Sketches for use in layout tools such as Adobe Illustrator or Inkscape should be stored in a vector file format. SVG is compatible with most software titles. WMF output is compatible with MS Office tools and can be written with the `win.metafile()` function.
 
 ```{r eval=FALSE}
-svg(filename = 'e:/temp/fig.svg', width=7, height=6, pointsize = 12, family = 'sans')
+library(svglite)
+svglite(filename = 'e:/temp/fig.svg', width = 7, height = 6, pointsize = 12)
 
-par(mar=c(0,2,0,4), xpd=NA)
+par(mar = c(0,2,0,4), xpd = NA)
 plotSPC(x, cex.names=1, axis.line.offset = -0.2, width=0.3)
 
 dev.off()
@@ -910,7 +933,14 @@ plotSPC(d.gsm.pedons.2, name='', color='p1', col.label='Contributing Fraction', 
 
 
 # Pair-Wise Dissimilarity
-Calculation of between-profile dissimilarity is performed using the `profile_compare()` function. Dissimilarity values depend on attributes selection (e.g. clay, CEC, pH , etc.), optional depth-weighting parameter (`k`), and a maximum depth of evaluation (`max_d`). This topic is further documented in a [related tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html), the function manual page (type `help(profile_compare)` in the **R** console), and [this paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
+Calculation of between-profile dissimilarity is performed using the `profile_compare()` function. Dissimilarity values depend on attributes selection (e.g. clay, CEC, pH , etc.), optional depth-weighting parameter (`k`), and a maximum depth of evaluation (`max_d`). See the [function manual page](http://ncss-tech.github.io/aqp/reference/pc.html) and [this paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020) for details.
+
+Some additional examples can be found in:
+
+   * [Pair-Wise Distances by Generalized Horizon Labels](http://ncss-tech.github.io/AQP/aqp/genhz-distance-eval.html)
+   * [Competing Soil Series](http://ncss-tech.github.io/AQP/soilDB/competing-series.html)
+   * [Soil Profile Distances](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html)
+
 ```{r fig.height=6, fig.width=10}
 library(cluster)
 library(sharpshootR)
