@@ -19,12 +19,12 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 # library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
 # Introduction
-
+The semi-automatic creation of soil profile sketches from morphologic data (OSDs, SSURGO components, NASIS pedons, etc.) has become something of an obsession for me, starting with field notes collected during my first season mapping soils in Pinnacles National Park, CA (CA788). These sketches appeared in SoilWeb circa 2007, with approximate colors derived from the OSDs in 2009. The [{aqp} package](http://ncss-tech.github.io/aqp/docs/) (2011) for R formalized one possible process for converting basic horizon morphology into cartoon-like sketches of soil profiles. If interested, I’d highly recommend the [`SoilProfileCollection` object documentation](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) for a detailed description of soil profile sketch authoring.
 
 
 ## Horizon Boundaries
@@ -35,7 +35,7 @@ options(width=100, stringsAsFactors=FALSE)
 
 ### Distinctness
 
-   * diagnoal lines depict the average depth over which the boundary is defined
+   * diagonal lines depict the average depth over which the boundary is defined
       + do we need to use a more rigorous geometry model?
       + may be hard to interpret without detailed explanation / examples
       + visually compact
@@ -49,16 +49,6 @@ options(width=100, stringsAsFactors=FALSE)
 
 ### Topography
 
-
-<!-- A typical set of sketches, derived from the OSDs, is presented below. Note that horizon boundaries are depicted as horizontal lines—suggesting very abrupt/smooth (VS) horizon boundaries. We all know that VS horizon boundaries are not that common; can we do better? Examples used in this article have been sourced via fetchOSD() of the {soilDB} R package. -->
-
-<!-- Horizon boundary distinctness describes the vertical distance over which one horizon transitions to the next. Horizon boundary topography describes the complexity of the horizon boundary. In {aqp} these two features are encoded using diagonal lines (distinctness) and "chevrons" (topography). The following figure demonstrates several possible combinations of horizon boundary distinctness and topography. Horizon depths are marked with small green symbols. The magnitude of these effects can be controlled when converting text boundary codes (e.g. CW) into representative "offsets". The default values have been selected based on an interpretation of our Field Book for Describing and Sampling Soils. The {aqp} manual contains a detailed explanation of usage and assumptions. -->
-
-<!-- Using the horizon boundary data from the OSDs and encoding via "diagonals" (distinctness) and "chevrons" (topography), we see the following. Note that horizon boundary topography has also been encoded via line type for clarity. What do you think? Is this an improvement or just clutter? Feel free to contact me with questions, suggestions, or a completely different approach to increasing the information density of these sketches. The code used to generate these figures is posted on the {aqp} GitHub site. -->
-
-<!-- Horizon boundary distinctness demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the "diagonal" boundaries is constrained by the depths of adjacent horizons. -->
-
-<!-- Horizon boundary topography demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the "chevron" is constrained by the depths of adjacent horizons. -->
 
 
 ## Required Packages
@@ -83,44 +73,35 @@ library(soilDB)
 
 <!-- The main idea is that a gradual horizon boundary represents a transition zone of up to +/- 7.5cm. -->
 
-```{r}
+```{r eval=FALSE}
+# same result
 hzDistinctnessCodeToOffset('G')
+hzDistinctnessCodeToOffset('gradual')
 ```
 
 
 ## Get Some Data
 
 ```{r}
-
-
 # select soil series names
 soil.series <- c('leon', 'musick', 'clarksville', 'pardee', 'amador', 'lucy', 'dylan', 'tristan', 'pierre', 'drummer', 'zook')
 
 # get the data
 osds <- fetchOSD(soil.series)
 
-# encode horizon boundarydistinctness via vertical offset
-osds$hd <- hzDistinctnessCodeToOffset(
-  osds$distinctness, 
-  codes=c('very abrupt', 'abrupt', 'clear', 'gradual', 'diffuse')
-  )
+# encode horizon boundary distinctness via vertical offset
+osds$hd <- hzDistinctnessCodeToOffset(osds$distinctness)
 
 # encode horizon boundary topography via vertical offset
-osds$hzto <- hzTopographyCodeToOffset(
-  osds$topography, 
-  codes = c('smooth', 'wavy', 'irregular', 'broken')
-)
+osds$hzto <- hzTopographyCodeToOffset(osds$topography)
 
-# also encode horizon boundary topography las line type
-osds$hzto.lty <- hzTopographyCodeToLineType(
-  osds$topography,
-  codes = c('smooth', 'wavy', 'irregular', 'broken')
-)
+# also encode horizon boundary topography as line type
+osds$hzto.lty <- hzTopographyCodeToLineType(osds$topography)
 
 # label data source, used later 
 site(osds)$source <- 'OSD'
 
-# concise representation of hz bnd distinctness and topography
+# concise representation of distinctness and topography
 # similar to field notes
 osds$bnd.code <- sprintf(
   "%s%s",
@@ -133,7 +114,7 @@ osds$bnd.code <- gsub('NANA', '', osds$bnd.code)
 ```
 
 # Horizon Sketches in {aqp}
-A typical set of sketches, derived from the OSDs, is presented below. Note that horizon boundaries are depicted as horizontal lines—suggesting very abrupt/smooth (VS) horizon boundaries. We all know that VS horizon boundaries are not that common; can we do better? Examples used in this article have been sourced via fetchOSD() of the {soilDB} R package.
+A typical set of sketches, derived from the OSDs, is presented below. Note that horizon boundaries are depicted as horizontal lines—suggesting very abrupt/smooth (VS) horizon boundaries. We all know that VS horizon boundaries are not that common; can we do better? Examples used in this article have been sourced via [`fetchOSD()`](http://ncss-tech.github.io/soilDB/docs/reference/fetchOSD.html) of the [{soilDB}](http://ncss-tech.github.io/soilDB/docs/) R package.
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 1), bg = 'black', fg = 'white')
@@ -147,7 +128,7 @@ Using the horizon boundary data from the OSDs and encoding via “diagonals” (
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 1), bg = 'black', fg = 'white')
 
-plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.66, cex.names = 0.55, name = 'name', hz.boundary.lty = 'hzto.lty') 
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.66, cex.names = 0.55, hz.boundary.lty = 'hzto.lty') 
 
 legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.05, bty = 'n', cex = 0.85)
 ```
@@ -159,7 +140,7 @@ Horizon boundary distinctness describes the vertical distance over which one hor
 
 ```{r fig.width=8, fig.height=5}
 # a single series
-x <- filter(osds, id == 'DRUMMER')
+x <- subset(osds, id == 'DRUMMER')
 
 # # full set of boundary topography codes
 # g <- expand.grid(
@@ -215,11 +196,9 @@ legend('bottom', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken
 ## Examples
 Horizon boundary distinctness demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the “diagonal” boundaries is constrained by the depths of adjacent horizons. 
 
-Horizon boundary topography demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the “chevron” is constrained by the depths of adjacent horizons.
-
 ```{r fig.width=10, fig.height=5}
 # keep a single OSD for the demo
-x <- filter(osds, id == 'LEON')
+x <- subset(osds, id == 'LEON')
 
 # safely duplicate these data 6 times
 # --> new IDs generated, old IDs saved into .oldID
@@ -254,7 +233,7 @@ plotSPC(z, width=0.33, print.id=TRUE, hz.distinctness.offset = 'hd', label='sour
 title('Horizon Boundary Distinctness', line = 0, col.main = 'white')
 ```
 
-
+Horizon boundary topography demonstration for the LEON soil series, data sourced from the OSD. Note that vertical offset of the “chevron” is constrained by the depths of adjacent horizons.
 ```{r fig.width=10, fig.height=5}
 # safely duplicate these data 4 times
 # --> new IDs generated, old IDs saved into .oldID
@@ -293,9 +272,8 @@ title('Horizon Boundary Topography', line = 0, col.main = 'white')
 
 # Alternative Approaches
 
-## Horizon Distinctness
-
-```{r fig.width=10, fig.height=5}
+Horizon distinctness via vertical segments with transparency.
+```{r fig.width=10, fig.height=5.5}
 # TODO: generalize this
 hdn <- horizonDepths(osds)
 
@@ -311,6 +289,13 @@ par(mar = c(0, 0, 0, 1))
 plotSPC(osds, width = 0.25, cex.id = 0.66, cex.names = 0.55, hz.distinctness.offset = 'hd') 
 
 # encode with brackets
+addBracket(s, tick.length = 0, offset = -0.33, lwd = 5, col=rgb(red=0, green=0, blue=1, alpha=0.5))
+```
+
+```{r fig.width=10, fig.height=5.5}
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, width = 0.25, cex.id = 0.66, cex.names = 0.55, name.style = 'center-center', hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.08, plot.depth.axis = FALSE) 
+
 addBracket(s, tick.length = 0, offset = -0.33, lwd = 5, col=rgb(red=0, green=0, blue=1, alpha=0.5))
 ```
 
