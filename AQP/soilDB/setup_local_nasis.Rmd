@@ -12,6 +12,8 @@ output:
 ## Introduction
 This document describes how to setup an ODBC link between **R** and the local NASIS database.
 
+0. If you have the NASIS application open, please close it before creating ODBC data source connections.
+
 ## Open the ODBC Data Source Administrator
 
 1. Go to the Start Menu and search for 'ODBC'. Select "_ODBC Data Sources (64-bit)_" if you are using Windows 10. It should look like this:
@@ -20,7 +22,7 @@ This document describes how to setup an ODBC link between **R** and the local NA
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
 
-  + Select the "ODBC Driver 13 for SQL Server" driver.
+  + Select the "ODBC Driver 13 for SQL Server" driver. If this driver is not available, use "SQL Server Native Client 11.0"
   
   
 ![](odbc-02.png)
