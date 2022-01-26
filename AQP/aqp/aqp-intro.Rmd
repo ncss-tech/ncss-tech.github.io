@@ -486,6 +486,15 @@ par(mar = c(0,2,0,4), xpd = NA)
 plotSPC(x, cex.names = 1, axis.line.offset = -0.1, width = 0.3)
 ```
 
+## Horizon Depth Labeling
+Horizon depths can be labeled for each profile as an alternative to a single depth axis. As of aqp version 1.41, it is possible to "fix" overlapping horizon depth labels with the new `fixLabelCollisions` argument. This approach to labeling depths works best when moving horizon designations with the `name.style` argument. Note that setting `fixLabelCollisions = TRUE` may incur a significant performance penalty when plotting large `SoilProfileCollection` objects.
+
+```{r, fig.width=8, fig.height=6}
+# set margins and turn off clipping
+par(mar = c(0, 0, 1, 1))
+plotSPC(x, cex.names = 1, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.08)
+```
+
 
 
 ## Relative Horizontal Positioning
