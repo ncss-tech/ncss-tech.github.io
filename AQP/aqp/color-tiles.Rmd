@@ -54,7 +54,7 @@ plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.styl
 ```
 
 Make a 5x6 grid of soil colors from above.
-```{r fig.width=5, fig.height=5}
+```{r fig.width=3, fig.height=3}
 m <- horizons(w)[, c('hzn_top', 'hzn_bot', 'moist_soil_color', 'color')]
 
 m <- matrix(m$moist_soil_color, nrow = 6, ncol = 5, byrow = FALSE)
@@ -63,7 +63,25 @@ par(mar=c(0,0,0,0))
 plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
 
 # vectorized functions are the best
-rect(xleft = col(m) - 0.4, ybottom = row(m) -0.4, xright = col(m) + 0.4, ytop = row(m) + 0.4, col = m, border = NA)
+rect(xleft = col(m) - 0.4, ybottom = row(m) + 0.4, xright = col(m) + 0.4, ytop = row(m) - 0.4, col = m, border = NA)
+```
+
+This time with rounded corners
+```{r fig.width=3, fig.height=3}
+library(berryFunctions)
+
+par(mar=c(0,0,0,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
+
+# ugh
+col.m <- col(m)
+row.m <- row(m)
+
+# not vectorized
+for(i in seq_along(m)) {
+  roundedRect(xleft = col.m[i] - 0.4, ybottom = row.m[i] + 0.4, xright = col.m[i] + 0.4, ytop = row.m[i] - 0.4, col = m[[i]], border = NA, rounding = 0.25)
+}
+
 ```
 
 Annotate with Munsell colors.
@@ -72,9 +90,9 @@ par(mar=c(0,0,0,0))
 plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
 
 # vectorized functions are the best
-rect(xleft = col(m) - 0.4, ybottom = row(m) -0.4, xright = col(m) + 0.4, ytop = row(m) + 0.4, col = m, border = NA)
+rect(xleft = col(m) - 0.4, ybottom = row(m) + 0.4, xright = col(m) + 0.4, ytop = row(m) - 0.4, col = m, border = NA)
 
-text(x = col(m), y = row(m), labels = w$color, col = invertLabelColor(w$moist_soil_color), cex = 0.66, font = 3)
+text(x = col(m), y = row(m), labels = w$color, col = invertLabelColor(w$moist_soil_color), cex = 0.5, font = 3)
 ```
 
 ----------------------------
