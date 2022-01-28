@@ -7,12 +7,11 @@ output:
     mathjax: null
     jquery: null
     smart: no
-    keep_md: no
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -33,44 +32,40 @@ library(RColorBrewer)
 library(scales)
 
 # get lab / morphologic data
-x <- fetchKSSL(series='holland', returnMorphologicData = TRUE)
+x <- fetchKSSL(series = 'holland', returnMorphologicData = TRUE, simplifyColors = TRUE)
 
 # extract pedons into SoilProfileCollection
 s <- x$SPC
 
-# extract horizon data from SPC
-h <- horizons(s)
-
-# simplify color data: 1 row / horizon, from morphologic data tables
-x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
-
-# merge color data into SPC
-h <- join(h, x.colors, by='labsampnum', type='left', match='first')
-
 # remove horizons that are missing moist colors
-h <- subset(h, h$m_hue != '' & ! is.na(h$m_hue) & ! is.na(h$m_value) & ! is.na(h$m_chroma))
+s <- subsetHz(s, !is.na(m_hue) & !is.na(m_value) & !is.na(m_chroma))
+
+# remove profiles with missing horizons due to above steps
+s <- HzDepthLogicSubset(s)
 
 # re-assemble Munsell color notation for moist color
-h$color <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
-
-# pack horizon data back into SPC
-horizons(s) <- h
+s$color <- sprintf("%s %s/%s", s$m_hue, s$m_value, s$m_chroma)
 ```
+
+
+
+
+
 
 
 Moist color changes with depth.
 ```{r fig.width=8, fig.height=5}
 par(mar=c(0,0,2,0))
-plot(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4)
+plotSPC(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4)
 mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 ```
 
 
 Compute depth-wise transition probability matrix for moist colors. Visualize as a graph organized by communities.
 ```{r, fig.width=9, fig.height=9}
-# remove profile #8
-idx <- (1:length(s))[-8]
-s <- s[idx, ]
+# # remove profile #8
+# idx <- (1:length(s))[-8]
+# s <- s[idx, ]
 
 # generate TP matrix from horizon moist colors
 tp <- hzTransitionProbabilities(s, name="color", loopTerminalStates = FALSE)
@@ -88,8 +83,8 @@ cl <- data.frame(color=V(g)$name, cluster=V(g)$cluster, stringsAsFactors = FALSE
 # join with SPC
 # note that we have to extract / join / splice
 h <- horizons(s)
-h <- join(h, cl, by='color')
-horizons(s) <- h
+h <- merge(x = h, y = cl, by = 'color', sort = FALSE)
+replaceHorizons(s) <- h
 
 # hack re-recreate colors used by plotSoilRelationGraph
 # good reminder to return more from that function...
@@ -97,8 +92,8 @@ cols <- colorRampPalette(brewer.pal(n = 9, name = "Set1"))(max(cl$cluster))
 s$cluster_color <- alpha(cols[s$cluster], 0.65)
 
 # profile sketches, colors match communities in graph above
-par(mar=c(0,0,1,0))
-plot(s, color='cluster_color', print.id=FALSE, name='hzn_desgn')
+par(mar=c(0,0,1,1))
+plotSPC(s, color='cluster_color', print.id=FALSE, name='hzn_desgn', name.style = 'center-center')
 mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 ```
 
@@ -108,7 +103,7 @@ Visualize as graph with vertices colored according to soil color.
 ```{r, fig.width=9, fig.height=9}
 # join Munsell color notation to graph nodes
 d <- data.frame(color=V(g)$name, stringsAsFactors = FALSE)
-d <- join(d, horizons(s), by = 'color', type='left', match='first')
+d <- plyr::join(d, horizons(s), by = 'color', type='left', match='first')
 V(g)$color <- d$moist_soil_color
 
 # prepare labels by converting to HSV
@@ -151,7 +146,7 @@ par(mar=c(1,0,3,0))
 plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(160, 1), xlim=c(1, 30))
 
 # vectorized functions are the best
-rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA)
+rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA, lty = 0)
 ```
 
 
@@ -163,7 +158,7 @@ par(mar=c(1,0,3,0))
 plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(160, 1), xlim=c(1, 32))
 
 # vectorized functions are the best
-rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA)
+rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA, lty = 0)
 
 # stretch most likely sequence... this isn't quite right
 rect(xleft=31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * seq_along(ml) + 0.5, col = parseMunsell(ml))
@@ -171,37 +166,34 @@ rect(xleft=31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * 
 
 
 
+
+
 Do it again, this time for a soil series with a lot of data: [Clarksville](https://casoilresource.lawr.ucdavis.edu/sde/?series=clarksville).
 ```{r}
 # get lab / morphologic data
-x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE)
+x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE, simplifyColors = TRUE)
 
-# extract pedons into SoilProfileCollection
+# extract SoilProfileCollection
 s <- x$SPC
 
-# extract horizon data from SPC
-h <- horizons(s)
-
-# simplify color data: 1 row / horizon, from morphologic data tables
-x.colors <- simplifyColorData(x$morph$phcolor, id.var = 'labsampnum', wt='colorpct')
-
-# merge color data into SPC
-h <- join(h, x.colors, by='labsampnum', type='left', match='first')
-
 # remove horizons that are missing moist colors
-h <- subset(h, h$m_hue != '' & ! is.na(h$m_hue) & ! is.na(h$m_value) & ! is.na(h$m_chroma))
+s <- subsetHz(s, !is.na(m_hue) & !is.na(m_value) & !is.na(m_chroma))
+
+# remove profiles with missing horizons due to above steps
+s <- HzDepthLogicSubset(s)
+
+# keep only profiles with > 2 horizons
+idx <- which(profileApply(s, nrow) > 2)
+s <- s[idx, ]
 
 # re-assemble Munsell color notation for moist color
-h$color <- paste0(h$m_hue, ' ', h$m_value, '/', h$m_chroma)
-
-# pack horizon data back into SPC
-horizons(s) <- h
+s$color <- sprintf("%s %s/%s", s$m_hue, s$m_value, s$m_chroma)
 ```
 
 Clarksville moist soil colors.
 ```{r fig.width=10, fig.height=5}
 par(mar=c(0,0,2,0))
-plot(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4, divide.hz=FALSE)
+plotSPC(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4, divide.hz=FALSE, lty = 0)
 mtext('KSSL data correllated to Clarksville series', at=0.5, adj = 0)
 ```
 
@@ -234,8 +226,32 @@ rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright =
 ```
 
 
+Make a 5x6 grid of soil colors from the first 5 profiles having > 5 horizons, and first 6 horizons.
+```{r fig.width=8, fig.height=6.5}
+# filter to just those profiles with > 5 horizons
+idx <- which(profileApply(s, nrow) > 5)
 
+# take the first 5 profiles, first 6 horizons
+w <- s[idx[1:5], 1:6]
 
+# check
+par(mar=c(0,0,0,0))
+plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.06)
+```
+
+```{r fig.width=5, fig.height=5}
+m <- horizons(w)[, c('hzn_top', 'hzn_bot', 'moist_soil_color', 'color')]
+
+m <- matrix(m$moist_soil_color, nrow = 6, ncol = 5, byrow = FALSE)
+
+par(mar=c(0,0,0,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
+
+# vectorized functions are the best
+rect(xleft = col(m) - 0.4, ybottom = row(m) -0.4, xright = col(m) + 0.4, ytop = row(m) + 0.4, col = m, border = NA)
+
+text(x = col(m), y = row(m), labels = w$color, col = invertLabelColor(w$moist_soil_color), cex = 0.66, font = 3)
+```
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

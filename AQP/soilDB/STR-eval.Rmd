@@ -4,27 +4,27 @@ author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
-  mathjax: null
-jquery: null
-smart: no
+    mathjax: null
+    jquery: null
+    smart: no
 ---
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
 ## Background
-The `estimateSTR()` function from the `soilDB` package applies a [soil temperature regime](https://en.wikipedia.org/wiki/USDA_soil_taxonomy#Soil_Temperature_Regimes_(STR)) (STR) classification using rules from Soil Taxonomy (12th edition). Accurate classificaiton of STR depends on the following properties:
+The `estimateSTR()` function from the `soilDB` package applies a [soil temperature regime](https://en.wikipedia.org/wiki/USDA_soil_taxonomy#Soil_Temperature_Regimes_(STR)) (STR) classification using rules from Soil Taxonomy (12th edition). Accurate classification of STR depends on the following properties:
 
    * MAST: mean annual soil temperature (degrees C, at 50cm)
    * MSST: mean summer soil temperature (degrees C, at 50cm)
    * MWST: mean winter soil temperature (degrees C, at 50cm)
-   * O horizon presence / absense
-   * permafrost presence / absense
+   * O horizon presence / absence
+   * permafrost presence / absence
 
-The function will generate resonable, but possibly wrong, results if missing O horizon, saturation, and permafrost values. This is only an issue for the gelic / cryic / frigid STR, e.g. in very cold climates.
+The function will generate reasonable, but possibly wrong, results if missing O horizon, saturation, and permafrost values. This is only an issue for the gelic / cryic / frigid STR, e.g. in very cold climates.
 
 
 STR include:

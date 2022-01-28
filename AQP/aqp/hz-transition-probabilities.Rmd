@@ -1,6 +1,9 @@
 ---
+title: "Horizon Sequence Transition Probability"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
 output:
-  html_vignette:
+  html_document:
     mathjax: null
     jquery: null
     smart: no
@@ -8,7 +11,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.align='center', dev='svglite', tidy=TRUE)
 options(width=100, stringsAsFactors=FALSE)
 
 knit_hooks$set(htmlcap = function(before, options, envir) {
@@ -17,15 +20,6 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
     }
     })
 ```
-
-
-Horizon Sequence Transition Probability
-=======================================
-D.E. Beaudette
-<br>
-`r format(Sys.time(), "%Y-%m-%d")`
-<br>
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
 
 # Introduction
@@ -190,4 +184,11 @@ for(i in 1:length(s)) {
   plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.3, edge.scaling.factor=2, main=s[i], vertex.label.cex=0.75, vertex.label.family='sans')
 }
 ```
+
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+
 
