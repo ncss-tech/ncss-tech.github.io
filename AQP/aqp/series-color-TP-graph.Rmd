@@ -11,7 +11,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE, fig.align = 'center')
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -225,33 +225,6 @@ plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(11, 1), xlim=c(1, 30))
 rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence)
 ```
 
-
-Make a 5x6 grid of soil colors from the first 5 profiles having > 5 horizons, and first 6 horizons.
-```{r fig.width=8, fig.height=6.5}
-# filter to just those profiles with > 5 horizons
-idx <- which(profileApply(s, nrow) > 5)
-
-# take the first 5 profiles, first 6 horizons
-w <- s[idx[1:5], 1:6]
-
-# check
-par(mar=c(0,0,0,0))
-plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.06)
-```
-
-```{r fig.width=5, fig.height=5}
-m <- horizons(w)[, c('hzn_top', 'hzn_bot', 'moist_soil_color', 'color')]
-
-m <- matrix(m$moist_soil_color, nrow = 6, ncol = 5, byrow = FALSE)
-
-par(mar=c(0,0,0,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
-
-# vectorized functions are the best
-rect(xleft = col(m) - 0.4, ybottom = row(m) -0.4, xright = col(m) + 0.4, ytop = row(m) + 0.4, col = m, border = NA)
-
-text(x = col(m), y = row(m), labels = w$color, col = invertLabelColor(w$moist_soil_color), cex = 0.66, font = 3)
-```
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
