@@ -243,7 +243,7 @@ bwplot(spi ~ factor(year) | month, data=scaled.data, as.table=TRUE, par.settings
 
 por <- sprintf('Period of Record: 1939-%s', yr)
 
-bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub = por, ylim=c(-0.05, 1.1), ylab='Percentile', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
+bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey', mo), sub = por, ylim=c(-0.05, 1.1), ylab='Empirical Percentiles of SWE', par.settings=tps, scales=list(alternating=3, y=list(tick.number=10)), subset=year > 1997 & month == mo, panel=function(x=x, y=y, ...) {
   panel.grid(-1, -1)
   panel.abline(h=0.5, lty=2, col='orange')
   panel.bwplot(x=x, y=y, ...)
