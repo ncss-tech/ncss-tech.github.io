@@ -95,8 +95,8 @@ library(plyr)
 
 
 # current data are:
-yr <- 2021
-mo <- 'May'
+yr <- 2022
+mo <- 'February'
 
 # Stanislaus River watershed
 course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
