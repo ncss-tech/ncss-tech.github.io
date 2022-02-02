@@ -18,7 +18,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -240,11 +240,11 @@ table(g$taxonname)
 ```
 
 
-Sometimes it is useful to split a collection into individual objects. Do this now by `filter`-ing on taxonname.
+Sometimes it is useful to split a collection into individual objects. Do this now by `subset`-ing on taxonname.
 ```{r fig.width=6, fig.height=7}
-musick <- filter(g, taxonname == 'musick')
-holland <- filter(g, taxonname == 'holland')
-chaix <- filter(g, taxonname == 'chaix')
+musick <- subset(g, taxonname == 'musick')
+holland <- subset(g, taxonname == 'holland')
+chaix <- subset(g, taxonname == 'chaix')
 ```
 
 
