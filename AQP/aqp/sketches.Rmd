@@ -1,0 +1,428 @@
+---
+title: "Soil Profile Sketches"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background = '#F7F7F7', 
+  fig.align = 'center', 
+  dev = 'svglite', 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+# Introduction
+This is an expanded description of the arguments to `plotSPC()` and tips on making soil profile sketches look the way you want them to.
+
+# Example Data
+```{r}
+library(aqp)
+library(soilDB)
+
+# some interesting soil series
+s <- c('leon', 'musick', 'clarksville', 'pardee', 'lucy', 'pierre', 'drummer', 'zook', 'san joaquin')
+
+# get basic morphology and extended data from SoilWeb cache 
+osds.full <- fetchOSD(s, extended = TRUE)
+
+# save copy of SoilProfileCollection for later
+osds <- osds.full$SPC
+```
+
+# Canvas
+See the [SPC introduction for the basics](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html#10_Plotting_SoilProfileCollection_Objects).
+```{r fig.width=10, fig.height=6}
+explainPlotSPC(osds)
+```
+
+
+
+# Arguments to `plotSPC`
+
+## `x`
+A `SoilProfileCollection` object with one or more profiles. Large collections (>25 profiles) may be hard to interpret on screen. Consider save the output directly to a PNG or PDF, for example:
+
+```{r eval = FALSE}
+# start output device, dimensions are in pixels
+png(filename = 'output.png', width = 1600, height = 800)
+
+# plot
+plotSPC(reallyBigSPC)
+
+# close device, write file
+dev.off()
+```
+
+Turning off ID and horizon designation annotation is another strategy for getting a quick glimpse of a large collection. Turning off profile and horizon bounary outlines with `divide.hz = FALSE` can help too.
+```{r fig.width=10, fig.height=4}
+# a single profile from our example
+musick <- subset(osds, id == 'MUSICK')
+
+# standard deviation of horizon boundary variation
+horizons(musick)$hzb <- 10
+
+# simulate 50 profiles
+musick.sim <- perturb(musick, n = 50, boundary.attr = 'hzb')
+
+# no margins
+par(mar = c(0, 0, 0, 0))
+# note other arguments used to improve legibility
+plotSPC(musick.sim, print.id = FALSE, name = NA, plot.depth.axis = TRUE, width = 0.4, divide.hz = FALSE, axis.line.offset = -4, cex.depth.axis = 0.75)
+```
+
+
+## `color`
+A quoted column name containing R-compatible color descriptions (e.g. `#7A5C37FF`, approximately 10YR 4/4), or numeric / categorical data to be displayed thematically.
+
+Numeric values.
+```{r fig.width=10, fig.height=5}
+# leave room at the top for a legend, and on the right hand side for depth axis.
+par(mar = c(0, 0, 3, 1))
+
+# horizon top depth
+plotSPC(osds, color = 'top', col.label = 'Horizon Top Depth (cm)', cex.names = 0.66)
+
+plotSPC(osds, color = 'value', col.label = 'Munsell Value (moist)', cex.names = 0.66)
+```
+
+Categorical values.
+```{r fig.width=10, fig.height=5}
+# set ordering of Munsell hue according to hue position
+osds$hue_ordered <- factor(osds$hue, levels = huePosition(returnHues = TRUE))
+
+# leave room at the top for a legend, and on the right hand side for depth axis.
+par(mar = c(0, 0, 3, 1))
+
+plotSPC(osds, color = 'hue_ordered', col.label = 'Munsell Value (moist)', cex.names = 0.66)
+
+# reaction class is already an ordered factor, set in fetchOSD()
+plotSPC(osds, color = 'pH_class', col.label = 'Reaction Class', cex.names = 0.66, col.legend.cex = 0.66)
+```
+
+User-defined colors in hex notation.
+```{r fig.width=10, fig.height=5}
+# assign each horizon a color of the rainbow
+horizons(osds)$rainbowColors <- rainbow(n = nrow(osds))
+
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, color = 'rainbowColors', cex.names = 0.66, col.legend.cex = 0.66)
+
+# color gradient from 2.5YR 6/8 -> 5Y 3/3
+cr <- colorRampPalette(parseMunsell(c('2.5YR 6/8', '5Y 3/3')), space = 'Lab', interpolate = 'spline')
+
+horizons(osds)$gradientColors <- cr(n = nrow(osds))
+
+plotSPC(osds, color = 'gradientColors', cex.names = 0.66, col.legend.cex = 0.66)
+```
+
+
+
+## `width`
+Each profile is given 1 horizontal unit of space in the figure. The `width` argument is given as 1/2 of this space: typically ranging from 0.1--0.4. Values >= 0.5 will cause overlap.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1))
+
+plotSPC(osds, cex.names = 0.66, print.id = FALSE, name = NA)
+
+# annotate horizontal space allocated to each profile
+abline(v = seq(0.5, length(osds) + 0.5, by = 1), lty = 2)
+```
+
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1))
+
+# too skinny, but lots of room for extra annotation
+plotSPC(osds, width = 0.1, cex.names = 0.66, print.id = FALSE)
+
+# works OK without horizon designations on the right side
+plotSPC(osds, width = 0.45, cex.names = 0.66, name = NA)
+
+# about right
+plotSPC(osds, width = 0.3, cex.names = 0.66)
+```
+
+
+
+## `name`
+quoted column name of the (horizon-level) attribute containing horizon designations or labels, if missing hzdesgnname(x) is used. Suppress horizon name printing by setting name = NA or name = ''.
+
+## `name.style`
+Horizon designation label style, one of `c('right-center', 'left-center', 'left-top', 'center-center')`. The `right-center` position has been the default in **aqp** since 2010. I prefer the `center-center` style. Note that horizon designation label colors are automatically adjusted for maximum contrast (by `invertLabelColor()`) when placed inside of a profile sketch.
+
+```{r fig.width=10, fig.height=15}
+par(mar=c(0,0,1,0), mfcol=c(4,1))
+
+for(i in c('right-center', 'left-center', 'left-top', 'center-center')) {
+  plotSPC(osds, width = 0.33, cex.names = 0.9, shrink=TRUE, print.id = FALSE, plot.depth.axis=FALSE, name.style=i)
+  mtext(text = i, at = 0.5, side=1, line=-4, cex=1, adj = 0, font = 2)
+}
+```
+
+## `label`
+quoted column name of the (site-level) attribute used to identify profile sketches
+
+## `hz.depths`
+logical, annotate horizon top depths to the right of each sketch (FALSE)
+
+## `hz.depths.offset`
+numeric, user coordinates for left-right adjustment for horizon depth annotation; reasonable values are usually within 0.01-0.05 (default: 0)
+
+## `hz.depths.lines`
+logical, draw segments between horizon depth labels and actual horizon depth; this is useful when including horizon boundary distinctness and/or fixLabelCollisions = TRUE
+
+## alt.label
+quoted column name of the (site-level) attribute used for secondary annotation
+
+## alt.label.col
+color used for secondary annotation text
+
+## cex.names
+baseline character scaling applied to all text labels
+
+## cex.depth.axis
+character scaling applied to depth scale
+
+## cex.id
+character scaling applied to label
+
+## font.id
+font style applied to label, default is 2 (bold)
+
+## print.id
+logical, print label above/beside each profile? (TRUE)
+
+## id.style
+label printing style: 'auto' (default) = simple heuristic used to select from: 'top' = centered above each profile, 'side' = 'along the top-left edge of profiles'
+
+## plot.order
+integer vector describing the order in which individual soil profiles should be plotted
+
+## relative.pos
+vector of relative positions along the x-axis, within {1, n}, ignores plot.order see details
+
+## add
+logical, add to an existing figure
+
+## scaling.factor
+vertical scaling of profile depths, useful for adding profiles to an existing figure
+
+## y.offset
+numeric vector of vertical offset for top of profiles in depth units of x, can either be a single numeric value or vector of length = length(x)
+
+## `x.idx.offset`
+Horizontal offset from 0 (left-hand edge), used to shift all profiles left or right within the sketch. Sometimes this is useful for making small, aesthetic adjustments especially when making sketches of large collections. When used together with the `add` argument, it is possible to align multiple versions of the same data by shifting profiles left or right. The following example adds profile sketches that use dry soil colors next to the original (moist soil colors) sketches.
+
+```{r fig.width=10, fig.height=6.5}
+# convert dry colors to hex notation
+osds$dry_color <- munsell2rgb(osds$dry_hue, osds$dry_value, osds$dry_chroma)
+
+# adjust margins
+par(mar = c(1.5, 0, 2, 1))
+
+# original data, supress horizon designations
+plotSPC(osds, width = 0.2, name = NA)
+
+# add and shift dry color sketches to the left (-0.4 units)
+plotSPC(osds, width = 0.15, cex.names = 0.66, plot.depth.axis = FALSE, print.id = FALSE, name = NA, x.idx.offset = -0.4, add = TRUE, color = 'dry_color')
+
+# a title
+title('Moist and Dry Colors')
+
+# demonstrate shift with an arrow below each profile
+s <- 1:length(osds)
+bottoms <- profileApply(osds, max) + 15
+arrows(x0 = s, y0 = bottoms, x1 = s - 0.4, y1 = bottoms, length = 0.1)
+```
+
+
+## n
+integer describing amount of space along x-axis to allocate, defaults to length(x)
+
+## max.depth
+suggested lower depth boundary of plot
+
+## n.depth.ticks
+suggested number of ticks in depth scale
+
+## shrink
+logical, reduce character scaling for 'long' horizon by 80%
+
+## shrink.cutoff
+character length defining 'long' horizon names
+
+## shrink.thin
+integer, horizon thickness threshold for shrinking horizon names by 80%, only activated when shrink = TRUE (NULL = no shrinkage)
+
+## abbr
+logical, abbreviate label
+
+## abbr.cutoff
+suggested minimum length for abbreviated label
+
+## divide.hz
+logical, divide horizons with line segment? (TRUE), see details
+
+## hz.distinctness.offset
+NULL, or quoted column name (horizon-level attribute) containing vertical offsets used to depict horizon boundary distinctness (same units as profiles), see details and codehzDistinctnessCodeToOffset; consider setting hz.depths.lines = TRUE when used in conjunction with hz.depths = TRUE
+
+## hz.topography.offset
+NULL, or quoted column name (horizon-level attribute) containing offsets used to depict horizon boundary topography (same units as profiles), see details and codehzTopographyCodeToOffset
+
+## hz.boundary.lty
+quoted column name (horizon-level attribute) containing line style (integers) used to encode horizon topography
+
+## axis.line.offset
+horizontal offset applied to depth axis (default is -2.5, larger numbers move the axis to the right)
+
+## plot.depth.axis
+logical, plot depth axis? (default is TRUE)
+
+## density
+fill density used for horizon color shading, either a single integer or a quoted column name (horizon-level attribute) containing integer values (default is NULL, no shading)
+
+## show.legend
+logical, show legend? (default is TRUE)
+
+## col.label
+thematic legend title
+
+## col.palette
+color palette used for thematic sketches (default is rev(brewer.pal(10, 'Spectral')))
+
+## col.palette.bias
+color ramp bias (skew), see colorRamp
+
+## col.legend.cex
+scaling of thematic legend
+
+## n.legend
+approximate number of classes used in numeric legend, max number of items per row in categorical legend
+
+## lwd
+line width multiplier used for sketches
+
+## lty
+line style used for sketches
+
+## default.color
+default horizon fill color used when color attribute is NA
+
+## fixLabelCollisions
+use aqp::fixOverlap() to attempt fixing hz depth labeling collisions, will slow plotting of large collections; enabling fixes also sets hz.depths.lines = TRUE
+
+
+
+```{r eval = FALSE, echo = FALSE}
+
+# encode horizon boundarydistinctness via vertical offset
+osds$hd <- hzDistinctnessCodeToOffset(osds$distinctness)
+
+# encode horizon boundary topography via vertical offset
+osds$hzto <- hzTopographyCodeToOffset(osds$topography)
+
+# also encode horizon boundary topography las line type
+osds$hzto.lty <- hzTopographyCodeToLineType(osds$topography)
+
+
+
+osds$bnd.code <- sprintf(
+  "%s%s",
+  substr(osds$distinctness, 1, 1),
+  substr(osds$topography, 1, 1)
+)
+
+# remove missing (NA) labels
+osds$bnd.code <- gsub('NANA', '', osds$bnd.code)
+
+# ok
+par(mar = c(0, 0, 0, 0))
+
+plot(osds)
+
+plotSPC(osds)
+
+plotSPC(osds, id.style = 'side')
+
+plotSPC(osds, id.style = 'top', width = 0.1)
+plotSPC(osds, id.style = 'top', width = 0.5)
+
+plotSPC(osds, id.style = 'top', width = 0.35)
+
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center')
+
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE)
+
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5)
+
+plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE)
+
+plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
+
+
+png(filename = 'figure.png', width = 1200, height = 900)
+
+# pdf(file = 'poster.pdf', width = 96, height = 42)
+
+plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
+
+dev.off()
+
+
+
+par(mar = c(0, 0, 3, 0))
+
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', color = 'value', col.label = 'Munsell Value (moist)', cex.names = 0.66, cex.id = 0.5, shrink = TRUE)
+
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', color = 'hue', col.label = 'Munsell Value (moist)', cex.names = 0.66, cex.id = 0.5, shrink = TRUE)
+
+
+huePosition(returnHues = TRUE)
+huePositionCircle()
+
+osds$hue_ordered <- factor(osds$hue, levels = huePosition(returnHues = TRUE))
+
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', color = 'hue_ordered', col.label = 'Munsell Value (moist)', cex.names = 0.66, cex.id = 0.5, shrink = TRUE)
+
+
+
+
+
+par(mar = c(0, 0, 0, 2))
+
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', cex.id = 0.5, cex.names = 0.66, axis.line.offset = -1) 
+
+plotSPC(osds, width = 0.3, hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, axis.line.offset = -1) 
+
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, name = 'bnd.code', axis.line.offset = -1) 
+
+
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, name = 'bnd.code', hz.boundary.lty = 'hzto.lty') 
+
+legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.05, bty = 'n', cex = 0.85)
+
+
+
+```
