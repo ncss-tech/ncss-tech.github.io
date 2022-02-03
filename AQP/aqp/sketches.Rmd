@@ -255,6 +255,10 @@ title('Moist and Dry Colors')
 s <- 1:length(osds)
 bottoms <- profileApply(osds, max) + 15
 arrows(x0 = s, y0 = bottoms, x1 = s - 0.4, y1 = bottoms, length = 0.1)
+
+# annotate moist vs. dry
+text(x = s, y = bottoms, labels = 'M', pos = 3, font = 3, cex = 0.66)
+text(x = s - 0.4, y = bottoms, labels = 'D', pos = 3, font = 3, cex = 0.66)
 ```
 
 
