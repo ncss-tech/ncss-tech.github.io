@@ -219,7 +219,7 @@ xyplot(top ~ p.q50 | variable,
 ```
 
 ### Morphologic Summaries
-by heneralized horizon labels, depth intervals, ???.
+by generalized horizon labels, depth intervals, ???.
 
 ### ST Criteria via {aqp}
 ```{r, eval = FALSE}
