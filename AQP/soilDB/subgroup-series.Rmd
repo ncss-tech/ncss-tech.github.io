@@ -46,6 +46,7 @@ library(FactoMineR)
 # mapping a subgroup
 library(sp)
 library(sf)
+library(raster)
 library(spData) 
 library(rasterVis)
 library(viridis)
@@ -59,16 +60,16 @@ library(SoilTaxonomy)
 Get a snapshot of the Soil Classification database. This contains the current classification for all soil series.
 ```{r}
 # latest version, synced quarterly
-u <- 'https://github.com/ncss-tech/SoilTaxonomy/raw/master/inst/extdata/SC-database.csv.gz'
+u <- 'https://github.com/ncss-tech/SoilWeb-data/raw/main/files/SC-database.csv.gz'
 tf <- tempfile()
 download.file(u, destfile = tf)
-SC <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
+SC <- read.csv(tf, stringsAsFactors = FALSE)
 ```
 
 Identify all of the soil series associated with a specific subgroup taxa: *abruptic durixeralfs* and download basic morphology and climate summaries via `fetchOSD`.
 ```{r}
 # select series names for a single subgroup
-s <- SC$soilseriesname[which(SC$tax_subgrp == 'abruptic durixeralfs')]
+s <- SC$soilseriesname[which(SC$taxsubgrp == 'abruptic durixeralfs')]
 
 # get OSD morphology and extended summaries
 osd <- fetchOSD(soils = s, extended = TRUE)
@@ -94,13 +95,13 @@ Link to SoilWeb subgroup taxa tree for [abruptic durixeralfs](https://casoilreso
 
 ## Taxa Extent Maps
 
-```{r fig.height = 8, fig.width = 4}
+```{r fig.height = 8, fig.width = 5.5}
 # get 800m extent map
 e <- taxaExtent('abruptic durixeralfs', level = 'subgroup')
 
 # aggregate via focal mean using 5x5 moving window
 # visualization purposes only
-a <- aggregate(e, fact = 5)
+a <- raster::aggregate(e, fact = 5)
 
 data("us_states")
 us_states <- as(us_states, 'Spatial')
@@ -133,7 +134,7 @@ res <- vizAnnualClimate(osd$climate.annual, s='SAN JOAQUIN', IQR.cex = 1.1, cex=
 Series associated with **abruptic durixeralfs** subgroup, arranged according to annual climate summaries.
 ```{r fig.width=14, fig.height=6}
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(osd$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
+plotProfileDendrogram(osd$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.25, y.offset = 0.5)
 mtext('Abruptic Durixeralfs', side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
 ```
