@@ -14,7 +14,7 @@ smart: no
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -189,7 +189,7 @@ mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
 
 Re-make, this time as a work of art. Note that the [Elvira](https://casoilresource.lawr.ucdavis.edu/sde/?series=elvira) sketch is missing a color for the Ap horizon due to a minor formatting error in the OSD (10YR2/1, e.g. missing a space). I adjusted the default color used by `plotSPC` to dark grey (<span style="background-color: `r grey(0.125)`;">&nbsp;&nbsp;&nbsp;</span>) as an act of artistic license.
-```{r fig.width=12, fig.height=5}
+```{r fig.width=12, fig.height=5, dev='png', fig.retina=2}
 # adjust margins and default colors
 par(mar=c(0,0,0,0), bg='black', fg='white')
 
