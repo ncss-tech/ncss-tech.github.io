@@ -39,6 +39,7 @@ Illustrate the extent of SSURGO map units associated with the Amador series.
 ```{r results='hide'}
 # load required libraries
 library(soilDB)
+library(raster)
 library(sp)
 library(sf)
 library(rgdal)
