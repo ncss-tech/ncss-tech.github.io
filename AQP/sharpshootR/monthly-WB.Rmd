@@ -13,7 +13,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
@@ -130,7 +130,7 @@ AWC <- round(median(res$ws, na.rm = TRUE) * 10)
 
 
 # monthly climate data from series summary
-PPT <- x$climate.monthly$q05[x$climate.monthly$variable == 'Precipitation (mm)']
+PPT <- x$climate.monthly$q50[x$climate.monthly$variable == 'Precipitation (mm)']
 PET <- x$climate.monthly$q50[x$climate.monthly$variable == 'Potential ET (mm)']
 ```
 
@@ -186,7 +186,7 @@ res <- SDA_query(sql)
 AWC <- round(median(res$ws, na.rm = TRUE) * 10)
 
 # monthly climate data from series summary
-PPT <- x$climate.monthly$q05[x$climate.monthly$variable == 'Precipitation (mm)']
+PPT <- x$climate.monthly$q50[x$climate.monthly$variable == 'Precipitation (mm)']
 PET <- x$climate.monthly$q50[x$climate.monthly$variable == 'Potential ET (mm)']
 
 # 3 warm-up cycles
@@ -239,7 +239,7 @@ GROUP BY chorizon.cokey;", x
   
   
   # monthly climate data from series summary
-  PPT <- osd$climate.monthly$q05[osd$climate.monthly$variable == 'Precipitation (mm)']
+  PPT <- osd$climate.monthly$q50[osd$climate.monthly$variable == 'Precipitation (mm)']
   PET <- osd$climate.monthly$q50[osd$climate.monthly$variable == 'Potential ET (mm)']
   
   # do water balance simulation
