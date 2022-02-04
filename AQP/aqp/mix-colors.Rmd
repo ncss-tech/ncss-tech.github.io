@@ -16,7 +16,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, fig.align = 'center', dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align = 'center', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -529,7 +529,7 @@ bwplot(which ~ x, data = adj.spec.dist, par.settings = tactile.theme())
 ```
 
 ### Comparison with dE000
-```{r fig.width=8, fig.height=8}
+```{r fig.width=8, fig.height=8, dev='png', fig.retina=2}
 x.comb$code <- factor(x.comb$code)
 cc <- colorContrast(x.comb$X1, x.comb$X2)
 

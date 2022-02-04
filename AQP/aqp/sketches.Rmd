@@ -262,11 +262,11 @@ text(x = s - 0.4, y = bottoms, labels = 'D', pos = 3, font = 3, cex = 0.66)
 ```
 
 
-## n
+## `n`
 integer describing amount of space along x-axis to allocate, defaults to length(x)
 
-## max.depth
-suggested lower depth boundary of plot
+## `max.depth`
+This is a suggested lower depth for the sketches, data are not modified and profiles may extend beyond figure margins.
 
 ## n.depth.ticks
 suggested number of ticks in depth scale

@@ -11,7 +11,7 @@ output:
   
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE, fig.align = 'center')
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE, fig.align = 'center')
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -81,12 +81,12 @@ s <- combine(
 
 # neat
 par(mar=c(0,0,0,0))
-plotSPC(s, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, width = 0.3)
+plotSPC(s, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, width = 0.3, cex.names = 0.75)
 ```
 
 
 Align many realizations and suppress all labels.
-```{r fig.width=12, fig.height=6}
+```{r fig.width=12, fig.height=6, dev='png', fig.retina=2}
 
 # simulate
 s <- perturb(
@@ -104,7 +104,7 @@ par(mar=c(0,0,0,0), fg=NA)
 plotSPC(s, print.id = FALSE, name = NA, divide.hz = FALSE, plot.depth.axis = FALSE, width=0.55, x.idx.offset = 2)
 ```
 
-```{r fig.width=12, fig.height=6}
+```{r fig.width=12, fig.height=6, dev='png', fig.retina=2}
 s <- perturb(
   subset(x, id == 'DRUMMER'), 
   n = 50, 
@@ -121,7 +121,7 @@ plotSPC(s, print.id=FALSE, name=NA, divide.hz = FALSE, plot.depth.axis = FALSE, 
 
 
 Sort the profile sketches based on a comparison of generalized horizon designation and how it varies with depth.
-```{r fig.width=12, fig.height=6}
+```{r fig.width=12, fig.height=6, dev='png', fig.retina=2}
 musick <- subset(x, id == 'MUSICK')
 musick$hd <- 5
 
@@ -177,7 +177,7 @@ z <- combine(
 )
 
 par(mar = c(0,0,3,0))
-plotSPC(z, color = 'ex_Ca_to_Mg', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Exchangeable Ca:Mg')
+plotSPC(z, color = 'ex_Ca_to_Mg', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.75, col.label = 'Exchangeable Ca:Mg')
 ```
 
 
@@ -186,11 +186,10 @@ plotSPC(z, color = 'ex_Ca_to_Mg', width = 0.3, name.style = 'center-center', plo
 d <- profile_compare(z, vars = c('ex_Ca_to_Mg', 'CEC_7'), max_d = 40, k = 0)
 dd <- diana(d)
 
-plotProfileDendrogram(z, dd, scaling.factor = 1.5, y.offset = 5, color = 'ex_Ca_to_Mg', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Exchangeable Ca:Mg')
-
+plotProfileDendrogram(z, dd, scaling.factor = 1.5, y.offset = 5, color = 'ex_Ca_to_Mg', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.75, col.label = 'Exchangeable Ca:Mg')
 ```
 
-```{r fig.width=14, fig.height=8}
+```{r fig.width=16, fig.height=7}
 # iterate over profiles and simulate morphology
 bootstrapProfile <- function(x, n, ...) {
   

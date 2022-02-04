@@ -18,7 +18,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -71,7 +71,7 @@ ssc <- ssc[-idx, ]
 head(ssc)
 ```
 
-```{r fig.height=3, fig.width=7}
+```{r fig.height=4, fig.width=7}
 # split by generalized horizon name into a list of data.frames
 ssc.list <- split(ssc, ssc$GENHZ)
 
