@@ -182,10 +182,22 @@ for(i in c('right-center', 'left-center', 'left-top', 'center-center')) {
 ```
 
 ## `label`
-quoted column name of the (site-level) attribute used to identify profile sketches
+A single (quoted) site-level attribute name that will be used to label profiles. This defaults to `idname(x)` (e.g. the profile ID), but can be anything in `site(x)`. See `id.style` argument for adjusting side vs. top vs. automatic label positioning.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1))
+plotSPC(osds, cex.names = 0.66, label = 'subgroup', name.style = 'center-center', width = 0.3)
+title('Subgroup Labels', line = -1)
+```
+
 
 ## `hz.depths`
-logical, annotate horizon top depths to the right of each sketch (FALSE)
+When `TRUE`, small horizon depth labels are placed just to the right of horizon top depths. The results may be illegible if there are too many profiles in the collection or if profiles are too wide. Works best with `name.style = 'center-center'` and `plot.depth.axis = FALSE`.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE)
+```
 
 ## `hz.depths.offset`
 numeric, user coordinates for left-right adjustment for horizon depth annotation; reasonable values are usually within 0.01-0.05 (default: 0)
@@ -193,11 +205,16 @@ numeric, user coordinates for left-right adjustment for horizon depth annotation
 ## `hz.depths.lines`
 logical, draw segments between horizon depth labels and actual horizon depth; this is useful when including horizon boundary distinctness and/or fixLabelCollisions = TRUE
 
-## alt.label
-quoted column name of the (site-level) attribute used for secondary annotation
 
-## alt.label.col
-color used for secondary annotation text
+
+## `alt.label` and `alt.label.col`
+A single (quoted) site-level attribute name that will be used as secondary annotation, inset just below the top of each profile. Note that the `alt.label.col` argument will probably have to be used for legibility.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1))
+plotSPC(osds, cex.names = 0.66, alt.label = 'tax_tempcl', width = 0.3, alt.label.col = 'white')
+```
+
 
 ## cex.names
 baseline character scaling applied to all text labels
