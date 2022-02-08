@@ -33,7 +33,7 @@ options(width=100, stringsAsFactors=FALSE)
 
 
 # Introduction
-This is an expanded description of the arguments to `plotSPC()` and tips on making soil profile sketches look the way you want them to.
+This is an expanded description of the arguments to `plotSPC()` and tips on making soil profile sketches look the way you want them to. Be sure to get the latest version of [aqp](https://github.com/ncss-tech/aqp/).
 
 # Example Data
 ```{r}
@@ -354,10 +354,21 @@ par(mar = c(0, 0, 0, 0))
 
 # apply profile-specific y-offsets
 # re-arrange horizontal position with 'plot.order = o'
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = .yshift, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.order = o)
+plotSPC(osds, cex.id = 0.66, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = .yshift, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.order = o)
 
 # demonstrate full y-range within figure
 axis(side = 4, line = -3, las = 1)
+
+# add idealized land surface
+.xland <- 1:length(osds)
+.yland <- .yshift - 30
+
+# smooth via interpolation
+.landSurface <- splinefun(.xland, .yland)
+.s <- seq(0.5, length(osds) + 0.5, by = 0.1)
+
+# add smoothed, idealized land surface
+lines(x = .s, y = .landSurface(.s), lwd = 2)
 
 # remind ourselves that this is fake
 title('A Fake Diagram of Real Soils', line= -1.5)
