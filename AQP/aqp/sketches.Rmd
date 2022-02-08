@@ -182,7 +182,7 @@ for(i in c('right-center', 'left-center', 'left-top', 'center-center')) {
 ```
 
 ## `label`
-A single (quoted) site-level attribute name that will be used to label profiles. This defaults to `idname(x)` (e.g. the profile ID), but can be anything in `site(x)`. See `id.style` argument for adjusting side vs. top vs. automatic label positioning.
+A single (quoted) site-level attribute name that will be used to label profiles. This defaults to `idname(x)` (e.g. the profile ID), but can be anything in `site(x)`. See `id.style` argument for adjusting side vs. top vs. automatic label positioning. Suppress printing of profile labels with `print.id = FALSE`.
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 1))
@@ -192,7 +192,7 @@ title('Subgroup Labels', line = -1)
 
 
 ## `hz.depths`
-When `TRUE`, small horizon depth labels are placed just to the right of horizon top depths. The results may be illegible if there are too many profiles in the collection or if profiles are too wide. Works best with `name.style = 'center-center'` and `plot.depth.axis = FALSE`.
+When `TRUE`, small horizon depth labels are placed just to the right of horizon top depths (right justified). The results may be illegible if there are too many profiles in the collection or if profiles are too wide. Works best with `name.style = 'center-center'` and `plot.depth.axis = FALSE`.
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
@@ -200,11 +200,29 @@ plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.
 ```
 
 ## `hz.depths.offset`
-numeric, user coordinates for left-right adjustment for horizon depth annotation; reasonable values are usually within 0.01-0.05 (default: 0)
+Numeric values between 0.01--0.15 shift horizon depth annotation to the right of profile sketches.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05)
+```
+
 
 ## `hz.depths.lines`
-logical, draw segments between horizon depth labels and actual horizon depth; this is useful when including horizon boundary distinctness and/or fixLabelCollisions = TRUE
+When `TRUE`, segments are drawn between horizon depth labels and actual horizon depth; this is useful when including horizon boundary distinctness and/or when `fixLabelCollisions = TRUE`.
 
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, hz.depths.lines = TRUE)
+```
+
+## `fixLabelCollisions`
+When `TRUE`, use `aqp::fixOverlap()` to attempt fixing horizon depth labeling collisions. This will slow plotting of large collections. Enabling fixes also sets `hz.depths.lines = TRUE`. Adjustments made by `aqp::fixOverlap()` involve random permutations, so output is different each time. Use `set.seed` when you need consistent results.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE)
+```
 
 
 ## `alt.label` and `alt.label.col`
@@ -228,8 +246,6 @@ character scaling applied to label
 ## font.id
 font style applied to label, default is 2 (bold)
 
-## print.id
-logical, print label above/beside each profile? (TRUE)
 
 ## id.style
 label printing style: 'auto' (default) = simple heuristic used to select from: 'top' = centered above each profile, 'side' = 'along the top-left edge of profiles'
@@ -243,11 +259,43 @@ vector of relative positions along the x-axis, within {1, n}, ignores plot.order
 ## add
 logical, add to an existing figure
 
-## scaling.factor
+## `scaling.factor`
 vertical scaling of profile depths, useful for adding profiles to an existing figure
 
-## y.offset
-numeric vector of vertical offset for top of profiles in depth units of x, can either be a single numeric value or vector of length = length(x)
+
+## `y.offset`
+Either a single value or numeric vector of vertical offsets with `length == length(x)`, in depth units of `x`. Profile sketches and depth axis are shifted when using a single y offset value. The depth axis is disabled when using multiple y offsets.
+
+Shift all profile sketches down 300cm, leaving room for additional annotation above. Right-hand axis added for clarity.
+```{r fig.width=10, fig.height=10}
+par(mar = c(0, 0, 0, 0))
+
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = 300, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.depth.axis = FALSE)
+
+rect(xleft = (1:length(osds)) - 0.25, xright = (1:length(osds)) + 0.25, ybottom = 250, ytop = runif(n = length(osds), min = 0, max = 250), col = 4)
+
+# demonstrate full y-range within figure
+axis(side = 4, line = -3, las = 1)
+```
+
+Shift each profile sketch a different amount. Transect or cross-section figures can be manually created in this way. See also `scaling.factor` for applying a vertical scaling to all profiles.
+```{r fig.width=10, fig.height=10}
+.yshift <- c(0, 1, 4, 8, 15, 22, 30, 35, 40) * 5
+
+osds$hr <- hurst.redness(osds$hue, osds$value, osds$chroma)
+osds$profile.median.hr <- profileApply(osds, function(i) median(i$hr, na.rm = TRUE))
+
+o <- order(osds$profile.median.hr)
+
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = .yshift, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.order = o)
+
+# demonstrate full y-range within figure
+axis(side = 4, line = -3, las = 1)
+```
+
+
+
 
 ## `x.idx.offset`
 Horizontal offset from 0 (left-hand edge), used to shift all profiles left or right within the sketch. Sometimes this is useful for making small, aesthetic adjustments especially when making sketches of large collections. When used together with the `add` argument, it is possible to align multiple versions of the same data by shifting profiles left or right. The following example adds profile sketches that use dry soil colors next to the original (moist soil colors) sketches.
@@ -351,8 +399,6 @@ line style used for sketches
 ## default.color
 default horizon fill color used when color attribute is NA
 
-## fixLabelCollisions
-use aqp::fixOverlap() to attempt fixing hz depth labeling collisions, will slow plotting of large collections; enabling fixes also sets hz.depths.lines = TRUE
 
 
 
