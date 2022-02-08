@@ -43,7 +43,7 @@ library(soilDB)
 # some interesting soil series
 s <- c('leon', 'musick', 'clarksville', 'pardee', 'lucy', 'pierre', 'drummer', 'zook', 'san joaquin')
 
-# get basic morphology and extended data from SoilWeb cache 
+# get basic morphology and extended data from SoilWeb cache
 osds.full <- fetchOSD(s, extended = TRUE)
 
 # save copy of SoilProfileCollection for later
@@ -167,15 +167,15 @@ plotSPC(osds, width = 0.3, cex.names = 0.66)
 
 
 ## `name`
-quoted column name of the (horizon-level) attribute containing horizon designations or labels, if missing hzdesgnname(x) is used. Suppress horizon name printing by setting name = NA or name = ''.
+Quoted column name of the (horizon-level) attribute containing horizon designations or labels, if missing `hzdesgnname(x)` is used. Suppress horizon name printing by setting `name = NA` or `name = ''`.
 
 ## `name.style`
-Horizon designation label style, one of `c('right-center', 'left-center', 'left-top', 'center-center')`. The `right-center` position has been the default in **aqp** since 2010. I prefer the `center-center` style. Note that horizon designation label colors are automatically adjusted for maximum contrast (by `invertLabelColor()`) when placed inside of a profile sketch.
+Horizon designation label style, one of `c('right-center', 'center-center', 'left-center', 'left-top', 'center-top'))`. The `right-center` position has been the default in **aqp** since 2010. I prefer the `center-center` style. Note that horizon designation label colors are automatically adjusted for maximum contrast (by `invertLabelColor()`) when placed inside of a profile sketch.
 
-```{r fig.width=10, fig.height=15}
-par(mar=c(0,0,1,0), mfcol=c(4,1))
+```{r fig.width=10, fig.height=16}
+par(mar=c(0,0,1,0), mfcol=c(5,1))
 
-for(i in c('right-center', 'left-center', 'left-top', 'center-center')) {
+for(i in c('right-center', 'center-center', 'left-center', 'left-top', 'center-top')) {
   plotSPC(osds, width = 0.33, cex.names = 0.9, shrink=TRUE, print.id = FALSE, plot.depth.axis=FALSE, name.style=i)
   mtext(text = i, at = 0.5, side=1, line=-4, cex=1, adj = 0, font = 2)
 }
@@ -247,20 +247,74 @@ character scaling applied to label
 font style applied to label, default is 2 (bold)
 
 
-## id.style
+## `id.style`
 label printing style: 'auto' (default) = simple heuristic used to select from: 'top' = centered above each profile, 'side' = 'along the top-left edge of profiles'
 
-## plot.order
+
+## `n`
+A single integer describing the amount of space along x-axis to allocate, defaults to `length(x)`.
+
+```{r fig.width=10, fig.height=6.5}
+explainPlotSPC(osds, cex.names = 0.66, width = 0.3, n = 15, print.id = FALSE, name.style = 'center-center')
+
+text(x = 10.5, y = 90, label = "additional space allocated by 'n = 15'", adj = 0, cex = 0.75)
+arrows(x0 = length(osds) + 1, x1 = 15, y0 = 100, y1 = 100, code = 3, length = 0.1)
+```
+
+## `plot.order`
 integer vector describing the order in which individual soil profiles should be plotted
 
-## relative.pos
+## `relative.pos`
 vector of relative positions along the x-axis, within {1, n}, ignores plot.order see details
 
-## add
-logical, add to an existing figure
+
+## `add`
+When `TRUE`, sketches and annotations (like a depth axis) are added to the current output device. With careful use of `x.idx.offset` it is possible to combine several sets of profiles, such as the results of a simulation (see [`perturb()`](http://ncss-tech.github.io/aqp/reference/perturb.html)). With careful use of `scaling.factor`, profiles can be added to any figure.
+
+```{r fig.width=10, fig.height=6}
+# select first profile
+x <- osds[1, ]
+
+# convert horizon distinctness codes 
+# to a horizon boundary "variability" index
+horizons(x)$hzd <- hzDistinctnessCodeToOffset(x$distinctness) * 2
+
+# generate 10 simulations
+x.sim <- perturb(x, n = 10, boundary.attr = 'hzd')
+
+# margins
+par(mar = c(0, 0, 0, 0))
+
+# plot the source profile, leaving room for 11 profiles (n = 11)
+plotSPC(x, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, n = 11, id.style = 'side', cex.id = 0.66, fixLabelCollisions = TRUE, max.depth = 145)
+
+# add 10 simulations, offset 1 position to the right with x.idx.offset = 1
+plotSPC(x.sim, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, id.style = 'top', add = TRUE, x.idx.offset = 1, fixLabelCollisions = TRUE)
+
+# annotate simulations
+arrows(x0 = 2, x1 = 11, y0 = -15, y1 = -15, length = 0.1, code = 3)
+mtext('Simulation', side = 3, at = 5.5, line = -2.5, font = 2, adj = 0)
+```
+
+
 
 ## `scaling.factor`
 vertical scaling of profile depths, useful for adding profiles to an existing figure
+
+```{r fig.width=10, fig.height=6}
+# margins
+par(mar = c(0, 0, 0, 0))
+
+# plot the source profile, leaving room for 11 profiles (n = 11)
+plotSPC(osds, cex.names = 0.66, name = NA, width = 0.25, plot.depth.axis = FALSE, hz.depths = TRUE, n = length(osds) * 2, print.id = FALSE, fixLabelCollisions = TRUE)
+
+plotSPC(osds, cex.names = 0.66, name = NA, width = 0.25, plot.depth.axis = FALSE, hz.depths = TRUE, print.id = FALSE, add = TRUE, x.idx.offset = length(osds), scaling.factor = 0.5, fixLabelCollisions = TRUE)
+
+arrows(x0 = length(osds) + 1, x1 = length(osds) * 2, y0 = -15, y1 = -15, length = 0.1, code = 3)
+mtext('scaling.factor = 0.5', side = 3, at = 12.5, line = -2.25, font = 2, adj = 0, cex = 0.85)
+```
+
+
 
 
 ## `y.offset`
@@ -272,6 +326,7 @@ par(mar = c(0, 0, 0, 0))
 
 plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = 300, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.depth.axis = FALSE)
 
+# fake data
 rect(xleft = (1:length(osds)) - 0.25, xright = (1:length(osds)) + 0.25, ybottom = 250, ytop = runif(n = length(osds), min = 0, max = 250), col = 4)
 
 # demonstrate full y-range within figure
@@ -280,18 +335,32 @@ axis(side = 4, line = -3, las = 1)
 
 Shift each profile sketch a different amount. Transect or cross-section figures can be manually created in this way. See also `scaling.factor` for applying a vertical scaling to all profiles.
 ```{r fig.width=10, fig.height=10}
+# manually create a nice looking set of relative elevations along a pretend landform
 .yshift <- c(0, 1, 4, 8, 15, 22, 30, 35, 40) * 5
 
+# compute the Hurst Redness Index for each horizon
+# this is a horizon-level attribute
 osds$hr <- hurst.redness(osds$hue, osds$value, osds$chroma)
+
+# compute the profile median of Hurst Redness Index
+# this is now a site-level attribute
 osds$profile.median.hr <- profileApply(osds, function(i) median(i$hr, na.rm = TRUE))
 
+# rank profile median, Hurst Redness Index
 o <- order(osds$profile.median.hr)
 
+# margins
 par(mar = c(0, 0, 0, 0))
+
+# apply profile-specific y-offsets
+# re-arrange horizontal position with 'plot.order = o'
 plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = .yshift, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.order = o)
 
 # demonstrate full y-range within figure
 axis(side = 4, line = -3, las = 1)
+
+# remind ourselves that this is fake
+title('A Fake Diagram of Real Soils', line= -1.5)
 ```
 
 
@@ -327,8 +396,6 @@ text(x = s - 0.4, y = bottoms, labels = 'D', pos = 3, font = 3, cex = 0.66)
 ```
 
 
-## `n`
-integer describing amount of space along x-axis to allocate, defaults to length(x)
 
 ## `max.depth`
 This is a suggested lower depth for the sketches, data are not modified and profiles may extend beyond figure margins.
