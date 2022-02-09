@@ -318,7 +318,7 @@ mtext('scaling.factor = 0.5', side = 3, at = 12.5, line = -2.25, font = 2, adj =
 
 
 ## `y.offset`
-Either a single value or numeric vector of vertical offsets with `length == length(x)`, in depth units of `x`. Profile sketches and depth axis are shifted when using a single y offset value. The depth axis is disabled when using multiple y offsets.
+Either a single value or numeric vector of vertical offsets with `length == length(x)`, in depth units of `x`. Profile sketches and depth axis are shifted when using a single y offset value. The depth axis is disabled when using multiple y offsets. Note: `y.offset` is automatically re-ordered by `plot.order`.
 
 Shift all profile sketches down 300cm, leaving room for additional annotation above. Right-hand axis added for clarity.
 ```{r fig.width=10, fig.height=10}
@@ -347,14 +347,19 @@ osds$hr <- hurst.redness(osds$hue, osds$value, osds$chroma)
 osds$profile.median.hr <- profileApply(osds, function(i) median(i$hr, na.rm = TRUE))
 
 # rank profile median, Hurst Redness Index
+# use this to sort profiles
 o <- order(osds$profile.median.hr)
+
+# however, this will complicate a manual specification of the landform surface
+# now we need an index back to the original order
+idx <- match(1:length(osds), o)
 
 # margins
 par(mar = c(0, 0, 0, 0))
 
 # apply profile-specific y-offsets
 # re-arrange horizontal position with 'plot.order = o'
-plotSPC(osds, cex.id = 0.66, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = .yshift, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.order = o)
+plotSPC(osds, cex.id = 0.66, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = .yshift[idx], hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.order = o)
 
 # demonstrate full y-range within figure
 axis(side = 4, line = -3, las = 1)
