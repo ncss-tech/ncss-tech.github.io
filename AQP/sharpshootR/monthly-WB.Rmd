@@ -210,7 +210,7 @@ title(sprintf('Monthly Water Balance: %s Series', toupper(s)), line = 2)
 ## Comparisons
 
 Abstract into a function, and use to compare multiple soils / climatic parameters. A more efficient approach would load all of the data then iterate over chunks.
-```{r fig.width=14, fig.height=12}
+```{r}
 # x: soil series name
 compareMonthlyWB <- function(x) {
   
@@ -253,8 +253,9 @@ GROUP BY chorizon.cokey;", x
   txt <- sprintf("%s\n%s", s$id, s$family)
   title(txt, line = 3, cex.main = 1)
 }
+```
 
-
+```{r fig.width=14, fig.height=12}
 # custom margins / multi-figure
 par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
 
@@ -263,8 +264,19 @@ soils <- c('amador', 'lucy', 'drummer', 'pierre')
 for(i in soils) {
   compareMonthlyWB(i)
 }
-
 ```
+
+```{r fig.width=14, fig.height=12}
+# custom margins / multi-figure
+par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
+
+# iterate over these soil series names
+soils <- c('leon', 'tristan', 'miami', 'freznik')
+for(i in soils) {
+  compareMonthlyWB(i)
+}
+```
+
 
 ----------------------------
 This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
