@@ -536,10 +536,10 @@ levelplot(stack(sand_3060cm, silt_3060cm, clay_3060cm), margin = FALSE)
 
 
 ### Soil / Land Classification
-```{r}
+```{r fig.width=8, fig.height=8}
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
 a <- st_bbox(
-  c(xmin = -114.20, xmax = -114.10, ymin = 47.65, ymax = 47.70), 
+  c(xmin = -114.30, xmax = -114.00, ymin = 47.5, ymax = 47.70), 
   crs = st_crs(4326)
 )
 
@@ -551,8 +551,8 @@ greatgroup <- ISSR800.wcs(aoi = a, var = 'greatgroup')
 lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
 
 # plot
-levelplot(greatgroup, margin = FALSE)
-levelplot(lcc_irrigated, margin = FALSE)
+levelplot(greatgroup, margin = FALSE, scales = list(draw = FALSE))
+levelplot(lcc_irrigated, margin = FALSE, scales = list(draw = FALSE))
 ```
 
 
