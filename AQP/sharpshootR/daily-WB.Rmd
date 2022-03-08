@@ -43,7 +43,7 @@ library(RColorBrewer)
 library(viridis)
 
 # special installation instructions:
-# http://hydromad.catchment.org/#installation
+# https://github.com/josephguillaume/hydromad#installation
 library(hydromad)
 ```
 

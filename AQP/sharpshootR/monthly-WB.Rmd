@@ -22,14 +22,14 @@ options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 
 
 ## Setup
-You will need these packages.
+You will need these packages. Must use the development version of `hydromad`, requires a working compiler (RTools on Windows).
 ```{r}
 library(aqp)
 library(soilDB)
 library(sharpshootR)
 
 # special installation instructions:
-# http://hydromad.catchment.org/#installation
+# https://github.com/josephguillaume/hydromad#installation
 library(hydromad)
 ```
 
