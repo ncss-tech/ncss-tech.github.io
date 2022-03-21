@@ -49,6 +49,7 @@ library(cluster)
 library(ape)
 library(scales)
 library(maps)
+library(tactile)
 
 ```
 
@@ -81,7 +82,7 @@ Plot sketches of the soils in this family, data are from OSDs via SoilWeb.
 ```{r fig.width=12, fig.height=6}
 # plot
 par(mar=c(0.25,0,1,1))
-plot(spc)
+plotSPC(spc, name.style = 'center-center', width = 0.3)
 mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
 ```
@@ -152,6 +153,33 @@ print(res$fig)
 res <- vizGeomorphicComponent(s.competing.data$geomcomp)
 print(res$fig)
 ```
+
+## NCCPI
+National Commodity Crop Productivity Index [user manual](https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_050734.pdf).
+
+```{r, fig.width=8, fig.height=5.5}
+nccpi <- s.competing.data$NCCPI
+nccpi$series <- factor(nccpi$series, levels = nccpi$series[order(nccpi$nccpi_q50)])
+
+segplot(
+  series ~ nccpi_q25 + nccpi_q75, 
+  data = nccpi, 
+  centers = nccpi_q50, 
+  xlab = 'NCCPI: 25th-50th-75th Percentiles',
+  sub = 'FY22 SSURGO Snapshot',
+  main = fm.name,
+  col.symbol = 'black',
+  band.height = 0.75,
+  par.settings = tactile.theme(),
+  scales = list(x = list(tick.number = 10)),
+  panel = function(...) {
+    panel.grid(-1, -1)
+    panel.segplot(...)
+  }
+)
+
+```
+
 
 
 ## Color Signatures
