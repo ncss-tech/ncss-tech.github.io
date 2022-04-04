@@ -84,7 +84,7 @@ xyplot(
   auto.key = list(lines = TRUE, points = FALSE, columns = 4), 
   panel = function(...) {
     panel.xyplot(...)
-    panel.abline(h = (x$sat), col = tactile.theme()$superpose.line$col, lty = 2)
+    panel.abline(h = (x$fc), col = tactile.theme()$superpose.line$col, lty = 2)
   })
 
 
