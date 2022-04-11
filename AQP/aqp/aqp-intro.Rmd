@@ -350,14 +350,14 @@ groupedProfilePlot(x, 'g', color='.horizon_ids_numeric', col.label = 'Horizon ID
 The inverse of `combine` is `split`: subsets of the `SoilProfileCollection` are split into list elements, each containing a new `SoilProfileCollection`.
 ```{r eval=FALSE}
 # continuing from above
-# split subsets of x into a list of SoilProfileCollection objcts using site-level attribute 'g'
+# split subsets of x into a list of SoilProfileCollection objects using site-level attribute 'g'
 res <- split(x, 'g')
 str(res, 1)
 ```
 
 
 ## Duplication
-Duplicate the first profile in `sp4` (colusa) 8 times, resulting in a new `SoilProfileCollection` object containing unique profile IDs.
+Duplicate the first profile in `sp4` (Colusa) 8 times, resulting in a new `SoilProfileCollection` object containing unique profile IDs.
 ```{r fig.height=4, fig.width=8}
 d <- duplicate(sp4[1, ], times = 8)
 par(mar = c(0,2,0,1))
