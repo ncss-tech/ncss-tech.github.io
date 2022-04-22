@@ -129,7 +129,26 @@ plotSPC(o, width = 0.3, name.style = 'center-center', cex.names = 0.75, hz.depth
 SoilTaxonomyDendrogram(o, width = 0.3, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, plot.depth.axis = FALSE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
 ```
 
+Just for fun, generate a hexagonal grid and query SSURGO data within grid cells.
+```{r fig.width=8, fig.height=8}
+# make hexagonal grid based on buffered point
+g <- st_make_grid(b, n = 1, square = FALSE, flat_topped = TRUE)
+g <- st_as_sf(g)
 
+# query SDA for intersecting map unit delineations
+mu <- SDA_spatialQuery(g, what = 'mupolygon', byFeature = TRUE, geomIntersection = TRUE)
+
+# note that intersecting delineations are grouped by 'gid'
+table(mu$gid)
+
+# copy / encode as a factor for thematic map
+mu$mukey.factor <- factor(mu$mukey)
+
+# pretty figure
+par(cex.axis = 0.75)
+plot(mu['mukey.factor'], key.width = lcm(4.5), main = 'Map Unit Keys', reset = FALSE)
+plot(p, add = TRUE, pch = 16, col = 1)
+```
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
