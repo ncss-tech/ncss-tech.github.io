@@ -1,0 +1,135 @@
+---
+title: "SDA Point Query Examples"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Setup
+```{r install-deps, eval=FALSE}
+# stable packages from CRAN
+install.packages('aqp')
+install.packages('soilDB')
+install.packages('sharpshootR')
+install.packages('sf')
+install.packages('cowplot')
+
+# latest versions from GitHub
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+```
+
+# Demonstration
+
+Query [detailed soil survey data (SSURGO)](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_053627) and associated Official Series Descriptions (OSD) at one or more points. In this example, we are using a single [point located near the NC / GA border](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=35.04229,-83.45657,z15). These examples demonstration how to use web-services to request spatial + tabular data from Soil Data Access (SDA) and SoilWeb.
+
+
+Load required packages and define one or more points using functionality from the `sf` package. 
+```{r}
+library(soilDB)
+library(aqp)
+library(sharpshootR)
+library(sf)
+
+
+# example point, WGS84 coordinates
+p <- st_as_sf(data.frame(x = -83.45657,
+                         y = 35.04229),
+              coords = c('x', 'y'),
+              crs = 4326)
+
+# 500m buffer applied to point defined in geographic coordinates
+b <- st_buffer(p, dist = units::set_units(500, m))
+
+# check with interactive map
+# mapview::mapview(b)
+```
+
+Submit a spatial query to SDA, asking for the spatial intersection of our example buffered point and SSURGO delineations.
+```{r}
+# result is an sf object
+mu <- SDA_spatialQuery(b, what = 'mupolygon', byFeature = TRUE, geomIntersection = TRUE)
+
+# check: OK
+plot(st_geometry(mu))
+plot(p, add = TRUE, pch = 16, col = 2)
+
+# copy / encode as a factor for thematic map
+mu$mukey.factor <- factor(mu$mukey)
+
+par(cex.axis = 0.75)
+plot(mu['mukey.factor'], key.width = lcm(4.5), main = 'Map Unit Key -- 500m Buffer', reset = FALSE)
+plot(p, add = TRUE, pch = 16, col = 1)
+
+# be sure to reset the graphics device
+# dev.off()
+```
+
+
+Request associated tabular data from SDA, using the unique set of map unit keys. The result is a [`SoilProfileCollection` object](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
+```{r}
+# format map unit keys for WHERE clause
+.is <- format_SQL_in_statement(unique(mu$mukey))
+
+# format WHERE clause
+# don't use a semicolon to finish the SQL statement, 
+# there is more added by fetchSDA()
+.where <- sprintf("mukey IN %s AND majcompflag = 'Yes' AND compkind != 'Miscellaneous area' ", .is)
+
+# query SDA, result is a SoilProfileCollection of map unit / component / horizon data
+x <- fetchSDA(WHERE = .where, duplicates = TRUE, childs = FALSE)
+
+# encode soil texture as ordered factor
+x$texture <- droplevels(factor(x$texture, levels = SoilTextureLevels(which = 'codes')))
+```
+
+Visual examination via soil profile sketches.
+```{r fig.width=14, fig.height=5.5}
+# quick visual check
+par(mar = c(0, 0, 3, 0))
+
+# profile sketches from SSURGO
+plotSPC(x, label = 'compname', color = 'texture', name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, plot.depth.axis = FALSE, col.label = 'Soil Texture Class', fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
+
+# group by national map unit symbol
+groupedProfilePlot(x, group.name.offset = c(-15), groups = 'nationalmusym', label = 'compname', color = 'texture', name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, plot.depth.axis = FALSE, col.label = 'Soil Texture Class', fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
+```
+
+Get OSD typical pedon morphology from SoilWeb.
+```{r fig.width=12, fig.height=6.5}
+# get OSDs and display
+o <- fetchOSD(unique(x$compname))
+
+par(mar = c(0, 0, 0, 0))
+
+# OSDs
+plotSPC(o, width = 0.3, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, plot.depth.axis = FALSE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
+
+# OSDs arranged by subgroup taxonomy
+SoilTaxonomyDendrogram(o, width = 0.3, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, plot.depth.axis = FALSE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
+```
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
