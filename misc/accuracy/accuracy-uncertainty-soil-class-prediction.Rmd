@@ -30,6 +30,7 @@ library(reshape2)
 library(wesanderson)
 library(grid)
 library(aqp)
+library(RColorBrewer)
 
 # functions specific to this document
 source('local-functions.R')
@@ -75,15 +76,27 @@ names(ss)[1] <- 'example'
 ss$example <- factor(ss$example)
 
 
+
+
 # uncertainty metrics
 cols <- wes_palette("Zissou1")[c(1, 5)]
 tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
 
+
+
 p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
   gs <- seq(0, 2.5, by=0.25)
+  .threshold <- c(0.90, 0.95, 1)
+  .critical.H <- equal.prob.H(n = 5, b = 2) * .threshold
   panel.abline(v=gs, lty=3, col='grey')
+  panel.abline(v = .critical.H, lty = 2, lwd = 1)
   panel.densityplot(...)
+  # grid.text('90%', x = unit(.critical.H[1] * 0.95, units = 'native'), y = unit(0.95, 'npc'), gp = gpar(cex = 0.66), just = 'right')
 })
+
+
+print(p.1, split = c(1, 1, 1, 2), more = TRUE)
+print(p.2, split = c(1, 2, 1, 2), more = FALSE)
 
 
 ## scatter plot of H vs. CI
@@ -373,10 +386,15 @@ d <- data.frame(n=n.seq, H=H)
 
 cols <- wes_palette("Zissou1")[c(1, 5)]
 
-xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Equal Class Probability', panel=function(...) {
-  panel.xyplot(..., type=c('l', 'g'))
-  panel.abline(h=1, col=cols[2], lty=2)
-  panel.text(x=80, y=1.2, 'Confusion Index', font=2, cex=0.8)
+xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Equal Class Probability', panel=function(x, y, ...) {
+  panel.xyplot(x = x, y = y, ..., type=c('l', 'g'))
+  panel.lines(x = x, y = y * 0.95, lty = 2)
+  panel.lines(x = x, y = y * 0.9, lty = 2)
+  # panel.abline(h=1, col=cols[2], lty=2)
+  
+  panel.text(x=100, y=y[length(y)] * 0.95, '95%', font=2, cex=0.8, pos = 4)
+  panel.text(x=100, y=y[length(y)] * 0.9, '90%', font=2, cex=0.8, pos = 4)
+  # panel.text(x=80, y=1.2, 'Confusion Index', font=2, cex=0.8)
 })
 ```
 

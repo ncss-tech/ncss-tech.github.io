@@ -1,4 +1,10 @@
 
+equal.prob.H <- function(n, b) {
+  p <- rep(1, times = n) / n
+  shannonEntropy(p, b = b)
+}
+
+
 # simulate predicted class probabilities via draws from dirichlet 
 # (n pixel * k classes)
 # n: number of simulated "pixels" 

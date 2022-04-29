@@ -62,6 +62,24 @@ soils <- c(s, sib$sib$sibling)
 osds <- fetchOSD(soils, extended = TRUE)
 ```
 
+
+
+There may be missing series from either / both SPC and geomorphic summaries. TBC.
+```{r eval = FALSE}
+# there may be records missing from SPC / hill slope position
+nm <- intersect(profile_id(osd$SPC), osd$hillpos$series)
+
+# keep only those series that exist in both
+sub <- subset(osd$SPC, profile_id(osd$SPC) %in% nm)
+
+## inverse problem: extra records in hill slope summaries
+# subset hillpos
+hillpos.sub <- subset(osd$hillpos, subset = series %in% profile_id(sub))
+
+## TODO: use subset objects below
+```
+
+
 ```{r fig.width=10, fig.height=6}
 res <- vizHillslopePosition(osds$hillpos)
 
