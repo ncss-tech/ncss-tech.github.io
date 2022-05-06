@@ -1,6 +1,5 @@
 ---
 title: "gNATSGO / gSSURGO Web Coverage Service"
-author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -26,7 +25,9 @@ options(width=100, stringsAsFactors=FALSE)
 
 
 # Introduction
-A web coverage service (WCS) is provided for the gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils/folder/149859400396). These grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:5070). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geodatabases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
+A web coverage service (WCS) is provided for the gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils/folder/149859400396). These grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:5070). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geo-databases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
+
+An experimental WCS is provided for raster soil survey (RSS) products at 10m resolution.
 
 A similar WCS is provided for the [ISSR-800 soil property grids](https://casoilresource.lawr.ucdavis.edu/soil-properties/).
 
@@ -35,11 +36,14 @@ See the [`mukey.wcs`](http://ncss-tech.github.io/soilDB/docs/reference/mukey.wcs
 
 Basic usage.
 ```{r eval = FALSE}
-# select gSSURGO grid
+# select gSSURGO grid, 30m resolution
 x <- mukey.wcs(aoi = aoi, db = 'gssurgo', ...)
 
-# select gNATSGO grid
+# select gNATSGO grid, 30m resolution
 x <- mukey.wcs(aoi = aoi, db = 'gnatsgo', ...)
+
+# select RSS grid, 10m resolution
+x <- mukey.wcs(aoi = aoi, db = 'RSS', ...)
 
 # select various ISSR-800 grids, details below
 x <- ISSR800.wcs(aoi = aoi, var = 'paws')
@@ -63,18 +67,101 @@ The gNATSGO database is composed primarily of SSURGO data, but STATSGO2 data was
 </div>
 
 
+## Raster Soil Survey
+Excerpt from the [RSS documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcseprd1759022).
+
+<div style="padding: 10px; font-size:90%;">
+Raster Soil Survey is a reference to the products of soil survey work completed using digital soil mapping methodologies. Digital soil mapping is the production of georeferenced soil databases based on the quantitative relationships between soil measurements made in the field or laboratory and environmental data and may be represented as either discrete classes or continuous soil properties. Both digital and traditional soil mapping use a conceptual soil-landscape model as a means for organizing environmental information into discrete divisions. The primary difference between these two approaches is that digital methods exploit quantitative relationships of the environmental information, while traditional methods utilize a more subjective approach and the approximate relationships of the environmental information to spatially represent where the divisions are represented.
+</div>
+
+
 ## Thematic Mapping
-Thematic mapping or analysis of soil information requires connecting the grids to our tabular data sources, either using local files (e.g. gSSURGO / gNATSGO) or Soil Data Access (SDA). Note that map unit keys associated with raster soil surveys (included with gNATSGO) are not currently available in SDA. 
+Thematic mapping or analysis of soil information requires connecting the grids to our tabular data sources, either using local files or Soil Data Access (SDA) web-service. The `soilDB` package provides many convenient interfaces to SDA. Note that SDA does not yet contain tabular data for the raster soil surveys.
 
 
 ## Caveats / Limitations
+  * Requests are limited to images sizes of 5000x5000 pixels, this is approximately 1x1 degrees at 30m.
+  * These instructions are based on the development version of [`soilDB`](https://github.com/ncss-tech/soilDB/), which has [recently switched over to `sf` and `terra` packages](https://github.com/ncss-tech/soilDB/blob/master/NEWS.md).
 
-Requests are limited to images sizes of 5000x5000 pixels, this is approximately 1x1 degrees at 30m.
 
-### Remaianing TODOs
-   * Ensure that data are not resampled unless a resolution other than 30m is requested.
-   * Currently the data come back *close* to 30m, usually 29.998-30.111. I'm not sure if this is something that has to be solved in the creation of the BBOX or if it is a Mapserver configuration issue. Still tinkering.
-   * Consider converting source mukey grids to COG-GeoTiff, this will require a newer version of GDAL.
+## Manually Creating bounding-boxes for WCS requests
+The WCS interface functions `mukey.wcs` and `ISSR800.wcs` can automatically generate a bounding-box (BBOX) from most spatial data formats. However, sometimes it is more convenient to manually specify a BBOX created from a website or single point specified in WGS84 coordinates. [SoilWeb](https://casoilresource.lawr.ucdavis.edu/gmap/) provides two convenient keyboard shortcuts, available after clicking on the map interface:
+
+   * 'b' copy bounding-box, returned as: <span style = 'font-size: 80%;'><tt>-118.6609 36.4820,-118.6609 36.5972,-118.3979 36.5972,-118.3979 36.4820,-118.6609 36.4820</tt></span>
+   
+   * 'p' copy link to center coordinate, returned as: `https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.53964,-118.52943,z13`
+   
+Right-clicking anywhere in the map interface will also generate a link to those coordinates and zoom-level.
+
+A SoilWeb-style BBOX can be directly converted into an `sf` object:
+```{r fig.width = 6.5, fig.height=5}
+library(sf)
+library(soilDB)
+library(terra)
+
+# paste your BBOX text here
+bb <- '-118.6609 36.4820,-118.6609 36.5972,-118.3979 36.5972,-118.3979 36.4820,-118.6609 36.4820'
+
+# convert text -> WKT -> sf
+wkt <- sprintf('POLYGON((%s))', bb)
+x <- st_as_sfc(wkt)
+
+# set coordinate reference system as GCS/WGS84
+st_crs(x) <- 4326
+
+# query WCS
+m <- mukey.wcs(x, db = 'gSSURGO')
+
+# looks OK
+plot(m, legend = FALSE, axes = FALSE, main = attr(m, 'layer name'))
+box()
+
+# add original BBOX, after transforming to mukey grid CRS
+plot(st_transform(x, 5070), add = TRUE)
+```
+
+
+A buffer applied to a [single WGS84 coordinate](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.52578,-118.55639,z13) can create a BBOX:
+```{r fig.width = 5, fig.height = 5}
+library(sf)
+library(soilDB)
+
+# example point, WGS84 coordinates
+p <- st_as_sf(
+  data.frame(
+    x = -118.55639,
+    y = 36.52578
+  ),
+  coords = c('x', 'y'),
+  crs = 4326
+)
+
+# 1000m buffer applied to WGS84 coordinate
+# radius defined in meters
+b <- st_buffer(p, dist = units::set_units(1000, m))
+b <- st_as_sf(b)
+
+# query WCS
+# result is in EPSG:5070
+m <- mukey.wcs(b, db = 'gSSURGO')
+
+# looks OK
+plot(m, legend = FALSE, axes = FALSE, main = attr(m, 'layer name'))
+box()
+
+# add buffer, after transforming to mukey grid CRS
+plot(st_transform(b, 5070), add = TRUE)
+
+# add original point, after transforming to mukey grid CRS
+plot(st_transform(p, 5070), add = TRUE, pch = 16)
+```
+
+
+
+
+
+
+
 
 
 # Setup
@@ -84,35 +171,33 @@ install.packages('soilDB')
 remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ```
 
-Load required package.
+Load required packages.
 ```{r}
 # latest from GitHub
 library(soilDB)
 
 # wrangling polygons and CRS transformations
-library(sp)
-library(rgdal)
-
-# geometric calculations
-library(rgeos)
-
-# this is the future, will eventually replace much of 
-# sp, rgdal, geos methods used here
 library(sf)
 
-# raster data visualization
-library(raster)
+# raster data / analysis
+library(terra)
+
+# raster visualization
 library(rasterVis)
-library(viridis)
+library(viridisLite)
 
 # soil classification
 library(aqp)
+
+# color palettes and manipulation
+library(RColorBrewer)
+library(colorspace)
 ```
 
 
 # Map Unit Key Grids
 
-Use the `mukey.wcs()` function to access chunks of the CONUS map unit key grids, based on some representation of an area of interest (AOI). The AOI can be defined manually, as below, or automatically extracted from `Spatial*`, `RasterLayer`, `sf`, `sfc` or `bbox` objects. The resulting grid of integers isn't all that useful by itself; join data from Soil Data Access (SDA) or local files (by map unit key) to create thematic maps. Note: the gSSURGO and gNATSGO grids are updated annually, and typically in-sync with the live version of the data hosted by SDA (updated Oct 1st) by early November. Map unit keys can change over time, especially in soil survey areas that were updated during the last fiscal year.
+Use the `mukey.wcs()` function to access chunks of the CONUS map unit key grids, based on some representation of an area of interest (AOI). The AOI can be defined manually, as below, or automatically extracted from `sf`, `sfc`, `bbox`, `SpatRaster`, or `SpatVector` objects. Backwards-compatibility with `Spatial*` and `RasterLayer` objects is also provided. The resulting grid of integers isn't all that useful by itself; join data from Soil Data Access (SDA) or local files (by map unit key) to create thematic maps. Note: the gSSURGO and gNATSGO grids are updated annually, and typically in-sync with the live version of the data hosted by SDA (updated Oct 1st) by early November. Map unit keys can change over time, especially in soil survey areas that were updated during the last fiscal year.
 ```{r}
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
 a <- st_bbox(
@@ -123,8 +208,11 @@ a <- st_bbox(
 # convert bbox to sf geometry
 a <- st_as_sfc(a)
 
-# fetch gSSURGO map unit keys at native resolution (~30m)
+# fetch gSSURGO map unit keys at native resolution (30m)
 x <- mukey.wcs(aoi = a, db = 'gssurgo')
+
+# check:
+print(x)
 
 # looks good
 levelplot(
@@ -143,40 +231,35 @@ levelplot(
 ## SSURGO Polygons from SDA
 It is possible to retrieve small areas of vector geometry (SSURGO polygons) from SDA with the `SDA_spatialQuery()` function. These data are stored and delivered in a geographic coordinate system (WGS84). Overlaying the SSURGO polygons and map unit key grids will require a simple transformation.
 ```{r}
-# note: SDA_spatialQuery() expects an sp object
-# convert raster extent into vector 
-g <- as(extent(x), 'SpatialPolygons')
-proj4string(g) <- projection(x)
+# bounding box as an sf object
+# generated from WCS result
+# EPSG:5070
+x.bbox <- st_as_sfc(st_bbox(x))
 
-# get intersecting SSURGO linework as SpatialPolygonsDataFrame from SDA
-p <- SDA_spatialQuery(g, what = 'mupolygon', geomIntersection = TRUE)
+# get intersecting SSURGO linework from SDA
+# result is an sf object in 
+# GCS WGS84
+p <- SDA_spatialQuery(x.bbox, what = 'mupolygon', geomIntersection = TRUE)
 
-# transform to AEA CRS
-p <- spTransform(p, CRS(projection(x)))
-
-# compute area and convert square meters to acres
-# rgeos::gArea(p) * 0.000247105
+# transform to AEA coordinate reference system used by gSSURGO / gNATSGO
+# this is EPSG:5070
+p <- st_transform(p, st_crs(x))
 
 par(mar = c(1, 0, 2, 0))
-plot(p, main = 'SSURGO Polygons (SDA)')
+plot(st_geometry(p), main = 'SSURGO Polygons (SDA)')
 mtext('Albers Equal Area Projection', side = 1, line = -0.5)
 ```
 
 
-That looks about right.
+Overlay SSURGO polygons and 30m map unit key grid.
 ```{r}
-levelplot(
-  x, att = 'ID', 
-  main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)',
-  margin = FALSE, 
-  colorkey = FALSE,
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.lines(p, col = 'white')
-  }
-)
+par(mar = c(1, 0, 2, 0))
+plot(x, main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)', col = viridis(50), axes = FALSE, legend = FALSE)
+plot(st_geometry(p), add = TRUE, border = 'white')
+
+mtext('CONUS Albers Equal Area Projection (EPSG:5070)', side = 1, line = 1)
 ```
+
 
 ## Grid Resolution Specification
 Requesting map unit key grids at a resolution other than 30m is possible, but only suitable for a quick "preview" of the data. For example, it is possible to get a much larger chunk of data by requesting grids at 800m. However, pixels are selected by nearest-neighbor and not generalized to the coarser scale. In short: don't use the resulting data for anything other than a simple preview.
@@ -194,6 +277,7 @@ a.CA <- st_as_sfc(a.CA)
 
 # fetch gSSURGO map unit keys at ~~ 800m
 # nearest-neighbor resampling = this is a "preview"
+# result is a SpatRaster object
 x.800 <- mukey.wcs(aoi = a.CA, db = 'gssurgo', res = 800)
 
 # OK
@@ -211,11 +295,46 @@ levelplot(
 
 
 
-# Examples
+## Raster Soil Survey Data
+```{r fig.width=7, fig.height=4}
+# slightly larger than Coweeta RSS BBOX
+# specified in EPSG:5070
+a <- st_bbox(
+  c(xmin = 1129000, xmax = 1135000, ymin = 1403000, ymax = 1411000), 
+  crs = st_crs(5070)
+)
+
+a <- st_as_sfc(a)
+
+# gSSURGO grid: 30m resolution
+(x <- mukey.wcs(a, db = 'gSSURGO', res = 30))
+
+# RSS grid: 10m resolution
+(y <- mukey.wcs(a, db = 'RSS', res = 10))
+
+# graphical comparison
+par(mfcol = c(1, 2))
+
+# gSSURGO
+plot(x, axes = FALSE, legend = FALSE, main = attr(x, 'layer name'))
+# original BBOX
+plot(a, add = TRUE)
+
+# RSS
+plot(y, axes = FALSE, legend = FALSE, main = attr(y, 'layer name'), ext = x)
+# original BBOX
+plot(a, add = TRUE)
+```
+
+
+
+# Thematic Mapping
 
 
 ## Several horizon-level soil properties
+The [`get_SDA_property()`](http://ncss-tech.github.io/soilDB/reference/get_SDA_property.html) function from `soilDB` is convenient interface to aggregated SSURGO/STATSGO tabular data via SDA.
 
+Get mukey grid.
 ```{r}
 # https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.57666,-96.70175,z14
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
@@ -227,16 +346,6 @@ a <- st_bbox(
 # convert bbox to sf geometry
 a <- st_as_sfc(a)
 
-
-# keyboard shortcuts at:
-# https://casoilresource.lawr.ucdavis.edu/gmap/
-# 'b' copy bounding-box
-# 'p' copy center coordinate
-
-# read-in AOI from shape file or similar
-# a <- st_read('file.shp')
-
-
 # fetch gSSURGO map unit keys at native resolution (~30m)
 mu <- mukey.wcs(aoi = a, db = 'gssurgo')
 
@@ -247,17 +356,24 @@ levelplot(
   margin = FALSE, 
   colorkey = FALSE, 
   scales = list(draw = FALSE),
-  col.regions = viridis
+  col.regions = viridis,
+  main = 'gSSURGO Map Unit Key Grid'
 )
+```
 
-# get unique map unit keys
-ll <- levels(mu)[[1]]
+Derive aggregate soil properties, merge with raster attribute table (RAT).
+```{r}
+# extract RAT for thematic mapping
+rat <- cats(mu)[[1]]
+
+# variables of interest
+vars <- c("dbthirdbar_r", "awc_r", "ph1to1h2o_r")
 
 # get / aggregate specific horizon-level properties from SDA
 # be sure to see the manual page for this function
-p <-  get_SDA_property(property = c("dbthirdbar_r", "awc_r", "ph1to1h2o_r"),
+p <-  get_SDA_property(property = vars,
                        method = "Dominant Component (Numeric)", 
-                       mukeys = ll$ID,
+                       mukeys = as.integer(rat$mukey),
                        top_depth = 0,
                        bottom_depth = 25)
 
@@ -265,37 +381,43 @@ p <-  get_SDA_property(property = c("dbthirdbar_r", "awc_r", "ph1to1h2o_r"),
 # check: OK
 head(p)
 
-#  convert areasymbol into a factor easy plotting later
+# convert areasymbol into a factor easy plotting later
 p$areasymbol <- factor(p$areasymbol)
 
-
-# combine unique mukey + data from SDA into a new raster attribute table (RAT)
-rat <- merge(ll, p, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
-
-# re-pack RAT
+# merge aggregate soil data into RAT
+rat <- merge(rat, p, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
 levels(mu) <- rat
 
-# convert raster + RAT --> stack of values
-Db <- deratify(mu, att = "dbthirdbar_r")
-AWC <- deratify(mu, att = "awc_r")
-pH <- deratify(mu, att = "ph1to1h2o_r")
-ssa <- deratify(mu, att = "areasymbol")
+# result is a grid of map unit keys + RAT
+```
 
-# graphical check
+Plot `areasymbol`.
+```{r fig.width = 6, fig.height = 5.5}
+# list variables in the RAT
+names(cats(mu)[[1]])
 
-levelplot(
-  ssa,
-  main = 'Soil Survey Area',
-  margin = FALSE, 
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  maxpixels = 1e5
-)
+# select 'areasymbol'
+activeCat(mu) <- 'areasymbol'
+plot(mu, axes = FALSE, maxcell = 1e5, col = viridis(2))
+box()
+```
+
+Plot aggregated soil properties.
+```{r}
+# reset the active category to 1
+# this will ensure that all variables in the RAT will be converted by catalyze(mu)
+activeCat(mu) <- 1
+
+# convert mukey grid + RAT -> stack of numerical grids
+mu.stack <- catalyze(mu)
+
+# keep only properties / remove IDs
+mu.stack <- mu.stack[[vars]]
 
 
 # note implicit simplification via maxpixels
 levelplot(
-  Db, 
+  mu.stack[['dbthirdbar_r']], 
   main = '1/3 Bar Bulk Density (g/cm^3)\n0-25cm\nDominant Component',
   margin = FALSE, 
   scales = list(draw = FALSE), 
@@ -304,7 +426,7 @@ levelplot(
 )
 
 levelplot(
-  AWC, 
+  mu.stack[['awc_r']], 
   main = 'AWC (cm/cm) 0-25cm\nDominant Component',
   margin = FALSE, 
   scales = list(draw = FALSE), 
@@ -313,7 +435,7 @@ levelplot(
 )
 
 levelplot(
-  pH, 
+  mu.stack[['ph1to1h2o_r']], 
   main = 'pH 1:1 H2O 0-25cm\nDominant Component',
   margin = FALSE, 
   scales = list(draw = FALSE), 
@@ -327,45 +449,54 @@ levelplot(
 ## Sand, Silt, and Clay at a Soil Survey Area Boundary
 A not so great SSA join (1979 vs 2004).
 
-
+Setup BBOX and query mukey WCS.
 ```{r}
 # extract a BBOX like this from SoilWeb by pressing "b"
 bb <- '-91.6853 36.4617,-91.6853 36.5281,-91.5475 36.5281,-91.5475 36.4617,-91.6853 36.4617'
 wkt <- sprintf('POLYGON((%s))', bb)
 
+# init sf object from WKT
 x <- st_as_sfc(wkt)
-st_crs(x) <- 4326
 
+# assign GCS WGS84 coordinate reference system
+st_crs(x) <- 4326
 
 # get gSSURGO grid here
 mu <- mukey.wcs(aoi = x, db = 'gssurgo')
 
-# unique map unit keys
-ll <- levels(mu)[[1]]
-
 # note SSA boundary
-levelplot(mu, att = 'ID', margin = FALSE, colorkey = FALSE, col.regions = viridis)
+levelplot(mu, att = 'ID', margin = FALSE, colorkey = FALSE, col.regions = viridis, scales = list(draw = FALSE))
+```
+
+Derive aggregate sand, silt, clay (RV) values from the largest component, taking the weighted mean over 25-50cm depth interval.
+```{r fig.width = 8, fig.height = 6}
+# extract RAT for thematic mapping
+rat <- cats(mu)[[1]]
+
+# variables of interest
+vars <- c("sandtotal_r","silttotal_r","claytotal_r")
 
 # get thematic data from SDA
 # dominant component
 # depth-weighted average
 # sand, silt, clay (RV)
-p <-  get_SDA_property(property = c("sandtotal_r","silttotal_r","claytotal_r"),
+p <-  get_SDA_property(property = vars,
                        method = "Dominant Component (Numeric)", 
-                       mukeys = ll$ID,
+                       mukeys = as.integer(rat$mukey),
                        top_depth = 25,
                        bottom_depth = 50)
 
+
+# check
 head(p)
 
-# re-create raster attribute table with aggregate soil properties
-rat <- merge(ll, p, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
-
-# re-pack RAT
+# merge aggregate soil data into RAT
+rat <- merge(rat, p, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
 levels(mu) <- rat
 
-# convert raster + RAT --> stack of values
-ssc <- deratify(mu, c("sandtotal_r","silttotal_r","claytotal_r"))
+# convert mukey grid + RAT -> stack of numerical grids
+# retaining only sand, silt, clay via [[vars]]
+ssc <- catalyze(mu)[[vars]]
 
 # graphical check
 # note implicit simplification via maxpixels
@@ -375,15 +506,35 @@ levelplot(
   margin = FALSE, 
   scales = list(draw = FALSE), 
   col.regions = viridis,
-  maxpixels = 1e4
+  maxpixels = 1e4,
+  layout = c(3, 1)
+)
+```
+
+
+Convert to soil texture class of <2mm fraction.
+```{r fig.width = 6, fig.height = 5.5}
+# create a new grid by copy
+# we will place soil texture classes into this grid
+texture.class <- ssc[[1]]
+names(texture.class) <- 'soil.texture'
+
+# assign soil texture classes for the fine earth fraction
+# using sand and clay percentages
+values(texture.class) <- ssc_to_texcl(
+  sand = values(ssc[['sandtotal_r']]), 
+  clay = values(ssc[['claytotal_r']]), 
+  droplevels = FALSE
 )
 
-
+plot(texture.class, col = viridis(50), axes = FALSE, main = 'Soil Texture Class <2mm Fraction\nDominant Component, 25-50cm (RV)')
+box()
 ```
 
 ## Component level properties
+
 Steel corrosion potential.
-```{r}
+```{r, fig.width = 6, fig.height = 5.5}
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
 a <- st_bbox(
   c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
@@ -396,53 +547,101 @@ a <- st_as_sfc(a)
 # fetch gSSURGO map unit keys at native resolution (~30m)
 x <- mukey.wcs(aoi = a, db = 'gssurgo')
 
-# get unique mukeys from grid
-ll <- levels(x)[[1]]
+# extract RAT for thematic mapping
+rat <- cats(x)[[1]]
 
-tab <- get_SDA_property(mukeys = ll$ID, property = 'Corrosion of Steel', method = 'DOMINANT CONDITION')
+tab <- get_SDA_property(property = 'Corrosion of Steel', 
+                        method = 'DOMINANT CONDITION',
+                        mukeys = as.integer(rat$mukey)
+)
 
+
+# convert to factor and set levels in logical order
 tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
 
-
-# re-create raster attribute table with aggregate soil properties
-rat <- merge(ll, tab, by.x = 'ID', by.y = 'mukey', sort = FALSE, all.x = TRUE)
-
-# re-pack RAT
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
 levels(x) <- rat
 
-# check: RAT has been integrated into the RasterLayer object
-x
+# set active category to corsteel
+activeCat(x) <- 'corsteel'
 
-# convert raster + RAT --> grid of values
-(corsteel <- deratify(x, att = 'corsteel'))
-
-# graphical check
-levelplot(
-  corsteel, 
-  main = 'Corrosion of Steel',
-  margin = FALSE, 
-  scales = list(draw = FALSE), 
-  col.regions = viridis
-  )
+# plot
+plot(x, axes = FALSE, col = viridis(3))
+box()
 ```
 
 
-## TODO SOC Stock Estimates
+Simplified component parent material group.
+```{r, fig.width = 6, fig.height = 5.5}
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
+  crs = st_crs(4326)
+)
+
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
+
+# fetch gSSURGO map unit keys at native resolution (~30m)
+x <- mukey.wcs(aoi = a, db = 'gssurgo')
+
+# extract RAT for thematic mapping
+rat <- cats(x)[[1]]
+
+# simplified parent material group name
+tab <- get_SDA_pmgroupname(mukeys = as.integer(rat$mukey))
+
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(x) <- rat
+
+# set active category to corsteel
+activeCat(x) <- 'pmgroupname'
+plot(x, axes = FALSE, col = viridis(10))
+```
+
+
+Hydric Rating.
+```{r, fig.width = 6, fig.height = 5.5}
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
+  crs = st_crs(4326)
+)
+
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
+
+# fetch gSSURGO map unit keys at native resolution (~30m)
+x <- mukey.wcs(aoi = a, db = 'gssurgo')
+
+# extract RAT for thematic mapping
+rat <- cats(x)[[1]]
+
+# simplified parent material group name
+tab <- get_SDA_hydric(mukeys = as.integer(rat$mukey))
+
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(x) <- rat
+
+# set active category to corsteel
+activeCat(x) <- 'HYDRIC_RATING'
+plot(x, axes = FALSE, col = viridis(10))
+```
+
 
 ## Additional interfaces to SDA with aggregation
 
 ```{r eval=FALSE}
-
 # tab <- get_SDA_muaggatt(mukeys = ll$ID)
 
-# tab <- get_SDA_hydric(mukeys = ll$ID)
-
 # tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
-
-# tab <- get_SDA_pmgroupname(mukeys = ll$ID, simplify = TRUE)
-
 ```
 
+
+## TODO SOC Stock Estimates + Expected Variation
 
 
 
@@ -450,18 +649,17 @@ levelplot(
 
 ## ISSR-800
 
-Available datasets.
+Available data sets. (TODO: there are more more to add, including NCCPI)
 ```{r, eval = FALSE}
 WCS_details(wcs = 'ISSR800')
 ```
-ee
+
 ```{r, echo = FALSE}
 kableExtra::kable_styling(knitr::kable(WCS_details(wcs = 'ISSR800'), row.names = FALSE), full_width = FALSE)
 ```
 
+Examples for a broad slice of California
 ```{r}
-# part of CA
-
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
 a.CA <- st_bbox(
   c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
@@ -470,7 +668,6 @@ a.CA <- st_bbox(
 
 # convert bbox to sf geometry
 a.CA <- st_as_sfc(a.CA)
-
 
 # floating point grids
 paws_total <- ISSR800.wcs(aoi = a.CA, var = 'paws')
@@ -499,38 +696,82 @@ weg <- ISSR800.wcs(aoi = a.CA, var = 'weg')
 str <- ISSR800.wcs(aoi = a.CA, var = 'str')
 ```
 
-```{r}
-# compositional data may lose some fidelity due to marginal aggregation
+Check to see if aggregated sand + silt + clay is roughly = 100%. Almost. This isn't surprising since each component of soil texture is aggregated separately.
+```{r, fig.width = 6, fig.height = 6.5}
 z <- sand_3060cm + silt_3060cm + clay_3060cm
-levelplot(z - 100, margin = FALSE)
+plot(z - 100)
 ```
 
 Soil texture class 25-50cm.
-```{r}
+```{r, fig.width = 6, fig.height = 6.5}
 texture_2550cm <- ISSR800.wcs(aoi = a.CA, var = 'texture_2550cm')
 
 # use colors from RAT
-cols <- levels(texture_2550cm)[[1]]$hex
-levelplot(texture_2550cm, att = 'class', margin = FALSE, col.regions = cols)
+cols <- cats(texture_2550cm)[[1]]$hex
+
+# plot using SoilWeb soil texture class colors
+plot(texture_2550cm, col = cols, axes = FALSE)
+box()
 ```
 
 
-```{r}
-levelplot(sar, margin = FALSE)
+Other soil properties of interest.
+```{r, fig.width = 6, fig.height = 6.5}
+plot(sar, axes = FALSE,  col = viridis(50), main = 'SAR')
+box()
 
-levelplot(wei, margin = FALSE)
+plot(wei, axes = FALSE,  col = viridis(50), main = 'Wind Erodibility Index')
+box()
 
-levelplot(drainage_class, margin = FALSE)
-levelplot(weg, margin = FALSE)
-levelplot(str, margin = FALSE)
+plot(drainage_class, axes = FALSE,  col = viridis(50), main = 'Drainage Class')
+box()
+
+plot(weg, axes = FALSE,  col = viridis(50), main = 'Wind Erodibility Group')
+box()
+
+plot(str, axes = FALSE,  col = viridis(50), main = 'Soil Temperature Regime')
+box()
 ```
 
+Stacking soil property grids for multi-panel figures that share a common color ramp / legend.
 ```{r fig.width = 10, fig.height=6}
-levelplot(stack(pH_05cm, pH_3060cm), margin = FALSE)
+# combine into multi-layer SpatRaster
+# like raster::stack()
+s <- c(pH_05cm, pH_3060cm)
 
-levelplot(stack(clay_05cm, clay_3060cm), margin = FALSE)
+# plot multiple layers via SpatRaster plot method
+# common color map / legend
+plot(s, col = viridis(50), axes = FALSE, mar = c(2, 2, 2, 4), range = c(4.5, 9))
+```
 
-levelplot(stack(sand_3060cm, silt_3060cm, clay_3060cm), margin = FALSE)
+
+I like this approach.
+```{r fig.width = 10, fig.height=6}
+# or, plot using rasterVis::levelplot
+
+# note laundering of layer names, required when original layer names contain spaces, punctuation, etc.
+names(s) <- make.names(names(s))
+
+# manually specify panel names
+# in original ordering specified to c()
+# formatting ideas: https://stackoverflow.com/questions/34652580/change-raster-panel-titles-using-levelplot
+levelplot(s, 
+          scales = list(draw = FALSE), 
+          col.regions = viridis, 
+          names.attr = c('pH 1:1 H20, 0-5cm', 'pH 1:1 H20, 30-60cm')
+)
+```
+
+
+Another example, with 3 panels.
+```{r fig.width = 10, fig.height=6}
+s <- c(sand_3060cm, silt_3060cm, clay_3060cm)
+names(s) <- make.names(names(s))
+levelplot(s, 
+          scales = list(draw = FALSE), 
+          col.regions = viridis,
+          names.attr = c('Percent Sand, 30-60cm', 'Percent Silt, 30-60cm', 'Percent Clay, 30-60cm')
+)
 ```
 
 
@@ -546,18 +787,31 @@ a <- st_bbox(
 # convert bbox to sf geometry
 a <- st_as_sfc(a)
 
-# get
+# these are grids + RAT
 greatgroup <- ISSR800.wcs(aoi = a, var = 'greatgroup')
 lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
 
+# create a large color palette for greatgroup classes
+cols <- brewer.pal(12, 'Set3')
+cols <- colorspace::darken(cols, amount = 0.25)
+cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
+
 # plot
-levelplot(greatgroup, margin = FALSE, scales = list(draw = FALSE))
-levelplot(lcc_irrigated, margin = FALSE, scales = list(draw = FALSE))
+levelplot(greatgroup, scales = list(draw = FALSE), col.regions = cr)
+
+
+# colors for irrigated LCC
+cols <- rev(brewer.pal(8, 'Spectral'))
+cols <- colorspace::darken(cols, amount = 0.1)
+cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
+
+# plot
+levelplot(lcc_irrigated, scales = list(draw = FALSE), col.regions = cr)
 ```
 
 
 ### Soil Color
-```{r}
+```{r fig.width = 6, fig.height = 6.5}
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
 a <- st_bbox(
   c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
@@ -570,25 +824,31 @@ a <- st_as_sfc(a)
 # most frequent soil series per grid cell
 series_name <- ISSR800.wcs(aoi = a, var = 'series_name')
 
-# extract unique soil series names
-rat <- levels(series_name)[[1]]
+# wow, 221 soil series
+length(levels(series_name)[[1]])
+
+# extract RAT for thematic mapping
+rat <- cats(series_name)[[1]]
 
 # query morphology from OSDs
 osds <- fetchOSD(soils = rat$series_name)
 
 # extract soil color at 25cm
-s <- slice(osds, fm = 25 ~ soil_color, just.the.data = TRUE, strict = FALSE)
+s <- dice(osds, fm = 25 ~ soil_color, SPC = FALSE)
 
 # subset columns / re-name for simpler join
 s.colors <- s[, c(idname(osds), 'soil_color')]
 names(s.colors)[1] <- 'series_name'
 
-# join with original RAT / re-order columns for packing into raster object
+# join with original RAT
 rat.new <- merge(rat, s.colors, by = 'series_name', sort = FALSE, all.x = TRUE)
+
+# re-order columns for packing into raster object
 rat.new <- rat.new[, c('ID', 'series_name', 'soil_color')]
 
-# replace old RAT with new RAT containing soil colors
+# re-pack RAT
 levels(series_name) <- rat.new
+
 
 # simple figure
 levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorkey = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs', scales = list(draw = FALSE))
@@ -618,9 +878,11 @@ pH <- ISSR800.wcs(aoi = a, var = 'ph_025cm')
 # no ESP grid, use a constant value of 1%
 esp <- ec
 values(esp) <- 1
+names(esp) <- 'ESP'
 
 # copy EC grid, replace values with classification in next step
 ss <- ec
+names(ss) <- 'FAO Salt Severity'
 
 # resulting raster contains factor levels (integers) and labels
 values(ss) <- allocate(EC = values(ec), pH = values(pH), ESP = values(esp), to = 'FAO Salt Severity', droplevels = TRUE)
@@ -629,7 +891,8 @@ values(ss) <- allocate(EC = values(ec), pH = values(pH), ESP = values(esp), to =
 print(ss)
 
 # plot
-levelplot(ss, margin = FALSE, main = 'FAO Salt Severity')
+plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = viridis(10))
+box()
 ```
 
 
@@ -658,12 +921,11 @@ levelplot(ss, margin = FALSE, main = 'FAO Salt Severity')
 # Artistic License
 https://github.com/riatelab/tanaka
 
-```{r}
-library(terra)
+```{r fig.width = 8, fig.height = 8}
 library(tanaka)
 
 tanaka(
-  rast(pH_3060cm), 
+  pH_3060cm, 
   breaks = c(6, 7, 8), 
   legend.pos = "topright", 
   legend.title = "pH 1:1 H2O (30-60cm)", 
@@ -674,6 +936,6 @@ tanaka(
 
 
 ----------------------------
-This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")` and `terra` version `r utils::packageDescription("terra", field="Version")`.
 
 
