@@ -1,0 +1,209 @@
+---
+title: "gNATSGO / gSSURGO Map Unit Key Grids"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+  
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+# Introduction
+gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils/folder/149859400396) map unit key grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:5070). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geo-databases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
+
+A [mukey web coverage service](http://ncss-tech.github.io/AQP/soilDB/local-mukey-grid.html) can be used when working with small (5000 x 5000 pixel) chunks.
+
+
+## gSSURGO
+Excerpt from the [gSSURGO documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=nrcs142p2_053628#release).
+
+<div style="padding: 10px; font-size:90%;">
+The gSSURGO Database is derived from the official Soil Survey Geographic (SSURGO) Database. SSURGO generally has the most detailed level of soil geographic data developed by the National Cooperative Soil Survey (NCSS) in accordance with NCSS mapping standards. The tabular data represent the soil attributes and are derived from properties and characteristics stored in the National Soil Information System (NASIS). The gSSURGO data were prepared by merging the traditional vector-based SSURGO digital map data and tabular data into statewide extents, adding a statewide gridded map layer derived from the vector layer, and adding a new value-added look up table (Valu1) containing “ready to map” attributes. The gridded map layer is a file geodatabase raster in an ArcGIS file geodatabase. The raster and vector map data have a statewide extent. The raster map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area projection. Each cell (and polygon) is linked to a map unit identifier called the map unit key. A unique map unit key is used to link the raster cells and polygons to attribute tables. Due to file size, the raster layer for the conterminous United States is only available in a 30-meter resolution.
+</div>
+
+## gNATSGO
+Excerpt from the [gNATSGO documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcseprd1464625).
+
+<div style="padding: 10px; font-size:90%;">
+The gNATSGO databases contain a raster of the soil map units and 70 related tables of soil properties and interpretations. They are designed to work with the SPSD gSSURGO ArcTools. Users can create full coverage thematic maps and grids of soil properties and interpretations for large geographic areas, such as the extent of a State or the conterminous United States. Please note that the State-wide geodatabases contain a 10 meter raster and the CONUS database contains a 30 meter raster.
+
+The gNATSGO database is composed primarily of SSURGO data, but STATSGO2 data was used to fill in the gaps. The RSSs are newer product with relatively limited spatial extent.  These RSSs were merged into the gNATSGO after combining the SSURGO and STATSGO2 data. The extent of RSS is expected to increase in the coming years.
+</div>
+
+
+
+
+## Thematic Mapping
+Thematic mapping or analysis of soil information requires connecting the grids to our tabular data sources, either using local files or Soil Data Access (SDA) web-service. The `soilDB` package provides many convenient interfaces to SDA. Note that SDA does not yet contain tabular data for the raster soil surveys.
+
+
+## Caveats / Limitations
+  * Tiled processing (pending tutorial) is necessary for creating CONUS-scale property grids.
+
+
+## Manually Creating a BBOX for Cropping CONUS Grids
+Sometimes it is convenient to manually specify a BBOX created from a website or single point specified in WGS84 coordinates. [SoilWeb](https://casoilresource.lawr.ucdavis.edu/gmap/) provides two convenient keyboard shortcuts, available after clicking on the map interface:
+
+   * 'b' copy bounding-box, returned as: <span style = 'font-size: 80%;'><tt>-118.6609 36.4820,-118.6609 36.5972,-118.3979 36.5972,-118.3979 36.4820,-118.6609 36.4820</tt></span>
+   
+   * 'p' copy link to center coordinate, returned as: `https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.53964,-118.52943,z13`
+   
+Right-clicking anywhere in the map interface will also generate a link to those coordinates and zoom-level.
+
+
+# Setup
+Need the latest version of `soilDB`, along with all packages specified below (CRAN versions fine).
+```{r eval = FALSE}
+install.packages('soilDB')
+remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+```
+
+Load required packages.
+```{r}
+# latest from GitHub
+library(soilDB)
+
+# wrangling polygons and CRS transformations
+library(sf)
+
+# raster data / analysis
+library(terra)
+
+# raster visualization
+library(viridisLite)
+```
+
+
+# Examples
+
+Create a `SpatRaster` object from a local [gSSURGO mukey GeoTiff](https://nrcs.app.box.com/v/soils/folder/149859400396).
+```{r}
+# mukey grid
+mu <- rast('E:/gis_data/mukey-grids/gSSURGO-mukey.tif')
+mu
+```
+
+
+One approach to setting up a bounding box for cropping the CONUS grid. The same approach is used to specify a bounding box to the [mukey web coverage service](http://ncss-tech.github.io/AQP/soilDB/WCS-demonstration-01.html). In this case, bounding boxes must be transformed to ESPG 5070.
+```{r eval = FALSE}
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -113.65, xmax = -112.51, ymin = 46.69, ymax = 47.18),
+  crs = st_crs(4326)
+)
+
+# convert to polygon
+a <- st_as_sfc(a)
+
+# transform to coordinate reference system of mukey grid
+a <- st_transform(a, 5070)
+```
+
+
+Alternative approach to generating a bounding box using SoilWeb. [Example BBOX center](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=41.83547,-90.12201,z16).
+```{r}
+# paste your BBOX text here
+bb <- '-90.1378 41.8273,-90.1378 41.8420,-90.1051 41.8420,-90.1051 41.8273,-90.1378 41.8273'
+
+# convert text -> WKT -> sf
+wkt <- sprintf('POLYGON((%s))', bb)
+a <- st_as_sfc(wkt)
+
+# set coordinate reference system as GCS/WGS84
+st_crs(a) <- 4326
+
+# transform to CRS of mukey grid
+a <- st_transform(a, 5070)
+```
+
+
+Crop CONUS grid using our BBOX geometry. Note that this process removes the original raster attribute table (RAT). A new RAT is created from just those map unit keys in the cropped grid.
+```{r}
+# crop CONUS grid
+(x <- crop(mu, a))
+
+# create new raster attribute table (RAT)
+uids <- terra::unique(x)[,1]
+rat <- data.frame(value = uids, mukey = uids)
+x <- terra::categories(x, layer = 1, rat)
+
+# set layer name in object
+names(x) <- 'mukey'
+```
+
+Graphically check cropped grid of map unit keys. The original BBOX in (transformed) WGS84 coordinates is plotted as a black outline for context.
+```{r fig.width=8, fig.height=6}
+# graphical check
+plot(x, legend = FALSE, axes = FALSE, main = 'gSSURGO Map Unit Keys')
+box()
+
+# add original BBOX, after transforming to mukey grid CRS
+plot(st_transform(a, 5070), add = TRUE)
+```
+
+Thematic mapping via selection and aggregation of tabular data from Soil Data Access (SDA). The `catalyze()` step can take a significant amount of time when processing large chunks of map unit keys.
+```{r fig.width=10, fig.height=6}
+# extract RAT for thematic mapping
+rat <- cats(x)[[1]]
+
+# variables of interest
+vars <- c("sandtotal_r", "silttotal_r", "claytotal_r", "om_r", "cec7_r", "ph1to1h2o_r")
+
+# weighted mean over components to account for large misc. areas
+# depth-weighted average 0-25cm
+p <-  get_SDA_property(
+  property = vars,
+  method = "Weighted Average", 
+  mukeys = as.integer(rat$mukey),
+  top_depth = 0,
+  bottom_depth = 50,
+  include_minors = TRUE, 
+  miscellaneous_areas = FALSE
+)
+
+# merge aggregate data into RAT
+rat <- merge(rat, p, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(x) <- rat
+
+# grid + RAT -> stack of numerical grids
+# ~ < 1 second
+system.time(x.stack <- catalyze(x))
+
+# keep only properties / remove IDs
+x.stack <- x.stack[[vars]]
+
+# check
+plot(x.stack, maxcell = 1e4, col = viridis::viridis(50), axes = FALSE)
+```
+
+
+
+
+
+----------------------------
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")` and `terra` version `r utils::packageDescription("terra", field="Version")`.
+
+
+
+
+
+
+
+
+
