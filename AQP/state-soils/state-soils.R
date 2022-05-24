@@ -1,3 +1,6 @@
+## old material, integrate or remove
+##
+
 # need the latest versions from GitHub
 
 library(aqp)
@@ -86,12 +89,12 @@ library(MASS)
 # replace 0-distances with min of non-zero distances
 d[d == 0] <- min(d[d > 0])
 # nMDS
-mds <- sammon(d)
+mds <- cmdscale(d)
 
 # ordination
 # color points by "3rd" horizon, moist soil color
-plot(mds$points, pch = 15, col = x[, 3]$soil_color, cex = 3)
-text(mds$points, x$state, cex = 0.75)
+plot(mds, pch = 15, col = x[, 3]$soil_color, cex = 3)
+text(mds, x$state, cex = 0.75)
 mtext('aqp::us.state.soils', side = 1, at = 0, font = 2, line = -2, adj = 0)
 
 
@@ -107,7 +110,7 @@ x <- fetchOSD(us.state.soils$id, extended = TRUE)
 site(x$SPC) <- us.state.soils
 
 # remove those outside of CONUS
-z <- filter(x$SPC, site(x$SPC)$id %in% x$climate.annual$series)
+z <- subset(x$SPC, site(x$SPC)$id %in% x$climate.annual$series)
 
 # plot style
 trellis.par.set(plot.line = list(col = 'RoyalBlue'))
@@ -126,7 +129,7 @@ mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = 
 
 # taxonomic breakdown
 # too messy with all of the soils
-SoilTaxonomyDendrogram(x$SPC[1:10, ], label = 'abbreviated', width = 0.3)
+SoilTaxonomyDendrogram(x$SPC[1:10, ], label = 'abbreviated', width = 0.3, name.style = 'center-center', hz.depths = TRUE, plot.depth.axis = FALSE, shrink = TRUE)
 
 
 # weave rug
