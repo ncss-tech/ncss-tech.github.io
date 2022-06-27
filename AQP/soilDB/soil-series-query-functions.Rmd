@@ -66,6 +66,7 @@ install.packages('sharpshootR', dep=TRUE)
 install.packages('dendextend', dep=TRUE)
 
 # latest versions from GitHub
+devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
 devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
@@ -108,8 +109,8 @@ s.dry <- fetchOSD(soils, colorState = 'dry')
 
 # quickly compare moist to dry colors
 par(mar=c(1,0,2,1), mfrow=c(2,1))
-plot(s) ; title('Moist Colors')
-plot(s.dry) ; title('Dry Colors')
+plotSPC(s, name.style = 'center-center') ; title('Moist Colors')
+plotSPC(s.dry, name.style = 'center-center') ; title('Dry Colors')
 ```
 
 The `SoilTaxonomyDendrogram` function from `sharpshootR` package knows how to use elements from the soil classification (order/suborder/great group/subgroup) to build a unique layout of profile sketches. The dissimilarity matrix is computed using Gower's distance metric for nominal data.
@@ -120,7 +121,7 @@ kable_styling(kable(site(s)[, c('id', 'soilorder', 'suborder', 'greatgroup', 'su
 
 ```{r fig.width = 8, fig.height = 4}
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, scaling.factor = 0.02, width = 0.28)
+SoilTaxonomyDendrogram(s, scaling.factor = 0.02, width = 0.28, name.style = 'center-center')
 ```
 
 Take a closer look at the object returned by `fetchKSSL`. Consult the [`SoilProfileCollection` reference](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) for details on the internal structure of `s` and relevant methods.
@@ -260,14 +261,14 @@ print(res$fig)
 ```
 
 
-# Siblings and Cousins
+# Related Soils
 
 ## Geographically Associated Soils
 
-*TODO: write some definitions*
-
 
 ## Siblings
+Siblings are soils that exist in the same map unit, possibly limited to major components.
+
 
 TODO: document major/minor siblings.
 
@@ -288,7 +289,7 @@ s.list <- unique(c(s$sib$series[1], s$sib$sibling))
 h <- fetchOSD(s.list)
 
 # plot dendrogram + profiles
-SoilTaxonomyDendrogram(h, y.offset = 0.4, width = 0.2)
+SoilTaxonomyDendrogram(h, y.offset = 0.4, width = 0.3, name.style = 'center-center')
 ```
 
 Component data for the siblings of **Amador**. These can be used to generate a [co-occurence network](http://ncss-tech.github.io/AQP/sharpshootR/component-relation-graph.html).
@@ -327,7 +328,7 @@ plotSoilRelationGraph(m, s='Amador', plot.style='dendrogram', type='fan')
 
 *Finish this*
 ```{r fig.width=20, fig.height=20}
-# takes a while to run, there will be duplicates in counsins here
+# takes a while to run, there will be duplicates in cousins here
 s <- siblings('amador', component.data = TRUE, cousins = TRUE)
 
 # combine sibling + cousin data, remove duplicates
@@ -347,14 +348,13 @@ plotSoilRelationGraph(m, s='Amador', vertex.scaling.factor=1, edge.transparency=
 # OSD Full Text Search
 [OSD Full Text Search](http://soilmap2-1.lawr.ucdavis.edu/osd-search/)
 ```{r fig.width=10, fig.height=6}
-
 soils <- OSDquery(brief_narrative = 'andesite', mlra = '18')
 kable_styling(kable(head(soils), format = 'html'), full_width = FALSE)
 
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, scaling.factor = 0.0225, width = 0.25)
+SoilTaxonomyDendrogram(s, y.offset = 0.4, scaling.factor = 0.0225, width = 0.28, name.style = 'center-center')
 ```
 
 
@@ -365,7 +365,7 @@ str(soils)
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, width=0.25)
+SoilTaxonomyDendrogram(s, width=0.3, scaling.factor = 0.02)
 ```
 
 
@@ -375,7 +375,7 @@ soils <- OSDquery(taxonomic_class = 'duri:* & calc:*', mlra = '28B')
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, width=0.25)
+SoilTaxonomyDendrogram(s, y.offset = 0.4, width=0.3, scaling.factor = 0.02, shrink = TRUE)
 ```
 
 ```{r fig.width=10, fig.height=6}
@@ -384,7 +384,7 @@ soils <- OSDquery(geog_assoc_soils = 'musick')
 s <- fetchOSD(soils$series, extended = TRUE)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, width=0.2)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, width=0.3, scaling.factor = 0.02, shrink = TRUE)
 
 kable_styling(kable(s$mtnpos, digits = 2, format = 'html'), full_width = FALSE)
 # kable(s$pmorigin)
@@ -410,8 +410,8 @@ print(res$fig)
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
-par(mar=c(0,0,2,1))
-plot(s$SPC, plot.order=res$order)
+par(mar=c(0, 0, 2, 0))
+plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
 title('Hydrologic Ordering via Hillslope Position Proportions')
 ```
 
@@ -421,15 +421,16 @@ print(res$fig)
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
-par(mar=c(0,0,2,1))
-plot(s$SPC, plot.order=res$order)
+par(mar=c(0, 0, 2, 0))
+plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
 title('Hydrologic Ordering via Geomorphic Component Proportions')
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, scaling.factor = 0.015, width = 0.25)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE, width = 0.28)
 ```
+
 
 Code.
 ```{r, eval=FALSE}
@@ -441,19 +442,19 @@ s <- fetchOSD(soils, extended = TRUE)
 res <- vizHillslopePosition(s$hillpos)
 print(res$fig)
 
-par(mar=c(0,0,2,1))
-plot(s$SPC, plot.order=res$order)
+par(mar=c(0, 0, 2, 0))
+plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
 title('Hydrologic Ordering via Hillslope Position Proportions')
 
 res <- vizGeomorphicComponent(s$geomcomp)
 print(res$fig)
 
-par(mar=c(0,0,2,1))
-plot(s$SPC, plot.order=res$order)
+par(mar=c(0, 0, 2, 0))
+plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
 title('Hydrologic Ordering via Geomorphic Component Proportions')
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, scaling.factor = 0.015, width = 0.25)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE, width = 0.28)
 ```
 
 
