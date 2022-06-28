@@ -35,7 +35,6 @@ With a recent version of R (>= 3.5), it is possible to get all of the packages t
 ```{r eval=FALSE}
 # run these commands in the R console
 install.packages('latticeExtra', dep=TRUE)
-install.packages('plyr', dep=TRUE)
 install.packages('reshape2', dep=TRUE)
 install.packages('aqp', dep=TRUE)
 install.packages('soilDB', dep=TRUE)
@@ -43,7 +42,6 @@ install.packages('soilDB', dep=TRUE)
 
 You will also need the latest version of `soilDB` and `aqp`:
 ```{r eval=FALSE}
-install.packages('remotes', dep=TRUE)
 remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
 remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
@@ -58,7 +56,6 @@ Here is a very quick example of how to build a water retention curve from KSSL d
 library(aqp)
 library(soilDB)
 library(latticeExtra)
-library(plyr)
 library(reshape2)
 library(grid)
 
