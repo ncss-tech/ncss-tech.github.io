@@ -35,7 +35,7 @@ Source colors are in sRGB (D65) colorspace, as converted from Munsell notation u
 Trivial example using some of the `aqp` built-in data, not very interesting.
 ```{r fig.width=8, fig.height=6}
 library(aqp)
-library(plyr)
+# library(plyr)
 library(cluster)
 library(ape)
 library(colorspace)
@@ -46,7 +46,10 @@ library(sharpshootR)
 data(sp1)
 sp1$soil_color <- with(sp1, munsell2rgb(hue, value, chroma))
 depths(sp1) <- id ~ top + bottom
-plot(sp1)
+hzdesgnname(sp1) <- 'name'
+
+par(mar = c(0, 0, 0, 1))
+plotSPC(sp1, width = 0.3, name.style = 'center-center')
 
 # manually convert Munsell -> RGB
 rgb.data <- munsell2rgb(sp1$hue, sp1$value, sp1$chroma, return_triplets = TRUE)
@@ -64,7 +67,7 @@ row.names(pig) <- pig[, 1]
 d <- daisy(pig[, 2:6])
 dd <- diana(d)
 
-plotProfileDendrogram(sp1, dd, dend.y.scale = 0.25, scaling.factor = 0.001, y.offset = 0.02, width=0.15)
+plotProfileDendrogram(sp1, clust = dd, dend.y.scale = 0.25, scaling.factor = 0.0008, y.offset = 0.02, width = 0.3, name.style = 'center-center')
 ```
 
 
@@ -84,8 +87,8 @@ s$g <- rgb.data$g
 s$b <- rgb.data$b
 
 # check
-par(mar=c(1,1,1,1))
-plot(s)
+par(mar=c(0, 0, 0, 1))
+plotSPC(s, name.style = 'center-center', width = 0.33)
 ```
 
 
@@ -123,7 +126,7 @@ dd <- diana(d)
 
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = max(d) / max(s), y.offset = max(d) / 10, width=0.25, cex.names=0.45)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.003, y.offset = 0.05, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
 ```
 
 
@@ -141,7 +144,7 @@ dd <- diana(d)
 
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.25, cex.names=0.45)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
 ```
 
 
@@ -159,7 +162,7 @@ d <- daisy(pig[, -1])
 dd <- diana(d)
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.25, cex.names=0.45)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 3, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
 ```
 
 
@@ -188,7 +191,7 @@ d <- Reduce('+', delta.E00)
 dd <- diana(d)
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.45, y.offset = 6, width=0.25, cex.names=0.45)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.45, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
 ```
 
 
@@ -231,7 +234,7 @@ par(mar=c(0,0,0,0), bg='black', fg='white')
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 1, width=0.35, cex.names=0.45, name=NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.33, y.offset = 1.5, width=0.4, name = NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE)
 ```
 
 ## Soil Profile Sketch Ordination
@@ -249,12 +252,17 @@ all(row.names(mds) == profile_id(s))
 # re-scale nMDS axis 1 to the typical horizontal scale used by plotSPC 
 xoff <- aqp:::.rescaleRange(mds[, 1], x0 = 1, x1 = length(s))
 
+# adjust to reduce overlap
+# with an expansion of the x-axis out to length(s) + 5
+set.seed(10110)
+xoff.fixed <- fixOverlap(xoff, thresh = 0.65, min.x = 1, max.x = length(s) + 5)
+
 # re-scale nMDS axis 2 to the typical vertical scale used by plotSPC  
 yoff <- aqp:::.rescaleRange(mds[, 2], x0 = -10, x1 = max(s))
 
 par(mar = c(0.25, 0.25, 0.25, 0.25), bg='black', fg='white')
 
-plotSPC(s, y.offset = yoff, relative.pos = xoff, width = 0.25, name.style = 'center-center', hz.depths = FALSE, col.label = 'Generalized Horizon Label', print.id = TRUE, name = NA, scaling.factor = 0.5, shrink = TRUE)
+plotSPC(s, y.offset = yoff, relative.pos = xoff.fixed, width = 0.25, name.style = 'center-center', hz.depths = FALSE, col.label = 'Generalized Horizon Label', print.id = TRUE, name = NA, scaling.factor = 0.8, shrink = TRUE)
 ```
 
 Arrange OSD sketches according to (approximate) locations defined by non-metric multidimensional scaling (ordination) of pair-wise distances.
