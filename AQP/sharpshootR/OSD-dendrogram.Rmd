@@ -162,7 +162,7 @@ hz.topography.offset = 'hzto',
 hz.boundary.lty = 'hzto.lty'
 )
 
-legend('bottomright', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.05, bty = 'n', cex = 0.85)
+legend('bottomright', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.01, bty = 'n', cex = 0.85)
 
 ```
 
