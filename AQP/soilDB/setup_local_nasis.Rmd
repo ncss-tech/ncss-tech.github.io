@@ -22,7 +22,7 @@ This document describes how to setup an ODBC link between **R** and the local NA
  
 2. With the "User DSN" tab selected, create a new data source by clicking on the "Add..." button. 
 
-  + Select the "ODBC Driver 13 for SQL Server" driver. If this driver is not available, use "SQL Server Native Client 11.0"
+  + Select the "ODBC Driver 17 for SQL Server" driver. If this driver is not available, use the Software Center to install it. 
   
   
 ![](odbc-02.png)
