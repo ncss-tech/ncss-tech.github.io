@@ -217,15 +217,14 @@ x <- mukey.wcs(aoi = a, db = 'gssurgo')
 print(x)
 
 # looks good
-levelplot(
+plot(
   x, 
-  att = 'ID',
   main = 'gSSURGO map unit keys',
   sub = 'Albers Equal Area Projection',
-  margin = FALSE, 
-  colorkey = FALSE, 
-  col.regions = viridis
-  )
+  axes = FALSE, 
+  legend = FALSE, 
+  col = viridis(100)
+)
 ```
 
 
@@ -283,15 +282,13 @@ a.CA <- st_as_sfc(a.CA)
 x.800 <- mukey.wcs(aoi = a.CA, db = 'gssurgo', res = 800)
 
 # OK
-levelplot(
+plot(
   x.800, 
-  att = 'ID',
   main = 'A Preview of gSSURGO Map Unit Keys',
   sub = 'Albers Equal Area Projection (800m)\nnearest-neighbor resampling',
-  margin = FALSE, 
-  colorkey = FALSE, 
-  col.regions = viridis,
-  scales = list(draw = FALSE)
+  axes = FALSE, 
+  legend = FALSE, 
+  col = viridis(100),
   )
 ```
 
@@ -360,13 +357,11 @@ a <- st_as_sfc(a)
 mu <- mukey.wcs(aoi = a, db = 'gssurgo')
 
 # check: OK
-levelplot(
+plot(
   mu, 
-  att = 'ID', 
-  margin = FALSE, 
-  colorkey = FALSE, 
-  scales = list(draw = FALSE),
-  col.regions = viridis,
+  legend = FALSE, 
+  axes = FALSE, 
+  col = viridis(100),
   main = 'gSSURGO Map Unit Key Grid'
 )
 ```
