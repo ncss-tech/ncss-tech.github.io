@@ -75,6 +75,7 @@ library(latticeExtra)
 library(RColorBrewer)
 library(plyr)
 
+
 # get soil temperature, soil moisture, and air temperature data
 x <- fetchHenry(project='CA792')
 
@@ -102,7 +103,7 @@ kable_styling(kable(head(x$soiltemp), row.names = FALSE, format='html'), full_wi
 ```
 
 Make a simple graphical timeline of the data by sensor.
-```{r fig.width=8, fig.height=5}
+```{r fig.width=10, fig.height=5}
 HenryTimeLine(x$soiltemp, main='Soil Temperature Records', col='RoyalBlue')
 HenryTimeLine(x$soilVWC, main='Soil VWC Records', col='RoyalBlue')
 ```
