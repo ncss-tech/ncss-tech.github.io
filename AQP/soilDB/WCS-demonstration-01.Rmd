@@ -207,9 +207,6 @@ a <- st_bbox(
   crs = st_crs(4326)
 )
 
-# convert bbox to sf geometry
-a <- st_as_sfc(a)
-
 # fetch gSSURGO map unit keys at native resolution (30m)
 x <- mukey.wcs(aoi = a, db = 'gssurgo')
 
@@ -232,22 +229,17 @@ plot(
 ## SSURGO Polygons from SDA
 It is possible to retrieve small areas of vector geometry (SSURGO polygons) from SDA with the `SDA_spatialQuery()` function. These data are stored and delivered in a geographic coordinate system (WGS84). Overlaying the SSURGO polygons and map unit key grids will require a simple transformation.
 ```{r}
-# bounding box as an sf object
-# generated from WCS result
-# EPSG:5070
-x.bbox <- st_as_sfc(st_bbox(x))
-
-# get intersecting SSURGO linework from SDA
-# result is an sf object in 
+# get intersecting SSURGO polygons from SDA
+# result is a SpatVector object
 # GCS WGS84
-p <- SDA_spatialQuery(x.bbox, what = 'mupolygon', geomIntersection = TRUE)
+p <- SDA_spatialQuery(x, what = 'mupolygon', geomIntersection = TRUE)
 
 # transform to AEA coordinate reference system used by gSSURGO / gNATSGO
 # this is EPSG:5070
-p <- st_transform(p, st_crs(x))
+p <- project(p, crs(x))
 
 par(mar = c(1, 0, 2, 0))
-plot(st_geometry(p), main = 'SSURGO Polygons (SDA)')
+plot(p, main = 'SSURGO Polygons (SDA)', axes = FALSE)
 mtext('Albers Equal Area Projection', side = 1, line = -0.5)
 ```
 
@@ -256,7 +248,7 @@ Overlay SSURGO polygons and 30m map unit key grid.
 ```{r}
 par(mar = c(1, 0, 2, 0))
 plot(x, main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)', col = viridis(50), axes = FALSE, legend = FALSE)
-plot(st_geometry(p), add = TRUE, border = 'white')
+plot(p, add = TRUE, border = 'white')
 
 mtext('CONUS Albers Equal Area Projection (EPSG:5070)', side = 1, line = 1)
 ```
@@ -272,9 +264,6 @@ a.CA <- st_bbox(
   c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
   crs = st_crs(4326)
 )
-
-# convert bbox to sf geometry
-a.CA <- st_as_sfc(a.CA)
 
 # fetch gSSURGO map unit keys at ~~ 800m
 # nearest-neighbor resampling = this is a "preview"
@@ -303,6 +292,7 @@ a <- st_bbox(
   crs = st_crs(5070)
 )
 
+# convert to sf polygon for later use in figures
 a <- st_as_sfc(a)
 
 # gSSURGO grid: 30m resolution
@@ -349,9 +339,6 @@ a <- st_bbox(
   c(xmin = -96.7696, xmax = -96.6477, ymin = 36.5477, ymax = 36.6139), 
   crs = st_crs(4326)
 )
-
-# convert bbox to sf geometry
-a <- st_as_sfc(a)
 
 # fetch gSSURGO map unit keys at native resolution (~30m)
 mu <- mukey.wcs(aoi = a, db = 'gssurgo')
@@ -402,7 +389,7 @@ Plot `areasymbol`.
 names(cats(mu)[[1]])
 
 # select 'areasymbol'
-activeCat(mu) <- 'areasymbol'
+activeCat(mu) <- 'awc_r'
 plot(mu, axes = FALSE, maxcell = 1e5, col = viridis(2))
 box()
 ```
@@ -447,7 +434,6 @@ levelplot(
   col.regions = viridis,
   maxpixels = 1e5
 )
-
 ```
 
 
@@ -470,7 +456,7 @@ st_crs(x) <- 4326
 mu <- mukey.wcs(aoi = x, db = 'gssurgo')
 
 # note SSA boundary
-levelplot(mu, att = 'ID', margin = FALSE, colorkey = FALSE, col.regions = viridis, scales = list(draw = FALSE))
+plot(mu, legend = FALSE, axes = FALSE, col = viridis(100))
 ```
 
 Derive aggregate sand, silt, clay (RV) values from the largest component, taking the weighted mean over 25-50cm depth interval.
@@ -804,7 +790,7 @@ cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
 # plot
 levelplot(greatgroup, scales = list(draw = FALSE), col.regions = cr)
-
+# plot(greatgroup, axes = FALSE)
 
 # colors for irrigated LCC
 cols <- rev(brewer.pal(8, 'Spectral'))
@@ -839,6 +825,9 @@ rat <- cats(series_name)[[1]]
 # query morphology from OSDs
 osds <- fetchOSD(soils = rat$series_name)
 
+# attempt to repair old-style O horizons
+osds <- accumulateDepths(osds)
+
 # extract soil color at 25cm
 s <- dice(osds, fm = 25 ~ soil_color, SPC = FALSE)
 
@@ -858,6 +847,8 @@ levels(series_name) <- rat.new
 
 # simple figure
 levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorkey = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs', scales = list(draw = FALSE))
+
+plot(series_name, col = rat.new$soil_color, axes = FALSE, legend = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs')
 ```
 
 

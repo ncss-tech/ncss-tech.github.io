@@ -197,7 +197,9 @@ levelplot(state ~ as.numeric(doy) * texture | year, data = z,
           main='Soil Moisture State',
           scales=list(alternating = 1, x=list(tick.number=25))
 )
+```
 
+```{r fig.width=9, fig.height=8}
 levelplot(state ~ as.numeric(doy) * year | texture, data = z, 
           # subset = year %in% c('2010'),
           col.regions = colorRampPalette(brewer.pal(n.states, 'Spectral'), interpolate = 'spline', space = 'Lab'),
@@ -208,7 +210,7 @@ levelplot(state ~ as.numeric(doy) * year | texture, data = z,
           xlab = 'Day of the Year',
           ylab = '',
           main='Soil Moisture State',
-          scales=list(alternating = 1, x=list(tick.number=25))
+          scales=list(alternating = 1, y = list(cex = 0.75), x = list(tick.number=20, cex = 0.66))
 )
 
 levelplot(S ~ as.numeric(doy) * year | texture, data = z, 
@@ -218,7 +220,7 @@ levelplot(S ~ as.numeric(doy) * year | texture, data = z,
           as.table = TRUE,
           xlab = 'Day of the Year',
           ylab = '',
-          main='Soil Moisture',
+          main='Soil Moisture\nEffective Depth (mm)',
           scales=list(alternating = 1, x=list(tick.number=25))
 )
 
@@ -229,7 +231,7 @@ levelplot(VWC ~ as.numeric(doy) * year | texture, data = z,
           as.table = TRUE,
           xlab = 'Day of the Year',
           ylab = '',
-          main='Soil Moisture',
+          main='Soil Moisture\nVolumetric Water Content',
           scales=list(alternating = 1, x=list(tick.number=25))
 )
 
@@ -243,11 +245,12 @@ levelplot(ET ~ as.numeric(doy) * year | texture, data = z,
           main='AET',
           scales=list(alternating = 1, x=list(tick.number=25))
 )
-
+```
 ## 
 
+```{r fig.width=8, fig.height=6}
 barchart(proportion ~ interval | texture, groups = state, 
-         main='Expected Weekly Soil Moisture State\nDAYMET 1988-2018',
+         main='Expected Weekly Soil Moisture State\nDAYMET 2000-2019',
          data = msp, horiz = FALSE, stack = TRUE, xlab = '', ylab='Proportion',
          as.table=TRUE,
          box.ratio = 30,
@@ -287,6 +290,7 @@ levelplot(state ~ as.numeric(interval) * texture, data = mss,
 
 ##
 
+# probability that soil is <= dry moisture state
 mst <- moistureStateThreshold(z, id = 'texture', threshold = 'dry', operator = '<=')
 str(mst)
 
@@ -298,7 +302,7 @@ levelplot(Pr ~ as.numeric(doy) * texture, data = mst,
           par.settings = tactile.theme(),
           xlab = 'Day of the Year',
           ylab = '',
-          main='Pr(Soil at Field Capacity or Drier)\n1988-2018',
+          main='Pr(Soil at Field Capacity or Drier)\nDAYMET 2000-2019',
           scales=list(x=list(tick.number=25))
 )
 
@@ -306,9 +310,9 @@ levelplot(Pr ~ as.numeric(doy) * texture, data = mst,
 
 # a different take: "on average, when do the soils
 xyplot(Pr ~ as.numeric(doy), groups = texture,
-       main='Expected Soil Moisture State\n1988-2018',
+       main='Pr(Soil at Field Capacity or Drier)\nDAYMET 2000-2019',
        data = mst, type=c('l', 'g'),
-       xlab = '', ylab='Proportion',
+       xlab = '', ylab='Probability',
        as.table=TRUE,
        auto.key=list(lines=TRUE, points=FALSE, columns=length(levels(msp$texture))),
        strip=strip.custom(bg=grey(0.9)),
