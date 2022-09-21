@@ -212,7 +212,7 @@ title(sprintf('Monthly Water Balance: %s Series', toupper(s)), line = 2)
 Abstract into a function, and use to compare multiple soils / climatic parameters. A more efficient approach would load all of the data then iterate over chunks.
 ```{r}
 # x: soil series name
-compareMonthlyWB <- function(x) {
+compareMonthlyWB <- function(x, ylim) {
   
   # get climate data
   osd <- fetchOSD(x, extended = TRUE)
@@ -246,7 +246,7 @@ GROUP BY chorizon.cokey;", x
   x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
   
   # compose WB figure
-  plotWB(WB = x.wb, legend.cex = 0.9)
+  plotWB(WB = x.wb, legend.cex = 0.9, ylim = ylim)
   
   # annotate with series name / family level classification
   s <- site(osd$SPC)
@@ -262,7 +262,8 @@ par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
 # iterate over these soil series names
 soils <- c('amador', 'lucy', 'drummer', 'pierre')
 for(i in soils) {
-  compareMonthlyWB(i)
+  # adjust ylim manually
+  compareMonthlyWB(i, ylim = c(-250, 180))
 }
 ```
 
@@ -273,7 +274,8 @@ par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
 # iterate over these soil series names
 soils <- c('leon', 'tristan', 'miami', 'freznik')
 for(i in soils) {
-  compareMonthlyWB(i)
+  # adjust ylim manually
+  compareMonthlyWB(i, ylim = c(-180, 190))
 }
 ```
 
