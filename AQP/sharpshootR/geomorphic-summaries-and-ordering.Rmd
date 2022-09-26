@@ -1,89 +1,153 @@
+---
+title: "Hydrologic Ordering of Geomorphic Proportions"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
 
-```{r}
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background = '#F7F7F7', 
+  fig.align = 'center', 
+  dev = 'svglite', 
+  fig.ext = ".svg", 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+
+options(width = 100, stringsAsFactors = FALSE)
+```
+
+
+```{r, fig.width=10, fig.height=8}
 library(aqp)
+library(sharpshootR)
+library(dendextend)
+library(ape)
+library(cluster)
 
 
 # use local data
 data("OSDexamples")
+```
 
 
-
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 2))
 plotGeomorphCrossSection(OSDexamples, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
 plotGeomorphCrossSection(OSDexamples, type = 'bar', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+```
 
+```{r, fig.width=10, fig.height=8}
 plotGeomorphCrossSection(OSDexamples, type = 'line', clust = FALSE)
 plotGeomorphCrossSection(OSDexamples, type = 'bar', clust = FALSE)
+```
 
-
-
+```{r, fig.width=10, fig.height=8}
 o <- reconcileOSDGeomorph(OSDexamples, 'hillpos')
 res <- vizHillslopePosition(o$geom, verbose = TRUE)
 print(res$fig)
+```
 
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'hillpos', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
+```
 
-
+```{r, fig.width=10, fig.height=8}
 o <- reconcileOSDGeomorph(OSDexamples, 'geomcomp')
 res <- vizGeomorphicComponent(o$geom, verbose = TRUE)
 print(res$fig)
+```
 
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'geomcomp', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
+```
 
+```{r, fig.width=10, fig.height=8}
 
 o <- reconcileOSDGeomorph(OSDexamples, 'flats')
 res <- vizFlatsPosition(o$geom, verbose = TRUE)
 print(res$fig)
+```
 
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'flats', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
+```
 
+```{r, fig.width=10, fig.height=8}
 
 
 o <- reconcileOSDGeomorph(OSDexamples, 'terrace')
 res <- vizTerracePosition(o$geom, verbose = TRUE)
 print(res$fig)
+```
 
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'terrace', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
 
+```
 
+```{r, fig.width=10, fig.height=8}
 
 o <- reconcileOSDGeomorph(OSDexamples, 'mtnpos')
 res <- vizMountainPosition(o$geom, verbose = TRUE)
 print(res$fig)
 
+```
+
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'mtnpos', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
 
+```
 
+```{r, fig.width=10, fig.height=8}
 
 o <- reconcileOSDGeomorph(OSDexamples, 'shape_across')
 res <- vizSurfaceShape(o$geom, title = 'Shape Across', verbose = TRUE)
 print(res$fig)
 
+```
+
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
 
+```
 
+```{r, fig.width=10, fig.height=8}
 
 o <- reconcileOSDGeomorph(OSDexamples, 'shape_down')
 res <- vizSurfaceShape(o$geom, title = 'Shape Down', verbose = TRUE)
 print(res$fig)
+```
 
+```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
 
+```
 
+```{r, fig.width=10, fig.height=8}
 ## TODO: ensure geomorph data + type aren't mixed up
 
 hydOrder(OSDexamples$hillpos, g = 'hillpos', clust = FALSE)
