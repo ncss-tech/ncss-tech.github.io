@@ -1,0 +1,97 @@
+
+```{r}
+library(aqp)
+
+
+# use local data
+data("OSDexamples")
+
+
+
+par(mar = c(1, 0, 1, 2))
+plotGeomorphCrossSection(OSDexamples, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+plotGeomorphCrossSection(OSDexamples, type = 'bar', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+
+plotGeomorphCrossSection(OSDexamples, type = 'line', clust = FALSE)
+plotGeomorphCrossSection(OSDexamples, type = 'bar', clust = FALSE)
+
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'hillpos')
+res <- vizHillslopePosition(o$geom, verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'hillpos', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'geomcomp')
+res <- vizGeomorphicComponent(o$geom, verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'geomcomp', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'flats')
+res <- vizFlatsPosition(o$geom, verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'flats', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'terrace')
+res <- vizTerracePosition(o$geom, verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'terrace', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'mtnpos')
+res <- vizMountainPosition(o$geom, verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'mtnpos', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'shape_across')
+res <- vizSurfaceShape(o$geom, title = 'Shape Across', verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+
+o <- reconcileOSDGeomorph(OSDexamples, 'shape_down')
+res <- vizSurfaceShape(o$geom, title = 'Shape Down', verbose = TRUE)
+print(res$fig)
+
+par(mar = c(1, 0, 1, 0))
+idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
+plotSPC(o$SPC, plot.order = idx)
+
+
+## TODO: ensure geomorph data + type aren't mixed up
+
+hydOrder(OSDexamples$hillpos, g = 'hillpos', clust = FALSE)
+
+
+hydOrder(OSDexamples$hillpos, g = 'hillpos', clust = TRUE)
+
+hydOrder(OSDexamples$flats, g = 'flats', clust = FALSE)
+
+
+```
