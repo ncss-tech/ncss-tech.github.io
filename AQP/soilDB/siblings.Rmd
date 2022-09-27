@@ -80,7 +80,7 @@ SoilTaxonomyDendrogram(h.major)
 
 All siblings.
 ```{r fig.width=10}
-SoilTaxonomyDendrogram(h.all)
+SoilTaxonomyDendrogram(h.all, width = 0.3)
 ```
 
 
@@ -107,7 +107,7 @@ plotSoilRelationGraph(m, s='Amador')
 h <- fetchOSD(c(s$sib$series[1], unique(s$cousins$sibling)))
 
 # plot dendrogram + profiles
-SoilTaxonomyDendrogram(h)
+SoilTaxonomyDendrogram(h, width = 0.3)
 ```
 
 ## Geomorphic Summaries

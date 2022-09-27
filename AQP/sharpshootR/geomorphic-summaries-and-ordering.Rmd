@@ -47,6 +47,7 @@ plotGeomorphCrossSection(OSDexamples, type = 'bar', maxIter = 100, j.amount = 0.
 ```
 
 ```{r, fig.width=10, fig.height=8}
+par(mar = c(1, 0, 1, 2))
 plotGeomorphCrossSection(OSDexamples, type = 'line', clust = FALSE)
 plotGeomorphCrossSection(OSDexamples, type = 'bar', clust = FALSE)
 ```
@@ -76,7 +77,6 @@ plotSPC(o$SPC, plot.order = idx)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-
 o <- reconcileOSDGeomorph(OSDexamples, 'flats')
 res <- vizFlatsPosition(o$geom, verbose = TRUE)
 print(res$fig)

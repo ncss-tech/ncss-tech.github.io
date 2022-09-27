@@ -41,10 +41,17 @@ par(mar=c(0, 0, 0, 0))
 plotSPC(s, name='hzname', plot.order=order(s$soil.depth), cex.names=0.85, axis.line.offset=-5, width=0.25, id.style='top', name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE)
 ```
 
-```{r plot-dendrogram, fig.width=14, fig.height=6}
+Divisive clustering, the default method.
+```{r fig.width=14, fig.height=7}
 # plot dendrogram + profiles
 # result is the distance matrix used to generate dendrogram
-d <- SoilTaxonomyDendrogram(s, cex.taxon.labels=0.8, width=0.25, y.offset = 0.4)
+d <- SoilTaxonomyDendrogram(s, cex.taxon.labels = 0.8, width = 0.25, y.offset = 0.4)
+```
+
+Try agglomerative clustering, need to adjust offset.
+```{r fig.width=14, fig.height=7}
+# plot dendrogram + profiles
+SoilTaxonomyDendrogram(s, cex.taxon.labels = 0.8, width = 0.25, y.offset = 0.5, cluster.method = 'agglomerative')
 ```
 
 
