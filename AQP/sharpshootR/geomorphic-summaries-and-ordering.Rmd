@@ -34,7 +34,6 @@ library(sf)
 library(sharpshootR)
 library(SoilTaxonomy)
 
-
 # way too many ties in geomcomp
 bb <- '-97.0983 39.3808,-97.0983 39.4127,-97.0282 39.4127,-97.0282 39.3808,-97.0983 39.3808'
 
@@ -224,6 +223,33 @@ idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
 
 ```
+
+
+# Problematic Clustering
+```{r, fig.width=10, fig.height=8}
+# use local data
+data("OSDexamples")
+
+o <- reconcileOSDGeomorph(OSDexamples, 'hillpos')
+
+knitr::kable(o$geom, digits = 3)
+
+
+res <- vizHillslopePosition(o$geom, verbose = TRUE)
+print(res$fig)
+```
+
+```{r, fig.width=10, fig.height=8}
+par(mar = c(1, 0, 1, 2))
+plotGeomorphCrossSection(OSDexamples, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+```
+
+```{r, fig.width=10, fig.height=8}
+par(mar = c(1, 0, 1, 2))
+plotGeomorphCrossSection(OSDexamples, type = 'line', clust = FALSE)
+```
+
+
 
 ```{r, fig.width=10, fig.height=8}
 ## TODO: ensure geomorph data + type aren't mixed up

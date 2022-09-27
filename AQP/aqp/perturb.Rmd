@@ -27,6 +27,8 @@ library(cluster)
 library(MASS)
 library(lattice)
 library(tactile)
+
+library(vegan)
 ```
 
 
@@ -149,6 +151,9 @@ plotSPC(s, print.id = FALSE, name = NA, divide.hz = FALSE, plot.depth.axis = FAL
 ```
 
 
+
+
+
 Use simulation to demonstration pair-wise distances between profiles. A "spike" is added so that relative distance can be interpreted.
 ```{r fig.width=12, fig.height=6}
 # example data
@@ -227,6 +232,64 @@ dd <- diana(d)
 plotProfileDendrogram(b, dd, scaling.factor = 1.5, y.offset = 4, color = 'ex_Ca_to_Mg', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Exchangeable Ca:Mg')
 
 ```
+
+
+```{r fig.width=12, fig.height=6, dev='png', fig.retina=2}
+musick <- subset(x, id == 'MUSICK')
+musick$hd <- 5
+
+drummer <- subset(x, id == 'DRUMMER')
+drummer$hd <- 5
+
+
+# simulate
+s1 <- perturb(
+  musick, 
+  id = sprintf("Music-%03d", 1:50),
+  boundary.attr = 'hd', 
+  min.thickness = 5
+)
+
+# simulate
+s2 <- perturb(
+  drummer, 
+  id = sprintf("Drummer-%03d", 1:50),
+  boundary.attr = 'hd', 
+  min.thickness = 5
+)
+
+
+s <- combine(list(s1, s2))
+
+# truncate all profiles to 0-150cm
+s <- trunc(s, 0, 150)
+
+s$group <- s$id
+
+
+
+s$genhz <- generalize.hz(s[[hzdesgnname(s)]], new = c('A', 'B', 'C'), pat = c('A', 'B', 'C'))
+
+d <- profile_compare(s, vars = c('genhz', 'genhz'), max_d = 150, k = 0)
+
+## map distance matrix to 2D space via principal coordinates
+d.betadisper <- betadisper(d, group=s$group, bias.adjust = TRUE, sqrt.dist = FALSE, type='median')
+
+## fancy plot
+par(mar=c(3,3,3,1), mfcol=c(1,2))
+
+boxplot(d.betadisper, varwidth=TRUE, las=1)
+
+plot(
+  d.betadisper, hull=FALSE, ellipse=TRUE, conf=0.5, las=1,
+  col=c('Royalblue', 'Orange', 'Darkgreen', 'Firebrick'), 
+  main='Ordination of Between-Profile Distances\n50% Probability Ellipse',
+  xlab='', ylab=''
+)
+
+```
+
+
 
 
 Simulation of plausible soil colors.
