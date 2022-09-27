@@ -29,31 +29,109 @@ options(width = 100, stringsAsFactors = FALSE)
 
 ```{r, fig.width=10, fig.height=8}
 library(aqp)
+library(soilDB)
+library(sf)
 library(sharpshootR)
-library(dendextend)
-library(ape)
-library(cluster)
+library(SoilTaxonomy)
 
 
-# use local data
-data("OSDexamples")
+# way too many ties in geomcomp
+bb <- '-97.0983 39.3808,-97.0983 39.4127,-97.0282 39.4127,-97.0282 39.3808,-97.0983 39.3808'
+
+
+
+## assemble AOI polygon into WKT
+wkt <- sprintf('POLYGON((%s))', bb)
+
+## init sf polygon
+x <- st_as_sfc(wkt)
+
+# set CRS as GCS WGS84
+st_crs(x) <- 4326
+
+## get overlapping map unit keys
+# could also use SDA_query() with more elaborate SQL
+m <- SDA_spatialQuery(x, what = 'mukey')
+
+## compose SQL to return component details for these map unit keys
+# return only:
+# * map units overlapping with BBOX
+# * major components
+# * no misc. areas that might share name with a poorly-named soil series
+sql <- sprintf(
+  "SELECT mukey, cokey, compname, compkind, comppct_r 
+  FROM component 
+  WHERE mukey IN %s 
+  -- AND majcompflag = 'Yes'
+  AND compkind != 'Miscellaneous area'
+  ", format_SQL_in_statement(as.integer(m$mukey))
+)
+
+## send to SDA, result is a data.frame
+s <- SDA_query(sql)
+
+
+
+## get OSD morphology + extended summaries 
+osd <- fetchOSD(unique(s$compname), extended = TRUE)
+
+
+## check out results
+str(osd, 1)
+
+
+# the latest soilDB::fetchOSD() will automatically encode horizon distinctness offset
+# backwards compatibility
+if(is.null(osd$SPC$hzd)) {
+  
+  # convert horizon boundary distinctness -> vertical distance
+  osd$SPC$hzd <- hzDistinctnessCodeToOffset(
+    osd$SPC$distinctness, 
+    codes = c('very abrupt', 'abrubt', 'clear', 'gradual', 'diffuse')
+  )
+}
+
 ```
+
+
+```{r, fig.width=10, fig.height=8}
+# single iteration of hydrologic ordering
+h1 <- hydOrder(osd$shape_across, g = 'shape', clust = TRUE)
+
+# return trace log for eval of objective function
+# increase max iterations
+h2 <- iterateHydOrder(osd$shape_across, 'shape', maxIter = 100, verbose = TRUE, trace = TRUE)
+
+# compare
+h1$match.rate
+h2$match.rate
+
+# inspect objective function evolution
+tr <- h2$trace
+
+obj <- sapply(tr, '[[', 'obj')
+hist(obj, las = 1, xlab = 'Objective Function\nLower is Better')
+
+match.rate <- sapply(tr, '[[', 'match.rate')
+hist(match.rate, las = 1, xlab = 'Matching Rate')
+```
+
 
 
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 2))
-plotGeomorphCrossSection(OSDexamples, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
-plotGeomorphCrossSection(OSDexamples, type = 'bar', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+plotGeomorphCrossSection(osd, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+plotGeomorphCrossSection(osd, type = 'bar', maxIter = 100, j.amount = 0.05, verbose = TRUE)
 ```
 
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 2))
-plotGeomorphCrossSection(OSDexamples, type = 'line', clust = FALSE)
-plotGeomorphCrossSection(OSDexamples, type = 'bar', clust = FALSE)
+plotGeomorphCrossSection(osd, type = 'line', clust = FALSE)
+plotGeomorphCrossSection(osd, type = 'bar', clust = FALSE)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-o <- reconcileOSDGeomorph(OSDexamples, 'hillpos')
+o <- reconcileOSDGeomorph(osd, 'hillpos')
 res <- vizHillslopePosition(o$geom, verbose = TRUE)
 print(res$fig)
 ```
@@ -65,7 +143,7 @@ plotSPC(o$SPC, plot.order = idx)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-o <- reconcileOSDGeomorph(OSDexamples, 'geomcomp')
+o <- reconcileOSDGeomorph(osd, 'geomcomp')
 res <- vizGeomorphicComponent(o$geom, verbose = TRUE)
 print(res$fig)
 ```
@@ -77,7 +155,7 @@ plotSPC(o$SPC, plot.order = idx)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-o <- reconcileOSDGeomorph(OSDexamples, 'flats')
+o <- reconcileOSDGeomorph(osd, 'flats')
 res <- vizFlatsPosition(o$geom, verbose = TRUE)
 print(res$fig)
 ```
@@ -91,7 +169,7 @@ plotSPC(o$SPC, plot.order = idx)
 ```{r, fig.width=10, fig.height=8}
 
 
-o <- reconcileOSDGeomorph(OSDexamples, 'terrace')
+o <- reconcileOSDGeomorph(osd, 'terrace')
 res <- vizTerracePosition(o$geom, verbose = TRUE)
 print(res$fig)
 ```
@@ -103,15 +181,15 @@ plotSPC(o$SPC, plot.order = idx)
 
 ```
 
-```{r, fig.width=10, fig.height=8}
+```{r, fig.width=10, fig.height=8, eval = FALSE}
 
-o <- reconcileOSDGeomorph(OSDexamples, 'mtnpos')
+o <- reconcileOSDGeomorph(osd, 'mtnpos')
 res <- vizMountainPosition(o$geom, verbose = TRUE)
 print(res$fig)
 
 ```
 
-```{r, fig.width=10, fig.height=8}
+```{r, fig.width=10, fig.height=8, eval = FALSE}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'mtnpos', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx)
@@ -120,7 +198,7 @@ plotSPC(o$SPC, plot.order = idx)
 
 ```{r, fig.width=10, fig.height=8}
 
-o <- reconcileOSDGeomorph(OSDexamples, 'shape_across')
+o <- reconcileOSDGeomorph(osd, 'shape_across')
 res <- vizSurfaceShape(o$geom, title = 'Shape Across', verbose = TRUE)
 print(res$fig)
 
@@ -135,7 +213,7 @@ plotSPC(o$SPC, plot.order = idx)
 
 ```{r, fig.width=10, fig.height=8}
 
-o <- reconcileOSDGeomorph(OSDexamples, 'shape_down')
+o <- reconcileOSDGeomorph(osd, 'shape_down')
 res <- vizSurfaceShape(o$geom, title = 'Shape Down', verbose = TRUE)
 print(res$fig)
 ```
@@ -150,12 +228,16 @@ plotSPC(o$SPC, plot.order = idx)
 ```{r, fig.width=10, fig.height=8}
 ## TODO: ensure geomorph data + type aren't mixed up
 
-hydOrder(OSDexamples$hillpos, g = 'hillpos', clust = FALSE)
+hydOrder(osd$hillpos, g = 'hillpos', clust = FALSE)
 
 
-hydOrder(OSDexamples$hillpos, g = 'hillpos', clust = TRUE)
+hydOrder(osd$hillpos, g = 'hillpos', clust = TRUE)
 
-hydOrder(OSDexamples$flats, g = 'flats', clust = FALSE)
+hydOrder(osd$flats, g = 'flats', clust = FALSE)
 
 
 ```
+
+
+----------------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
