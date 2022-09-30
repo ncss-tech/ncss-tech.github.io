@@ -120,8 +120,8 @@ plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.dept
 
 Compute pair-wise distances between profiles using `genhz` (an ordered factor) to a maximum depth of 150cm. See `?profile_compare` and `?daisy` for details. Divisive hierarchical clustering is applied to the distance matrix, with a final re-ordering step according to soil depth (`dendextend::rotate)`.
 ```{r}
-# note funky syntax required to trick profile_compare... will be fixed soon
-d <- profile_compare(z, vars = c('genhz', 'genhz'), max_d = 150, k = 0, rescale.result = TRUE)
+# latest aqp
+d <- NCSP(z, vars = c('genhz'), maxDepth = 150, k = 0, rescaleResult = TRUE)
 
 # divisive hierarchical clustering
 h <- as.hclust(diana(d))
