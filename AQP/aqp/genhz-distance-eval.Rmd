@@ -39,6 +39,9 @@ library(cluster)
 library(dendextend)
 library(MASS)
 
+library(corrplot)
+library(viridisLite)
+
 data("loafercreek")
 hzdesgnname(loafercreek) <- 'hzname'
 
@@ -129,6 +132,27 @@ h <- as.hclust(diana(d))
 # attempt sorting dendrogram by soil depth
 h <- dendextend::rotate(h, order(z$depth))
 ```
+
+As suggested by Shawn Salley, a quick view of the distance matrix as an image. Pair-wise distances are encoded with color.
+```{r fig.width=8, fig.height=8}
+m <- as.matrix(d)
+dimnames(m) <- list(z$shortID, z$shortID)
+
+par(bg = 'black', fg = 'white')
+corrplot(
+  m, 
+  col = viridis(25), 
+  is.corr = FALSE, 
+  col.lim = c(0, 1), 
+  method = "color", 
+  order = "original",
+  type = "upper", 
+  # tl.pos = "n",
+  # cl.pos = "n",
+  mar = c(0.1, 0, 0, 0.8)
+) 
+```
+
 
 
 `plotProfileDendrogram` from the sharpshootR package aligns profile sketches with the terminal leaves of a dendrogram.

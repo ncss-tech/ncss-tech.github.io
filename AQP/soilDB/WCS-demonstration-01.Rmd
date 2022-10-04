@@ -167,10 +167,13 @@ plot(st_transform(p, 5070), add = TRUE, pch = 16)
 
 
 # Setup
-Need the latest version of `soilDB`, along with all packages specified below (CRAN versions fine).
+Need the latest version of `soilDB` and `terra`, along with all packages specified below (CRAN versions fine).
 ```{r eval = FALSE}
 install.packages('soilDB')
 remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+
+# terra
+install.packages('terra', repos='https://rspatial.r-universe.dev')
 ```
 
 Load required packages.
@@ -182,6 +185,7 @@ library(soilDB)
 library(sf)
 
 # raster data / analysis
+# need latest: install.packages('terra', repos='https://rspatial.r-universe.dev')
 library(terra)
 
 # raster visualization
@@ -390,7 +394,7 @@ names(cats(mu)[[1]])
 
 # select 'areasymbol'
 activeCat(mu) <- 'awc_r'
-plot(mu, axes = FALSE, maxcell = 1e5, col = viridis(2))
+plot(mu)
 box()
 ```
 
@@ -788,17 +792,19 @@ cols <- brewer.pal(12, 'Set3')
 cols <- colorspace::darken(cols, amount = 0.25)
 cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
-# plot
-levelplot(greatgroup, scales = list(draw = FALSE), col.regions = cr)
-# plot(greatgroup, axes = FALSE)
+# rasterVis method still fails
+# levelplot(greatgroup, scales = list(draw = FALSE), col.regions = cr)
+# terra plot method
+plot(greatgroup, axes = FALSE, col = cr(50))
 
 # colors for irrigated LCC
 cols <- rev(brewer.pal(8, 'Spectral'))
 cols <- colorspace::darken(cols, amount = 0.1)
 cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
-# plot
-levelplot(lcc_irrigated, scales = list(draw = FALSE), col.regions = cr)
+# rasterVis method still fails
+# levelplot(lcc_irrigated, scales = list(draw = FALSE), col.regions = cr)
+plot(lcc_irrigated, axes = FALSE, col = cr(50))
 ```
 
 
@@ -845,9 +851,10 @@ rat.new <- rat.new[, c('ID', 'series_name', 'soil_color')]
 levels(series_name) <- rat.new
 
 
-# simple figure
-levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorkey = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs', scales = list(draw = FALSE))
+# rasterVis method still fails
+# levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorkey = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs', scales = list(draw = FALSE))
 
+# 
 plot(series_name, col = rat.new$soil_color, axes = FALSE, legend = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs')
 ```
 
@@ -874,7 +881,7 @@ pH <- ISSR800.wcs(aoi = a, var = 'ph_025cm')
 
 # no ESP grid, use a constant value of 1%
 esp <- ec
-values(esp) <- 1
+values(esp) <- 0
 names(esp) <- 'ESP'
 
 # copy EC grid, replace values with classification in next step
@@ -893,22 +900,39 @@ box()
 ```
 
 
-For larger objects, consider the alternative. Hmm: `Error in setValues(out, vals) : values must be numeric, logical or factor`.
+FAO Salt Severity Classification
 ```{r eval = FALSE}
-ss <- overlay(
-  pH, ec, esp,
-  fun = function(.pH, .ec, .esp) {
-    
-    # this doesn't seem to help
-    # .ec <- ifelse(is.na(.ec), 0, .ec)
-    # .pH <- ifelse(is.na(.pH), 7, .pH)
-    
-    res <- allocate(EC = .ec, pH = .pH, ESP = .esp, to = 'FAO Salt Severity', droplevels = FALSE)
-    return(res)
-  }
-)
+## TODO: NODATA not correctly handled, possibly need to mask
 
-levelplot(ss, margin = FALSE, main = 'FAO Salt Severity')
+# combine individual SpatRaster objects into a multi-band SpatRaster
+s <- c(pH, ec, esp)
+
+# classification wrapper
+.fun <- function(x) {
+  
+  .pH <- x[1]
+  .ec <- x[2]
+  .esp <- x[3]
+  
+  .res <- allocate(EC = .ec, pH = .pH, ESP = .esp, to = 'FAO Salt Severity', droplevels = FALSE)
+  return(.res)
+}
+
+# apply classification pixel-wise to stack
+ss <- app(s, fun = .fun)
+
+## TODO: can this be done within app()?
+# manually specified levels
+ll <- c("nonsaline", "slightly saline", "moderately saline", 
+"strongly saline", "very strongly saline", "extremely saline", 
+"saline-sodic", "slightly sodic", "moderately sodic", "strongly sodic", 
+"very strongly sodic")
+
+# convert to grid + RAT
+levels(ss) <- data.frame(ID = 1:length(ll), class = ll)
+
+plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = viridis(10))
+box()
 ```
 
 ## PRISM Stack
