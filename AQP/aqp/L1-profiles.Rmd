@@ -22,7 +22,84 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-# Data
+# Introduction
+The concept of an "L1 profile" is based on the [multivariate median](https://en.wikipedia.org/wiki/Median#Multivariate_median), also referred to as the "geometric median" or "L1 median". The L1 median represents an n-dimensional point that minimizes some distance metric to all other points in a data set. Consider the following 2-dimensional data (black points), estimated marginal medians (blue), and L1 median (red). The marginal medians are computed independently along each dimension which the L1 median is computed across all dimensions.
+
+```{r fig.width=6, fig.height=6, echo=FALSE}
+library(Gmedian)
+
+set.seed(4)
+x <- rnorm(100, mean = 1, sd = 0.25)
+y <- x * rnorm(100, mean = 1, sd = 2) + x
+
+# marginal medians
+med.x <- median(x)
+med.y <- median(y)
+
+# L1 median
+G <- Gmedian(cbind(x, y))
+
+par(mar = c(1, 1, 1, 1))
+plot(x, y, axes = FALSE, xlab = '', ylab = '', type = 'n')
+segments(x0 = G[, 1], y0 = G[, 2], x1 = x, y1 = y, col = rgb(0.8, 0.8, 0.8, alpha = 0.5))
+abline(v = med.x, h = med.y, lty = 3)
+points(med.x, med.y, pch = 15, col = 'royalblue', cex = 2)
+points(G, pch = 15, col = 'firebrick', cex = 2)
+points(x, y, pch = 16, cex = 0.85)
+
+legend('topleft', legend = c('Marginal Median', 'L1 Median', 'Data'), pch = c(15, 15, 16), pt.cex = c(2, 2, 0.85), col = c('royalblue', 'firebrick', 'black'), bty = 'n', cex = 0.8)
+box()
+```
+
+
+The "L1 profile" is a synthetic soil profile built from L1 median values along 1cm depth intervals. Consider 10 simulated profiles, each with 3 soil properties, all sharing a relatively common distribution with depth.
+```{r fig.width=8, fig.height=6, echo = FALSE}
+library(aqp)
+library(sharpshootR)
+
+set.seed(1010)
+x <- lapply(sprintf("Sim %01d", 1:10), random_profile, n = c(5:8), n_prop = 3, method = 'LPP', SPC = TRUE)
+x <- combine(x)
+site(x)$group <- 'L1 Median'
+
+x <- trunc(x, 0, 100)
+
+# aggregation formula
+fm <- group ~ p1 + p2 + p3
+
+# L1 median by group
+z <- L1_profiles(x, fm = fm, method = 'constant', maxDepthConstant = 100)
+
+# combine L1 + source data
+s <- combine(x, z)
+
+# compute PCA
+pc <- princomp(horizons(s)[, c('p1', 'p2', 'p3')], cor = TRUE)
+pc.scores <- predict(pc, horizons(s)[, c('p1', 'p2', 'p3')])
+
+# save to SPC
+s$pc1 <- pc.scores[, 1]
+
+## mixture of color is not intuitive
+## consider using actual soil color
+# s$pc_color <- rgb(scales::rescale(pc.scores, to = c(0, 1)))
+
+# num classification
+d <- NCSP(s, vars = c('p1', 'p2', 'p3'), maxDepth = 100, rescaleResult = TRUE)
+
+# simple clustering for viz
+h <- hclust(d, method = 'ward.D')
+
+# viz
+par(mar = c(0, 0, 3, 1.5))
+plotProfileDendrogram(s, clust = h, color = 'pc1', y.offset = 0.2, scaling.factor = 0.018, width = 0.3, name = NA, cex.depth.axis = 0.85, divide.hz = FALSE)
+```
+
+
+
+
+# Demonstration
+Demonstrate with real data.
 ```{r fig.width = 8, fig.height=6}
 library(aqp)
 library(soilDB)
@@ -41,6 +118,11 @@ x <- fetchKSSL('plainfield')
 x <- subset(x, pedon_completeness_index > 3)
 x <- subset(x, pedon_key != '6678')
 
+# this is rather drastic, consider other possible "repairs"
+# fillHzGaps(x), accumulateDepths(x), repairMissingHzDepths(x)
+# remove problematic horizonation
+x <- HzDepthLogicSubset(x)
+
 # normalize taxonname for use as a grouping variable
 x$taxonname <- tolower(x$taxonname)
 
@@ -50,8 +132,10 @@ x$wmpd <- with(horizons(x), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.
 
 # Aggregation
 ```{r fig.width = 8, fig.height=6} 
+site(x)$group <- 'L1 Median'
+
 # aggregation formula
-fm <- taxonname ~ sand + silt + clay + estimated_ph_h2o + bs82 + wmpd
+fm <- group ~ sand + silt + clay + estimated_ph_h2o + bs82 + wmpd
 
 # L1 medians
 z <- L1_profiles(x, fm = fm, method = 'constant', maxDepthConstant = 150)
@@ -72,10 +156,10 @@ a <- slab(x, fm = fm)
 vars <- c("sand", "silt", "clay", "estimated_ph_h2o", "bs82", "wmpd")
 z.long <- reshape2::melt(as(z, 'data.frame'), id.vars = c(idname(z), horizonDepths(z)), measure.vars = vars)
 
-new.vars <- c('variable', 'taxonname', 'top', 'bottom', 'p.q50', 'p.q25', 'p.q75', 'contributing_fraction')
+new.vars <- c('variable', 'group', 'top', 'bottom', 'p.q50', 'p.q25', 'p.q75', 'contributing_fraction')
 
 # re-name and adjust to match slab output
-names(z.long)[1] <- 'taxonname'
+names(z.long)[1] <- 'group'
 names(z.long)[5] <- 'p.q50'
 z.long$p.q25 <- NA
 z.long$p.q75 <- NA
@@ -126,7 +210,8 @@ x.z$texture <- factor(x.z$texture, levels = SoilTextureLevels(which = 'codes'))
 x.z <- trunc(x.z, 0, 150)
 
 # pair-wise eval of distances
-d <- profile_compare(x.z, vars = vars, max_d = 150, k = 0)
+d <- NCSP(x.z, vars = vars, maxDepth = 150, k = 0)
+
 # divisive hierarchical clustering
 hc <- diana(d)
 ```
@@ -134,15 +219,16 @@ hc <- diana(d)
 ## Hierarchical Clustering
 ```{r fig.width = 12, fig.height=6}
 par(mar = c(0, 0, 3, 1))
-plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.65, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'texture', name.style = 'center-center')
+plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.85, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'texture', name.style = 'center-center', id.style = 'side')
 
-plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.65, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'wmpd', name.style = 'center-center')
+plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.85, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'wmpd', name.style = 'center-center', id.style = 'side')
 
-plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.65, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'bs82', name.style = 'center-center')
+plotProfileDendrogram(x.z, clust = hc, scaling.factor = 0.85, y.offset = 5, width = 0.3, divide.hz = FALSE, color = 'bs82', name.style = 'center-center', id.style = 'side')
 ```
 
 
 ## nMDS
+The L1 profile is located very close to the center of the ordination.
 ```{r fig.width = 8, fig.height=8}
 # non-metric multidimensional scaling of distance matrix
 mds <- sammon(d)
