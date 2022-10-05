@@ -154,6 +154,37 @@ corrplot(
 ```
 
 
+Rank, left to right, profiles according to median distance to all other profiles in the collection. Profiles 17, 6, 4, or 13 might be good candidates for typical pedons. 
+```{r, fig.width=12, fig.height=6}
+# convert to matrix
+m <- as.matrix(d)
+
+# use shorter IDs
+dimnames(m) <- list(z$shortID, z$shortID)
+
+# mask diagonal and lower triangle 
+m[upper.tri(m, diag = TRUE)] <- NA
+
+# extract distances to all other profiles
+dl <- lapply(1:nrow(m), FUN = function(i) {
+  .r <- c(m[i, ], m[, i])
+  return(as.vector(na.omit(.r)))
+})
+
+# compute median distance to all other profiles
+names(dl) <- dimnames(m)[[1]]
+(med.dist <- sort(sapply(dl, median, na.rm = TRUE)))
+
+# sorting vector for plotting sketches
+idx <- match(names(med.dist), z$shortID)
+
+par(mar = c(4, 0, 3, 0))
+plotSPC(z, plot.order = idx, color = 'genhz', width = 0.25, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
+
+axis(1, at = 1:length(z), labels = round(med.dist, 3), line = 0, cex.axis = 0.85)
+mtext("Median distance to all other profiles (not to scale)", side = 1, line = 2.25)
+```
+
 
 `plotProfileDendrogram` from the sharpshootR package aligns profile sketches with the terminal leaves of a dendrogram.
 ```{r, fig.width=12, fig.height=8}
