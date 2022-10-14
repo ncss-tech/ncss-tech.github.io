@@ -819,43 +819,22 @@ a <- st_bbox(
 # convert bbox to sf geometry
 a <- st_as_sfc(a)
 
-# most frequent soil series per grid cell
-series_name <- ISSR800.wcs(aoi = a, var = 'series_name')
+# moist soil color at 25cm, low-res version
+s <- soilColor.wcs(aoi = a, var = 'sc025cm', res = 270)
 
-# wow, 221 soil series
-length(levels(series_name)[[1]])
+# note access to colors via RAT
+rat <- cats(s)[[1]]
+plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = attr(s, 'layer name'))
+box()
+```
 
-# extract RAT for thematic mapping
-rat <- cats(series_name)[[1]]
+Soil color distribution.
+```{r fig.width = 8, fig.height = 4}
+# specific to this AOI
+barplot(s, col = rat$col, las = 3, cex.names = 0.66)
 
-# query morphology from OSDs
-osds <- fetchOSD(soils = rat$series_name)
-
-# attempt to repair old-style O horizons
-osds <- accumulateDepths(osds)
-
-# extract soil color at 25cm
-s <- dice(osds, fm = 25 ~ soil_color, SPC = FALSE)
-
-# subset columns / re-name for simpler join
-s.colors <- s[, c(idname(osds), 'soil_color')]
-names(s.colors)[1] <- 'series_name'
-
-# join with original RAT
-rat.new <- merge(rat, s.colors, by = 'series_name', sort = FALSE, all.x = TRUE)
-
-# re-order columns for packing into raster object
-rat.new <- rat.new[, c('ID', 'series_name', 'soil_color')]
-
-# re-pack RAT
-levels(series_name) <- rat.new
-
-
-# rasterVis method still fails
-# levelplot(series_name, margin = FALSE, col.regions = rat.new$soil_color, colorkey = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs', scales = list(draw = FALSE))
-
-# 
-plot(series_name, col = rat.new$soil_color, axes = FALSE, legend = FALSE, main = 'Moist Soil Colors at 25cm', sub = 'Source: most frequent series / 800m cell and OSDs')
+# these colors, but frequencies tabulated across all of CONUS
+# barplot(rat$freq, col = rat$col, las = 3, names.arg = rat$munsell, cex.names = 0.6)
 ```
 
 
