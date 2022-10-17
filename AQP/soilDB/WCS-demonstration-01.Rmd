@@ -838,6 +838,24 @@ barplot(s, col = rat$col, las = 3, cex.names = 0.66)
 ```
 
 
+Detailed soil color mapping.
+```{r fig.width = 9, fig.height = 6}
+# from SoilWeb
+bb <- '-90.1576 41.8579,-90.1576 41.9193,-90.0100 41.9193,-90.0100 41.8579,-90.1576 41.8579'
+
+# convert text -> WKT -> sf
+wkt <- sprintf('POLYGON((%s))', bb)
+a <- st_as_sfc(wkt, crs = 4326)
+
+# moist soil color at 25cm, low-res version
+s <- soilColor.wcs(aoi = a, var = 'sc025cm_hr', res = 30)
+
+# note access to colors via RAT
+rat <- cats(s)[[1]]
+plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = attr(s, 'layer name'))
+box()
+```
+
 
 ### Classification
 ```{r}
