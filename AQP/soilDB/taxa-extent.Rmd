@@ -30,10 +30,9 @@ Get required packages.
 # run these commands in the R console
 install.packages('soilDB', dep = TRUE)
 install.packages('mapview', dep = TRUE)
-install.packages('rgdal', dep = TRUE)
-install.packages('viridis', dep = TRUE)
-install.packages('raster', dep = TRUE)
-install.packages('rasterVis', dep = TRUE)
+install.packages('sf', dep = TRUE)
+install.packages('viridisLite', dep = TRUE)
+install.packages('terra', dep = TRUE)
 install.packages('mapview', dep = TRUE)
 install.packages('SoilTaxonomy', dep = TRUE)
 ```
@@ -45,16 +44,13 @@ install.packages('SoilTaxonomy', dep = TRUE)
 library(soilDB)
 library(SoilTaxonomy)
 
-library(raster)
-library(rasterVis)
-library(viridis)
+library(terra)
+library(viridisLite)
 
-library(rgdal)
 library(mapview)
 
-library(sp)
-library(spData) 
 library(sf) 
+library(spData) 
 ```
 
 
@@ -62,43 +58,34 @@ library(sf)
 Prepare state boundaries for CONUS.
 ```{r}
 # CRS defs used by SEE grids
-crs_lower48 <- "EPSG:5070"
+# EPSG:5070
+crs_lower48 <- 5070
 
 # use lower '48 state borders as context
 # transform to the CRS of the SEE taxa grids
 data("us_states")
-us_states <- as(us_states, 'Spatial')
-us_states <- spTransform(us_states, CRS(crs_lower48))
+us_states <- st_transform(us_states, crs_lower48)
 
-# get a bbox for CONUS and expand by 100km = 100,000m
-b <- bbox(us_states)
-x.lim <- c(b[1, 1] - 1e5, b[1, 2] + 1e5)
-y.lim <- c(b[2, 1] - 1e5, b[2, 2] + 1e5)
+# convert to SpatVect
+us_states <- vect(us_states)
+
+# tight bounding box around CONUS
+b <- ext(us_states)
 ```
 
 # Examples 
+Results are `SpatRaster` as provided by the terra package.
+
 
 All vertisols.
 ```{r fig.height=6, fig.width=7}
 taxa <- 'vertisols'
 x <- taxaExtent(taxa, level = 'order')
-a <- aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-## CONUS + states
-## cropped to CONUS
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = names(a),
-  margin = FALSE, 
-  xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
+# plot using full extent of CONUS
+plot(a, axes = FALSE, col = viridis(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 ```
 
 
@@ -106,23 +93,11 @@ Xeralfs.
 ```{r fig.height=6, fig.width=7}
 taxa <- 'xeralfs'
 x <- taxaExtent(taxa, level = 'suborder')
-a <- aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-## CONUS + states
-## cropped to CONUS
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = names(a),
-  margin = FALSE, 
-  xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
+# plot using full extent of CONUS
+plot(a, axes = FALSE, col = viridis(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 ```
 
 
@@ -130,22 +105,11 @@ Durixeralfs.
 ```{r fig.height=6, fig.width=7}
 taxa <- 'durixeralfs'
 x <- taxaExtent(taxa, level = 'greatgroup')
-a <- aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-## cropped to raster extent
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = taxa,
-  margin = FALSE, 
-  # xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
+# zoomed to taxa extent
+plot(a, axes = FALSE, col = viridis(25), mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 ```
 
 
@@ -153,44 +117,22 @@ Abruptic durixeralfs.
 ```{r fig.height=6, fig.width=7}
 taxa <- 'abruptic durixeralfs'
 x <- taxaExtent(taxa, level = 'subgroup')
-a <- aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-## cropped to raster extent
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = taxa,
-  margin = FALSE, 
-  # xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
+# zoomed to taxa extent
+plot(a, axes = FALSE, col = viridis(25), mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 ```
 
 
 Cecil soil series.
 ```{r fig.height=6, fig.width=7}
 s <- seriesExtent('cecil', type = 'raster')
-a <- aggregate(s, fact = 5)
+a <- aggregate(s, fact = 5, fun = mean, na.rm = TRUE)
 
-## cropped to CONUS
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = 'Cecil',
-  margin = FALSE, 
-  # xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
+# CONUS
+plot(a, axes = FALSE, col = viridis(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 ```
 
 
@@ -199,43 +141,18 @@ levelplot(
 ## Formative Elements
 ```{r fig.height=6, fig.width=7}
 x <- taxaExtent('pale', level = 'greatgroup', formativeElement = TRUE)
-a <- raster::aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-## CONUS + states
-## cropped to CONUS
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = names(a),
-  margin = FALSE, 
-  xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
+# zoomed to full extent
+plot(a, axes = FALSE, col = viridis(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 
 x <- taxaExtent('grossarenic', level = 'subgroup', formativeElement = TRUE)
-a <- raster::aggregate(x, fact = 5)
+a <- raster::aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-## CONUS + states
-## cropped to CONUS
-levelplot(
-  a,
-  # maxpixels = 1e5,
-  main = names(a),
-  margin = FALSE, 
-  xlim = x.lim, ylim = y.lim,
-  scales = list(draw = FALSE), 
-  col.regions = viridis,
-  panel = function(...) {
-    panel.levelplot(...)
-    sp.polygons(us_states, col = 'black', lwd = 2)
-  }
-)
-
+# zoomed to taxa extent
+plot(a, axes = FALSE, col = viridis(25), mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
 ```
 
 
@@ -245,38 +162,41 @@ This is based on the [mapview](https://r-spatial.github.io/mapview/) package.
 
 ```{r}
 x <- taxaExtent('xeralfs', level = 'suborder')
-a <- aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
+# requires raster package representation
+mapview(raster::raster(a), col.regions = viridis, na.color = NA, use.layer.names = TRUE)
 ```
 
 
 ```{r}
 x <- taxaExtent('durixeralfs', level = 'greatgroup')
-a <- aggregate(x, fact = 5)
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
-mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
+mapview(raster::raster(a), col.regions = viridis, na.color = NA, use.layer.names = TRUE)
 ```
 
 
 ```{r}
 s <- seriesExtent('san joaquin', type = 'raster')
-a <- aggregate(s, fact = 5)
+a <- aggregate(s, fact = 5, fun = mean, na.rm = TRUE)
 
-mapview(a, col.regions = viridis, na.color = NA, use.layer.names = TRUE)
+mapview(raster::raster(a), col.regions = viridis, na.color = NA, use.layer.names = TRUE)
 ```
 
 ## Aggregating and mapping multiple soil taxa
 This example demonstrates a way of using pattern matching on a soil taxonomic level to filter a list of soil taxa that can be aggregated into one raster and mapped.  For example, if we wanted to see all the Andisols and any Andic or Vitrandic subgroups we could use this process.  If the pattern match grabs taxa that shouldn't be include then you can use the same process to exclude taxa that should not be in the aggregated extent raster (ie. 'Kandic' elements).
 
+TODO: this needs a little more work, not sure if `terra::merge()` is doing what I want it to.
 ```{r eval = FALSE}
-# load ST data from SoilTaxonomy package
-data("ST", package = 'SoilTaxonomy')
+# unique taxa
+data("ST_unique_list", package = 'SoilTaxonomy')
 
 # filter to include taxa based on a specified pattern
-idx <- grep('and', ST$tax_subgroup)
-STgroup <- ST$tax_subgroup[idx]
+idx <- grep('and', ST_unique_list$subgroup)
+STgroup <- ST_unique_list$subgroup[idx]
 length(STgroup)
+
 # filter to remove specified orders and any other based on pattern matching
 idx <- grep('ids|ods|ults|ox|els|kandi', STgroup)
 STgroup <- STgroup[-idx]
@@ -285,25 +205,35 @@ length(STgroup)
 # inspect
 head(STgroup)
 
-# create a list
-m <- list()
 
 # loop thru list and fetch taxa extent rasters
-for (i in 1:length(STgroup)) {
-  m[[i]] <- taxaExtent(x=STgroup[i], level='subgroup', timeout = 60)
-}
+# not all taxa have been mapped, messages printed
+m <- lapply(STgroup, taxaExtent, level = 'subgroup', timeout = 120)
 
-# merge list of rasters into one rasterlayer
-x <- do.call(merge, m)
+# remove NULL
+m <- m[which(!sapply(m, is.null))]
+
+# combine into SpatRasterCollection
+x <- sprc(m)
+# merge into single SpatRaster
+x <- merge(x)
+
 
 # give merged raster a name
 names(x) <- 'Andisols and Andic Subgroups'
 
+
+# CONUS map
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
+plot(a, axes = FALSE, col = viridis(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
+lines(us_states, lwd = 2)
+
+
 # slippy map
 if(requireNamespace("mapview")) {
-  mapview::mapview(x, col.regions = viridis::viridis, na.color = NA, use.layer.names = TRUE)
+  mapview::mapview(raster::raster(x), col.regions = viridis::viridis, na.color = NA, use.layer.names = TRUE)
 }
 ```
 
 ----------------------------
-This document is based on `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+This document is based on `soilDB` version `r utils::packageDescription("soilDB", field = "Version")`.
