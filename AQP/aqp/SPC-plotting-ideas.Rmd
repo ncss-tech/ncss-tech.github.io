@@ -12,13 +12,13 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
 This is a work in progress, please see the in-line comments for a description of what is going on here.
 
-```{r fig.width=8, fig.height=5}
+```{r fig.width=8.5, fig.height=5}
 # load required libraries
 library(soilDB)
 library(aqp)
@@ -33,7 +33,7 @@ data("loafercreek")
 x <- loafercreek[1:10, ]
 
 # default margins are too wide, make smaller
-par(mar=c(1,1,2,1))
+par(mar=c(1,1,1,1))
 
 # profile sketches
 plotSPC(x, label='pedon_id', id.style='side')
@@ -55,10 +55,10 @@ names(s)[2:3] <- c('top', 'bottom')
 
 # plot sketches and annotate with PSCS
 par(mar=c(1,1,1,1))
-# ommit pedon IDs for now
+# omit pedon IDs for now
 plotSPC(x, print.id = TRUE)
 # add PSCS brackets as vertical var
-addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, offset = -0.33, tick.length = 0, lwd = 10, col = rgb(red=0, green=0, blue=1, alpha=0.25))
 
 # check structure of diagnostic horizon data
 head(diagnostic_hz(x))
@@ -67,8 +67,8 @@ head(diagnostic_hz(x))
 # sort(table(diagnostic_hz(x)$featkind))
 
 # add brackets for some diagnostic features
-addDiagnosticBracket(x, kind='argillic horizon', col='red')
-addDiagnosticBracket(x, kind='paralithic contact', col='black')
+addDiagnosticBracket(x, offset = -0.33, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, offset = -0.33, kind='paralithic contact', col='black')
 ```
 
 Align profiles to an elevation gradient, regular spacing of sketches.
@@ -165,12 +165,57 @@ par(mar=c(4.5,4,1,1))
 plotTransect(x, grad.var.name = 'elev_field', crs = CRS('+proj=utm +zone=10 +datum=NAD83'))
 ```
 
+
+Grouped soil profile sketches.
 ```{r fig.width=10, fig.height=4}
-## better example from CA792
+
 data("mineralKing")
 
-par(mar=c(1,1,2,1))
-groupedProfilePlot(mineralKing, groups='taxonname', print.id=FALSE, group.name.offset = c(-5, -10))
+par(mar = c(1,1,2,1))
+
+# crowded
+groupedProfilePlot(
+  mineralKing, 
+  groups = 'taxonname'
+)
+
+# vertical offsets for group labels
+groupedProfilePlot(
+  mineralKing, 
+  groups = 'taxonname',
+  group.name.offset = c(-10, -15),
+  id.style = 'side'
+)
+
+# suppress profile ID labeling
+groupedProfilePlot(
+  mineralKing, 
+  groups = 'taxonname', 
+  print.id = FALSE, 
+  group.name.offset = c(-10, -15),
+)
+
+# shift group lines to the right
+groupedProfilePlot(
+  mineralKing, 
+  groups = 'taxonname', 
+  print.id = FALSE, 
+  group.name.offset = c(-10, -15),
+  break.offset = 0.66
+)
+
+# move horizon designations into profiles
+groupedProfilePlot(
+  mineralKing, 
+  groups = 'taxonname', 
+  print.id = FALSE, 
+  group.name.offset = c(-10, -15),
+  break.offset = 0.6,
+  name.style = 'center-center',
+  width = 0.3
+)
+
+# ... make output device wider
 ```
 
 
