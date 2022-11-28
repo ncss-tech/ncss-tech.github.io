@@ -613,6 +613,33 @@ plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset =
 
 legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.05, bty = 'n', cex = 0.85)
 
-
-
 ```
+
+
+# Sketch Metadata
+Sometimes you need details from a sketch for further annotation; profile ordering, depth scaling, y-offsets, and so on. This information is stored in a special environment.
+
+```{r fig.width=10, fig.height=5}
+# re-order by max profile depth
+# note this is not the same as soil depth (e.g. to contact)
+.depths <- profileApply(osds, max)
+.order <- order(.depths)
+
+# make a sketch
+par(mar = c(0, 0, 0, 3))
+plotSPC(osds, cex.names = 0.6, name.style = 'center-center', width = 0.3, plot.order = .order)
+
+# get last sketch metadata
+lastPP <- get("last_spc_plot", envir = aqp.env)
+str(lastPP)
+
+# use plot order (from metadata) to annotate
+text(x = seq_along(osds), y = .depths[.order] + 5, labels = .depths[.order], cex = 0.55)
+```
+
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
+
