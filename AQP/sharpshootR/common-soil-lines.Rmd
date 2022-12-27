@@ -1,51 +1,97 @@
+---
+title: "Spatial Adjacency"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
-library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
-options(width=100, stringsAsFactors=FALSE, cache=FALSE)
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+# Setup
+```{r install-deps, eval=FALSE}
+# stable packages from CRAN
+install.packages('igraph')
+install.packages('soilDB')
+install.packages('sharpshootR')
+install.packages('sf')
+install.packages('spdep')
+
+# latest versions from GitHub
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 # Linework Evaluation
 
-```{r get-data}
-library(spdep)
-library(rgdal)
-library(igraph)
+```{r}
+library(soilDB)
 library(sharpshootR)
+library(sf)
+library(spdep)
 library(lattice)
+library(igraph)
 
-# load active survey
-x <- readOGR(dsn='L:/NRCS/MLRAShared/CA630/Archived_OFFICIAL_DB/final/FG_CA630_GIS_2018.gdb', layer='ca630_a', stringsAsFactors=FALSE)
-# x <- readOGR(dsn='L:/NRCS/MLRAShared/CA792/ca792_spatial/FG_CA792_OFFICIAL.gdb', layer='ca792_a', stringsAsFactors=FALSE)
+# example point, WGS84 coordinates
+p <- st_as_sf(data.frame(x = -83.45657,
+                         y = 35.04229),
+              coords = c('x', 'y'),
+              crs = 4326)
 
-# remove NOTCOM, DA, and empty (non-NA) symbols
-x <- x[which(! x$MUSYM %in% c('NOTCOM', 'DAM', 'DA', ' ', '', 'WATER', 'W')), ]
+# 2km buffer applied to point defined in geographic coordinates
+b <- st_buffer(p, dist = units::set_units(2000, m))
 
+# result is an sf object
+x <- SDA_spatialQuery(b, what = 'mupolygon', byFeature = TRUE, geomIntersection = TRUE)
+```
+
+```{r}
+# look up map unit symbols for these map unity keys
+.is <- format_SQL_in_statement(x$mukey)
+.sql <- sprintf("SELECT mukey, musym FROM mapunit WHERE mukey IN %s", .is)
+mu <- SDA_query(.sql)
+
+x <- merge(x, mu, by = 'mukey')
+
+# check: OK
+plot(x['musym'])
+```
+
+
+```{r}
 # create polygon adjacency matrix
-res <- polygonAdjacency(x, v='MUSYM')
-
-# # graphical check: slow for large number of features
-# plot(x)
-# plot(x[res$commonLines, ], col='red', add=TRUE)
-
-# save to SHP
-# writeOGR(x[res$commonLines, ], dsn='l:/CA630/MapUnits', layer='common-soil-lines', driver='ESRI Shapefile', overwrite_layer=TRUE)
+res <- polygonAdjacency(x, v = 'musym')
 ```
 
 
 
-```{r ex-1, fig.width=20, fig.height=20}
+```{r fig.width=20, fig.height=20}
 # plot spatial adjacency information
-par(mar=c(0,0,0,0))
+par(mar = c(0, 0, 0, 0))
 plotSoilRelationGraph(res$adjMat, vertex.scaling.factor = 1)
-plotSoilRelationGraph(res$adjMat, spanning.tree=0.9, edge.scaling.factor=0.1)
-plotSoilRelationGraph(res$adjMat, spanning.tree='max', edge.scaling.factor=0.1, vertex.scaling.factor=1.5)
+plotSoilRelationGraph(res$adjMat, spanning.tree = 0.9, edge.scaling.factor = 0.5)
+plotSoilRelationGraph(res$adjMat, spanning.tree = 'max', edge.scaling.factor = 0.5, vertex.scaling.factor = 1.5)
 ```
 
 
-```{r node-diversity, fig.width=8, fig.height=14}
-# compute diversity by map unit symbol
-g <- plotSoilRelationGraph(res$adjMat, vertex.scaling.factor = 1, plot.style = 'none')
-dotplot(sort(graph.diversity(g)))
-```
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
