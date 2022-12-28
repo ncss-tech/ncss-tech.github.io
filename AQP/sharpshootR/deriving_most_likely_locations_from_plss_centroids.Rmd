@@ -55,8 +55,8 @@ install.packages('cluster', dep=TRUE)
 
 You will also need the latest version of `sharpshootR`:
 ```{r eval=FALSE}
-install.packages('devtools', dep=TRUE)
-devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+install.packages('remotes', dep=TRUE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 ## Generating some PLSS centroids data
@@ -204,7 +204,6 @@ plot(x)
 lines(p.plss.sec)
 lines(p.plss)
 points(d1, pch = 15, cex = 1)
-
 ```
 
 ### Resample and generate slope and aspect grids and create raster stack
@@ -289,9 +288,9 @@ idx <- which(a5$distance < quantile(a5$distance)[2])
 
 plot(rs$elevation, axes = FALSE)
 #plot(r1, axes = FALSE)
-plot(a5[idx, ], pch=0, cex=1.5, lwd=2, add = TRUE)
-plot(st_geometry(d1[idx.pt, ]), pch=15, cex=1.5, lwd=2, add = TRUE)
-points(mean(a6$x[idx]), mean(a6$y[idx]), pch=15, cex=1.5, lwd=2, col='red', add = TRUE)
+points(a5[idx, ], pch=0, cex=1.5)
+points(d1[idx.pt, ], pch=15, cex=1.5)
+points(mean(a6$x[idx]), mean(a6$y[idx]), pch=15, cex=1.5, lwd=2, col='red')
 
 # plot(rs$elevation)
 # #plot(r1)
