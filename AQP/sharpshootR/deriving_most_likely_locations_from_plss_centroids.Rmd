@@ -155,7 +155,7 @@ The `LL2PLSS()` function in the sharpshootR package relies on the GetLatLon func
 d1 <- st_as_sf(d, coords = c('lon', 'lat'), crs = 4326)
 
 # set idx to point of interest  
-idx.pt <- 1
+idx.pt <- 2
 d1[idx.pt, ]
 
 # get geometry for sectional area - note returnlevel = 'S'
@@ -262,14 +262,14 @@ e.dist <- as.matrix(daisy(e, metric = 'euclidean', stand = TRUE))
 e.dist <- e.dist[-(nrow(e)+1), -c(1:nrow(e))]
 
 # rank distances
-a$distance <- a4
+a$distance <- e.dist
 # get index to minimum distance value
 idx <- which.min(a$distance)
 
 # create a grid  based on our elevation grid
 r <- rs$elevation
 # convert points in 'a' to pixels
-r1 <- rasterize(a, r, a@data$distance)
+r1 <- rasterize(a, r, a$distance)
 
 # removes edge effects from raster 
 r1[cellFromRow(r1, 1)] <- NA
@@ -278,17 +278,26 @@ r1[cellFromCol(r1, 1)] <- NA
 r1[cellFromCol(r1, ncol(r1))] <- NA
 
 # remove edge effects - NA's introduced from sampled data
-idx <- complete.cases(a@data)
+idx <- complete.cases(as.data.frame(a))
 a5 <- a[idx, ]
+
+a6 <- as.data.frame(geom(a5))
 
 # use 1st quantile of the distance values to evaluate a subset of minimum distances
 # can add an additional weighting factor to further narrow the 1st quantile range of values
-idx <- which(a5$distance < quantile(a5$distance)[2]*0.5)
-plot(rs$elevation)
-#plot(r1)
-points(a5[idx, ], pch=0, cex=1, lwd=2)
-points(x = mean(a5[idx, ]@coords[, 1]), y = mean(a5[idx, ]@coords[, 2]), pch=15, cex=1.5, lwd=2, col='red')
-points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
+idx <- which(a5$distance < quantile(a5$distance)[2])
+
+plot(rs$elevation, axes = FALSE)
+#plot(r1, axes = FALSE)
+plot(a5[idx, ], pch=0, cex=1.5, lwd=2, add = TRUE)
+plot(st_geometry(d1[idx.pt, ]), pch=15, cex=1.5, lwd=2, add = TRUE)
+points(mean(a6$x[idx]), mean(a6$y[idx]), pch=15, cex=1.5, lwd=2, col='red', add = TRUE)
+
+# plot(rs$elevation)
+# #plot(r1)
+# points(a5[idx, ], pch=0, cex=1, lwd=2)
+# points(x = mean(a5[idx, ]@coords[, 1]), y = mean(a5[idx, ]@coords[, 2]), pch=15, cex=1.5, lwd=2, col='red')
+# points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 box()
 title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)", sub = "mean of most-likely area coordinates shown as red square", )
 ```
@@ -299,15 +308,17 @@ title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)",
 # move coords for most-likely centroid XY back into the original dataframe 'd'
 # convert coordinates to dataframe, assign id column, sort and rename columns
 # then join back to the original data
-coords <- as.data.frame(coordinates(a5[idx, ]))
+#coords <- as.data.frame(coordinates(a5[idx, ]))
+coords <- as.data.frame(a6[idx, ])
 lat1 <- mean(coords$y)
 lon1 <- mean(coords$x)
 coords.ml <- data.frame(lon1, lat1)
-coords.ml$id <- d1@data$id[idx.pt]
+coords.ml$id <- d1$id[idx.pt]
+#coords.ml$id <- d1@data$id[idx.pt]
 coords.ml$mean_dist <- mean(a5$distance[idx])
 coords.ml <- coords.ml[, c(3,2,1,4)]
 names(coords.ml) <- c('id', 'lat1', 'lon1', 'dist')
-d6 <- join(d, coords.ml, by='id', type='left')
+d6 <- plyr::join(d, coords.ml, by='id', type='left')
 ```
 
 
