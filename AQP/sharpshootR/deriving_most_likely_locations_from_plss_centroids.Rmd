@@ -18,12 +18,12 @@ options(width=100, stringsAsFactors=FALSE)
 ```
 
 ## Introduction
-Most soil survey data contains site-level information such as slope gradient, slope aspect (degrees or classes), and elevation recorded for each site.  PLSS centroids are at best a gross approximation of a sites location - can we do better?  How do we use this information to take a PLSS centroid location and determine where in that section are the most likely locations of a site? 
+Most soil survey data contains site-level information such as slope gradient, slope aspect (degrees or classes), and elevation recorded for each site.  PLSS centroids are at best gross approximations of site locations - can we do better?  How do we use this information to take a PLSS centroid location and determine where in that section are the most likely locations of a site? 
 
 This tutorial demonstrates how to use functions in the [sharpshootR](http://ncss-tech.github.io/AQP/sharpshootR/sharpshootR-Intro.html) package and combine them with other packages to create a decision support tool that can be used to determine a most-likely location by using additional site-level data.
 
 ## Background
-Before the days of GPS technology the system used for locating sampling sites was the [Public Lands Survey System (PLSS)](https://en.wikipedia.org/wiki/Public_Land_Survey_System) description method.  Locating the data was accomplished using several different methods.  Sometimes the data was marked on a topographic map or pin-pricked and labeled on aerial photographs and then the PLSS was also derived for these locations.  Other times it was not marked on maps at all and was only given a PLSS location.  We may be limited in our ability to spatially locate data based only on PLSS descriptions due to the inherent accuracy of the system and depending on what level the PLSS description was recorded.  At the section level we are talking about a square mile area while we are looking at a much smaller area for sites described to the quarter-quarter section level. Given a PLSS geometry we can identify areas slope gradient, slope aspect, and elevation within that section that are most similar to what was identified by the soil scientist during the original observation.  While this process still requires checking, it has the potential to get much closer to the actual locations of sites than we could get by only deriving the PLSS centroids.
+Before the days of GPS technology the system used for locating sampling sites was the [Public Lands Survey System (PLSS)](https://en.wikipedia.org/wiki/Public_Land_Survey_System) description method.  Locating the data was accomplished using several different methods.  Sometimes the data was marked on a topographic map or pin-pricked and labeled on aerial photographs and then a PLSS description was derived for these locations.  Other times it was not marked on maps at all and was only given a PLSS location on the field sheet.  We may be limited in our ability to spatially locate data based only on PLSS descriptions due to the inherent accuracy of the system and depending on what level of detail was recorded in the PLSS description.  At the section level we are talking about a square mile area (640 acres) while at the quarter-quarter section we are looking at a much smaller area of 40 acres. Given a PLSS geometry we can identify areas slope gradient, slope aspect, and elevation within that sectional area that are most similar to what was identified by the soil scientist during the original observation.  While this process still requires checking, it has the potential to get much closer to the actual locations of sites than could be achieved by deriving only PLSS section or quarter section centroids.
 
 ### Steps required to accomplish this task
 1) generate PLSS centroids for PLSS descriptions
@@ -168,7 +168,7 @@ p.plss <- LL2PLSS(d1$lon[idx.pt], d1$lat[idx.pt])
 
 # plot section, quarter-quarter section, and point geometries together
 plot(p.plss.sec$geom)
-plot(d1[idx.pt,], add=TRUE)
+points(d1[idx.pt,], pch=15, cex=1, lwd=2)
 plot(p.plss$geom, add=TRUE)
 ```
 
@@ -181,16 +181,16 @@ x <- get_elev_raster(sf::st_as_sf(p.plss.sec$geom), z = 14, src = "aws")
 plot(x)
 plot(p.plss.sec$geom, add=TRUE)
 plot(p.plss$geom, add=TRUE)
-plot(d1[idx.pt,], add=TRUE)
+points(d1[idx.pt,], pch=15, cex=1, lwd=2)
 
 # extract extent
-e <- extent(p.plss$geom)
+e <- extent(sf::st_as_sf(p.plss$geom))
 # expand extent slightly
 dd <- e*1.20
 # crop section to QQ-section geometry extent
 x <- crop(x, dd)
 plot(x)
-plot(d1[idx.pt,], add=TRUE)
+points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 ```
 
 ### Resample and generate slope and aspect grids and create raster stack
@@ -199,7 +199,7 @@ plot(d1[idx.pt,], add=TRUE)
 # resample to 30m res
 x3 <- aggregate(x, fact=9)
 
-# create raster stack of slope and aspect - slope in percent!
+# create raster stack of slope and aspect
 rs <- terrain(x3, opt=c('slope'), unit='degrees')
 rs1 <- terrain(x3, opt=c('aspect'), unit='radians')
 # add elevation to raster stack and convert to feet
@@ -209,18 +209,18 @@ rs$aspect <- cos(rs1$aspect)
 
 # plots
 plot(rs$elevation)
-plot(d1[idx.pt,], add=TRUE)
+points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 box()
 title(main="Elevation(ft)")
 ```
 
 ```{r, echo=FALSE}
 plot(rs$slope)
-plot(d1[idx.pt,], add=TRUE)
+points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 box()
 title(main="Slope(deg)")
 plot(rs$aspect)
-plot(d1[idx.pt,], add=TRUE)
+points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 box()
 title(main="Aspect(cos)")
 ```
@@ -231,7 +231,6 @@ title(main="Aspect(cos)")
 ```{r}
 # sample points
 a <- sampleRegular(rs, ncell(rs), sp=TRUE)
-#points(a, add=TRUE)
 
 # slope and elev and aspect_cos
 a1 <- a@data[, c(1,3,2)]
@@ -266,26 +265,32 @@ idx <- complete.cases(a@data)
 a5 <- a[idx, ]
 
 # use 1st quantile of the distance values to evaluate a subset of minimum distances
-idx <- which( a5$distance < quantile(a5$distance)[2])
+# can add an additional weighting factor to further narrow the 1st quantile range of values
+idx <- which(a5$distance < quantile(a5$distance)[2]*0.5)
 plot(rs$elevation)
+#plot(r1)
 points(a5[idx, ], pch=0, cex=1, lwd=2)
-plot(d1[idx.pt,], add=TRUE)
+points(x = mean(a5[idx, ]@coords[, 1]), y = mean(a5[idx, ]@coords[, 2]), pch=15, cex=1.5, lwd=2, col='red')
+points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 box()
-title(main="Elev(ft): QQ-Sec area with center point & most-likely areas (boxes)")
+title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)", sub = "mean of most-likely area coordinates shown as red square", )
 ```
 
 
 
 ```{r}
-# move coords for most-likely back into the original df 'd'
+# move coords for most-likely centroid XY back into the original dataframe 'd'
 # convert coordinates to dataframe, assign id column, sort and rename columns
 # then join back to the original data
 coords <- as.data.frame(coordinates(a5[idx, ]))
-coords$id <- d1@data$id[idx.pt]
-coords$dist <- a5$distance[idx]
-coords <- coords[, c(3,2,1,4)]
-names(coords) <- c('id', 'lat1', 'lon1', 'dist')
-d6 <- join(d, coords, by='id', type='left')
+lat1 <- mean(coords$y)
+lon1 <- mean(coords$x)
+coords.ml <- data.frame(lon1, lat1)
+coords.ml$id <- d1@data$id[idx.pt]
+coords.ml$mean_dist <- mean(a5$distance[idx])
+coords.ml <- coords.ml[, c(3,2,1,4)]
+names(coords.ml) <- c('id', 'lat1', 'lon1', 'dist')
+d6 <- join(d, coords.ml, by='id', type='left')
 ```
 
 
