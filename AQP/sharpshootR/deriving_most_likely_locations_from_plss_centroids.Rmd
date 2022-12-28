@@ -249,16 +249,17 @@ a <- spatSample(rs, floor(ncell(rs) / 100), method = 'regular', as.points = TRUE
 # extract values
 e <- extract(rs, a, ID = FALSE)
 
-# append PLSS-located point
-e.plss <- extract(rs, d1[idx.pt, ], ID = FALSE)
-e <- rbind(e, e.plss)
+# append original data, requires adjusting names
+o <- d[idx.pt, c('slope_deg', 'elevation', 'aspect_cos')]
+names(o) <- names(e)
+e <- rbind(e, o)
+
 
 # run dissimilarity calc
 e.dist <- as.matrix(daisy(e, metric = 'euclidean', stand = TRUE))
 
-## TODO: fix this
-# trim matrix to last column, also removing last value from last column
-e.dist <- e.dist[-(nrow(e)+1), -c(1:nrow(e))]
+# extract distances from original point to all other samples
+e.dist <- e.dist[nrow(e), -nrow(e)]
 
 # rank distances
 a$distance <- e.dist
