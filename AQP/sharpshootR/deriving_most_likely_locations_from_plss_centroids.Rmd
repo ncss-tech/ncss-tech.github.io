@@ -66,33 +66,34 @@ You can use the `formatPLSS()` and the `PLSS2LL()` functions in the sharpshootR 
 # load required packages
 library(sharpshootR)
 library(elevatr)
+library(terra)
 library(raster)
-library(rgeos)
+library(sf)
 library(cluster)
-library(plyr)
-library(sp)
 library(xtable)
 
 # build some data
 d <- data.frame( 
-id=c('JAKECR', 'KOFI27'), 
-qq=c('SW', 'NE'), 
-q=c('NW', 'SW'),
-s=c(21, 10), 
-t=c('T8N', 'T26N'),
-r=c('R8W', 'R29W'),
-type=c('SN', 'SN'),
-m='MT20', 
-slope=c(8, 15),
-aspect=c('W.SW', 32),
-elevation=c(5460, 3540),
-lat=c(46.43493, 48.02308),
-lon=c(-112.6162, -115.3249), stringsAsFactors = FALSE)
+  id=c('JAKECR', 'KOFI27'), 
+  qq=c('SW', 'NE'), 
+  q=c('NW', 'SW'),
+  s=c(21, 10), 
+  t=c('T8N', 'T26N'),
+  r=c('R8W', 'R29W'),
+  type=c('SN', 'SN'),
+  m='MT20', 
+  slope=c(8, 15),
+  aspect=c('W.SW', 32),
+  elevation=c(5460, 3540),
+  lat=c(46.43493, 48.02308),
+  lon=c(-112.6162, -115.3249), 
+  stringsAsFactors = FALSE
+)
 ```
 
 ```{r, echo=FALSE}
 # show format
-kable(d)
+knitr::kable(d)
 ```
 
 ## Deriving centroids from PLSS information
@@ -139,7 +140,7 @@ d$slope_deg <- round(d$slope_deg, 0)
 d$flag <- ifelse(!is.na(d$qq), 'QQ', ifelse((is.na(d$qq) & !is.na(d$q)), 'Q', ifelse((is.na(d$qq) & is.na(d$q)), 'S', '')))
 
 # show data
-kable(d)
+knitr::kable(d)
 ```
 
 
@@ -148,49 +149,54 @@ The `LL2PLSS()` function in the sharpshootR package relies on the GetLatLon func
 
 
 ```{r}
-# make a copy of the dataframe
-d1 <- d
-
-# initialize SPDF
-coordinates(d1) <- ~ lon + lat
-proj4string(d1) <- '+proj=longlat +datum=WGS84'
+# make a copy
+# convert to sf object
+# point geometry
+d1 <- st_as_sf(d, coords = c('lon', 'lat'), crs = 4326)
 
 # set idx to point of interest  
 idx.pt <- 1
-d1@data[idx.pt, ]
+d1[idx.pt, ]
 
 # get geometry for sectional area - note returnlevel = 'S'
-p.plss.sec <- LL2PLSS(d1$lon[idx.pt], d1$lat[idx.pt], returnlevel = 'S')
+p.plss.sec <- LL2PLSS(d$lon[idx.pt], d$lat[idx.pt], returnlevel = 'S')
 
 # get geometry for the quarter-quarter area corresponding to the point intersection
 # note default returnlevel='I' used because parameter is left unspecified
-p.plss <- LL2PLSS(d1$lon[idx.pt], d1$lat[idx.pt])
+p.plss <- LL2PLSS(d$lon[idx.pt], d$lat[idx.pt])
 
 # plot section, quarter-quarter section, and point geometries together
 plot(p.plss.sec$geom)
-points(d1[idx.pt,], pch=15, cex=1, lwd=2)
-plot(p.plss$geom, add=TRUE)
+plot(p.plss$geom, add = TRUE)
+plot(st_geometry(d1[idx.pt, ]), pch=15, cex=1, lwd=2, add = TRUE)
 ```
 
 ### Fetch elevation data and crop to extent
 
 ```{r}
 # get elevation data for section geometry
-#x <- get_elev_raster(p.plss$geom, z = 14, src = "aws")
-x <- get_elev_raster(sf::st_as_sf(p.plss.sec$geom), z = 14, src = "aws")
-plot(x)
-plot(p.plss.sec$geom, add=TRUE)
-plot(p.plss$geom, add=TRUE)
-points(d1[idx.pt,], pch=15, cex=1, lwd=2)
+x <- get_elev_raster(p.plss.sec$geom, z = 14, src = "aws")
+
+# convert to terra object
+x <- rast(x)
+
+# visual check
+plot(x, axes = FALSE)
+plot(p.plss.sec$geom, add = TRUE)
+plot(p.plss$geom, add = TRUE)
+plot(st_geometry(d1[idx.pt, ]), pch = 15, cex = 1, lwd = 2, add = TRUE)
 
 # extract extent
-e <- extent(sf::st_as_sf(p.plss$geom))
+e <- ext(p.plss)
 # expand extent slightly
-dd <- e*1.20
+dd <- e * 1.20
+
 # crop section to QQ-section geometry extent
 x <- crop(x, dd)
+
+# graphical check
 plot(x)
-points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
+plot(st_geometry(d1[idx.pt,]), pch = 15, cex = 1.5, lwd = 2, add = TRUE)
 ```
 
 ### Resample and generate slope and aspect grids and create raster stack
@@ -200,27 +206,24 @@ points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 x3 <- aggregate(x, fact=9)
 
 # create raster stack of slope and aspect
-rs <- terrain(x3, opt=c('slope'), unit='degrees')
-rs1 <- terrain(x3, opt=c('aspect'), unit='radians')
+rs <- terrain(x, v = c('slope'), unit = 'degrees')
+rs1 <- terrain(x, v = c('aspect'), unit = 'radians')
+
 # add elevation to raster stack and convert to feet
-rs$elevation <- x3*3.28
+rs$elevation <- x * 3.28
+
 # transform to cos(aspect_rad) 
 rs$aspect <- cos(rs1$aspect)
-
-# plots
-plot(rs$elevation)
-points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
-box()
-title(main="Elevation(ft)")
 ```
 
 ```{r, echo=FALSE}
-plot(rs$slope)
-points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
+plot(rs$slope, axes = FALSE)
+plot(st_geometry(d1[idx.pt, ]), pch=15, cex=1.5, lwd=2, add = TRUE)
 box()
 title(main="Slope(deg)")
-plot(rs$aspect)
-points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
+
+plot(rs$aspect, axes = FALSE)
+plot(st_geometry(d1[idx.pt, ]), pch=15, cex=1.5, lwd=2, add = TRUE)
 box()
 title(main="Aspect(cos)")
 ```
@@ -230,7 +233,12 @@ title(main="Aspect(cos)")
 
 ```{r}
 # sample points
-a <- sampleRegular(rs, ncell(rs), sp=TRUE)
+a <- spatSample(rs, floor(ncell(rs) / 100), method = 'regular', as.points = TRUE, values = FALSE)
+
+# extract values
+a1 <- extract(rs, a, ID = FALSE)
+
+# append PLSS-located point
 
 # slope and elev and aspect_cos
 a1 <- a@data[, c(1,3,2)]
