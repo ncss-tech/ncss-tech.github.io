@@ -261,21 +261,26 @@ e.dist <- as.matrix(daisy(e, metric = 'euclidean', stand = TRUE))
 # extract distances from original point to all other samples
 e.dist <- e.dist[nrow(e), -nrow(e)]
 
+hist(e.dist, las = 1)
+
 # rank distances
 a$distance <- e.dist
+
+# visualize distance map, using aggregated grid topology
+# plot(rasterize(a, aggregate(rs$elevation, fact = 9), field = 'distance', fun = mean))
+
 # get index to minimum distance value
 idx <- which.min(a$distance)
 
 # create a grid  based on our elevation grid
-r <- rs$elevation
 # convert points in 'a' to pixels
-r1 <- rasterize(a, r, a$distance)
+r.dist <- rasterize(a, rs$elevation, field = 'distance', fun = mean)
 
 # removes edge effects from raster 
-r1[cellFromRow(r1, 1)] <- NA
-r1[cellFromRow(r1, nrow(r1))] <- NA
-r1[cellFromCol(r1, 1)] <- NA
-r1[cellFromCol(r1, ncol(r1))] <- NA
+r.dist[cellFromRow(r.dist, 1)] <- NA
+r.dist[cellFromRow(r.dist, nrow(r.dist))] <- NA
+r.dist[cellFromCol(r.dist, 1)] <- NA
+r.dist[cellFromCol(r.dist, ncol(r.dist))] <- NA
 
 # remove edge effects - NA's introduced from sampled data
 idx <- complete.cases(as.data.frame(a))
@@ -283,28 +288,22 @@ a5 <- a[idx, ]
 
 a6 <- as.data.frame(geom(a5))
 
-# use 1st quantile of the distance values to evaluate a subset of minimum distances
+# use 10th percentile of the distance values to evaluate a subset of minimum distances
 # can add an additional weighting factor to further narrow the 1st quantile range of values
-idx <- which(a5$distance < quantile(a5$distance)[2])
+idx <- which(a5$distance < quantile(a5$distance, prob = 0.1, na.rm = TRUE))
 
 plot(rs$elevation, axes = FALSE)
-#plot(r1, axes = FALSE)
 points(a5[idx, ], pch=0, cex=1.5)
 points(d1[idx.pt, ], pch=15, cex=1.5)
 points(mean(a6$x[idx]), mean(a6$y[idx]), pch=15, cex=1.5, lwd=2, col='red')
 
-# plot(rs$elevation)
-# #plot(r1)
-# points(a5[idx, ], pch=0, cex=1, lwd=2)
-# points(x = mean(a5[idx, ]@coords[, 1]), y = mean(a5[idx, ]@coords[, 2]), pch=15, cex=1.5, lwd=2, col='red')
-# points(d1[idx.pt,], pch=15, cex=1.5, lwd=2)
 box()
 title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)", sub = "mean of most-likely area coordinates shown as red square", )
 ```
 
 
 
-```{r}
+```{r eval = FALSE}
 # move coords for most-likely centroid XY back into the original dataframe 'd'
 # convert coordinates to dataframe, assign id column, sort and rename columns
 # then join back to the original data
