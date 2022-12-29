@@ -192,9 +192,9 @@ lines(p.plss)
 points(d1, pch = 15, cex = 1)
 
 # extract extent
-e <- ext(p.plss)
+e.qq <- ext(p.plss)
 # expand extent slightly
-dd <- e * 1.20
+dd <- e.qq * 1.20
 
 # crop section to QQ-section geometry extent
 x <- crop(x, dd)
@@ -223,7 +223,7 @@ rs$elevation <- x * 3.28
 rs$aspect <- cos(rs1$aspect)
 ```
 
-```{r, echo=FALSE}
+```{r, fig.show="hold", out.width="50%", echo=FALSE}
 plot(rs$slope, axes = FALSE)
 lines(p.plss.sec)
 lines(p.plss)
@@ -246,6 +246,9 @@ title(main="Aspect (cosine transform)")
 # sample points
 a <- spatSample(rs, floor(ncell(rs) / 100), method = 'regular', as.points = TRUE, values = FALSE)
 
+# crop section to QQ-section geometry extent
+a <- crop(a, e.qq)
+
 # extract values
 e <- extract(rs, a, ID = FALSE)
 
@@ -267,7 +270,7 @@ hist(e.dist, las = 1)
 a$distance <- e.dist
 
 # visualize distance map, using aggregated grid topology
-# plot(rasterize(a, aggregate(rs$elevation, fact = 9), field = 'distance', fun = mean))
+#plot(rasterize(a, aggregate(rs$elevation, fact = 9), field = 'distance', fun = mean))
 
 # get index to minimum distance value
 idx <- which.min(a$distance)
@@ -286,19 +289,26 @@ r.dist[cellFromCol(r.dist, ncol(r.dist))] <- NA
 idx <- complete.cases(as.data.frame(a))
 a5 <- a[idx, ]
 
+# copy out dataframe of coordinates as reference for later use
 a6 <- as.data.frame(geom(a5))
 
 # use 10th percentile of the distance values to evaluate a subset of minimum distances
 # can add an additional weighting factor to further narrow the 1st quantile range of values
-idx <- which(a5$distance < quantile(a5$distance, prob = 0.1, na.rm = TRUE))
+idx <- which(a5$distance < quantile(a5$distance, prob = 0.15, na.rm = TRUE))
+
+# find top 4 of the minimum distance score pixels for comparison
+idx.ml <- idx[1:4]
 
 plot(rs$elevation, axes = FALSE)
+lines(p.plss)
 points(a5[idx, ], pch=0, cex=1.5)
+points(a5[idx.ml,], pch=0, cex=1.5, lwd=2, col='red')
 points(d1[idx.pt, ], pch=15, cex=1.5)
-points(mean(a6$x[idx]), mean(a6$y[idx]), pch=15, cex=1.5, lwd=2, col='red')
+points(mean(a6$x[idx.ml]), mean(a6$y[idx.ml]), pch=15, cex=1.5, lwd=2, col='red')
 
 box()
-title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)", sub = "mean of most-likely area coordinates shown as red square", )
+title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)") 
+title(sub= "mean of most-likely area coordinates shown as red square")
 ```
 
 
@@ -307,13 +317,10 @@ title(main="Elev(ft): QQ-Sec area with center point & most-likely area (boxes)",
 # move coords for most-likely centroid XY back into the original dataframe 'd'
 # convert coordinates to dataframe, assign id column, sort and rename columns
 # then join back to the original data
-#coords <- as.data.frame(coordinates(a5[idx, ]))
-coords <- as.data.frame(a6[idx, ])
-lat1 <- mean(coords$y)
-lon1 <- mean(coords$x)
+lat1 <- mean(a6$y[idx.ml])
+lon1 <- mean(a6$x[idx.ml])
 coords.ml <- data.frame(lon1, lat1)
 coords.ml$id <- d1$id[idx.pt]
-#coords.ml$id <- d1@data$id[idx.pt]
 coords.ml$mean_dist <- mean(a5$distance[idx])
 coords.ml <- coords.ml[, c(3,2,1,4)]
 names(coords.ml) <- c('id', 'lat1', 'lon1', 'dist')
