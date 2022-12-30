@@ -14,7 +14,7 @@ keep_md: no
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
@@ -54,7 +54,7 @@ x <- CDECquery(id=s, sensor=45, interval='D', start='2000-01-01', end='2030-01-0
 ## NOTE: requires sharpshootR >= 1.4.02
 # plot
 par(mar=c(4.5, 4.5, 2.5, 1.5))
-PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2020)
+PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2023)
 ```
 
 
@@ -104,17 +104,17 @@ PCP_plot(x, ylab='Cumulative PPT (in)', main='DAYMET', this.year = 1999, this.da
 
 ## SCAN/SNOTEL
 Daily climate data from the [Rogers Farm #1 SCAN station](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**.
-```{r fig.height=6, fig.width=10}
+```{r results='hide', fig.height=6, fig.width=10, eval=FALSE}
 # range can extend beyond actual records
-x <- fetchSCAN(site.code=c(2001), year=1990:2020)
+x <- fetchSCAN(site.code = c(2001), year = 1990:2022, timeseries = 'Daily')
 
-# extract instantanious precipitation, units are inches 
+# extract instantaneous precipitation, units are inches 
 x <- x$PRCP
 # copy date into column expected by PCP_plot
 x$datetime <- x$Date
 
 par(mar=c(4.5, 4.5, 2.5, 1.5))
-PCP_plot(x, ylab='Cumulative PPT (in)', main='SCAN Station 2001', this.year = 2019, this.day = 300)
+PCP_plot(x, ylab = 'Cumulative PPT (in)', main = 'SCAN Station 2001', this.year = 2022, this.day = 300)
 ```
 
 ## Animations
