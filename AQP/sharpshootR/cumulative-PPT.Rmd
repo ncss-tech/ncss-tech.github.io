@@ -40,7 +40,7 @@ TODO: relate to these excellent maps: https://cw3e.ucsd.edu/odds-of-normal-water
 # Various Data Sources
 
 ## CDEC
-```{r fig.height=5.5, fig.width=10}
+```{r fig.height=6, fig.width=10}
 # define station of interest
 s <- 'SPW'
 # get metadata

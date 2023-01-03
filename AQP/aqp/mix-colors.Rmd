@@ -61,7 +61,11 @@ library(aqp)
 library(lattice)
 library(tactile)
 library(sharpshootR)
+
+# need this for mixingMethod = 'reference'
 library(gower)
+
+# need this for colorMixtureVenn()
 library(venn)
 
 # local copy of the Munsell chip spectral library
@@ -130,10 +134,10 @@ colorContrastPlot(m1 = colors[1], m2 = colors[2])
 Simulate a mixture via `mixMunsell`. See the [online documentation](http://ncss-tech.github.io/aqp/docs/reference/mixMunsell.html) for details on the method and [relevant citations](http://ncss-tech.github.io/aqp/docs/reference/munsell.spectra.html).
 ```{r fig.height=2.5, fig.width=5}
 # just the closest match
-mixed <- mixMunsell(colors)
+mixed <- mixMunsell(colors, mixingMethod = 'reference')
 
 # top 5 matches, decreasing order
-mixed.5 <- mixMunsell(colors, n = 5)
+mixed.5 <- mixMunsell(colors, mixingMethod = 'reference', n = 5)
 ```
 
 Left to right: original colors-to-mix and final mixture candidate (`r mixed$munsell`). This is the Munsell chip associated with the reference spectra that is *closest* to the [weighted geometric mean](https://en.wikipedia.org/wiki/Weighted_geometric_mean) of the source spectra.
@@ -156,7 +160,7 @@ colorContrastPlot(
 
 Demonstrate reference spectra for the source colors and final mixture. The dashed line is the weighted geometric mean spectra.
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(colors, showMixedSpec = TRUE)
+plotColorMixture(colors, mixingMethod = 'reference', showMixedSpec = TRUE)
 ```
 
 <span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <span style="padding: 5px; background-color: `r aqp::parseMunsell(mixed$munsell)`; color: white;">`r mixed$munsell`</span>.
@@ -184,28 +188,28 @@ colorMixtureVenn(chips, ellipse = TRUE)
 ## Tinkering with `plotColorMixture`
 
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5)
 ```
 
-Compare "reference" (default) vs. "exact" mixing methods.
+Compare "reference" vs. "exact" mixing methods.
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, mixingMethod = 'reference', showMixedSpec = TRUE)
 plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, mixingMethod = 'exact')
 ```
 
 ```{r fig.height=5.5, fig.width=9}
 # is this right? can the resulting spectra be "higher" than the source?
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5)
 
 # label collision
-plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 5, showMixedSpec = TRUE)
-plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 5)
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 4, label.cex = 0.65)
 
 
-plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2), swatch.cex = 5)
 
 plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(1, 2))
-plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE)
+plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65)
 ```
 
 Check: "blue" + "yellow" = "green", yes. Note weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit but close enough.
@@ -217,7 +221,7 @@ plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, mixin
 
 Top 3 mixture candidates
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, n = 3)
+plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference', n = 3)
 ```
 
 ## Simulation of a continuous mixture
@@ -246,8 +250,8 @@ m <- c('10YR 8/6', '10YR 2/2')
 
 knitr::kable(
   rbind(
-    mixMunsell(m, mixingMethod = 'reference'),
     mixMunsell(m, mixingMethod = 'exact'),
+    mixMunsell(m, mixingMethod = 'reference'),
     mixMunsell(m, mixingMethod = 'estimate')
   ),
   digits = 2
@@ -256,14 +260,14 @@ knitr::kable(
 
 The weighted geometric mean of the two spectra seems plausible:
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 8/6', '10YR 2/2'), swatch.cex = 5, showMixedSpec = TRUE)
+plotColorMixture(c('10YR 8/6', '10YR 2/2'), swatch.cex = 5)
 ```
 
 
 Evaluate the top 20 mixture candidates in terms of spectral distance and $\Delta{E_{00}}$ relative to the most likely match.
 ```{r}
 m <- c('10YR 8/6', '10YR 2/2')
-x <- mixMunsell(m, n = 20)
+x <- mixMunsell(m, n = 20, mixingMethod = 'reference')
 
 z <- expand.grid(m1 = x$munsell[1], m2 = x$munsell)
 d <- colorContrast(z[[1]], z[[2]])
@@ -320,7 +324,7 @@ Try again, this time using the entire spectral library.
 m <- c('10YR 8/6', '10YR 2/2')
 
 # return distances to entire spectral library
-x <- mixMunsell(m, n = 2486)
+x <- mixMunsell(m, n = 2486, mixingMethod = 'reference')
 
 # do not compare 1st mixture candidate to itself (dE00 = 0)
 z <- expand.grid(m1 = x$munsell[1], m2 = x$munsell[-1])
@@ -392,7 +396,6 @@ axis(2, las = 1, cex.axis = 0.75)
 ### Spectral Differences: Adjacent Chips
 Use spectra differences between adjacent chips to determine a reasonable threshold. 
 ```{r fig.width = 8.5, fig.height=5}
-
 # Munsell LUT
 data(munsell)
 
@@ -474,7 +477,7 @@ box()
 axis(1, at = seq(0, 1, by = 0.1), cex.axis = 0.75)
 axis(2, las = 1, cex.axis = 0.75)
 
-quantile(d.adj)
+knitr::kable(t(quantile(d.adj)), digits = 3)
 ```
 
 
@@ -525,7 +528,6 @@ adj.spec.dist <- make.groups(
 )
 
 bwplot(which ~ x, data = adj.spec.dist, par.settings = tactile.theme())
-
 ```
 
 ### Comparison with dE000
@@ -560,43 +562,6 @@ xyplot(
   }
 )
 
-```
-
-
-# Alternative color mixing strategies
-How does `soilDB::estimateColorMixture` (weighted mean of CIELAB coordinates) compare? Not bad (~2 chips off), but the subtractive mixture seems more likely.
-```{r fig.height=3.5, fig.width=6}
-library(soilDB)
-
-colors <- c('10YR 6/2', '7.5YR 3/3')
-
-d <- cbind(
-  parseMunsell(colors, convertColors=FALSE),
-  parseMunsell(colors, return_triplets=TRUE, returnLAB=TRUE),
-  pct=c(0.5, 0.5),
-  col=parseMunsell(colors, convertColors=TRUE)
-)
-
-e1 <- estimateColorMixture(d, backTransform = TRUE)
-m1 <- mixMunsell(colors)
-```
-
-```{r fig.height=5.5, fig.width=9}
-plotColorMixture(colors, showMixedSpec = TRUE)
-```
-
-```{r fig.height=3.5, fig.width=6}
-par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
-colorContrastPlot(
-  m1$munsell,
-  sprintf('%s %s/%s', e1$colorhue, e1$colorvalue, e1$colorchroma),
-  labels = c('Subtractive Mixture', 'Weighted Average CIELAB')  
-  )
-```
-
-What does a $\Delta E_{00}$ of **4.55** mean in terms of "color chips" in a simulated color book?
-```{r fig.height=5, fig.width=10}
-contrastChart('10YR 6/2', hues = c('10YR', '7.5YR'), thresh = 4.55)
 ```
 
 
