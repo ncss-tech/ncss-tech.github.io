@@ -200,8 +200,10 @@ d <- SoilTaxonomyDendrogram(s)
 # re-order based on subgroup classification
 m <- m[, d$order]
 
+# pdf(file = 'state-soils-chips.pdf', width = 18, height = 5)
+
 # init plot region
-par(mar=c(0,0,0,0))
+par(mar=c(0,0,0,0.5))
 plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, n+0.5), asp = 1)
 
 # keep track of column and row indices for simpler plotting
@@ -224,8 +226,9 @@ for(i in seq_along(m)) {
 # annotate with series names | state
 # text(x = seq_along(s), y = 0.33, labels = site(s)$id[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
 
-text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
+text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 45, adj = 0, font = 2)
 
+# dev.off()
 ```
 
 ----------------------------
