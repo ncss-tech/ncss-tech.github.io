@@ -21,7 +21,7 @@ library(aqp)
 library(soilDB)
 
 # get lab / morphologic data
-x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE, simplifyColors = TRUE)
+x <- fetchKSSL(series = 'clarksville', returnMorphologicData = TRUE, simplifyColors = TRUE)
 
 # extract SoilProfileCollection
 s <- x$SPC
@@ -40,30 +40,71 @@ s <- s[idx, ]
 s$color <- sprintf("%s %s/%s", s$m_hue, s$m_value, s$m_chroma)
 ```
 
-Extract the first 5 profiles having > 5 horizons, and first 6 horizons.
+One approach: extract the first $n$ profiles having > 5 horizons, and first 6 horizons.
 ```{r fig.width=8, fig.height=6.5}
 # filter to just those profiles with > 5 horizons
 idx <- which(profileApply(s, nrow) > 5)
 
-# take the first 5 profiles, first 6 horizons
-w <- s[idx[1:5], 1:6]
+# take the first n profiles, all horizons
+n <- 6
+w <- s[idx[1:n], 1:6]
 
 # check
 par(mar=c(0,0,0,0))
 plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.06)
 ```
 
-Make a 5x6 grid of soil colors from above.
-```{r fig.width=3, fig.height=3}
-m <- horizons(w)[, c('hzn_top', 'hzn_bot', 'moist_soil_color', 'color')]
+Less restrictive: first $n$ profiles, all horizons.
+```{r fig.width=8, fig.height=6.5}
+n <- 6
+w <- s[1:n, ]
 
-m <- matrix(m$moist_soil_color, nrow = 6, ncol = 5, byrow = FALSE)
+# check
+par(mar=c(0,0,0,0))
+plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.06)
+```
+
+Regularize horizons / colors to $k$ rows.
+```{r}
+regularizeColors <- function(i, k = 6) {
+  .col <- colorRampPalette(na.omit(i$moist_soil_color), space = 'Lab', interpolate = 'spline')(k)
+  .munsell <- rgb2munsell(t(col2rgb(.col)/255))
+  .munsell <- sprintf("%s %s/%s", .munsell$hue, .munsell$value, .munsell$chroma)
+  
+  return(list(col = .col, munsell = .munsell))
+}
+
+mm <- profileApply(w, simplify = FALSE, FUN = regularizeColors, k = 6)
+```
+
+
+Make a $k$ row by $n$ column grid of soil colors from above.
+```{r fig.width=3, fig.height=3}
+
+m <- lapply(mm, '[[', 'col')
+m <- do.call('cbind', m)
+
+# m <- matrix(m$moist_soil_color, nrow = 6, ncol = 5, byrow = FALSE)
 
 par(mar=c(0,0,0,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, n+0.5), asp = 1)
 
 # vectorized functions are the best
 rect(xleft = col(m) - 0.4, ybottom = row(m) + 0.4, xright = col(m) + 0.4, ytop = row(m) - 0.4, col = m, border = NA)
+```
+
+Annotate with Munsell colors.
+```{r fig.width=5, fig.height=5}
+.munsell <- lapply(mm, '[[', 'munsell')
+.munsell <- do.call('c', .munsell)
+
+par(mar=c(0,0,0,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, n+0.5), asp = 1)
+
+# vectorized functions are the best
+rect(xleft = col(m) - 0.4, ybottom = row(m) + 0.4, xright = col(m) + 0.4, ytop = row(m) - 0.4, col = m, border = NA)
+
+text(x = col(m), y = row(m), labels = .munsell, col = invertLabelColor(m), cex = 0.66, font = 2)
 ```
 
 This time with rounded corners
@@ -71,7 +112,7 @@ This time with rounded corners
 library(berryFunctions)
 
 par(mar=c(0,0,0,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, n+0.5), asp = 1)
 
 # ugh
 col.m <- col(m)
@@ -84,15 +125,107 @@ for(i in seq_along(m)) {
 
 ```
 
-Annotate with Munsell colors.
-```{r fig.width=5, fig.height=5}
+
+
+
+Arbitrary collection of profiles
+```{r fig.width=10, fig.height=4.75}
+library(sharpshootR)
+data("OSDexamples")
+
+s <- OSDexamples$SPC
+s$color <- sprintf("%s %s/%s", s$hue, s$value, s$chroma)
+
+s$moist_soil_color <- s$soil_color
+
+mm <- profileApply(s, simplify = FALSE, FUN = regularizeColors, k = 8)
+
+m <- lapply(mm, '[[', 'col')
+m <- do.call('cbind', m)
+
+n <- length(s)
+
+# init plot region
 par(mar=c(0,0,0,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, 5.5), asp = 1)
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, n+0.5), asp = 1)
 
-# vectorized functions are the best
-rect(xleft = col(m) - 0.4, ybottom = row(m) + 0.4, xright = col(m) + 0.4, ytop = row(m) - 0.4, col = m, border = NA)
+# keep track of column and row indices for simpler plotting
+col.m <- col(m)
+row.m <- row(m)
 
-text(x = col(m), y = row(m), labels = w$color, col = invertLabelColor(w$moist_soil_color), cex = 0.5, font = 3)
+# roundedRect() not vectorized
+for(i in seq_along(m)) {
+  roundedRect(
+    xleft = col.m[i] - 0.4, 
+    ybottom = row.m[i] + 0.4, 
+    xright = col.m[i] + 0.4, 
+    ytop = row.m[i] - 0.4, 
+    col = m[[i]], 
+    border = NA, 
+    rounding = 0.25
+  )
+}
+
+```
+[US State Soils](https://www.nrcs.usda.gov/resources/education-and-teaching-materials/state-soils)
+```{r fig.width=10, fig.height=4.75}
+library(sharpshootR)
+data("us.state.soils")
+
+s <- fetchOSD(us.state.soils$series)
+
+# splice-in state names
+s$series <- site(s)$id
+us.state.soils$series <- toupper(us.state.soils$series)
+site(s) <- us.state.soils
+
+s$color <- sprintf("%s %s/%s", s$hue, s$value, s$chroma)
+
+s$moist_soil_color <- s$soil_color
+
+mm <- profileApply(s, simplify = FALSE, FUN = regularizeColors, k = 8)
+
+m <- lapply(mm, '[[', 'col')
+m <- do.call('cbind', m)
+
+n <- length(s)
+```
+
+```{r results='hide', fig.show='hide'}
+# hide this plot
+d <- SoilTaxonomyDendrogram(s)
+```
+
+```{r fig.width=20, fig.height=4.75}
+# re-order based on subgroup classification
+m <- m[, d$order]
+
+# init plot region
+par(mar=c(0,0,0,0))
+plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(6.5, 0.5), xlim=c(0.5, n+0.5), asp = 1)
+
+# keep track of column and row indices for simpler plotting
+col.m <- col(m)
+row.m <- row(m)
+
+# roundedRect() not vectorized
+for(i in seq_along(m)) {
+  roundedRect(
+    xleft = col.m[i] - 0.4, 
+    ybottom = row.m[i] + 0.4, 
+    xright = col.m[i] + 0.4, 
+    ytop = row.m[i] - 0.4, 
+    col = m[[i]], 
+    border = NA, 
+    rounding = 0.25
+  )
+}
+
+# annotate with series names | state
+# text(x = seq_along(s), y = 0.33, labels = site(s)$id[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
+
+text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
+
 ```
 
 ----------------------------
