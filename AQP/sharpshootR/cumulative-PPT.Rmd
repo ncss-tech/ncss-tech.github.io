@@ -34,7 +34,11 @@ Cumulative PPT over the course of an idealized water year (October 1 through Sep
    * blue traces are cumulative PPT records corresponding to 5th, 25th, 50th, 75th, and 95th percentiles of historical (end of water-year) cumulative PPT
    * blue box-whisker indicates 5-25-50-75-95th percentiles of starting water-day where cumulative PPT > 0.1 (units)
 
-TODO: relate to these excellent maps: https://cw3e.ucsd.edu/odds-of-normal-water-year-precipitation/
+## TODO
+
+ * relate to these excellent maps: https://cw3e.ucsd.edu/odds-of-normal-water-year-precipitation/
+ * compare annual distributions: 1st derivatives of cumulative precipitation
+
 
 
 # Various Data Sources
@@ -49,9 +53,15 @@ s.info <- CDEC_StationInfo(s)
 title.text <- sprintf("%s [%s]", s.info$site.meta$Name, s)
 
 # get data
-x <- CDECquery(id=s, sensor=45, interval='D', start='2000-01-01', end='2030-01-01')
+x <- CDECquery(id = s, sensor = 45, interval = 'D', start = '2000-01-01', end = '2030-01-01')
 
-## NOTE: requires sharpshootR >= 1.4.02
+# bad data:
+# station_id dur_code sensor_num sensor_type value flag  units   datetime year month water_year water_day
+# 7419        SPW        D         45     PPT INC 15.65      INCHES 2020-04-23 2020 April       2020       206
+
+# filter bad record
+x <- x[x$value < 10, ]
+
 # plot
 par(mar=c(4.5, 4.5, 2.5, 1.5))
 PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2023)
