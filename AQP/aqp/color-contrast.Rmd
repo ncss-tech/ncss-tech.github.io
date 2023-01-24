@@ -546,7 +546,7 @@ library(rms)
 library(tactile)
 
 data(munsell)
-x <- subset(munsell, subset=value %in% 3:8 & chroma %in% 1:6 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+x <- subset(munsell, subset = value %in% 2:8 & chroma %in% 1:8 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
 
 cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
 z <- combn(cols, 2)
@@ -626,11 +626,11 @@ kable(head(d[idx.F, ]), row.names = FALSE)
 # plot(dE00 ~ dC, data=d)
 
 dd <- datadist(d)
-options(datadist="dd")
+options(datadist = "dd")
 
 # there is a little bit of curvature
-(m <- ols(dE00 ~ rcs(dH, 3) + rcs(dV, 3) + rcs(dC, 3), data=d))
-# (m <- ols(dE00 ~ dH + dV + dC, data=d))
+(m <- ols(dE00 ~ rcs(dH, 3) + rcs(dV, 3) + rcs(dC, 3), data = d))
+# (m <- ols(dE00 ~ dH + dV + dC, data = d))
 
 plot(Predict(m, dH=NA, dV=0, dC=0))
 plot(Predict(m, dH=0, dV=NA, dC=0))
@@ -645,7 +645,9 @@ plot(summary(m, dH=c(0,1), dV=c(0,1), dC=c(0,1)))
 plot(summary(m))
 
 plot(anova(m), what='partial R2')
+```
 
+```{r fig.width=8.5, fig.height=6}
 plot(nomogram(m))
 ```
 
@@ -653,6 +655,80 @@ For next time, how do you use these tables?
 ```{r}
 print(nomogram(m, dH=c(0, 1, 2, 3)))
 ```
+
+
+```{r}
+library(viridisLite)
+
+# re-fit simpler model, without intercept
+summary(m <- lm(dE00 ~ dH + bs(dV, 3) * dC - 1, data = d))
+
+# RMSE
+sqrt(mean((d$dE00 - predict(m))^2))
+
+nd <- expand.grid(dH = 0:3, dV = 0:6, dC = 0:6)
+nd$dE00 <- predict(m, newdata = nd)
+
+# factors
+nd$dH <- factor(nd$dH, labels = sprintf("dH = %s", sort(unique(nd$dH))))
+
+
+head(nd)
+
+tps <- tactile.theme(regions = list(col = viridis(200, alpha = 0.75, direction = -1)))
+
+levelplot(
+  dE00 ~ dV * dC | dH, 
+  data = nd,
+  main = 'Expected Change in dE00',
+  xlab = expression(Delta*Value),
+  ylab = expression(Delta*Chroma),
+  as.table = TRUE,
+  par.settings = tps,
+  scales = list(alternating = 1),
+  subscripts = TRUE,
+  panel = function(x, y, z, subscripts, ...) {
+    panel.levelplot(x = x, y = y, z = z, subscripts = subscripts, ...)
+    
+    .NAidx <- which(is.na(z[subscripts]))
+    .txt <- format(round(z[subscripts]), trim = TRUE)
+    .txt[.NAidx] <- ''
+    panel.text(x[subscripts], y[subscripts], labels = .txt, col = 'black', cex = 0.66, font = 2)
+  }
+)
+
+```
+
+
+```{r}
+du <- unique(d[, c('dH', 'dV', 'dC', 'cc')])
+du <- du[which(du$dH < 4 & du$dV < 4 & du$dC < 5), ]
+
+du$dH <- factor(du$dH, labels = sprintf("dH = %s", sort(unique(du$dH))))
+
+tps <- tactile.theme(regions = list(col = grey.colors))
+
+
+levelplot(
+  cc ~ dV * dC | dH, 
+  data = du,
+  as.table = TRUE,
+  par.settings = tps,
+  scales = list(alternating = 1),
+  subscripts = TRUE,
+  panel = function(x, y, z, subscripts, ...) {
+    panel.levelplot(x = x, y = y, z = z, subscripts = subscripts, ...)
+    
+    .NAidx <- which(is.na(z[subscripts]))
+    .txt <- abbreviate(z[subscripts], minlength = 1)
+
+    panel.text(x[subscripts], y[subscripts], labels = .txt, col = 'black', cex = 0.85, font = 2)
+  }
+)
+```
+
+
+
 
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`.
