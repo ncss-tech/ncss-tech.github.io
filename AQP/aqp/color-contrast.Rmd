@@ -44,6 +44,7 @@ library(latticeExtra)
 library(knitr)
 library(MASS)
 library(vegan)
+library(viridisLite)
 ```
 
 ## Core Functions
@@ -133,19 +134,23 @@ contrastClass(v1=3, c1=4, v2=5, c2=3, dH=0, dV=3, dC=1, verbose = TRUE)
 ### Hue Position
 Differences in Munsell hue ($dH$) are computed according to radial position (clock-wise) from <span style="padding: 5px; background-color: `r parseMunsell('5R 6/8')`; color: white;">`5R`&nbsp;&nbsp;&nbsp;</span> to <span style="padding: 5px; background-color: `r parseMunsell('5PB 6/8')`; color: white;">&nbsp;&nbsp;&nbsp;`5PB`</span>.
 
-![](https://www.nrcs.usda.gov/Internet/FSE_MEDIA/nrcs142p2_050366.jpg)
+```{r fig.width=6, fig.height=6, fig.align='center'}
+par(mar = c(0, 0, 0, 0))
+huePositionCircle()
+```
+
 
 Use `huePosition()` to extract hues in order, or convert a vector of hues into an index of positions.
 ```{r fig.width=7, fig.height=7, res=100}
 # hues used in the description of soil color (except for neutral hues)
-hues <- huePosition(x=NULL, returnHues = TRUE)
+hues <- huePosition(x = NULL, returnHues = TRUE)
 # convert hue names into position
 hue.pos <- huePosition(hues)
 # check
 kable(head(cbind(hue.pos, hues)))
 ```
 
-Arranged in CIELAB colorspace, the ordering of hues looks like this. The `huePositionPlot` function in {sharpshootR} will make this kind of figure for any combination of value and chroma.
+Arranged in CIELAB colorspace, the ordering of hues looks like this. The `huePositionPlot()` function in {sharpshootR} will make this kind of figure for any combination of value and chroma.
 ```{r fig.width=7, fig.height=7, res=100}
 # make these into real colors by fixing value and chroma at '6'
 colors <- paste0(hues, ' 6/6')
@@ -166,6 +171,14 @@ abline(h=0, v=0, lty=2)
 points(B ~ A, data=x, pch=15, col=x$hex, cex=4.5)
 text(x$A, x$B, labels = hue.labels, cex=0.75)
 ```
+
+Demo `sharpshootR::huePostitionPlot()`
+```{r fig.width=7, fig.height=7, res=100, eval=FALSE}
+
+sharpshootR::huePositionPlot(contour.dE00 = TRUE, origin = '10YR 4/4')
+
+```
+
 
 
 ## Color Contrast Charts
@@ -323,22 +336,10 @@ title('nMDS', col.main='white', line=0.75)
 
 
 ### Nearly Imperceptible Differences
-```{r fig.width=8, fig.height=6}
-# locate color pairs which are at the edge of perceptable differences
-idx <- which(d < 4)
-row.idx <- row(d)[idx]
-col.idx <- col(d)[idx]
-low.dE00 <- cbind(dimnames(d)[[1]][row.idx], dimnames(d)[[2]][col.idx])
-
-# not so helpful viz of pairs
-swatchplot(list(
-  A=parseMunsell(low.dE00[, 1]),
-  B=parseMunsell(low.dE00[, 2])
-))
-```
+TODO
 
 
-```{r fig.width=8, fig.height=6}
+```{r eval = FALSE, echo = FALSE, fig.width=8, fig.height=6}
 # compute median delta-E00 by Munsell chip
 l <- list()
 for(i in seq_along(x$munsell)) {
@@ -383,7 +384,8 @@ x$munsell <- sprintf("%s/%s", x$value, x$chroma)
 # dE00
 # pair-wise distances are only present in the upper triangle
 # lower triangle is 0
-d <- compare_colour(x[, c('L', 'A', 'B')], from_space='lab', white_from = 'D65', method='cie2000')
+d <- compare_colour(x[, c('L', 'A', 'B')], from_space='lab', white_from = 'D65', method = 'cie2000')
+
 # copy color codes for convenience
 dimnames(d) <- list(x$munsell, x$munsell)
 
@@ -469,7 +471,7 @@ colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), printMetrics = TRUE, d.cex =
 data(munsell)
 
 # for now, most commonly used hue pages, but expanded to full range in value / chroma
-x <- subset(munsell, subset = hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+x <- subset(munsell, subset = hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y') & value %in% 2:8 & chroma %in% 2:8)
 
 # create all pair-wise combinations
 cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
@@ -503,7 +505,7 @@ dC <- abs(m1.pieces[[3]] - m2.pieces[[3]])
 
 # just adjacent chips
 # ~ 11,498 combinations
-idx <- which(dH %in% c(0,1) & dV %in% c(0,1) & dC %in% c(0,1))
+idx <- which(dH %in% c(0, 1) & dV %in% c(0, 1) & dC %in% c(0, 1))
 z <- z[idx, ]
 
 # compute color contrast metrics on adjacent chips
@@ -536,8 +538,57 @@ adj <- do.call('rbind', adj)
 knitr::kable(adj)
 
 # just changes along a single dimension 
-knitr::kable(adj[row.names(adj) %in% c('0-0-1', '1-0-0', '0-1-0'), ])
+idx <- which(row.names(adj) %in% c('1-0-0', '0-1-0', '0-0-1'))
+knitr::kable(adj[idx[3:1], ])
 ```
+
+```{r}
+library(corrplot)
+
+# fresh start
+data(munsell)
+
+# for now, most commonly used hue pages, but expanded to full range in value / chroma
+x <- subset(munsell, subset = hue %in% c('2.5YR') & value %in% 2:8 & chroma %in% 2:8)
+
+x <- subset(munsell, subset = value %in% 6 & chroma %in% 6)
+idx <- match(huePosition(returnHues = TRUE), x$hue)
+x <- x[idx, ]
+
+x$m <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
+x$col <- rgb(x$r, x$g, x$b, maxColorValue = 1)
+
+
+d <- farver::compare_colour(
+  from = x[, c('L', 'A', 'B')],
+  to = x[, c('L', 'A', 'B')], 
+  from_space = 'lab', 
+  method = 'CIE2000'
+)
+
+dimnames(d) <- list(x$m, x$m)
+
+par(fg = 'white', bg = 'black')
+corrplot(
+    d, 
+    col = mako(25), 
+    is.corr = FALSE, 
+    col.lim = range(d), 
+    method = "color", 
+    order = "original",
+    type = "upper",
+    diag = FALSE,
+    tl.cex = 0.66,
+    tl.col = x$col,
+    # tl.col = 'white',
+    mar = c(0.1, 0, 0, 0.8),
+    # addgrid = TRUE,
+  ) 
+
+
+
+```
+
 
 
 ## Example 2
@@ -546,7 +597,11 @@ library(rms)
 library(tactile)
 
 data(munsell)
-x <- subset(munsell, subset = value %in% 2:8 & chroma %in% 1:8 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+x <- subset(munsell, subset = value %in% 2:8 & chroma %in% 2:8 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+
+## leave out N for now
+# x2 <- subset(munsell, subset = value %in% 2:6 & hue %in% c('N'))
+# x <- rbind(x1, x2)
 
 cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
 z <- combn(cols, 2)
@@ -558,13 +613,14 @@ d <- colorContrast(z[[1]], z[[2]])
 ```{r fig.width=7, fig.height=4}
 kable(head(d), row.names = FALSE)
 
-bwplot(cc ~ dE00, data=d, 
-       par.settings=tactile.theme(), 
-       xlab=expression(Delta*E['00']),
-       main='CIE Delta-E00 vs. Soil Color Contrast Class\nhue 10R-2.5Y, value 3-8, chroma 1-6',
-       scales=list(x=list(tick.number=10)), 
-       panel=function(...) {
-         panel.grid(h=3, v=-1)
+bwplot(cc ~ dE00, data = d, 
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, value 2-8, chroma 2-8',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
          panel.bwplot(...)
        })
 ```
@@ -575,7 +631,7 @@ bwplot(dV ~ dE00, data=d,
        subset = dH < 1 & dC < 1,
        par.settings=tactile.theme(), 
        xlab=expression(Delta*E['00']),
-       main='CIE Delta-E00 vs. Change in Munsell Value\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       main='CIE Delta-E00 vs. Change in Munsell Value\nhue 10R-5Y, value 2-8, chroma 2-8',
        sub = 'Constant Hue and Chroma',
        scales=list(x=list(tick.number=10)), 
        panel=function(...) {
@@ -587,7 +643,7 @@ bwplot(dH ~ dE00, data=d,
        subset = dV < 1 & dC < 1,
        par.settings=tactile.theme(), 
        xlab=expression(Delta*E['00']),
-       main='CIE Delta-E00 vs. Change in Munsell Hue\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       main='CIE Delta-E00 vs. Change in Munsell Hue\nhue 10R-10R-5Y, value 2-8, chroma 2-8',
        sub = 'Constant Value and Chroma',
        scales=list(x=list(tick.number=10)), 
        panel=function(...) {
@@ -599,7 +655,7 @@ bwplot(dC ~ dE00, data=d,
        subset = dV < 1 & dH < 1,
        par.settings=tactile.theme(), 
        xlab=expression(Delta*E['00']),
-       main='CIE Delta-E00 vs. Change in Munsell Chroma\nhue 10R-2.5Y, value 3-8, chroma 1-6',
+       main='CIE Delta-E00 vs. Change in Munsell Chroma\nhue 10R-10R-5Y, value 2-8, chroma 2-8',
        sub = 'Constant Hue and Value',
        scales=list(x=list(tick.number=10)), 
        panel=function(...) {
@@ -651,23 +707,31 @@ plot(anova(m), what='partial R2')
 plot(nomogram(m))
 ```
 
-For next time, how do you use these tables?
+Add intercept to LP
 ```{r}
 print(nomogram(m, dH=c(0, 1, 2, 3)))
 ```
 
+## TODO
+  * Add N hues
+  * include value and chroma of starting chip
 
-```{r}
-library(viridisLite)
+  
+```{r fig.width=10, fig.height=4, fig.align='center'}
+library(terra)
+library(splines)
 
 # re-fit simpler model, without intercept
-summary(m <- lm(dE00 ~ dH + bs(dV, 3) * dC - 1, data = d))
+summary(m <- lm(dE00 ~ dH * bs(dV, 3) * dC - 1, data = d))
 
 # RMSE
+# ~ 2.6
 sqrt(mean((d$dE00 - predict(m))^2))
 
-nd <- expand.grid(dH = 0:3, dV = 0:6, dC = 0:6)
-nd$dE00 <- predict(m, newdata = nd)
+nd <- expand.grid(dH = 0:3, dV = 0:4, dC = 0:4)
+p <- data.frame(predict(m, newdata = nd, interval = 'prediction', level = 0.8))
+nd$dE00 <- p$fit
+nd$interval <- p$upr - p$lwr 
 
 # factors
 nd$dH <- factor(nd$dH, labels = sprintf("dH = %s", sort(unique(nd$dH))))
@@ -675,29 +739,126 @@ nd$dH <- factor(nd$dH, labels = sprintf("dH = %s", sort(unique(nd$dH))))
 
 head(nd)
 
-tps <- tactile.theme(regions = list(col = viridis(200, alpha = 0.75, direction = -1)))
+tps <- tactile.theme(regions = list(col = viridis(200, alpha = 0.85, direction = -1)))
 
 levelplot(
-  dE00 ~ dV * dC | dH, 
+  dE00 ~ dC * dV | dH, 
   data = nd,
-  main = 'Expected Change in dE00',
-  xlab = expression(Delta*Value),
-  ylab = expression(Delta*Chroma),
+  main = expression(Estimated~Delta*E['00']),
+  sub = 'Common Soil Hues, Value 2-8, Chroma 2-8',
+  ylab = expression(Delta*Value),
+  xlab = expression(Delta*Chroma),
   as.table = TRUE,
   par.settings = tps,
   scales = list(alternating = 1),
   subscripts = TRUE,
   panel = function(x, y, z, subscripts, ...) {
+    # background colors / shading ~ dE00
     panel.levelplot(x = x, y = y, z = z, subscripts = subscripts, ...)
     
+    
+    # labels for dE00 values
+    # convert NA -> ''
     .NAidx <- which(is.na(z[subscripts]))
     .txt <- format(round(z[subscripts]), trim = TRUE)
     .txt[.NAidx] <- ''
-    panel.text(x[subscripts], y[subscripts], labels = .txt, col = 'black', cex = 0.66, font = 2)
+    
+    # legible labels based reasonable threshold 
+    .col <- ifelse(z[subscripts] > 25, 'white', 'black')
+    
+    # annotate with dE00
+    panel.text(
+      x = x[subscripts],
+      y = y[subscripts],
+      labels = .txt,
+      col = .col,
+      cex = 0.8,
+      font = 2
+    )
+    
+    # mark regions of current contrast classes
+    # polygon outlines perhaps
+    .n <- length(x[subscripts])
+    .bogus <- rep(4, times = .n)
+    
+    # simple proxy for dH by panel
+    # requires correct ordering of panels
+    .dH <- panel.number() - 1
+    
+    # compute contrast class within panels
+    # assume starting value and chroma are not "low"
+    .cc <- contrastClass(
+      v1 = .bogus, 
+      c1 = .bogus, 
+      v2 = .bogus, 
+      c2 = .bogus, 
+      dH = rep(.dH, times = .n), 
+      dV = y[subscripts], 
+      dC = x[subscripts]
+    )
+    
+    panel.text(
+      x = x[subscripts] + 0.33,
+      y = y[subscripts] - 0.33,
+      labels = abbreviate(.cc, minlength = 1),
+      col = .col,
+      cex = 0.66,
+      font = 3
+    )
+    
+    # assemble contrast class grid / overlay
+    .xyz <- cbind(x = x[subscripts], y = y[subscripts], cc = .cc)
+    .r <- rast(.xyz, type = 'xyz')
+    .p <- as.polygons(.r, dissolve = TRUE)
+    
+    # polygon coordinates
+    .coords <- crds(.p)
+    
+    # debug
+    # browser()    
+    
+    # annotate contrast class boundaries
+    panel.polygon(.coords, lwd = 1, lty = 3, border = 'white')
+    
+    # could have done this manually with 4 line segments per panel...
+    
   }
 )
 
+
+## TODO: think about how to use / display prediction interval
+levelplot(
+  interval ~ dC * dV | dH, 
+  data = nd,
+  main = expression(Estimated~Delta*E['00']),
+  ylab = expression(Delta*Value),
+  xlab = expression(Delta*Chroma),
+  as.table = TRUE,
+  par.settings = tps,
+  scales = list(alternating = 1)
+)
+
+
 ```
+
+Hmmm.
+```{r}
+d.m <- parseMunsell(d$m1, convertColors = FALSE)
+
+d$v1 <- d.m$value
+
+xyplot(
+  dE00 ~ dV | factor(v1),
+  groups = factor(dC),
+  data = d, 
+  subset = dH == 1,
+  par.settings = tactile.theme(), 
+  scales = list(alternating = 1),
+  type = c('smooth', 'p')
+)
+
+```
+
 
 
 ```{r}
