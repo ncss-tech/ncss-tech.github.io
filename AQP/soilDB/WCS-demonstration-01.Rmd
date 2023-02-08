@@ -111,10 +111,10 @@ x <- st_as_sfc(wkt)
 st_crs(x) <- 4326
 
 # query WCS
-m <- mukey.wcs(x, db = 'gSSURGO')
+mu <- mukey.wcs(x, db = 'gSSURGO')
 
 # looks OK
-plot(m, legend = FALSE, axes = FALSE, main = attr(m, 'layer name'))
+plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
 box()
 
 # add original BBOX, after transforming to mukey grid CRS
@@ -144,10 +144,10 @@ b <- st_as_sf(b)
 
 # query WCS
 # result is in EPSG:5070
-m <- mukey.wcs(b, db = 'gSSURGO')
+mu <- mukey.wcs(b, db = 'gSSURGO')
 
 # looks OK
-plot(m, legend = FALSE, axes = FALSE, main = attr(m, 'layer name'))
+plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
 box()
 
 # add buffer, after transforming to mukey grid CRS
@@ -191,6 +191,10 @@ library(terra)
 library(rasterVis)
 library(viridisLite)
 
+# figures
+library(lattice)
+library(tactile)
+
 # soil classification
 library(aqp)
 
@@ -211,14 +215,14 @@ a <- st_bbox(
 )
 
 # fetch gSSURGO map unit keys at native resolution (30m)
-x <- mukey.wcs(aoi = a, db = 'gssurgo')
+mu <- mukey.wcs(aoi = a, db = 'gssurgo')
 
 # check:
-print(x)
+print(mu)
 
 # looks good
 plot(
-  x, 
+  mu, 
   main = 'gSSURGO map unit keys',
   sub = 'Albers Equal Area Projection',
   axes = FALSE, 
@@ -235,11 +239,11 @@ It is possible to retrieve small areas of vector geometry (SSURGO polygons) from
 # get intersecting SSURGO polygons from SDA
 # result is a SpatVector object
 # GCS WGS84
-p <- SDA_spatialQuery(x, what = 'mupolygon', geomIntersection = TRUE)
+p <- SDA_spatialQuery(mu, what = 'mupolygon', geomIntersection = TRUE)
 
 # transform to AEA coordinate reference system used by gSSURGO / gNATSGO
 # this is EPSG:5070
-p <- project(p, crs(x))
+p <- project(p, crs(mu))
 
 par(mar = c(1, 0, 2, 0))
 plot(p, main = 'SSURGO Polygons (SDA)', axes = FALSE)
@@ -250,7 +254,7 @@ mtext('Albers Equal Area Projection', side = 1, line = -0.5)
 Overlay SSURGO polygons and 30m map unit key grid.
 ```{r}
 par(mar = c(1, 0, 2, 0))
-plot(x, main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)', col = viridis(50), axes = FALSE, legend = FALSE)
+plot(mu, main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)', col = viridis(50), axes = FALSE, legend = FALSE)
 plot(p, add = TRUE, border = 'white')
 
 mtext('CONUS Albers Equal Area Projection (EPSG:5070)', side = 1, line = 1)
@@ -287,6 +291,8 @@ plot(
 
 
 ## Raster Soil Survey Data
+Note: tabular data for RSS are not yet available via SDA.
+
 ```{r fig.width=12, fig.height=6}
 # slightly larger than Coweeta RSS BBOX
 # specified in EPSG:5070
@@ -330,11 +336,201 @@ plot(a, add = TRUE)
 
 # Thematic Mapping
 
+The following example BBOX + resulting gSSURGO mukey grid will be used for the following examples
+```{r}
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- st_bbox(
+  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
+  crs = st_crs(4326)
+)
+
+# convert bbox to sf geometry
+a <- st_as_sfc(a)
+
+# fetch gSSURGO map unit keys at native resolution (~30m)
+mu <- mukey.wcs(aoi = a, db = 'gssurgo')
+```
+
+
+## Map Unit Aggregate Values
+
+The Mapunit Aggregated Attribute table records a variety of soil attributes and interpretations that have been aggregated from the component level to a single value at the map unit level. They have been aggregated by one or more appropriate means in order to express a consolidated value or interpretation for the map unit as a whole.
+
+Use the `get_SDA_muaggatt()` convenience function, or write a simple query in SQL and submit via `SDA_query()`.
+
+```{r fig.width=10, fig.align='center'}
+# copy example grid
+mu2 <- mu
+
+# extract RAT for thematic mapping
+rat <- cats(mu2)[[1]]
+
+# optionally use convenience function:
+# * returns all fields from muagatt table
+# * along with map unit name
+# tab <- get_SDA_muaggatt(mukeys = as.numeric(rat$mukey), query_string = TRUE)
+
+
+# the SQL is simple, only need a few columns from a single table
+# safely create IN statement from vector of mukey
+.sql <- sprintf(
+  "SELECT mukey, aws050wta, aws0100wta FROM muaggatt WHERE mukey IN %s",
+  format_SQL_in_statement(as.numeric(rat$mukey))
+)
+
+# run query, result is a data.frame
+tab <- SDA_query(.sql)
+
+# check
+head(tab)
+
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(mu2) <- rat
+
+# convert grid + RAT -> stack of propery grids
+# note explicit subset of returned grids, we don't need the mukey grid
+aws <- catalyze(mu2)[[c('aws050wta', 'aws0100wta')]]
+
+# simple plot, note scales are different
+plot(aws, axes = FALSE, col = mako(10), main = c('Plant Available Water Storage (cm)\nWeighted Mean over Components, 0-50cm', 'Plant Available Water Storage (cm)\nWeighted Mean over Components, 0-100cm'), line = -1.5)
+```
+
+
+## Interpretations for Soil Suitability / Limitation 
+
+Use the `get_SDA_interpretation()` convenience function.
+
+```{r fig.width=6, fig.height=5, fig.align='center'}
+# copy example grid
+mu2 <- mu
+
+# extract RAT for thematic mapping
+rat <- cats(mu2)[[1]]
+
+rules <- c('ENG - Construction Materials; Roadfill', 'AWM - Irrigation Disposal of Wastewater')
+
+tab <- get_SDA_interpretation(
+  rulename = rules, 
+  method = "Weighted Average", 
+  mukeys = as.numeric(rat$mukey)
+)
+
+# check
+head(tab)
+
+# set factor levels
+tab$class_ENGConstructionMaterialsRoadfill <- factor(
+  tab$class_ENGConstructionMaterialsRoadfill,
+  levels = c('Not suited', 'Poorly suited', 'Moderately suited', 'Moderately well suited', 'Well suited', 'Not Rated'),
+  ordered = TRUE
+)
+
+bwplot(
+  class_ENGConstructionMaterialsRoadfill ~ rating_ENGConstructionMaterialsRoadfill, 
+  data = tab, 
+  xlab = 'Fuzzy Rating',
+  main = 'ENG - Construction Materials; Roadfill',
+  par.settings = tactile.theme()
+)
+```
+
+```{r fig.width=10, fig.align='center'}
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(mu2) <- rat
+
+
+# convert grid + RAT -> stack of property grids
+# note explicit subset of returned grids, we don't need the mukey grid
+vars <- c('rating_ENGConstructionMaterialsRoadfill', 'rating_AWMIrrigationDisposalofWastewater')
+rating <- catalyze(mu2)[[vars]]
+
+# simple plot, note scales are different
+plot(rating, axes = FALSE, col = mako(10), main = c('Construction Materials; Roadfill\nWeighted Mean over Components', 'Irrigation Disposal of Wastewater\nWeighted Mean over Components'), line = -1.5)
+```
+
+
+## Component level properties
+
+Steel corrosion potential.
+```{r, fig.width = 6, fig.height = 4}
+# copy example grid
+mu2 <- mu
+
+# extract RAT for thematic mapping
+rat <- cats(mu2)[[1]]
+
+tab <- get_SDA_property(property = 'Corrosion of Steel', 
+                        method = 'DOMINANT CONDITION',
+                        mukeys = as.integer(rat$mukey)
+)
+
+
+# convert to factor and set levels in logical order
+tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
+
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(mu2) <- rat
+
+# set active category to corsteel
+activeCat(mu2) <- 'corsteel'
+
+# plot
+plot(mu2, axes = FALSE, col = viridis(3))
+box()
+```
+
+
+Simplified component parent material group.
+```{r, fig.width = 7, fig.height = 6}
+# copy example grid
+mu2 <- mu
+
+# extract RAT for thematic mapping
+rat <- cats(mu2)[[1]]
+
+# simplified parent material group name
+tab <- get_SDA_pmgroupname(mukeys = as.integer(rat$mukey))
+
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(mu2) <- rat
+
+# set active category to corsteel
+activeCat(mu2) <- 'pmgroupname'
+plot(mu2, axes = FALSE, col = viridis(10))
+box()
+```
+
+
+Hydric Rating.
+```{r, fig.width = 6, fig.height = 5.5}
+# copy example grid
+mu2 <- mu
+
+# extract RAT for thematic mapping
+rat <- cats(mu2)[[1]]
+
+# simplified parent material group name
+tab <- get_SDA_hydric(mukeys = as.integer(rat$mukey))
+
+# merge aggregate soil data into RAT
+rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+levels(mu2) <- rat
+
+# set active category to corsteel
+activeCat(mu2) <- 'HYDRIC_RATING'
+plot(mu2, axes = FALSE, col = viridis(10))
+```
+
+
 
 ## Several horizon-level soil properties
 The [`get_SDA_property()`](http://ncss-tech.github.io/soilDB/reference/get_SDA_property.html) function from `soilDB` is convenient interface to aggregated SSURGO/STATSGO tabular data via SDA.
 
-Get mukey grid.
+Setup a new AOI for the following examples.
 ```{r}
 # https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.57666,-96.70175,z14
 # make a bounding box and assign a CRS (4326: GCS, WGS84)
@@ -386,12 +582,11 @@ levels(mu) <- rat
 # result is a grid of map unit keys + RAT
 ```
 
-Plot `areasymbol`.
+Plant available water 0-25cm.
 ```{r fig.width = 6, fig.height = 4}
 # list variables in the RAT
 names(cats(mu)[[1]])
 
-# select 'areasymbol'
 activeCat(mu) <- 'awc_r'
 plot(mu)
 box()
@@ -413,7 +608,7 @@ mu.stack <- mu.stack[[vars]]
 # note implicit simplification via maxpixels
 levelplot(
   mu.stack[['dbthirdbar_r']], 
-  main = '1/3 Bar Bulk Density (g/cm^3)\n0-25cm\nDominant Component',
+  main = '1/3 Bar Bulk Density (g/cm^3)\nDominant Component\n0-25cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
   col.regions = viridis,
@@ -422,7 +617,7 @@ levelplot(
 
 levelplot(
   mu.stack[['awc_r']], 
-  main = 'AWC (cm/cm) 0-25cm\nDominant Component',
+  main = 'AWC (cm/cm)\nDominant Component\n0-25cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
   col.regions = viridis,
@@ -431,7 +626,7 @@ levelplot(
 
 levelplot(
   mu.stack[['ph1to1h2o_r']], 
-  main = 'pH 1:1 H2O 0-25cm\nDominant Component',
+  main = 'pH 1:1 H2O\nDominant Component\n0-25cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
   col.regions = viridis,
@@ -496,7 +691,7 @@ ssc <- catalyze(mu)[[vars]]
 # note implicit simplification via maxpixels
 levelplot(
   ssc, 
-  main = 'Sand, Silt, Clay (RV) 25-50cm\nDominant Component',
+  main = 'Sand, Silt, Clay (RV)\nDominant Component\n25-50cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
   col.regions = viridis,
@@ -525,115 +720,6 @@ plot(texture.class, col = viridis(50), axes = FALSE, main = 'Soil Texture Class 
 box()
 ```
 
-## Component level properties
-
-Steel corrosion potential.
-```{r, fig.width = 6, fig.height = 4}
-# make a bounding box and assign a CRS (4326: GCS, WGS84)
-a <- st_bbox(
-  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
-  crs = st_crs(4326)
-)
-
-# convert bbox to sf geometry
-a <- st_as_sfc(a)
-
-# fetch gSSURGO map unit keys at native resolution (~30m)
-x <- mukey.wcs(aoi = a, db = 'gssurgo')
-
-# extract RAT for thematic mapping
-rat <- cats(x)[[1]]
-
-tab <- get_SDA_property(property = 'Corrosion of Steel', 
-                        method = 'DOMINANT CONDITION',
-                        mukeys = as.integer(rat$mukey)
-)
-
-
-# convert to factor and set levels in logical order
-tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
-
-# merge aggregate soil data into RAT
-rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
-levels(x) <- rat
-
-# set active category to corsteel
-activeCat(x) <- 'corsteel'
-
-# plot
-plot(x, axes = FALSE, col = viridis(3))
-box()
-```
-
-
-Simplified component parent material group.
-```{r, fig.width = 6, fig.height = 4}
-# make a bounding box and assign a CRS (4326: GCS, WGS84)
-a <- st_bbox(
-  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
-  crs = st_crs(4326)
-)
-
-# convert bbox to sf geometry
-a <- st_as_sfc(a)
-
-# fetch gSSURGO map unit keys at native resolution (~30m)
-x <- mukey.wcs(aoi = a, db = 'gssurgo')
-
-# extract RAT for thematic mapping
-rat <- cats(x)[[1]]
-
-# simplified parent material group name
-tab <- get_SDA_pmgroupname(mukeys = as.integer(rat$mukey))
-
-# merge aggregate soil data into RAT
-rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
-levels(x) <- rat
-
-# set active category to corsteel
-activeCat(x) <- 'pmgroupname'
-plot(x, axes = FALSE, col = viridis(10))
-box()
-```
-
-
-Hydric Rating.
-```{r, fig.width = 6, fig.height = 5.5}
-# make a bounding box and assign a CRS (4326: GCS, WGS84)
-a <- st_bbox(
-  c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), 
-  crs = st_crs(4326)
-)
-
-# convert bbox to sf geometry
-a <- st_as_sfc(a)
-
-# fetch gSSURGO map unit keys at native resolution (~30m)
-x <- mukey.wcs(aoi = a, db = 'gssurgo')
-
-# extract RAT for thematic mapping
-rat <- cats(x)[[1]]
-
-# simplified parent material group name
-tab <- get_SDA_hydric(mukeys = as.integer(rat$mukey))
-
-# merge aggregate soil data into RAT
-rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
-levels(x) <- rat
-
-# set active category to corsteel
-activeCat(x) <- 'HYDRIC_RATING'
-plot(x, axes = FALSE, col = viridis(10))
-```
-
-
-## Additional interfaces to SDA with aggregation
-
-```{r eval=FALSE}
-# tab <- get_SDA_muaggatt(mukeys = ll$ID)
-
-# tab <- get_SDA_interpretation(mukeys = ll$ID, rulename = '')
-```
 
 
 ## TODO SOC Stock Estimates + Expected Variation
