@@ -626,6 +626,33 @@ bwplot(cc ~ dE00, data = d,
 ```
 
 
+```{r fig.width=7, fig.height=4}
+# extract hue
+.m1 <- parseMunsell(d$m1, convertColors = FALSE)
+.m2 <- parseMunsell(d$m2, convertColors = FALSE)
+
+d$.hue1 <- factor(.m1$hue, levels = huePosition(returnHues = TRUE))
+d$.hue2 <- factor(.m2$hue, levels = huePosition(returnHues = TRUE))
+
+# only viz comparisons bewtween colors with same hue
+d.sub <- subset(d, subset = .hue1 == .hue2)
+
+# panel by hue
+bwplot(cc ~ dE00 | .hue1, data = d.sub, 
+       as.table = TRUE,
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, value 2-8, chroma 2-8',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(alternating = 1, x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
+         panel.bwplot(...)
+       })
+```
+
+
+
 ```{r fig.width=7, fig.height=4.5}
 bwplot(dV ~ dE00, data=d, 
        subset = dH < 1 & dC < 1,
