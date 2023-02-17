@@ -122,7 +122,7 @@ Create a vector of colors to mix, and evaluate [color contrast metrics](https://
 colors <- c('5YR 2/2', '10YR 4/4')
 colorContrast(m1 = colors[1], m2 = colors[2])
 ```
-We can see that these colors are 2 hue, 2 value, and 2 chroma "chips" apart from eachother. This evaluates to a *prominent* [soil color contrast class](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569) and [$\Delta{E_{00}}$](http://zschuessler.github.io/DeltaE/learn/) of about 20.
+We can see that these colors are 2 hue, 2 value, and 2 chroma "chips" apart from each other. This evaluates to a *prominent* [soil color contrast class](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/ref/?cid=nrcs142p2_053569) and [$\Delta{E_{00}}$](http://zschuessler.github.io/DeltaE/learn/) of about 20.
 
 
 A picture is far more intuitive.
@@ -165,7 +165,23 @@ plotColorMixture(colors, mixingMethod = 'reference', showMixedSpec = TRUE)
 
 <span style="padding: 5px; background-color: `r aqp::parseMunsell('5YR 2/2')`; color: white;">`50% 5YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 4/4')`; color: white;">`50% 10YR 4/4`</span> = <span style="padding: 5px; background-color: `r aqp::parseMunsell(mixed$munsell)`; color: white;">`r mixed$munsell`</span>.
 
-What do you think, is the mixture plausible? Experiments with real soil material + Nix Pro sensor measurements pending.
+What do you think, is the mixture plausible? Experiments with real soil material + Nix Pro sensor measurements, visible-spectrum spectrophotometer pending.
+
+
+### Mollic Epipedon Mixing Rule
+Consider the physical mixture of soil material 0 to 18cm, with two horizons spanning 0-12cm, and 12-18cm. Assume that the soil material is of roughly the same soil texture and has similar reflective properties. 
+
+<span style="padding: 5px; background-color: `r aqp::parseMunsell('10YR 2/2')`; color: white;">`60% 10YR 2/2`</span> + <span style="padding: 5px; background-color: `r aqp::parseMunsell('10Y 6/6')`; color: white;">`40% 10Y 6/6`</span> = <span style="padding: 5px; background-color: `r aqp::parseMunsell('5Y 3/3')`; color: white;">`5Y 3/3`</span>
+```{r fig.height=5.5, fig.width=9}
+# horizon thickness (cm)
+w <- c(12, 8)
+
+# moist soil colors
+m <- c('10YR 2/2', '10Y 6/6')
+
+plotColorMixture(m, w, mixingMethod = 'exact', swatch.cex = 4, label.cex = 0.65, overlapFix = TRUE)
+```
+
 
 ### Experimenting with Color Mixtures
 The `colorMixtureVenn` function from the sharpshootR package is a handy way to view simulated mixtures of 2-7 colors.
