@@ -22,9 +22,51 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 
 # Introduction
 
+## Perceptual Color Distance
+
+```{r echo = FALSE, fig.align='center', fig.width=10, fig.height=6, results='hide'}
+library(aqp)
+library(farver)
+library(ape)
+library(cluster)
+library(MASS)
+
+data("munsell")
+m <- subset(munsell, subset = value == 6 & chroma %in% c(0, 6))
+x <- m[, c('L', 'A', 'B')]
+m <- sprintf("%s %s/%s", m$hue, m$value, m$chroma)
+cols <- parseMunsell(m)
+
+# https://en.wikipedia.org/wiki/Color_difference#CIEDE2000
+d <- compare_colour(x, x, from_space='lab', white_from = 'D65', method='cie2000')
+dimnames(d) <- list(m, m)
+
+## note re-formatting of distances returned by compare_colour
+h <- as.phylo(as.hclust(diana(as.dist(d))))
+
+par(mar=c(0, 0.1, 2, 0), bg = 'black', fg = 'white')
+plot(h, label.offset = 3, edge.color='white', tip.color='white', font=2, type='cladogram', direction = 'down')
+tiplabels(pch=22, cex = 3, bg = cols, col = 'white', offset = 1.5)
+title('Delta-E (CIE2000)', col.main = 'white', line = 0.5)
+```
+
+
+```{r echo = FALSE, fig.align='center', fig.width=8, fig.height=8, results='hide'}
+mds <- sammon(d)
+
+par(mar=c(0.1, 0.1, 2, 3), bg = 'black', fg = 'white', xpd = NA)
+plot(mds$points, type = 'n', axes = FALSE)
+abline(h = 0, v = 0, lty = 3)
+points(mds$points, cex = 3, pch = 22, bg = cols, col = 'white')
+text(mds$points, m, col = 'white', cex = 0.66, pos = 4, offset = 1)
+```
+
+
+
 ## Soil Color Contrast Class
 
 ## Delta-E
+
 
 
 # Applications
@@ -45,6 +87,7 @@ library(knitr)
 library(MASS)
 library(vegan)
 library(viridisLite)
+library(tactile)
 ```
 
 ## Core Functions
@@ -542,6 +585,9 @@ idx <- which(row.names(adj) %in% c('1-0-0', '0-1-0', '0-0-1'))
 knitr::kable(adj[idx[3:1], ])
 ```
 
+## dE00 Between Hues
+
+Including N chip.
 ```{r}
 library(corrplot)
 
@@ -549,10 +595,16 @@ library(corrplot)
 data(munsell)
 
 # for now, most commonly used hue pages, but expanded to full range in value / chroma
-x <- subset(munsell, subset = hue %in% c('2.5YR') & value %in% 2:8 & chroma %in% 2:8)
+x1 <- subset(munsell, subset = value == 6 & chroma == 6)
 
-x <- subset(munsell, subset = value %in% 6 & chroma %in% 6)
-idx <- match(huePosition(returnHues = TRUE), x$hue)
+# neutral
+x2 <- subset(munsell, subset = hue == 'N' & value == 6 )
+
+# combine
+x <- rbind(x1, x2)
+
+# re-arrange into "hue order"
+idx <- match(huePosition(returnHues = TRUE, includeNeutral = TRUE), x$hue)
 x <- x[idx, ]
 
 x$m <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
@@ -584,39 +636,162 @@ corrplot(
     mar = c(0.1, 0, 0, 0.8),
     # addgrid = TRUE,
   ) 
+```
 
+Without N chip.
+```{r}
+x <- x[x$hue != 'N', ]
 
+d <- farver::compare_colour(
+  from = x[, c('L', 'A', 'B')],
+  to = x[, c('L', 'A', 'B')], 
+  from_space = 'lab', 
+  method = 'CIE2000'
+)
 
+dimnames(d) <- list(x$m, x$m)
+
+par(fg = 'white', bg = 'black')
+corrplot(
+    d, 
+    col = mako(25), 
+    is.corr = FALSE, 
+    col.lim = range(d), 
+    method = "color", 
+    order = "original",
+    type = "upper",
+    diag = FALSE,
+    tl.cex = 0.66,
+    tl.col = x$col,
+    # tl.col = 'white',
+    mar = c(0.1, 0, 0, 0.8),
+    # addgrid = TRUE,
+  ) 
 ```
 
 
 
+
+
 ## Example 2
+
+```{r}
+data(munsell)
+x1 <- subset(munsell, subset = value %in% 2:6 & chroma %in% c(0, 2:6) & hue != 'N')
+x2 <- subset(munsell, subset = hue == 'N')
+
+
+cols1 <- paste0(x1$hue, ' ', x1$value, '/', x1$chroma)
+cols2 <- paste0(x2$hue, ' ', x2$value, '/', x2$chroma)
+
+z <- expand.grid(colors = cols1, neutral = cols2)
+
+d <- colorContrast(z$neutral, z$colors)
+
+# extract hue
+.m1 <- parseMunsell(d$m1, convertColors = FALSE)
+.m2 <- parseMunsell(d$m2, convertColors = FALSE)
+
+d$.hue1 <- factor(.m1$hue, levels = huePosition(returnHues = TRUE, includeNeutral = TRUE))
+d$.hue2 <- factor(.m2$hue, levels = huePosition(returnHues = TRUE, includeNeutral = TRUE))
+
+d$.value1 <- .m1$value
+d$.value2 <- .m2$value
+```
+
+```{r fig.width=7, fig.height=4}
+
+bwplot(.hue2 ~ dE00, data = d, 
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, N; value 2-8; chroma 2-8, 0',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
+         panel.bwplot(...)
+       })
+
+
+bwplot(.value2  ~ dE00, data = d, 
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, N; value 2-8; chroma 2-8, 0',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
+         panel.bwplot(...)
+       })
+
+
+bwplot(.value2  ~ dE00 | .hue2, data = d, 
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, N; value 2-8; chroma 2-8, 0',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
+         panel.bwplot(...)
+       })
+
+
+levelplot(
+  dE00 ~ .value2 * .hue2, data = d,
+  subset = .value1 == 2,
+  par.settings = tactile.theme()
+  
+)
+
+
+
+bwplot(cc ~ dE00, data = d, 
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, N; value 2-8; chroma 2-8, 0',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
+         panel.bwplot(...)
+       })
+```
+
+
+
+
 ```{r}
 library(rms)
 library(tactile)
 
 data(munsell)
-x <- subset(munsell, subset = value %in% 2:8 & chroma %in% 2:8 & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y'))
+x <- subset(munsell, subset = value %in% 2:8 & chroma %in% c(0, 2:8) & hue %in% c('10R', '2.5YR', '5YR', '7.5YR', '10YR', '2.5Y', '5Y', '10GY', 'N'))
 
-## leave out N for now
-# x2 <- subset(munsell, subset = value %in% 2:6 & hue %in% c('N'))
-# x <- rbind(x1, x2)
+## TODO: more expansive set
+# x <- subset(munsell, subset = value %in% 2:6 & chroma %in% c(0, 2:6))
 
 cols <- paste0(x$hue, ' ', x$value, '/', x$chroma)
 z <- combn(cols, 2)
 
 z <- data.frame(t(z), stringsAsFactors = FALSE)
 d <- colorContrast(z[[1]], z[[2]])
+
+# extract hue
+.m1 <- parseMunsell(d$m1, convertColors = FALSE)
+.m2 <- parseMunsell(d$m2, convertColors = FALSE)
+
+d$.hue1 <- factor(.m1$hue, levels = huePosition(returnHues = TRUE, includeNeutral = TRUE))
+d$.hue2 <- factor(.m2$hue, levels = huePosition(returnHues = TRUE, includeNeutral = TRUE))
+
+kable(head(d), row.names = FALSE)
 ```
 
 ```{r fig.width=7, fig.height=4}
-kable(head(d), row.names = FALSE)
-
 bwplot(cc ~ dE00, data = d, 
        par.settings = tactile.theme(), 
        xlab = expression(Delta*E['00']),
-       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, value 2-8, chroma 2-8',
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, N; value 2-8; chroma 2-8, 0',
        sub = 'Soil Survey Technical Note #2',
        scales = list(x = list(tick.number = 10)), 
        panel = function(...) {
@@ -627,14 +802,24 @@ bwplot(cc ~ dE00, data = d,
 
 
 ```{r fig.width=7, fig.height=4}
-# extract hue
-.m1 <- parseMunsell(d$m1, convertColors = FALSE)
-.m2 <- parseMunsell(d$m2, convertColors = FALSE)
+d.sub <- subset(d, subset = .hue1 == '10YR' | .hue2 == '10YR')
 
-d$.hue1 <- factor(.m1$hue, levels = huePosition(returnHues = TRUE))
-d$.hue2 <- factor(.m2$hue, levels = huePosition(returnHues = TRUE))
+bwplot(dE00 ~ .hue1, data = d.sub, 
+       as.table = TRUE,
+       par.settings = tactile.theme(), 
+       xlab = expression(Delta*E['00']),
+       main = 'CIE Delta-E00 vs. Soil Color Contrast Class\nhues: 10R-5Y, N; value 2-8; chroma 2-8, 0',
+       sub = 'Soil Survey Technical Note #2',
+       scales = list(alternating = 3, x = list(tick.number = 10)), 
+       panel = function(...) {
+         panel.grid(h = 3, v = -1)
+         panel.bwplot(...)
+       })
+```
 
-# only viz comparisons bewtween colors with same hue
+
+```{r fig.width=7, fig.height=4}
+# only viz comparisons between colors with same hue
 d.sub <- subset(d, subset = .hue1 == .hue2)
 
 # panel by hue
