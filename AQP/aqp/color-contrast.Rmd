@@ -33,16 +33,28 @@ library(MASS)
 
 data("munsell")
 m <- subset(munsell, subset = value == 6 & chroma %in% c(0, 6))
+
+# re-order based on hue position
+idx <- match(huePosition(returnHues = TRUE, includeNeutral = TRUE), m$hue)
+m <- m[idx, ]
+
+# extract CIELAB coordinates for dE00
 x <- m[, c('L', 'A', 'B')]
+
+# convert to standard Munsell notation
 m <- sprintf("%s %s/%s", m$hue, m$value, m$chroma)
 cols <- parseMunsell(m)
 
 # https://en.wikipedia.org/wiki/Color_difference#CIEDE2000
 d <- compare_colour(x, x, from_space='lab', white_from = 'D65', method='cie2000')
 dimnames(d) <- list(m, m)
+d <- as.dist(d)
 
 ## note re-formatting of distances returned by compare_colour
-h <- as.phylo(as.hclust(diana(as.dist(d))))
+h <- as.phylo(as.hclust(diana(d)))
+
+# rotation not needed
+# h <- rotateConstr(h, m)
 
 par(mar=c(0, 0.1, 2, 0), bg = 'black', fg = 'white')
 plot(h, label.offset = 3, edge.color='white', tip.color='white', font=2, type='cladogram', direction = 'down')
