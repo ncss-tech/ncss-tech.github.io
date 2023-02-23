@@ -27,8 +27,9 @@ options(width=100, stringsAsFactors=FALSE)
 # Introduction
 A web coverage service (WCS) is provided for the gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils/folder/180456387335). These grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:5070). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geo-databases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
 
-
 An experimental WCS is provided for raster soil survey (RSS) products at 10m resolution.
+
+An experimental WCS is provided for STATSGO2 (2016) at 300m resolution.
 
 A similar WCS is provided for the [ISSR-800 soil property grids](https://casoilresource.lawr.ucdavis.edu/soil-properties/).
 
@@ -46,19 +47,22 @@ x <- mukey.wcs(aoi = aoi, db = 'gnatsgo', ...)
 # select RSS grid, 10m resolution
 x <- mukey.wcs(aoi = aoi, db = 'RSS', ...)
 
+# select STATSGO2 grid, 300m resolution
+x <- mukey.wcs(aoi = aoi, db = 'statsgo', ...)
+
 # select various ISSR-800 grids, details below
 x <- ISSR800.wcs(aoi = aoi, var = 'paws')
 ```
 
 
-## gSSURGO
+### gSSURGO
 Excerpt from the [gSSURGO documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=nrcs142p2_053628#release).
 
 <div style="padding: 10px; font-size:90%;">
 The gSSURGO Database is derived from the official Soil Survey Geographic (SSURGO) Database. SSURGO generally has the most detailed level of soil geographic data developed by the National Cooperative Soil Survey (NCSS) in accordance with NCSS mapping standards. The tabular data represent the soil attributes and are derived from properties and characteristics stored in the National Soil Information System (NASIS). The gSSURGO data were prepared by merging the traditional vector-based SSURGO digital map data and tabular data into statewide extents, adding a statewide gridded map layer derived from the vector layer, and adding a new value-added look up table (Valu1) containing “ready to map” attributes. The gridded map layer is a file geodatabase raster in an ArcGIS file geodatabase. The raster and vector map data have a statewide extent. The raster map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area projection. Each cell (and polygon) is linked to a map unit identifier called the map unit key. A unique map unit key is used to link the raster cells and polygons to attribute tables. Due to file size, the raster layer for the conterminous United States is only available in a 30-meter resolution.
 </div>
 
-## gNATSGO
+### gNATSGO
 Excerpt from the [gNATSGO documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcseprd1464625).
 
 <div style="padding: 10px; font-size:90%;">
@@ -68,12 +72,23 @@ The gNATSGO database is composed primarily of SSURGO data, but STATSGO2 data was
 </div>
 
 
-## Raster Soil Survey
+### Raster Soil Survey
 Excerpt from the [RSS documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcseprd1759022).
 
 <div style="padding: 10px; font-size:90%;">
 Raster Soil Survey is a reference to the products of soil survey work completed using digital soil mapping methodologies. Digital soil mapping is the production of georeferenced soil databases based on the quantitative relationships between soil measurements made in the field or laboratory and environmental data and may be represented as either discrete classes or continuous soil properties. Both digital and traditional soil mapping use a conceptual soil-landscape model as a means for organizing environmental information into discrete divisions. The primary difference between these two approaches is that digital methods exploit quantitative relationships of the environmental information, while traditional methods utilize a more subjective approach and the approximate relationships of the environmental information to spatially represent where the divisions are represented.
 </div>
+
+An experimental, 300m gridded representation of STATSGO 2 is provided by the SoilWeb web coverage service. This is not an official USDA-NRCS product.
+
+### STATSGO
+
+Excerpt from [STATSGO2 Documentation](https://www.nrcs.usda.gov/resources/data-and-reports/description-of-statsgo2-database).
+
+<div style="padding: 10px; font-size:90%;">
+The Digital General Soil Map of the United States or STATSGO2 is a broad-based inventory of soils and non-soil areas that occur in a repeatable pattern on the landscape and that can be cartographically shown at the scale mapped of 1:250,000 in the continental U.S., Hawaii, Puerto Rico, and the Virgin Islands and 1:1,000,000 in Alaska. The level of mapping is designed for broad planning and management uses covering state, regional, and multi-state areas. The U.S. General Soil Map is comprised of general soil association units and is maintained and distributed as a spatial and tabular dataset.
+</div>
+
 
 
 ## Thematic Mapping
@@ -307,7 +322,7 @@ a <- st_as_sfc(a)
 # gSSURGO grid: 30m resolution
 (x <- mukey.wcs(a, db = 'gSSURGO', res = 30))
 
-# gNATSGO grid: 300m resolution
+# gNATSGO grid: 30m resolution
 (y <- mukey.wcs(a, db = 'gNATSGO', res = 30))
 
 # RSS grid: 10m resolution
@@ -332,6 +347,22 @@ plot(z, axes = FALSE, legend = FALSE, main = attr(z, 'layer name'), ext = x)
 plot(a, add = TRUE)
 ```
 
+
+## STATSGO
+Continuing from the example above.
+
+```{r fig.width=8, fig.height=6}
+(statsgo <- mukey.wcs(a, db = 'statsgo', res = 300))
+
+# graphical comparison
+par(mfcol = c(1, 2))
+
+# gSSURGO
+plot(x, axes = FALSE, legend = FALSE, main = attr(x, 'layer name'))
+
+# STATSGO
+plot(statsgo, axes = FALSE, legend = FALSE, main = attr(statsgo, 'layer name'))
+```
 
 
 # Thematic Mapping
@@ -1021,10 +1052,10 @@ box()
 
 ## Others
 
-# Artistic License
-https://github.com/riatelab/tanaka
+<!-- # Artistic License -->
+<!-- https://github.com/riatelab/tanaka -->
 
-```{r fig.width = 8, fig.height = 8}
+```{r fig.width = 8, fig.height = 8, eval = FALSE, echo = FALSE}
 library(tanaka)
 
 tanaka(
