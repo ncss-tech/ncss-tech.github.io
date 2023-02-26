@@ -190,11 +190,22 @@ plot_grid(hs$fig, gc$fig, nrow = 2, rel_heights = c(0.5, 0.5))
 ## CA from Soil Series Geomorphic Summaries
 Data are from SSURGO components.
 ```{r fig.width=8, fig.height=8}
+# row-wise proportions add to 1
 hs.tab <- (s$hillpos[, 2:6])
 row.names(hs.tab) <- s$hillpos$series
 
+# row-wise proportions add to 1
 gc.tab <- (s$geomcomp[, 2:7])
 row.names(gc.tab) <- s$geomcomp$series
+
+## TODO: think about implications:
+# * row-wise proportions ignore relationships to other rows
+# * table-wise proportions assume equal weights
+# * converting to row-wise counts would over-weight series of great extent
+
+# convert row-wise proportions -> table-wise proportions
+hs.tab <- hs.tab / sum(hs.tab)
+gc.tab <- gc.tab / sum(gc.tab)
 
 # perform CA
 hs.ca <- CA(hs.tab, graph = FALSE)
@@ -209,11 +220,9 @@ plot(gc.ca, autoLab='yes', title='Geomorphic Component', cex=0.75, col.col='fire
 
 ```{r fig.width=10, fig.height=10}
 ## combine lattice + ggplot graphics
-
 p2 <- plot(hs.ca, autoLab='yes', title='Hillslope Position', cex=0.75, col.col='firebrick', col.row='royalblue')
 
 plot_grid(hs$fig, p2, nrow = 2, rel_heights = c(0.4, 0.6))
-
 ```
 
 
@@ -234,6 +243,11 @@ gc.tab <- (s$geomcomp[, 1:7])
 g <- merge(hs.tab, gc.tab, by = 'series', sort = FALSE)
 row.names(g) <- g$series
 g$series <- NULL
+
+
+# ??
+# convert to table-wise proportions
+g <- g / sum(g)
 
 
 # multiple factor analysis
