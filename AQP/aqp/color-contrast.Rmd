@@ -57,7 +57,7 @@ h <- as.phylo(as.hclust(diana(d)))
 # h <- rotateConstr(h, m)
 
 par(mar=c(0, 0.1, 2, 0), bg = 'black', fg = 'white')
-plot(h, label.offset = 3, edge.color='white', tip.color='white', font=2, type='cladogram', direction = 'down')
+plot(h, label.offset = 3, edge.color='white', tip.color='white', font=2, type='cladogram', direction = 'down', lwd = 2)
 tiplabels(pch=22, cex = 3, bg = cols, col = 'white', offset = 1.5)
 title('Delta-E (CIE2000)', col.main = 'white', line = 0.5)
 ```

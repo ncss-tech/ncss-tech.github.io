@@ -223,49 +223,34 @@ par(mar=c(0,0,1,1))
 plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.45, y.offset = 7, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
 ```
 
-
-
 ## Soil Color Art
 
+Using the distance matrix / clustering from above.
+
 ```{r fig.width=12, fig.height=6, dev='png'}
-library(aqp)
-library(farver)
-library(soilDB)
-library(sharpshootR)
-library(cluster)
-
-# photogenic soil series
-s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA',  'vleck', 'drummer', 'CANEYHEAD', 'musick', 'sierra', 'HAYNER', 'zook', 'argonaut', 'PALAU')
-
-# get these soil series
-s <- fetchOSD(s.list)
-
-# manually convert Munsell -> sRGB
-rgb.data <- munsell2rgb(s$hue, s$value, s$chroma, return_triplets = TRUE)
-s$r <- rgb.data$r
-s$g <- rgb.data$g
-s$b <- rgb.data$b
-
-# generate color signature
-pig <- soilColorSignature(s, method = 'pam', pam.k = 3)
-
-# propagate IDs
-# this will be abstracted in the near future
-row.names(pig) <- pig[, 1]
-
-# distance matrix no standardization needed
-d <- daisy(pig[, -1], stand = FALSE)
-
-# divisive hierarchical clustering
-dd <- diana(d)
-
 # adjust margins and default colors
-par(mar=c(0,0,0,0), bg='black', fg='white')
+par(mar=c(0,0,0,0), bg='black', fg='white', lend = 2)
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.33, y.offset = 2, width=0.4, name = NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.33, y.offset = 2, width=0.4, name = NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE, hz.distinctness.offset = 'hzd')
 ```
+
+
+```{r fig.width=12, fig.height=6, dev='png'}
+# adjust margins and default colors
+par(mar=c(0,0,0,0), lend = 2)
+
+# hang profiles from dendrogram
+# note customization via arguments passed to plotSPC
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 1.5, scaling.factor = 0.35, y.offset = 2, width = 0.4, name = NA, dend.type = 'cladogram', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE, hz.distinctness.offset = 'hzd')
+```
+
+
+
+
+
+
 
 ## Soil Profile Sketch Ordination
 Arrange OSD sketches according to locations defined by non-metric multidimensional scaling (ordination) of pair-wise distances. Needs work.
