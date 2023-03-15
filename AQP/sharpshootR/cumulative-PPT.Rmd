@@ -9,7 +9,7 @@ jquery: null
 smart: no
 keep_md: no
 ---
-  
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
@@ -28,16 +28,16 @@ library(soilDB)
 # Background
 Cumulative PPT over the course of an idealized water year (October 1 through September 30). Measurements are selected from water years with annual PPT close to the 5th, 25th, 50th, 75th, and 95th percentiles of annual PPT (over all water years). Key elements:
 
-   * red line is the current water year's cumulative PPT trajectory
-   * red date and value are current date and cumulative PPT
-   * red box-whisker are 5-25-50-75-95th percentiles of cumulative PPT on current day of water year
-   * blue traces are cumulative PPT records corresponding to 5th, 25th, 50th, 75th, and 95th percentiles of historical (end of water-year) cumulative PPT
-   * blue box-whisker indicates 5-25-50-75-95th percentiles of starting water-day where cumulative PPT > 0.1 (units)
+* red line is the current water year's cumulative PPT trajectory
+* red date and value are current date and cumulative PPT
+* red box-whisker are 5-25-50-75-95th percentiles of cumulative PPT on current day of water year
+* blue traces are cumulative PPT records corresponding to 5th, 25th, 50th, 75th, and 95th percentiles of historical (end of water-year) cumulative PPT
+* blue box-whisker indicates 5-25-50-75-95th percentiles of starting water-day where cumulative PPT > 0.1 (units)
 
 ## TODO
 
- * relate to these excellent maps: https://cw3e.ucsd.edu/odds-of-normal-water-year-precipitation/
- * compare annual distributions: 1st derivatives of cumulative precipitation
+* relate to these excellent maps: https://cw3e.ucsd.edu/odds-of-normal-water-year-precipitation/
+* compare annual distributions: 1st derivatives of cumulative precipitation
 
 
 
@@ -128,7 +128,38 @@ PCP_plot(x, ylab = 'Cumulative PPT (in)', main = 'SCAN Station 2001', this.year 
 ```
 
 ## Animations
-TODO.
+
+```{r results='hide'}
+library(gifski)
+
+s <- 'SPW'
+s.info <- CDEC_StationInfo(s)
+title.text <- sprintf("%s [%s]", s.info$site.meta$Name, s)
+
+# get data
+x <- CDECquery(id = s, sensor = 45, interval = 'D', start = '2000-01-01', end = '2030-01-01')
+
+# filter bad record
+x <- x[x$value < 10, ]
+
+save_gif(
+  {
+    for(i in 1:365) {
+      # plot
+      par(mar=c(4.5, 4.5, 2.5, 1.5))
+      PCP_plot(x, ylab='Cumulative PPT (inches)', main=title.text, this.year = 2005, this.day = i)
+    }
+  },
+  gif_file = "PCP_plot-SPW-animation.gif",
+  width = 700,
+  height = 500,
+  delay = 0.05,
+  loop = TRUE
+)
+
+```
+
+![](PCP_plot-SPW-animation.gif)
 
 ----------------------------
 This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
