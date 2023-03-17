@@ -183,6 +183,16 @@ for(i in 1:length(s)) {
   tp <- hzTransitionProbabilities(s.data[[i]], 'hzn_desgn')
   plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.3, edge.scaling.factor=2, main=s[i], vertex.label.cex=0.75, vertex.label.family='sans')
 }
+
+# others
+s <- c('drummer', 'lucy', 'pierre', 'miami')
+s.data <- lapply(s, fetchKSSL)
+
+par(mar=c(0,0,2,0), mfcol=c(2,2))
+for(i in 1:length(s)) {
+  tp <- hzTransitionProbabilities(s.data[[i]], 'hzn_desgn')
+  plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.3, edge.scaling.factor=2, main=s[i], vertex.label.cex=0.75, vertex.label.family='sans')
+}
 ```
 
 
