@@ -13,14 +13,8 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='subpixel'), tidy=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10), tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
-
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
 ```
 
 
@@ -30,10 +24,15 @@ Lets get some interpretations that are relevant to MLRA 18 (Sierra Nevada Foothi
 
 Note that SDA has a 100,000 row limit, so we have to be a little clever when writing the queries. In this case, letting the database filter out NULL fuzzy ratings and the reasons for ratings.
 ```{r}
+library(aqp)
 library(soilDB)
-library(plyr)
 library(reshape2)
 library(lattice)
+library(cluster)
+library(ape)
+library(sharpshootR)
+library(plyr)
+
 
 # beware, there are hard limits (100k rows) on what can be returned by SDA
 q <- "SELECT component.cokey, compname, mrulename, interplr, interplrc
@@ -103,10 +102,6 @@ Here is a crazy idea, what if we could sort a collection of soil series based on
  
 Lets try it with a small set of MLRA 17, 18, and 22A soils. NULL ratings will confound interpretation of the results--there are no "AGR - Pesticide Loss Potential-Leaching" ratings for components named "Dunstone". I have tried to select a small set of relevant interpretations, but clearly there are many possibilities. Soil profile sketches ([derived from Official Series Descriptions](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html)) are used in the final figure. Note that these are not the same as the component data that were used to generate the interpretation-based similarity.
 ```{r, fig.width=10, fig.height=6}
-library(cluster)
-library(ape)
-library(sharpshootR)
-
 # set list of soil series (component names)
 soil.list <- c('Pardee', 'Yolo', 'Capay', 'Aiken', 'Amador', 'Pentz', 'Sobrante',
 'Argonaut', 'Toomes', 'Jocal', 'Holland', 'Auburn', 'Dunstone', 
@@ -159,9 +154,9 @@ osds <- fetchOSD(soil.list)
 # hang profile sketches from interpretation-based clustering
 # may have to tinker with arguments to get figure right
 par(mar=c(2,1,2,1))
-plotProfileDendrogram(osds, clust = diana(d), scaling.factor = 0.008, max.depth=200, width = 0.2)
+plotProfileDendrogram(osds, clust = diana(d), scaling.factor = 0.008, max.depth=200, width = 0.3, name.style = 'center-center', shrink = TRUE)
 title('Component Similarity via Interpretation Fuzzy Values')
-mtext('profile sketches from OSD', side = 1)
+mtext('profile sketches from OSDs', side = 1)
 ```
 
 Interesting. Discussion to be continued...
