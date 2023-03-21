@@ -105,7 +105,7 @@ Series-level summaries of climate provided by [`fetchOSD()`](http://ncss-tech.gi
 AWC estimated from SSURGO data, via SDA.
 
 ```{r}
-s <- 'Amador'
+s <- 'amador'
 x <- fetchOSD(s, extended = TRUE)
 
 # get representative, profile-total AWC from SSURGO
