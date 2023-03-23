@@ -19,7 +19,7 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='svglite', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -52,6 +52,8 @@ library(viridis)
 
 # subgroup "explainer"
 library(SoilTaxonomy)
+
+library(data.tree)
 ```
 
 
@@ -68,7 +70,8 @@ SC <- read.csv(tf, stringsAsFactors = FALSE)
 Identify all of the soil series associated with a specific subgroup taxa: *abruptic durixeralfs* and download basic morphology and climate summaries via `fetchOSD`.
 ```{r}
 # select series names for a single subgroup
-s <- SC$soilseriesname[which(SC$taxsubgrp == 'abruptic durixeralfs')]
+SC <- SC[which(SC$taxsubgrp == 'abruptic durixeralfs'), ]
+s <- SC$soilseriesname
 
 # get OSD morphology and extended summaries
 osd <- fetchOSD(soils = s, extended = TRUE)
@@ -80,9 +83,59 @@ Explain subgroup taxa via [SoilTaxonomy](https://github.com/ncss-tech/SoilTaxono
 cat(explainST('abruptic durixeralfs'))
 ```
 
-<pre>
+<pre style="line-height: 110%;">
 ```{r results='asis', echo=FALSE}
 cat(explainST('abruptic durixeralfs'))
+```
+</pre>
+
+## ST Hierarchy with Family and Series
+```{r}
+# subset SC database to required columns
+SC <- SC[, c('soilseriesname', 'taxorder', 'taxsuborder', 'taxgrtgroup', 'taxsubgrp', 'taxclname')]
+
+# normalization via lower case
+SC$taxclname <- tolower(SC$taxclname)
+SC$soilseriesname <- tolower(SC$soilseriesname)
+
+# remove subgroup component of family spec
+SC$f <- NA_character_
+for(i in 1:nrow(SC)) {
+  SC$f[i] <- gsub(pattern = SC$taxsubgrp[i], replacement = '', SC$taxclname[i], fixed = TRUE)
+}
+
+# remove white space
+SC$f <- trimws(SC$f, which = 'both')
+
+# required columns only, smaller data.tree
+v <- c('taxorder', 'taxsuborder', 'taxgrtgroup', 'taxsubgrp', 'f', 'soilseriesname', 'path')
+
+# init data.tree object
+SC$path <- sprintf("ST/%s/%s/%s/%s/%s/%s", SC$taxorder, SC$taxsuborder, SC$taxgrtgroup, SC$taxsubgrp, SC$f, SC$soilseriesname)
+n <- as.Node(SC[, v], pathName = 'path')
+
+## missing family / series result in an ugly tree, prune accordingly
+# prune missing family / series
+pf <- function(i) {
+  
+  # NA due to left join
+  # note odd approach required, matching to 'NA' vs. is.na()
+  if(GetAttribute(i, 'name') == 'NA') {
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+  
+}
+
+## print
+# print(n, limit = NULL, pruneFun = pf)
+```
+
+<pre style="line-height: 110%;">
+```{r echo = FALSE, results='asis'}
+# taxonTree(c('durixeralfs', 'rhodoxeralfs'), special.chars = c("\u251c","\u2502", "\u2514", "\u2500 "))
+print(n, limit = NULL, pruneFun = pf)
 ```
 </pre>
 
@@ -94,7 +147,7 @@ Link to SoilWeb subgroup taxa tree for [abruptic durixeralfs](https://casoilreso
 
 ## Taxa Extent Maps
 
-```{r fig.height = 8, fig.width = 5.5}
+```{r fig.height = 8, fig.width = 5.5, dev = 'png'}
 # get 800m extent map
 e <- taxaExtent('abruptic durixeralfs', level = 'subgroup')
 
@@ -138,7 +191,7 @@ print(update(res$fig, layout=c(4,2), sub='Abruptic Durixeralfs'))
 
 
 ### Geomorphic Descriptions
-```{r fig.height=5, fig.width=8.5}
+```{r fig.height=6.5, fig.width=8.5}
 hs <- vizHillslopePosition(osd$hillpos)
 print(hs$fig)
 
