@@ -37,7 +37,9 @@ Follow along with the blocks of code below by copying / pasting into a new R "sc
 If you are feeling adventurous, have a look at a draft [tutorial on queries that return geometry from SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html). Additional tips on advanced spatial queries can be found [here](http://sdmdataaccess.sc.egov.usda.gov/documents/AdvancedSpatialDataAccess.pdf).
 
 
-## Critical Note: SSURGO vs. STATSGO
+## Critical Notes 
+
+### SSURGO vs. STATSGO
 SSURGO (1:24k soil survey) and STATSGO (1:250k soil survey) records are stored *together* in SDA. Therefore, it is critical that evey query to SDA include some kind of filter for selecting the appropriate records. Filtering strategies include:
 
    * explicit exclusion of STATSGO records, via `legend.areasymbol != 'US'` in the WHERE clause
@@ -63,6 +65,61 @@ INNER JOIN mapunit mu ON mu.lkey = legend.lkey
 INNER JOIN component co ON mu.mukey = co.mukey
 WHERE legend.areasymbol = 'CA113' ;
 ```
+
+### Integer Columns
+Be sure to `CAST()` integer columns when using operators such as multiplication, division, etc.. or when values may be very large. Queries that work with large sets of `muacres` from the mapunit table are one such case. 
+
+
+Integer overflow, result is `NULL`.
+```{sql eval = FALSE}
+SELECT 
+SUM(muacres) AS ac 
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+WHERE legend.areasymbol != 'US' ;
+```
+
+Casting `muacres` to numeric data type, result is 2,280,193,353 acres.
+```{sql eval = FALSE}
+SELECT 
+SUM(CAST(muacres AS NUMERIC)) AS ac 
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+WHERE legend.areasymbol != 'US' ;
+```
+
+Implicit casting to numeric via division by floating point value, result is 2280.193 million acres.
+```{sql eval = FALSE}
+SELECT 
+SUM(muacres / 1000000.0) AS ac 
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+WHERE legend.areasymbol != 'US' ;
+```
+
+
+Scaling of `muacres` by component percentage, as converted to a fraction. Result is **wrong**: 500 million acres.
+```{sql eval = FALSE}
+SELECT 
+SUM((comppct_r / 100) * muacres) / 1000000 AS ac 
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+INNER JOIN component AS co ON mu.mukey = co.mukey 
+WHERE legend.areasymbol != 'US' ;
+```
+
+
+Casting `comppct_r` and `muacres` to numeric, result is correct: 2242.39 million acres. Note that there are still some components with NULL `comppct_r`, will be fixed eventually.
+```{sql eval = FALSE}
+SELECT 
+SUM((CAST(comppct_r AS NUMERIC) / 100) * CAST(muacres AS NUMERIC)) / 1000000 AS ac 
+FROM legend
+INNER JOIN mapunit mu ON mu.lkey = legend.lkey
+INNER JOIN component AS co ON mu.mukey = co.mukey 
+WHERE legend.areasymbol != 'US' ;
+```
+
+Use this last pattern whenever converting component percentages to a fraction, or scaling the `muacres` field.
 
 
 ## Install Required R Packages
