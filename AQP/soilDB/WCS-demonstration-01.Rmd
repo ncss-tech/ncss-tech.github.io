@@ -369,9 +369,10 @@ plot(statsgo, axes = FALSE, legend = FALSE, main = attr(statsgo, 'layer name'))
 
 ## Hawaii SSURGO
 
+An experimental, 30m SSURGO mukey WCS based on the EPSG:6628 coordinate reference system. The example bounding-box is centered on the [southern coast of Kauai](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=21.97839,-159.61727,z13).
 ```{r fig.width = 6.5, fig.height=5}
 # paste your BBOX text here
-bb <- '-156.3442 20.7871,-156.3442 20.8220,-156.2772 20.8220,-156.2772 20.7871,-156.3442 20.7871'
+bb <- '-159.7426 21.9059,-159.7426 22.0457,-159.4913 22.0457,-159.4913 21.9059,-159.7426 21.9059'
 
 # convert text -> WKT -> sf
 wkt <- sprintf('POLYGON((%s))', bb)
@@ -383,17 +384,21 @@ st_crs(x) <- 4326
 # query WCS
 mu <- mukey.wcs(x, db = 'hi_ssurgo')
 
-# looks OK
-plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
-box()
+# make NA (the ocean) blue
+plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'), colNA = 'royalblue')
 
+# # check mu names
+# .is <- format_SQL_in_statement(cats(mu)[[1]]$mukey)
+# .sql <- sprintf("SELECT mukey, muname FROM mapunit WHERE mukey IN %s", .is)
+# knitr::kable(SDA_query(.sql))
 ```
 
 ## Puerto Rico SSURGO
 
+An experimental, 30m SSURGO mukey WCS based on the EPSG:32161 coordinate reference system. The example bounding-box is centered on the [eastern coast of Puerto Rico](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=18.24843,-65.67369,z13).
 ```{r fig.width = 6.5, fig.height=5}
 # paste your BBOX text here
-bb <- '-66.5529 18.1893,-66.5529 18.2602,-66.4189 18.2602,-66.4189 18.1893,-66.5529 18.1893'
+bb <- '-65.7741 18.1711,-65.7741 18.3143,-65.5228 18.3143,-65.5228 18.1711,-65.7741 18.1711'
 
 # convert text -> WKT -> sf
 wkt <- sprintf('POLYGON((%s))', bb)
@@ -405,10 +410,13 @@ st_crs(x) <- 4326
 # query WCS
 mu <- mukey.wcs(x, db = 'pr_ssurgo')
 
-# looks OK
-plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
-box()
+# make NA (the ocean) blue
+plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'), colNA = 'royalblue')
 
+# # check mu names
+# .is <- format_SQL_in_statement(cats(mu)[[1]]$mukey)
+# .sql <- sprintf("SELECT mukey, muname FROM mapunit WHERE mukey IN %s", .is)
+# knitr::kable(SDA_query(.sql))
 ```
 
 
