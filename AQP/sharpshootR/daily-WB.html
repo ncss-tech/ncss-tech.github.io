@@ -11,7 +11,7 @@
 
 <meta name="author" content="D.E. Beaudette and J.M. Skovlin" />
 
-<meta name="date" content="2022-09-08" />
+<meta name="date" content="2023-04-03" />
 
 <title>A Simple Daily Water Balance Simulation</title>
 
@@ -301,8 +301,8 @@ pre code {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -310,16 +310,9 @@ pre code {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -367,7 +360,7 @@ pre code {
 <h1 class="title toc-ignore">A Simple Daily Water Balance
 Simulation</h1>
 <h4 class="author">D.E. Beaudette and J.M. Skovlin</h4>
-<h4 class="date">2022-09-08</h4>
+<h4 class="date">2023-04-03</h4>
 
 </div>
 
@@ -384,9 +377,7 @@ library(aqp)
 library(soilDB)
 library(sharpshootR)
 
-library(sp)
-library(rgeos)
-
+library(sf)
 
 library(pbapply)
 library(reshape2)
@@ -402,7 +393,12 @@ library(viridis)
 library(hydromad)</code></pre>
 <pre class="r"><code>## simulate NULL PET
 # near Sonora, CA
-p &lt;- SpatialPoints(cbind(-120.37673,37.99877), proj4string = CRS(&#39;+proj=longlat +datum=WGS84&#39;))
+p &lt;- data.frame(
+  x = -120.37673,
+  y = 37.99877
+)
+p &lt;- st_as_sf(p, coords = c(&#39;x&#39;, &#39;y&#39;))
+st_crs(p) &lt;- 4326
 daily.data &lt;- prepareDailyClimateData(p, start = 2013, end = 2014, onlyWB = TRUE)
 
 # save PET
@@ -462,17 +458,23 @@ xyplot(
 <pre class="r"><code>## prepare some example data via DAYMET
 
 # near Sonora, CA
-p &lt;- SpatialPoints(cbind(-120.37673,37.99877), proj4string = CRS(&#39;+proj=longlat +datum=WGS84&#39;))
+p &lt;- data.frame(
+  x = -120.37673,
+  y = 37.99877
+)
+p &lt;- st_as_sf(p, coords = c(&#39;x&#39;, &#39;y&#39;))
+st_crs(p) &lt;- 4326
+
 daily.data &lt;- prepareDailyClimateData(p, start = 2000, end = 2019, onlyWB = TRUE)
 
 head(daily.data)</code></pre>
 <pre><code>##                  date  PPT       PET
-## 2000-01-01 2000-01-01 3.48 0.5217335
-## 2000-01-02 2000-01-02 0.00 0.8891649
-## 2000-01-03 2000-01-03 0.00 0.9667959
-## 2000-01-04 2000-01-04 0.00 1.1105400
-## 2000-01-05 2000-01-05 0.00 1.0158303
-## 2000-01-06 2000-01-06 0.00 1.1002700</code></pre>
+## 2000-01-01 2000-01-01 3.48 0.5217339
+## 2000-01-02 2000-01-02 0.00 0.8891655
+## 2000-01-03 2000-01-03 0.00 0.9667966
+## 2000-01-04 2000-01-04 0.00 1.1105407
+## 2000-01-05 2000-01-05 0.00 1.0158309
+## 2000-01-06 2000-01-06 0.00 1.1002707</code></pre>
 <pre class="r"><code># example soil material
 data(&quot;ROSETTA.centroids&quot;)
 vars &lt;- c(&#39;texture&#39;, &#39;sat&#39;, &#39;fc&#39;, &#39;pwp&#39;)
@@ -518,11 +520,11 @@ str(z)</code></pre>
 )
 
 t(apply(ann.AET, 1, quantile))</code></pre>
-<pre><code>##                  0%       25%       50%      75%      100%
-## silt loam 263.60044 312.96322 326.13241 352.7824 406.40613
-## clay      249.68941 293.61131 306.43732 332.0907 383.36988
-## loam      222.70922 261.53374 275.57542 300.6626 351.14986
-## sand       32.26762  51.05105  63.16503  87.6968  90.67191</code></pre>
+<pre><code>##                  0%       25%       50%       75%      100%
+## silt loam 263.60050 312.96329 326.13250 352.78250 406.40625
+## clay      249.68947 293.61139 306.43740 332.09076 383.37000
+## loam      222.70927 261.53382 275.57550 300.66272 351.14997
+## sand       32.26764  51.05108  63.16506  87.69684  90.67195</code></pre>
 <pre class="r"><code>kable(prop.table(table(z$texture, z$state), margin = 1), digits = 2)</code></pre>
 <table>
 <thead>

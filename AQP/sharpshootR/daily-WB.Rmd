@@ -29,9 +29,7 @@ library(aqp)
 library(soilDB)
 library(sharpshootR)
 
-library(sp)
-library(rgeos)
-
+library(sf)
 
 library(pbapply)
 library(reshape2)
@@ -50,7 +48,12 @@ library(hydromad)
 ```{r fig.width=8, fig.height=6}
 ## simulate NULL PET
 # near Sonora, CA
-p <- SpatialPoints(cbind(-120.37673,37.99877), proj4string = CRS('+proj=longlat +datum=WGS84'))
+p <- data.frame(
+  x = -120.37673,
+  y = 37.99877
+)
+p <- st_as_sf(p, coords = c('x', 'y'))
+st_crs(p) <- 4326
 daily.data <- prepareDailyClimateData(p, start = 2013, end = 2014, onlyWB = TRUE)
 
 # save PET
@@ -110,7 +113,13 @@ xyplot(
 ## prepare some example data via DAYMET
 
 # near Sonora, CA
-p <- SpatialPoints(cbind(-120.37673,37.99877), proj4string = CRS('+proj=longlat +datum=WGS84'))
+p <- data.frame(
+  x = -120.37673,
+  y = 37.99877
+)
+p <- st_as_sf(p, coords = c('x', 'y'))
+st_crs(p) <- 4326
+
 daily.data <- prepareDailyClimateData(p, start = 2000, end = 2019, onlyWB = TRUE)
 
 head(daily.data)
