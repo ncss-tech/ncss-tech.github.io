@@ -177,7 +177,7 @@ sensor.depths <- unique(g$depth)
 date.axis <- seq.Date(as.Date(min(g$Date)), as.Date(max(g$Date)), by='3 months')
 
 # plot soil moisture time series, panels are depth
-p <- xyplot(value ~ Date | factor(Site) + which, groups=factor(depth), data=g, as.table=TRUE, type=c('l','g'), auto.key=list(columns=length(sensor.depths), lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.80)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y"), y=list(relation='free', rot=0)), ylab='', main='Soil Moisture and Temperature at Several Depths')
+p <- xyplot(value ~ Date | factor(Site) + which, groups=factor(depth), data=g, as.table=TRUE, type=c('l','g'), auto.key=list(columns=length(sensor.depths), lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.80)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y"), y=list(relation='free', rot=0)), ylab='', main='Soil Moisture and Temperature at Several Depths (deg. C)')
 
 useOuterStrips(p)
 
@@ -187,15 +187,15 @@ useOuterStrips(p)
 # no SAL sensors for these sites
 # xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SAL, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), layout=c(1,length(sensor.depths)), scales=list(alternating=3, y=list(relation='free', rot=0)))
 
-xyplot(value ~ Date, groups=factor(Site), data=x$TAVG, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Average Air Temperature by Site')
+xyplot(value ~ Date, groups=factor(Site), data=x$TAVG, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Average Air Temperature by Site (deg. C)')
 
-xyplot(value ~ Date, groups=factor(Site), data=x$PRCP, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Precipitation by Site')
+xyplot(value ~ Date, groups=factor(Site), data=x$PRCP, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Precipitation by Site (inches)')
 
-xyplot(value ~ Date, groups=factor(Site), data=x$PREC, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Accumulated Precipitation by Site')
+xyplot(value ~ Date, groups=factor(Site), data=x$PREC, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Accumulated Precipitation by Site (inches)')
 
-xyplot(value ~ Date, groups=factor(Site), data=x$WTEQ, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Water Equivalent by Site')
+xyplot(value ~ Date, groups=factor(Site), data=x$WTEQ, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Water Equivalent by Site (inches)')
 
-xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Depth (in) by Site')
+xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Depth (in) by Site (inches)')
 ```
 
 
