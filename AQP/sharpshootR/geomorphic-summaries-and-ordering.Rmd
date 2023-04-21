@@ -115,14 +115,17 @@ hist(match.rate, las = 1, xlab = 'Matching Rate')
 ```
 
 
+Note that profiles deeper than 180cm are marked as truncated via ragged bottoms.
+```{r, fig.width=10, fig.height=8.5}
+# provide additional arguments to aqp::plotSPC() via options
+options(.aqp.plotSPC.args = list(max.depth = 180))
 
-```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 2))
 plotGeomorphCrossSection(osd, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
 plotGeomorphCrossSection(osd, type = 'bar', maxIter = 100, j.amount = 0.05, verbose = TRUE)
 ```
 
-```{r, fig.width=10, fig.height=8}
+```{r, fig.width=10, fig.height=8.5}
 par(mar = c(1, 0, 1, 2))
 plotGeomorphCrossSection(osd, type = 'line', clust = FALSE)
 plotGeomorphCrossSection(osd, type = 'bar', clust = FALSE)
@@ -137,7 +140,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'hillpos', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8}
@@ -149,7 +152,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'geomcomp', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8}
@@ -161,7 +164,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'flats', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
+plotSPC(o$SPC, plot.order = idx, width = 0.1, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8}
@@ -173,8 +176,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'terrace', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
-
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8, eval = FALSE}
@@ -186,7 +188,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8, eval = FALSE}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'mtnpos', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8}
@@ -198,7 +200,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8}
@@ -210,7 +212,7 @@ print(res$fig)
 ```{r, fig.width=10, fig.height=8}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx)
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 
@@ -229,6 +231,9 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
+# truncate profiles at 180cm
+options(.aqp.plotSPC.args = list(max.depth = 180))
+
 par(mar = c(1, 0, 1, 2))
 plotGeomorphCrossSection(OSDexamples, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
 ```
@@ -250,6 +255,11 @@ hydOrder(osd$hillpos, g = 'hillpos', clust = TRUE)
 
 hydOrder(osd$flats, g = 'flats', clust = FALSE)
 
+```
+
+Reset options.
+```{r}
+options(.aqp.plotSPC.args = NULL)
 ```
 
 

@@ -98,7 +98,7 @@ plotSPC(musick.sim, print.id = FALSE, name = NA, plot.depth.axis = TRUE, width =
 
 ## Profile Arrangement
 
-### `n`
+### n
 A single integer describing the amount of space along x-axis to allocate, defaults to `length(x)`.
 
 ```{r fig.width=10, fig.height=6.5}
@@ -108,14 +108,14 @@ text(x = 10.5, y = 90, label = "additional space allocated by 'n = 15'", adj = 0
 arrows(x0 = length(osds) + 1, x1 = 15, y0 = 100, y1 = 100, code = 3, length = 0.1)
 ```
 
-### `plot.order`
+### plot.order
 integer vector describing the order in which individual soil profiles should be plotted
 
-### `relative.pos`
+### relative.pos
 vector of relative positions along the x-axis, within {1, n}, ignores plot.order see details
 
 
-### `add`
+### add
 When `TRUE`, sketches and annotations (like a depth axis) are added to the current output device. With careful use of `x.idx.offset` it is possible to combine several sets of profiles, such as the results of a simulation (see [`perturb()`](http://ncss-tech.github.io/aqp/reference/perturb.html)). With careful use of `scaling.factor`, profiles can be added to any figure.
 
 ```{r fig.width=10, fig.height=6}
@@ -144,7 +144,7 @@ mtext('Simulation', side = 3, at = 5.5, line = -2.5, font = 2, adj = 0)
 ```
 
 
-### `x.idx.offset`
+### x.idx.offset
 Horizontal offset from 0 (left-hand edge), used to shift all profiles left or right within the sketch. Sometimes this is useful for making small, aesthetic adjustments especially when making sketches of large collections. When used together with the `add` argument, it is possible to align multiple versions of the same data by shifting profiles left or right. The following example adds profile sketches that use dry soil colors next to the original (moist soil colors) sketches.
 
 ```{r fig.width=10, fig.height=6.5}
@@ -173,7 +173,7 @@ text(x = s, y = bottoms, labels = 'M', pos = 3, font = 3, cex = 0.66)
 text(x = s - 0.4, y = bottoms, labels = 'D', pos = 3, font = 3, cex = 0.66)
 ```
 
-### `y.offset`
+### y.offset
 Either a single value or numeric vector of vertical offsets with `length == length(x)`, in depth units of `x`. Profile sketches and depth axis are shifted when using a single y offset value. The depth axis is disabled when using multiple y offsets. Note: `y.offset` is automatically re-ordered by `plot.order`.
 
 Shift all profile sketches down 300cm, leaving room for additional annotation above. Right-hand axis added for clarity.
@@ -235,16 +235,21 @@ lines(x = .s, y = .landSurface(.s), lwd = 2)
 title('A Fake Diagram of Real Soils', line= -1.5)
 ```
 
-
-
-### `max.depth`
-This is a suggested lower depth for the sketches, data are not modified and profiles may extend beyond figure margins.
-
-
-
 ## Profile Styling
 
-### `width`
+### max.depth
+This is a suggested lower depth for the vertical axis, given in the same units as used by the `SoilProfileCollection`. Profiles deeper than `max.depth` are truncated and marked with a "ragged" bottom boundary.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1))
+
+plotSPC(osds, cex.names = 0.66, name = NA, max.depth = 145)
+
+# SPC truncated at 145cm
+abline(h = 145, lty = 2)
+```
+
+### width
 Each profile is given 1 horizontal unit of space in the figure. The `width` argument is given as 1/2 of this space: typically ranging from 0.1--0.4. Values >= 0.5 will cause overlap.
 
 ```{r fig.width=10, fig.height=5}
@@ -505,11 +510,23 @@ Profile ID annotation style. The default value of `auto` uses a simple heuristic
 
 ## Horizon Boundaries
 
+### raggedBottom
+A quoted column name of the (site-level) attribute (logical) used to mark profiles with a truncated lower boundary. This type of annotation is a convenient way to demonstrate that soil, paralithic material, or bedrock contact likely extends below the depth of excavation. 
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 1))
+
+# flag all profiles as being incomplete / truncated
+site(osds)$rb <- TRUE
+
+plotSPC(osds, cex.names = 0.66, raggedBottom = 'rb', width = 0.33, name.style = 'center-center')
+```
+
 ### divide.hz
 logical, divide horizons with line segment? (`TRUE`). Often handy when plotting a very large collection or for a artistic flair. PNG or similar graphics devices are suggested when setting `divide.hz = FALSE`.
 
 ```{r fig.width=10, fig.height=5, dev='png'}
-# supress printing of horizon designation
+# suppress printing of horizon designation
 par(mar = c(0, 0, 0, 1))
 plotSPC(osds, name = NA, name.style = 'center-center', divide.hz = FALSE, width = 0.33)
 ```
