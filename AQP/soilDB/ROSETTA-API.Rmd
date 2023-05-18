@@ -492,7 +492,7 @@ mean.pct.decreast <- 0.1
 
 
 txt <- levels(x$txt)
-txt.relative.change <- rescale(1:length(ll), to = c(0.5, 1.5))
+txt.relative.change <- rescale(1:length(txt), to = c(0.5, 1.5))
 names(txt.relative.change) <- txt
 
 1 - (mean.pct.decreast * txt.relative.change)
