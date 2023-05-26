@@ -13,21 +13,20 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-# library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
 
 # Introduction
-This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is purged when SoilWeb is periodically synced to the official data.
+This document demonstrates how to use the [soilDB](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) package to access detailed soil series extent maps via SoilWeb. These maps can be directly displayed in **R**, overlayed on Google Maps, or saved as local files (e.g. shapefiles). Data returned from SoilWeb represent bounding-boxes that enclose SSURGO polygons associated with map units containing the search criteria. Bounding-boxes are snapped to 0.01 degree precision in order to reduce processing time and file size. Note that these files are cached server-side after the first request, and the cache is rebuilt when SoilWeb is periodically synced to the official data.
 
 # Installation
 With a recent version of R, it should be possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console to install required packages
 install.packages('soilDB', dep=TRUE)
-install.packages('RColorBrewer', dep=TRUE)
+install.packages('terra', dep=TRUE)
 install.packages('sf', dep=TRUE)
 install.packages('maps', dep=TRUE)
 install.packages('scales', dep=TRUE)
@@ -39,28 +38,26 @@ Illustrate the extent of SSURGO map units associated with the Amador series.
 ```{r results='hide'}
 # load required libraries
 library(soilDB)
-library(raster)
-library(sp)
 library(sf)
-library(rgdal)
+library(terra)
 library(maps)
-library(RColorBrewer)
+library(rasterVis)
 ```
 
 
 Investigate the structure of soil series extent data.
 ```{r }
-# the result is a SpatialPolygonsDataFrame object
+# the result is an af object
 amador <- seriesExtent('amador')
 
 # internal structure / class
-str(amador, 2)
+class(amador)
 
 # coordinate reference system in PROJ4 notation
-proj4string(amador)
+st_crs(amador)
 
 # check attribute table, details: http://casoilresource.lawr.ucdavis.edu/see/
-slot(amador, 'data')
+head(amador)
 ```
 
 ## Compare Amador, Pardee, and San Joaquin Extents
@@ -69,17 +66,14 @@ slot(amador, 'data')
 s <- c('amador', 'pardee', 'san joaquin')
 
 # define some nice colors
-cols <- brewer.pal('Set1', n = length(s))
+cols <- c("#E41A1C", "#377EB8", "#4DAF4A")
 
 # iterate over vector of soil series names
 # and store spatial extents in a list
-s.extent <- lapply(s, seriesExtent, timeout=120)
+s.extent <- lapply(s, seriesExtent, timeout = 120)
 
-# combine into a single SpatialPolygonsDataFrame
+# combine into a single sf object
 s.extent <- do.call('rbind', s.extent)
-
-# convert into an sf object
-s.extent <- st_as_sf(s.extent)
 
 # very simple plot method for sf objects
 # https://r-spatial.github.io/sf/articles/sf5.html
@@ -98,7 +92,7 @@ mapview(s.extent, zcol = 'series', legend = TRUE)
 Save soil series extent data in multiple formats.
 ```{r example-4, eval=FALSE}
 # save using the coordinate reference system associated with this object (GCS WGS84)
-write_sf(s.extent, dsn='amador-pardee-san-joaquin-extent.shp')
+write_sf(s.extent, dsn = 'amador-pardee-san-joaquin-extent.shp')
 
 # save as KML for use in Google Earth
 # writeOGR(s.extent, dsn='amador-pardee-san-joaquin-extent.kml', layer='amador-pardee-san-joaquin', driver='KML')
@@ -113,10 +107,11 @@ write_sf(s.extent, dsn='amador-pardee-san-joaquin-extent.shp')
 
 Using vector features, works with all SSURGO data.
 ```{r, results = 'hide'}
-library(scales) # need this for alpha()
+# need this for alpha()
+library(scales)
 
 # define some nice colors
-cols <- brewer.pal('Set1', n=3)
+cols <- c("#E41A1C", "#377EB8", "#4DAF4A")
 
 # list of series for investigation of joint occurrence
 s <- c('pentz', 'peters', 'pardee', 'amador', 'san joaquin', 'redding', 'auburn')
@@ -124,14 +119,11 @@ s <- c('pentz', 'peters', 'pardee', 'amador', 'san joaquin', 'redding', 'auburn'
 # get list of extents
 e <- lapply(s, seriesExtent)
 
-# convert to sf objects
-e <- lapply(e, st_as_sf) 
-
 # flatten to single sf object
 e <- do.call('rbind', e)
 
 # map of CA
-par(mar=c(1,1,1,1))
+par(mar = c(1,1,1,1))
 map('state', 'ca')
 
 # sf plot method
@@ -140,16 +132,13 @@ plot(st_geometry(e), border = NA, col = alpha(cols[2], 0.25), add = TRUE)
 
 # finish map
 box()
-title(main='Joint Occurrence', line=1.25)
-mtext(side=1, text=as.character(Sys.Date()), line=0)
+title(main = 'Joint Occurrence', line = 1.25)
+mtext(side = 1, text = as.character(Sys.Date()), line = 0)
 ```
 
 
-
+Join occurrence of Zook and siblings.
 ```{r, results='hide'}
-library(rasterVis)
-library(viridis)
-
 # using all siblings of a given soil series
 s <- 'zook'
 sib <- siblings(s)
@@ -165,60 +154,39 @@ g <- lapply(sib.names, function(i) {
   return(se)
 })
 
-# extract the extent / BBOX for each
-e <- lapply(g, extent)
 
-# convert to Spatial Polygons
-e <- lapply(e, as, 'SpatialPolygons')
+# assemble collection, 44 spatRast objects
+g <- sprc(g)
 
-# hack: assign each extent an ID so they can be merged
-for(i in 1:length(e)) {
-  e[[i]] <- spChFIDs(e[[i]], as.character(i))
-}
+# merge into single SpatRaster
+# compute sum whenever there is overlap
+m <- mosaic(g, fun = 'sum')
 
-# combine list of SP into single, multi-feature SP object
-p <- do.call('rbind', e)
-
-# graphical check, ok
-plot(p)
-
-# extend each series extent grid to the full extent / BBOX
-ge <- lapply(g, function(i) {
-  extend(i, extent(p))
-})
-
-# grids are conformal
-# convert to rasterStack for convenience
-# each layer has been thresholded to binary 0/1 raster
-ge <- stack(ge)
-
-# sum pixels across raster stack
-x <- stackApply(ge, indices = rep(1, times = nlayers(ge)), fun = sum, na.rm = TRUE)
-
-# set 0 to nodata
-x[x == 0] <- NA
-
-x <- x / maxValue(x)
+# values > 100% are rounding errors
+# truncate at 100%
+m[m > 100] <- 100
 
 levelplot(
-  x,
-  col.regions=viridis,
+  m,
+  col.regions = hcl.colors,
   main = 'Joint Occurrence',
   margin = FALSE, 
   scales = list(draw = FALSE)
 )
 
 # generalize via focal sum
-a <- aggregate(x, fact = 5, fun = sum, na.rm = TRUE)
+a <- aggregate(m, fact = 5, fun = sum, na.rm = TRUE)
+
+# re-scale to fractions of 5x larger grid size
+a <- a / 5^2
 
 levelplot(
   a,
-  col.regions=viridis,
+  col.regions = hcl.colors,
   main = 'Joint Occurrence',
   margin = FALSE, 
   scales = list(draw = FALSE)
 )
-
 ```
 
 
@@ -229,7 +197,7 @@ Lets investigate the spatial extent and MLRA overlap for the [Boomer](http://cas
 Get extent and make a simple map.
 ```{r}
 # define some nice colors
-cols <- brewer.pal('Set1', n=3)
+cols <- c("#E41A1C", "#377EB8", "#4DAF4A")
 
 # get extent
 boomer <- seriesExtent('boomer')
@@ -237,7 +205,7 @@ boomer <- seriesExtent('boomer')
 # basic figure
 par(mar=c(1,0,1,0))
 map(database='county', regions='california')
-plot(boomer, col=cols[2], border=cols[2], add=TRUE)
+plot(st_geometry(boomer), col=cols[2], border=cols[2], add=TRUE)
 box()
 title(main='Boomer Series Extent', line=1.25)
 mtext(side=1, text=as.character(Sys.Date()), line=0)
@@ -246,21 +214,17 @@ mtext(side=1, text=as.character(Sys.Date()), line=0)
 Investigate MLRA overlap for the Boomer series via [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html) (official SSURGO data). These results are based on the assumption that the "muaoverlap" table is correctly populated.
 ```{r}
 res <- SDA_query("SELECT compname, areasymbol as mlra, areaname as mlra_name, count(compname) as n_components from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'boomer' AND areatypename = 'MLRA' GROUP BY compname, areasymbol, areaname ORDER BY count(compname) DESC")
-kable(res, row.names = FALSE)
+knitr::kable(res, row.names = FALSE)
 ```
 
 That seems strange, which map units are in MLRA 31?
 ```{r}
 res <- SDA_query("SELECT component.mukey, muname, compname, comppct_r from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN mapunit ON muaoverlap.mukey = mapunit.mukey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'boomer' AND areatypename = 'MLRA' AND areasymbol = '31'")
-kable(res, row.names = FALSE)
+knitr::kable(res, row.names = FALSE)
 ```
 
-Save extent for Boomer series as shapefile (GCS/WGS84).
-```{r, eval=FALSE}
-writeOGR(boomer, dsn='.', layer='boomer-extent', driver='ESRI Shapefile')
-```
 
 
 
 ----------------------------
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")` and `terra` version `r utils::packageDescription("terra", field="Version")`.

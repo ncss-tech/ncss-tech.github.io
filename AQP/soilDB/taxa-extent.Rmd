@@ -13,7 +13,6 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-# library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
@@ -209,17 +208,25 @@ m <- lapply(STgroup, taxaExtent, level = 'subgroup', timeout = 120)
 m <- m[which(!sapply(m, is.null))]
 
 # combine into SpatRasterCollection
+# 150 spatRast objects
 x <- sprc(m)
 
 # combine into single SpatRaster
-x <- mosaic(s, fun = 'sum')
+x <- mosaic(x, fun = 'sum')
+
+# values > 100 are rounding errors
+x[x > 100] <- 100
 
 # give merged raster a name
 names(x) <- 'Andisols and Andic Subgroups'
 
+# aggregate to 5x larger grid, sum of cell percent cover
+a <- aggregate(x, fact = 5, fun = sum, na.rm = TRUE)
+
+# rescale percent cover to larger grid size
+a <- a / 5^2
 
 # CONUS map
-a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 plot(a, axes = FALSE, col = hcl.colors(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
 lines(us_states, lwd = 2)
 
