@@ -179,7 +179,7 @@ w <- c(12, 8)
 # moist soil colors
 m <- c('10YR 2/2', '10Y 6/6')
 
-plotColorMixture(m, w, mixingMethod = 'exact', swatch.cex = 4, label.cex = 0.65, overlapFix = TRUE)
+plotColorMixture(m, w, mixingMethod = 'exact', label.cex = 0.65, overlapFix = TRUE)
 ```
 
 ```{r fig.height=2.5, fig.width=10, echo=FALSE, eval=FALSE}
@@ -221,40 +221,40 @@ colorMixtureVenn(chips, ellipse = TRUE)
 ## Tinkering with `plotColorMixture`
 
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 5/3', '10YR 3/2'), swatch.cex = 5)
+plotColorMixture(c('10YR 5/3', '10YR 3/2'))
 ```
 
 Compare "reference" vs. "exact" mixing methods.
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, mixingMethod = 'reference', showMixedSpec = TRUE)
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), swatch.cex = 5, mixingMethod = 'exact')
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), mixingMethod = 'reference', showMixedSpec = TRUE)
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), mixingMethod = 'exact')
 ```
 
 ```{r fig.height=5.5, fig.width=9}
 # is this right? can the resulting spectra be "higher" than the source?
-plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1), swatch.cex = 5)
+plotColorMixture(c('10YR 6/2', '5YR 5/6'), w = c(2,1))
 
 # label collision
-plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 5)
-plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), swatch.cex = 4, label.cex = 0.65)
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'))
+plotColorMixture(c('10YR 5/3', '10YR 3/2', '5R 2/2'), label.cex = 0.65)
 
 
-plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2), swatch.cex = 5)
+plotColorMixture(c('10YR 4/6', '2.5Y 6/2', '5Y 2/2'), w = c(1, 1, 2))
 
 plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(1, 2))
-plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), swatch.cex = 4, label.cex = 0.65)
+plotColorMixture(c('5G 6/5', '5R 5/4'), w = c(3, 1), label.cex = 0.65)
 ```
 
 Check: "blue" + "yellow" = "green", yes. Note weighted geometric mean spectra (dotted line): closest chip isn't a perfect fit but close enough.
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference')
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, mixingMethod = 'exact')
+plotColorMixture(c('5B 5/10', '5Y 8/8'), label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference')
+plotColorMixture(c('5B 5/10', '5Y 8/8'), label.cex = 0.65, mixingMethod = 'exact')
 ```
 
 
 Top 3 mixture candidates
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('5B 5/10', '5Y 8/8'), swatch.cex = 4, label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference', n = 3)
+plotColorMixture(c('5B 5/10', '5Y 8/8'), label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference', n = 3)
 ```
 
 ## Simulation of a continuous mixture
@@ -293,7 +293,7 @@ knitr::kable(
 
 The weighted geometric mean of the two spectra seems plausible:
 ```{r fig.height=5.5, fig.width=9}
-plotColorMixture(c('10YR 8/6', '10YR 2/2'), swatch.cex = 5)
+plotColorMixture(c('10YR 8/6', '10YR 2/2'))
 ```
 
 

@@ -34,29 +34,29 @@ s <- fetchOSD(s.list)
 
 ```{r check-via-plotting, fig.width=16, fig.height=6}
 # estimate soil depth based on horizon designation
-s$soil.depth <- profileApply(s, estimateSoilDepth, name='hzname')
+s$soil.depth <- profileApply(s, estimateSoilDepth, name = 'hzname')
 
 # plot profiles, order by soil depth
-par(mar=c(0, 0, 0, 0))
-plotSPC(s, name='hzname', plot.order=order(s$soil.depth), cex.names=0.85, axis.line.offset=-5, width=0.25, id.style='top', name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE)
+par(mar = c(0, 0, 0, 0))
+plotSPC(s, name = 'hzname', plot.order = order(s$soil.depth), cex.names = 0.85, axis.line.offset = -5, width = 0.33, id.style = 'top', name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE)
 ```
 
 Divisive clustering, the default method.
 ```{r fig.width=14, fig.height=7}
 # plot dendrogram + profiles
 # result is the distance matrix used to generate dendrogram
-d <- SoilTaxonomyDendrogram(s, cex.taxon.labels = 0.8, width = 0.25, y.offset = 0.4)
+d <- SoilTaxonomyDendrogram(s, cex.taxon.labels = 0.8, width = 0.33, y.offset = 0.4)
 ```
 
 Try agglomerative clustering, need to adjust offset.
 ```{r fig.width=14, fig.height=7}
 # plot dendrogram + profiles
-SoilTaxonomyDendrogram(s, cex.taxon.labels = 0.8, width = 0.25, y.offset = 0.5, cluster.method = 'agglomerative')
+SoilTaxonomyDendrogram(s, cex.taxon.labels = 0.8, width = 0.33, y.offset = 0.5, cluster.method = 'agglomerative')
 ```
 
 
 Approximate sorting of dendrogram according to catenary position ([hillslope position proportions](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs142p2_054252#describe)).
-```{r fig.width=8, fig.height=4}
+```{r fig.width=10, fig.height=6}
 # TODO: try norforlk and siblings
 # http://soilmap2-1.lawr.ucdavis.edu/dylan/soilweb/sde/?series=norfolk
 
@@ -76,13 +76,13 @@ Organize ST dendrogram according to catenary position.
 ```{r fig.width=12, fig.height=12}
 par(mar=c(0,0,1,1), mfrow=c(2,1))
 
-SoilTaxonomyDendrogram(s$SPC, width=0.25)
+SoilTaxonomyDendrogram(s$SPC, width = 0.33, cex.taxon.labels = 0.88, shrink = TRUE)
 mtext('default sorting', side = 2, line=-1, font=3, cex=1.25)
 
 # labels used to re-order (if possible) terminal branches of dendrogram
 labs <- profile_id(s$SPC)[res$order]
 
-SoilTaxonomyDendrogram(s$SPC, rotationOrder = labs, width=0.25)
+SoilTaxonomyDendrogram(s$SPC, rotationOrder = labs, width = 0.33, cex.taxon.labels = 0.88, shrink = TRUE)
 mtext('approx. catenary sorting', side = 2, line=-1, font=3, cex=1.25)
 ```
 
@@ -136,6 +136,7 @@ name.style = 'center-center',
 cex.names = 0.66,
 plot.depth.axis = FALSE,
 hz.depths = TRUE,
+fixLabelCollisions = TRUE,
 shrink = TRUE,
 hz.distinctness.offset = 'hd',
 hz.topography.offset = 'hzto',
@@ -163,6 +164,7 @@ name.style = 'center-center',
 cex.names = 0.66,
 plot.depth.axis = FALSE,
 hz.depths = TRUE,
+fixLabelCollisions = TRUE,
 shrink = TRUE,
 hz.distinctness.offset = 'hd',
 hz.topography.offset = 'hzto',
