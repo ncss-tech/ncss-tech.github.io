@@ -473,13 +473,20 @@ plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.
 ```
 
 ### fixLabelCollisions
-When `TRUE`, use `aqp::fixOverlap()` to attempt fixing horizon depth labeling collisions. This will slow plotting of large collections. Enabling fixes also sets `hz.depths.lines = TRUE`. Adjustments made by `aqp::fixOverlap()` involve random permutations, so output is different each time. Use `set.seed` when you need consistent results.
+When `TRUE`, use `aqp::fixOverlap()` to attempt fixing horizon depth labeling collisions. This will slow plotting of large collections. Enabling fixes also sets `hz.depths.lines = TRUE`. A simulation of electrostatic charges is used to iteratively adjust labels until there is no overlap. See `?electroStatics_1D` for details.
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
 plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE)
 ```
 
+### fixOverlapArgs
+Pass additional arguments to `fixOverlap()` as a `list`. Fix overlapping labels with simulated annealing. Adjustments made by this method involve random permutations, so output is different each time. Use `set.seed` when you need consistent results. See `?SANN_1D` for details.
+
+```{r fig.width=10, fig.height=5}
+par(mar = c(0, 0, 0, 0))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, fixOverlapArgs = list(method = 'S'))
+```
 
 ### alt.label and alt.label.col
 A single (quoted) site-level attribute name that will be used as secondary annotation, inset just below the top of each profile. Note that the `alt.label.col` argument will probably have to be used for legibility.

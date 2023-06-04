@@ -109,7 +109,7 @@ print(res$fig)
 ```
 
 
-Vizualize pair-wise distances using a dendrogram and profile sketches. What do the two main groupings tell us about this family?
+Visualize pair-wise distances using a dendrogram and profile sketches. What do the two main groupings tell us about this family?
 ```{r fig.width=12, fig.height=6}
 par(mar=c(0,0,1,1))
 plotProfileDendrogram(s.competing.data$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
