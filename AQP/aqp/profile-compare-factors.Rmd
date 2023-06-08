@@ -43,6 +43,7 @@ library(sharpshootR)
 library(cluster)
 library(RColorBrewer)
 library(ape)
+library(dendextend)
 ```
 
 
@@ -119,59 +120,46 @@ table(x$texture_class)
 x$texture_class <- factor(x$texture_class, ordered = TRUE, levels = SoilTextureLevels())
 x$texture_class <- droplevels(x$texture_class)
 
-# make a copy without ordering
-x$texture_class_nominal <- factor(x$texture_class, levels=sort(as.character(unique(x$texture_class)), decreasing = TRUE), ordered = FALSE)
+# make a copy same order, but not an ordered factor
+x$texture_class_nominal <- factor(x$texture_class, levels=levels(x$texture_class), ordered = FALSE)
 
 # graphical check
 par(mar=c(0,1,3,1))
 plot(x, color='texture_class', label='pedon_id')
 plot(x, color='texture_class_nominal', label='pedon_id')
-
-# make a fake horizon-level attr, until #7 is fixed
-x$constant <- rep(1, times=nrow(x))
 ```
 
 ## Horizon Level Attributes
 ```{r fig.width=10, fig.height=6}
 
 # compute pair-wise distances using texture class (ordered factor)
-d.hz <- profile_compare(x, vars=c('texture_class', 'constant'), max_d=100, k=0, rescale.result=TRUE)
+d.hz <- NCSP(x, vars = c('texture_class'), maxDepth = 100, rescaleResult = TRUE)
 # divisive hierarchical clustering
 dd.hz <- diana(d.hz)
 
 # plot dendrogram + profiles
-par(mar=c(1,0,3,1))
-plotProfileDendrogram(x, dd.hz,  width=0.25, color='texture_class', label='pedon_id', cex.name=0.65)
+par(mar = c(1,0,3,1))
+plotProfileDendrogram(x, dd.hz,  width=0.25, color = 'texture_class', label='pedon_id', cex.name=0.65)
 ```
 
 
 ```{r fig.width=10, fig.height=6}
 # compute pair-wise distances using texture class (nominal factor)
-d.hz <- profile_compare(x, vars=c('texture_class_nominal', 'constant'), max_d=100, k=0, rescale.result=TRUE)
+d.hz <- NCSP(x, vars = c('texture_class_nominal'), maxDepth = 100, rescaleResult = TRUE)
 # divisive hierarchical clustering
 dd.hz <- diana(d.hz)
 
 # plot dendrogram + profiles
-par(mar=c(1,0,3,1))
+par(mar = c(1,0,3,1))
 plotProfileDendrogram(x, dd.hz,  width=0.25, color='texture_class_nominal', label='pedon_id', cex.name=0.65)
 ```
 
 ### Compare Dendrograms
 ```{r fig.width=10, fig.height=6}
-d.ordinal <- profile_compare(x, vars=c('texture_class', 'constant'), max_d=100, k=0, rescale.result=TRUE)
+d.ordinal <- NCSP(x, vars=c('texture_class'), maxDepth = 100, rescaleResult = TRUE)
+d.nominal <- NCSP(x, vars=c('texture_class_nominal'), maxDepth = 100, rescaleResult = TRUE)
 
-d.nominal <- profile_compare(x, vars=c('texture_class_nominal', 'constant'), max_d=100, k=0, rescale.result=TRUE)
-
-p.ordinal <- as.phylo(as.hclust(diana(d.ordinal)))
-p.nominal <- as.phylo(as.hclust(diana(d.nominal)))
-
-
-dueling.dendrograms(p.1 = p.ordinal, p.2 = p.nominal, lab.1 = 'Ordinal', lab.2 = 'Nominal')
-
-
-# dendextend::dend_diff(as.dendrogram(diana(d.ordinal)), as.dendrogram(diana(d.nominal)))
-
-# dendextend::tanglegram(as.dendrogram(diana(d.ordinal)), as.dendrogram(diana(d.nominal)))
+dendextend::tanglegram(as.dendrogram(diana(d.ordinal)), as.dendrogram(diana(d.nominal)))
 ```
 
 
@@ -192,20 +180,34 @@ par(mar=c(0,1,3,1))
 plot(x, color='texture_class', label='pedon_id', col.palette=brewer.pal(10, 'Spectral'), plot.order=order(x$elev_field))
 addVolumeFraction(x, 'total_frags_pct')
 axis(side=1, at=1:length(x), labels=x$elev_field[order(x$elev_field)], line=-3)
-mtext(text='Field Described Slope (m)', side=1, line=-4)
+mtext(text='Field Described Elevation (m)', side=1, line=-4)
 ```
 
+$D = (D_{s} * w_{s}) + (D_{h} * w_{h}) / (w_{s} + w_{h})$
+
+$\sum_{elements} D{i} * w_{i} / \sum w_{i}$
+
 ```{r fig.width=10, fig.height=6}
-# compute pair-wise distances using:
 # hz attributes: texture class (ordered factor) and rock frag volume
+
+D.hz <- NCSP(x, vars = c('texture_class', 'total_frags_pct'), maxDepth = 100, rescaleResult = TRUE)
+w.hz <- 1
+
 # site attributes: surface slope and elevation
-d.hz.site <- profile_compare(x, vars=c('texture_class', 'total_frags_pct', 'slope_field', 'elev_field'), max_d=100, k=0)
+D.s <- compareSites(x, vars = c('slope_field', 'elev_field'))
+w.s <- 1
+
+# combine
+# note special syntaxt to add distance mat. by element
+D <- Reduce(`+`, list(D.s * w.s, D.hz * w.hz)) / sum(c(w.s, w.hz))
+
 # divisive hierarchical clustering
-dd.hz.site <- diana(d.hz.site)
+dd.hz.site <- diana(D)
 
 # plot dendrogram + profiles
-par(mar=c(2,1,3,1))
-plotProfileDendrogram(x, dd.hz.site, scaling.factor = 0.008, y.offset = 0.1, width=0.15, color='texture_class', name='fake.name', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'))
+par(mar = c(2,1,3,1))
+plotProfileDendrogram(x, dd.hz.site, scaling.factor = 0.008, y.offset = 0.1, width = 0.2, color='texture_class', label='pedon_id', cex.name=0.75, col.palette=brewer.pal(10, 'Spectral'), max.depth = 125)
+
 addVolumeFraction(x, 'total_frags_pct')
 ```
 
