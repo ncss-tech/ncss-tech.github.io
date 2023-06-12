@@ -61,7 +61,7 @@ w <- s[1:n, ]
 
 # check
 par(mar=c(0,0,0,0))
-plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.06)
+plotSPC(w, color = 'moist_soil_color', cex.names = 0.75, width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.06)
 ```
 
 Regularize horizons / colors to $k$ rows.
@@ -227,7 +227,7 @@ for(i in seq_along(m)) {
 # text(x = seq_along(s), y = 0.33, labels = site(s)$id[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
 # text(x = seq_along(s), y = 0.33, labels = s$subgroup[d$order], cex = 0.5, srt = 45, adj = 0, font = 2)
 
-text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 45, adj = 0, font = 2)
+# text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 45, adj = 0, font = 2)
 
 # dev.off()
 ```
