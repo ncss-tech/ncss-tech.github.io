@@ -224,7 +224,7 @@ for(i in seq_along(m)) {
 }
 
 # annotate 
-# text(x = seq_along(s), y = 0.33, labels = site(s)$id[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
+text(x = seq_along(s), y = 0.33, labels = site(s)$id[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
 # text(x = seq_along(s), y = 0.33, labels = s$subgroup[d$order], cex = 0.5, srt = 45, adj = 0, font = 2)
 
 # text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 45, adj = 0, font = 2)

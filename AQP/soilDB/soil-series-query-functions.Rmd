@@ -108,7 +108,7 @@ s <- fetchOSD(soils)
 s.dry <- fetchOSD(soils, colorState = 'dry')
 
 # quickly compare moist to dry colors
-par(mar=c(1,0,2,1), mfrow=c(2,1))
+par(mar = c(1,0,2,1), mfrow = c(2,1))
 plotSPC(s, name.style = 'center-center') ; title('Moist Colors')
 plotSPC(s.dry, name.style = 'center-center') ; title('Dry Colors')
 ```
@@ -121,7 +121,7 @@ kable_styling(kable(site(s)[, c('id', 'soilorder', 'suborder', 'greatgroup', 'su
 
 ```{r fig.width = 8, fig.height = 4}
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, scaling.factor = 0.02, width = 0.28, name.style = 'center-center')
+SoilTaxonomyDendrogram(s, scaling.factor = 0.02, width = 0.28, name.style = 'center-center', depth.axis = list(line = -4))
 ```
 
 Take a closer look at the object returned by `fetchKSSL`. Consult the [`SoilProfileCollection` reference](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) for details on the internal structure of `s` and relevant methods.
@@ -289,7 +289,7 @@ s.list <- unique(c(s$sib$series[1], s$sib$sibling))
 h <- fetchOSD(s.list)
 
 # plot dendrogram + profiles
-SoilTaxonomyDendrogram(h, y.offset = 0.4, width = 0.3, name.style = 'center-center')
+SoilTaxonomyDendrogram(h, y.offset = 0.4, width = 0.3, name.style = 'center-center', depth.axis = list(line = -3))
 ```
 
 Component data for the siblings of **Amador**. These can be used to generate a [co-occurence network](http://ncss-tech.github.io/AQP/sharpshootR/component-relation-graph.html).
@@ -353,8 +353,8 @@ kable_styling(kable(head(soils), format = 'html'), full_width = FALSE)
 
 s <- fetchOSD(soils$series)
 
-par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, y.offset = 0.4, scaling.factor = 0.0225, width = 0.28, name.style = 'center-center')
+par(mar = c(0, 0, 1, 1))
+SoilTaxonomyDendrogram(s, y.offset = 0.4, scaling.factor = 0.0225, width = 0.28, name.style = 'center-center', depth.axis = list(line = -3))
 ```
 
 
@@ -364,8 +364,8 @@ str(soils)
 
 s <- fetchOSD(soils$series)
 
-par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, width=0.3, scaling.factor = 0.02)
+par(mar = c(0,0,1,1))
+SoilTaxonomyDendrogram(s, width=0.3, scaling.factor = 0.02, depth.axis = list(line = -3))
 ```
 
 
@@ -375,7 +375,7 @@ soils <- OSDquery(taxonomic_class = 'duri:* & calc:*', mlra = '28B')
 s <- fetchOSD(soils$series)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s, y.offset = 0.4, width=0.3, scaling.factor = 0.02, shrink = TRUE)
+SoilTaxonomyDendrogram(s, y.offset = 0.4, width=0.3, scaling.factor = 0.02, shrink = TRUE, depth.axis = list(line = -3))
 ```
 
 ```{r fig.width=10, fig.height=6}
@@ -384,7 +384,7 @@ soils <- OSDquery(geog_assoc_soils = 'musick')
 s <- fetchOSD(soils$series, extended = TRUE)
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, width=0.3, scaling.factor = 0.02, shrink = TRUE)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, width=0.3, scaling.factor = 0.02, shrink = TRUE, depth.axis = list(line = -3))
 
 kable_styling(kable(s$mtnpos, digits = 2, format = 'html'), full_width = FALSE)
 # kable(s$pmorigin)
@@ -411,7 +411,7 @@ print(res$fig)
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
 par(mar=c(0, 0, 2, 0))
-plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
+plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Hillslope Position Proportions')
 ```
 
@@ -422,13 +422,13 @@ print(res$fig)
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
 par(mar=c(0, 0, 2, 0))
-plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
+plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Geomorphic Component Proportions')
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE, width = 0.28)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE, width = 0.28)
 ```
 
 
@@ -443,18 +443,18 @@ res <- vizHillslopePosition(s$hillpos)
 print(res$fig)
 
 par(mar=c(0, 0, 2, 0))
-plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
+plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Hillslope Position Proportions')
 
 res <- vizGeomorphicComponent(s$geomcomp)
 print(res$fig)
 
 par(mar=c(0, 0, 2, 0))
-plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE)
+plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Geomorphic Component Proportions')
 
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, plot.depth.axis = FALSE, width = 0.28)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE, width = 0.28)
 ```
 
 

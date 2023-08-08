@@ -138,7 +138,7 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 0))
+par(mar = c(1, 0, 1, 1))
 idx <- match(hydOrder(o$geom, g = 'hillpos', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
@@ -150,7 +150,7 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 0))
+par(mar = c(1, 0, 1, 1))
 idx <- match(hydOrder(o$geom, g = 'geomcomp', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
@@ -162,7 +162,7 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 0))
+par(mar = c(1, 0, 1, 1))
 idx <- match(hydOrder(o$geom, g = 'flats', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.1, name.style = 'center-center', cex.names = 0.65)
 ```
@@ -174,7 +174,7 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 0))
+par(mar = c(1, 0, 1, 1))
 idx <- match(hydOrder(o$geom, g = 'terrace', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
@@ -198,7 +198,7 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 0))
+par(mar = c(1, 0, 1, 1))
 idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
@@ -210,7 +210,7 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 0))
+par(mar = c(1, 0, 1, 1))
 idx <- match(hydOrder(o$geom, g = 'shape', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```

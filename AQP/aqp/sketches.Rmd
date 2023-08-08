@@ -90,7 +90,7 @@ musick.sim <- perturb(musick, n = 50, boundary.attr = 'hzb')
 # no margins
 par(mar = c(0, 0, 0, 0))
 # note other arguments used to improve legibility
-plotSPC(musick.sim, print.id = FALSE, name = NA, plot.depth.axis = TRUE, width = 0.4, divide.hz = FALSE, axis.line.offset = -4, cex.depth.axis = 0.75)
+plotSPC(musick.sim, print.id = FALSE, name = NA, width = 0.4, divide.hz = FALSE, depth.axis = list(line = -4, cex = 1))
 ```
 
 
@@ -133,10 +133,10 @@ x.sim <- perturb(x, n = 10, boundary.attr = 'hzd')
 par(mar = c(0, 0, 0, 0))
 
 # plot the source profile, leaving room for 11 profiles (n = 11)
-plotSPC(x, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, n = 11, id.style = 'side', cex.id = 0.66, fixLabelCollisions = TRUE, max.depth = 145)
+plotSPC(x, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, n = 11, id.style = 'side', cex.id = 0.66, fixLabelCollisions = TRUE, max.depth = 145)
 
 # add 10 simulations, offset 1 position to the right with x.idx.offset = 1
-plotSPC(x.sim, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, print.id = FALSE, add = TRUE, x.idx.offset = 1, fixLabelCollisions = TRUE)
+plotSPC(x.sim, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, print.id = FALSE, add = TRUE, x.idx.offset = 1, fixLabelCollisions = TRUE)
 
 # annotate simulations
 arrows(x0 = 2, x1 = 11, y0 = -15, y1 = -15, length = 0.1, code = 3)
@@ -158,7 +158,7 @@ par(mar = c(1.5, 0, 2, 1))
 plotSPC(osds, width = 0.2, name = NA)
 
 # add and shift dry color sketches to the left (-0.4 units)
-plotSPC(osds, width = 0.15, cex.names = 0.66, plot.depth.axis = FALSE, print.id = FALSE, name = NA, x.idx.offset = -0.4, add = TRUE, color = 'dry_color')
+plotSPC(osds, width = 0.15, cex.names = 0.66, depth.axis = FALSE, print.id = FALSE, name = NA, x.idx.offset = -0.4, add = TRUE, color = 'dry_color')
 
 # a title
 title('Moist and Dry Colors')
@@ -180,7 +180,7 @@ Shift all profile sketches down 300cm, leaving room for additional annotation ab
 ```{r fig.width=10, fig.height=10}
 par(mar = c(0, 0, 0, 0))
 
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = 300, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, plot.depth.axis = FALSE)
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, y.offset = 300, hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, depth.axis = FALSE)
 
 # fake data
 rect(xleft = (1:length(osds)) - 0.25, xright = (1:length(osds)) + 0.25, ybottom = 250, ytop = runif(n = length(osds), min = 0, max = 250), col = 4)
@@ -238,10 +238,10 @@ title('A Fake Diagram of Real Soils', line= -1.5)
 ## Profile Styling
 
 ### max.depth
-This is a suggested lower depth for the vertical axis, given in the same units as used by the `SoilProfileCollection`. Profiles deeper than `max.depth` are truncated and marked with a "ragged" bottom boundary.
+Set the maximum depth for soil profile sketches, given in the same units as used by the `SoilProfileCollection`. Profiles deeper than `max.depth` are truncated and marked with a "ragged" bottom boundary. Values deeper than the deepest profiles in the collection (e.g. `max(x)`) will extend the vertical dimension of the sketch to `max.depth`. This can be a handy way to include extra space below profile sketches for additional annotation.
 
 ```{r fig.width=10, fig.height=5}
-par(mar = c(0, 0, 0, 1))
+par(mar = c(1, 0, 0, 1))
 
 plotSPC(osds, cex.names = 0.66, name = NA, max.depth = 145)
 
@@ -284,9 +284,9 @@ vertical scaling of profile depths, useful for adding profiles to an existing fi
 par(mar = c(0, 0, 0, 0))
 
 # plot the source profile, leaving room for 11 profiles (n = 11)
-plotSPC(osds, cex.names = 0.66, name = NA, width = 0.25, plot.depth.axis = FALSE, hz.depths = TRUE, n = length(osds) * 2, print.id = FALSE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
+plotSPC(osds, cex.names = 0.66, name = NA, width = 0.25, depth.axis = FALSE, hz.depths = TRUE, n = length(osds) * 2, print.id = FALSE, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
 
-plotSPC(osds, cex.names = 0.66, name = NA, width = 0.25, plot.depth.axis = FALSE, hz.depths = TRUE, print.id = FALSE, add = TRUE, x.idx.offset = length(osds), scaling.factor = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
+plotSPC(osds, cex.names = 0.66, name = NA, width = 0.25, depth.axis = FALSE, hz.depths = TRUE, print.id = FALSE, add = TRUE, x.idx.offset = length(osds), scaling.factor = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
 
 arrows(x0 = length(osds) + 1, x1 = length(osds) * 2, y0 = -15, y1 = -15, length = 0.1, code = 3)
 mtext('scaling.factor = 0.5', side = 3, at = 12.5, line = -2.25, font = 2, adj = 0, cex = 0.85)
@@ -448,11 +448,11 @@ title('Subgroup Labels', line = -1)
 
 
 ### hz.depths
-When `TRUE`, small horizon depth labels are placed just to the right of horizon top depths (right justified). The results may be illegible if there are too many profiles in the collection or if profiles are too wide. Works best with `name.style = 'center-center'` and `plot.depth.axis = FALSE`.
+When `TRUE`, small horizon depth labels are placed just to the right of horizon top depths (right justified). The results may be illegible if there are too many profiles in the collection or if profiles are too wide. Works best with `name.style = 'center-center'` and `depth.axis = FALSE`.
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE)
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE)
 ```
 
 ### hz.depths.offset
@@ -460,7 +460,7 @@ Numeric values between 0.01--0.15 shift horizon depth annotation to the right of
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05)
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05)
 ```
 
 
@@ -469,7 +469,7 @@ When `TRUE`, segments are drawn between horizon depth labels and actual horizon 
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, hz.depths.lines = TRUE)
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, hz.depths.lines = TRUE)
 ```
 
 ### fixLabelCollisions
@@ -477,7 +477,7 @@ When `TRUE`, use `aqp::fixOverlap()` to attempt fixing horizon depth labeling co
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE)
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE)
 ```
 
 ### fixOverlapArgs
@@ -485,7 +485,7 @@ Pass additional arguments to `fixOverlap()` as a `list`. Fix overlapping labels 
 
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 0))
-plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, fixOverlapArgs = list(method = 'S'))
+plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, fixOverlapArgs = list(method = 'S'))
 ```
 
 ### alt.label and alt.label.col
@@ -527,7 +527,15 @@ par(mar = c(0, 0, 0, 1))
 site(osds)$rb <- TRUE
 
 plotSPC(osds, cex.names = 0.66, raggedBottom = 'rb', width = 0.33, name.style = 'center-center')
+
+# flag some profiles as being incomplete / truncated
+site(osds)$rb <- c(TRUE, FALSE, FALSE)
+
+plotSPC(osds, cex.names = 0.66, raggedBottom = 'rb', width = 0.33, name.style = 'center-center')
 ```
+
+A ragged bottom boundary is automatically added when `max.depth < max(x)`. Suppress this behavior by setting `raggedBottom = FALSE`.
+
 
 ### divide.hz
 logical, divide horizons with line segment? (`TRUE`). Often handy when plotting a very large collection or for a artistic flair. PNG or similar graphics devices are suggested when setting `divide.hz = FALSE`.
@@ -573,33 +581,33 @@ plotSPC(osds, cex.names = 0.66, name.style = 'center-center', width = 0.33, hz.t
 
 ## Depth Axis
 
-### plot.depth.axis
-Logical, include a depth axis on the right-hand side of the figure. You may have to increase the right-hand margin.
+The depth axis is controlled via `depth.axis` argument as of aqp 2.0. The `depth.axis` argument can take two forms: 
 
-### axis.line.offset
-Horizontal offset applied to depth axis (default is -2.5, larger numbers move the axis to the right).
+  * logical: `FALSE` (suppress the depth axis) or `TRUE` (use the default depth axis style)
+  * a list with named elements: specify some or all of the depth axis parameters
 
-### cex.depth.axis
-Scaling factor applied specifically to the depth axis.
+Depth axis parameters include:
+  
+  * `style`: legend style, either 'compact' or 'traditional' (aqp 1.x default)
+  * `line`: horizontal positioning, default is -2
+  * `cex`: scaling factor for entire axis
+  * `interval`: depth axis interval
+
+Increase the depth axis scaling factor, shift to the right, set interval to 15cm.
 ```{r fig.width=10, fig.height=5}
-par(mar = c(0, 0, 0, 3))
-plotSPC(osds, cex.names = 0.6, cex.depth.axis = 1.5, name.style = 'center-center', width = 0.3, plot.depth.axis = TRUE, hz.depths = TRUE, hz.depths.offset = 0.05, hz.depths.lines = TRUE)
+par(mar = c(0, 0, 0, 4))
+plotSPC(
+  osds, 
+  cex.names = 0.6, 
+  name.style = 'center-center', 
+  width = 0.3, 
+  depth.axis = list(cex = 0.75, line = -1.5, interval = 15)
+  )
 ```
 
-### n.depth.ticks
-Suggested number of ticks in depth axis.
+Backwards compatibility for aqp 1.x-style arguments is provided but a message is printed whenever the following arguments are used: `cex.depth.axis`, `axis.line.offset`, `plot.depth.axis`. These arguments will eventually be removed from `plotSPC()`.
 
-
-
-
-
-
-
-
-
-
-
-
+If you like the depth axis as used in aqp 1.x, set `depth.axis = list(style = 'traditional')`, or for all subsequent plots: `options(.aqp.plotSPC.args = depth.axis = list(style = 'traditional'))`
 
 
 
@@ -647,20 +655,20 @@ plotSPC(osds, id.style = 'top', width = 0.35)
 
 plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center')
 
-plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE)
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE)
 
-plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5)
+plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5)
 
-plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE)
+plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE)
 
-plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
+plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
 
 
 png(filename = 'figure.png', width = 1200, height = 900)
 
 # pdf(file = 'poster.pdf', width = 96, height = 42)
 
-plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
+plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
 
 dev.off()
 
@@ -686,11 +694,11 @@ plotSPC(osds, id.style = 'top', width = 0.35, name.style = 'center-center', colo
 
 par(mar = c(0, 0, 0, 2))
 
-plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', cex.id = 0.5, cex.names = 0.66, axis.line.offset = -1) 
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', cex.id = 0.5, cex.names = 0.66, depth.axis = list(line = -1)) 
 
-plotSPC(osds, width = 0.3, hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, axis.line.offset = -1) 
+plotSPC(osds, width = 0.3, hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, depth.axis = list(line = -1)) 
 
-plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, name = 'bnd.code', axis.line.offset = -1) 
+plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, name = 'bnd.code', depth.axis = list(line = -1)) 
 
 
 plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.5, cex.names = 0.66, name = 'bnd.code', hz.boundary.lty = 'hzto.lty') 

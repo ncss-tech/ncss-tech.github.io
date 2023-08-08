@@ -50,7 +50,6 @@ library(ape)
 library(scales)
 library(maps)
 library(tactile)
-
 ```
 
 ## Get Data
@@ -82,7 +81,7 @@ Plot sketches of the soils in this family, data are from OSDs via SoilWeb.
 ```{r fig.width=12, fig.height=6}
 # plot
 par(mar=c(0.25,0,1,1))
-plotSPC(spc, name.style = 'center-center', width = 0.3)
+plotSPC(spc, name.style = 'center-center', width = 0.3, max.depth = 210)
 mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
 ```
@@ -209,7 +208,7 @@ dd <- diana(d)
 Hang profile sketches from divisive hierarchical clustering of soil color signatures.
 ```{r fig.width=12, fig.height=5}
 par(mar = c(1,0,1,1))
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.2, cex.names=0.45, max.depth = 200)
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.28, y.offset = 2, width=0.2, cex.names=0.45)
 
 # annotate with family name
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
@@ -223,7 +222,7 @@ par(mar = c(0,0,0,0), bg = 'black', fg = 'white')
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 2, width=0.4, cex.names=0.45, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE, name=NA, default.color = grey(0.125), max.depth = 200)
+plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.28, y.offset = 2, width=0.4, cex.names=0.45, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, name=NA, default.color = grey(0.125), max.depth = 210)
 
 # annotate with family name
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
@@ -248,19 +247,19 @@ spc$gley <- factor(grepl('g', spc$hzname))
 spc$discontinuity <- factor(grepl('^[0-9]', spc$hzname))
 ```
 
-Thematic profile sketches illustrate the main differences. Horizon designations are ommitted to highlight major differences within the family.
+Thematic profile sketches illustrate the main differences. Horizon designations are omitted to highlight major differences within the family. Make additional vertial space for annotation by increasing the maximum depth within the figure to 220cm. 
 ```{r fig.width=10, fig.height=4}
 par(mar = c(0,0,3,1))
-plot(spc, color='gley', col.label='Gleyed Horizons', name='')
+plotSPC(spc, color='gley', col.label='Gleyed Horizons', name='', max.depth = 220)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 
-plot(spc, color='discontinuity', col.label='Discontinuity', name='')
+plotSPC(spc, color='discontinuity', col.label='Discontinuity', name='', max.depth = 220)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 
-plot(spc, color='texture_class', col.label='Texture Class', name='')
+plotSPC(spc, color='texture_class', col.label='Texture Class', name='', max.depth = 220)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 
-plot(spc, color='pH_class', col.label='pH Class', name='')
+plotSPC(spc, color='pH_class', col.label='pH Class', name='', max.depth = 220)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 ```
 
@@ -268,20 +267,21 @@ It is possible to quantitatively compare how these qualitative (and categorical)
 
 ```{r}
 # compute pair-wise distances using 4 morphologic indicators
+# to a maximum depth of 200cm
 pd <- NCSP(spc, vars = c('texture_class', 'pH_class', 'gley', 'discontinuity'), maxDepth = 200)
 
 # divisive hierarchical clustering of the distance matrix
 dd <- diana(pd)
 ```
 
-Sketches made from moist colors, arranged according to select indices of morphology as extracted from the OSDs.
+Sketches made from moist colors, arranged according to select indices of morphology as extracted from the OSDs. Profiles are truncated at 200cm.
 ```{r fig.width=10, fig.height=6} 
 par(mar = c(1,0,1,1))
 plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, max.depth = 200)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font = 4)
 ```
 
-Thematic sketches, arranged according to select indices of morphology as extracted from the OSDs. Trends are obvious.
+Thematic sketches, arranged according to select indices of morphology as extracted from the OSDs. Trends are clear
 ```{r fig.width=10, fig.height=6} 
 par(mar = c(1,0,3,1))
 plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='texture_class', col.label='Texture Class', max.depth = 200)
