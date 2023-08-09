@@ -592,8 +592,8 @@ Depth axis parameters include:
   * `line`: horizontal positioning, default is -2
   * `cex`: scaling factor for entire axis
   * `interval`: depth axis interval
-
-Increase the depth axis scaling factor, shift to the right, set interval to 15cm.
+  
+As of aqp 2.x, the depth axis is truncated near `max.depth`.
 ```{r fig.width=10, fig.height=5}
 par(mar = c(0, 0, 0, 4))
 plotSPC(
@@ -601,7 +601,8 @@ plotSPC(
   cex.names = 0.6, 
   name.style = 'center-center', 
   width = 0.3, 
-  depth.axis = list(cex = 0.75, line = -1.5, interval = 15)
+  depth.axis = list(cex = 0.75, line = -1.5, interval = 15),
+  max.depth = 225
   )
 ```
 

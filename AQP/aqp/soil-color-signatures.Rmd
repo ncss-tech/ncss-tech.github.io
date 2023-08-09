@@ -135,7 +135,7 @@ dd.colorBucket <- diana(d)
 
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 1.18, scaling.factor = 0.003, y.offset = 0.06, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 1.18, scaling.factor = 0.0037, y.offset = 0.06, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 
@@ -153,7 +153,7 @@ dd.depthSlices <- diana(d)
 
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.3, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.39, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 
@@ -171,7 +171,7 @@ d <- daisy(pig[, -1], stand = FALSE)
 dd.pam <- diana(d)
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.3, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.41, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 
@@ -179,13 +179,13 @@ plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.3, y.off
 ```{r fig.width=12, fig.height=16}
 par(mfrow = c(3, 1), mar=c(0,0,1,1))
 
-plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 1.18, scaling.factor = 0.003, y.offset = 0.06, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 1.18, scaling.factor = 0.0038, y.offset = 0.06, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 mtext('colorBucket', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 
-plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.3, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.38, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 mtext('depthSlices', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 
-plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.3, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.38, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 mtext('PAM', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 ```
 
@@ -220,7 +220,7 @@ d <- Reduce('+', delta.E00)
 dd <- diana(d)
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.45, y.offset = 7, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center')
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.55, y.offset = 7, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 ## Soil Color Art
@@ -233,7 +233,7 @@ par(mar=c(0,0,0,0), bg='black', fg='white', lend = 2)
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.33, y.offset = 2, width=0.4, name = NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE, hz.distinctness.offset = 'hzd')
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.55, y.offset = 2, width=0.4, name = NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, hz.distinctness.offset = 'hzd', max.depth = 210)
 ```
 
 
@@ -243,7 +243,7 @@ par(mar=c(0,0,0,0), lend = 2)
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 1.5, scaling.factor = 0.35, y.offset = 2, width = 0.4, name = NA, dend.type = 'cladogram', dend.width = 2, divide.hz=FALSE, print.id=FALSE, plot.depth.axis=FALSE, hz.distinctness.offset = 'hzd')
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 1.5, scaling.factor = 0.38, y.offset = 2, width = 0.4, name = NA, dend.type = 'cladogram', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, hz.distinctness.offset = 'hzd', max.depth = 210)
 ```
 
 
