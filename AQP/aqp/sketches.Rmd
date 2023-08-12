@@ -588,7 +588,7 @@ The depth axis is controlled via `depth.axis` argument as of aqp 2.0. The `depth
 
 Depth axis parameters include:
   
-  * `style`: legend style, either 'compact' or 'traditional' (aqp 1.x default)
+  * `style`: legend style, either 'traditional' (aqp 1.x default), 'compact', or 'tape' 
   * `line`: horizontal positioning, default is -2
   * `cex`: scaling factor for entire axis
   * `interval`: depth axis interval
@@ -608,7 +608,7 @@ plotSPC(
 
 Backwards compatibility for aqp 1.x-style arguments is provided but a message is printed whenever the following arguments are used: `cex.depth.axis`, `axis.line.offset`, `plot.depth.axis`. These arguments will eventually be removed from `plotSPC()`.
 
-If you like the depth axis as used in aqp 1.x, set `depth.axis = list(style = 'traditional')`, or for all subsequent plots: `options(.aqp.plotSPC.args = depth.axis = list(style = 'traditional'))`
+If you like the depth axis as used in aqp 1.x, set `depth.axis = list(style = 'traditional')`, or for all subsequent plots: `options(.aqp.plotSPC.args  = list(style = 'traditional'))`
 
 
 
