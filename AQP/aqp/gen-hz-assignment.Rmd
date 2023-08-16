@@ -75,7 +75,6 @@ library(sharpshootR)
 library(igraph)
 library(ape)
 library(latticeExtra)
-library(plyr)
 library(lattice)
 library(cluster)
 library(MASS)
@@ -87,11 +86,12 @@ While the methods outlined in this document can be applied to any collection of 
 ```{r load-data, fig.width=9, fig.height=4, htmlcap='15 pedons correlated to the Loafercreek soil series.'}
 # load sample data from the soilDB package
 data(loafercreek, package = 'soilDB')
-# keep only the first 15 pedons
-pedons <- loafercreek[1:15, ]
-# plot profile sketches
-par(mar=c(0,0,0,0))
-plot(pedons, name='hzname', print.id=FALSE, cex.names=0.75, axis.line.offset=-4)
+# keep only the first n pedons
+pedons <- loafercreek[1:20, ]
+# tighter margins
+par(mar = c(0, 0, 0, 1))
+# profile sketches with customization of style
+plotSPC(pedons, print.id = FALSE, max.depth = 150, cex.names = 0.66, width = 0.35, name.style = 'center-center', depth.axis = list(style = 'compact', line = -2))
 ```
 
 
@@ -121,15 +121,15 @@ In this case, [`r names(sort(table(pedons$hzname), decreasing=TRUE))[1:4]`] hori
 Constructing a graph of transitions from one horizon to the next ("transition probabilities") can highlight those horizon designations that are most commonly used together. A follow-up tutorial on transition probability matrix interpretation is planned.
 ```{r transition-probabilities, fig.width=6, fig.height=6, out.width="80%", htmlcap='Graph constructed from transition probabilities.'}
 tp <- hzTransitionProbabilities(pedons, 'hzname')
-par(mar=c(1,1,1,1))
-plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size=0.5, edge.scaling.factor=2, vertex.label.cex=0.75, vertex.label.family='sans')
+par(mar = c(1, 1, 1, 1))
+plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size = 0.5, edge.scaling.factor = 2, vertex.label.cex = 0.75, vertex.label.family = 'sans')
 ```
 
 
 A quick summary of horizon depth mid-points (e.g., average depth of horizon) can help in organizing the various designations and possibly give some clues as to how they can be grouped. The following plot is called a [box and whisker plot](http://en.wikipedia.org/wiki/Box_plot).
 
 
-```{r horizonation-mid-point, fig.width=9, fig.height=4, htmlcap='Range in horizon depth mid-point for original horizon designations.'}
+```{r horizonation-mid-point, fig.width=10.5, fig.height=4, htmlcap='Range in horizon depth mid-point for original horizon designations.'}
 # compute horizon mid-points
 pedons$mid <- with(horizons(pedons), (hzdept + hzdepb) / 2)
 
@@ -149,7 +149,7 @@ bwplot(mid ~ factor(hzname, levels=hz.designation.by.median.depths),
 
 Next, a similar summary of soil properties (clay content and total rock fragment volume) is presented. The goal is to determine which horizons designations can be grouped and which generalized horizon labels to assign to each group.
 
-```{r univariate-eval-clay, fig.width=9, fig.height=4, htmlcap='Range in clay content for original horizon designations.'}
+```{r univariate-eval-clay, fig.width=10.5, fig.height=4, htmlcap='Range in clay content for original horizon designations.'}
 # box and wisker plot by clay content
 bwplot(clay ~ factor(hzname, levels=hz.designation.by.median.depths), 
        data=horizons(pedons), 
@@ -161,7 +161,7 @@ bwplot(clay ~ factor(hzname, levels=hz.designation.by.median.depths),
 })
 ```
 
-```{r univariate-eval-rf, fig.width=9, fig.height=4, htmlcap='Range in total rock fragment content for original horizon designations.'}
+```{r univariate-eval-rf, fig.width=10.5, fig.height=4, htmlcap='Range in total rock fragment content for original horizon designations.'}
 # box and wisker plot by total rock fragment volume
 bwplot(total_frags_pct ~ factor(hzname, levels=hz.designation.by.median.depths), 
        data=horizons(pedons), 
@@ -177,8 +177,8 @@ bwplot(total_frags_pct ~ factor(hzname, levels=hz.designation.by.median.depths),
 Sometimes looking at thematic soil profile sketches can be informative.
 ```{r thematic-profile-sketch, fig.width=9, fig.height=4, htmlcap='Horizon colors are based on clay content.'}
 # color horizons by clay content
-par(mar=c(0,0,3,0))
-plot(pedons, name='hzname', print.id=FALSE, cex.names=0.75, axis.line.offset=-4, color='clay')
+par(mar = c(0, 0, 3, 1))
+plotSPC(pedons, print.id = FALSE, max.depth = 150, cex.names = 0.66, width = 0.35, name.style = 'center-center', depth.axis = list(style = 'compact', line = -2), color='clay')
 ```
 
 ## Assignment of Generalized Horizon Labels
@@ -191,10 +191,10 @@ From the above analysis and the [OSD](https://soilseries.sc.egov.usda.gov/OSD_Do
 # save our GHL
 n <- c('A','Bt1','Bt2','Bt3','Cr','R')
 # REGEX rules
-p <- c('^A$|Ad|Ap',
-       'Bt1$',
+p <- c('^A$|Ad|Ap|A1|A2',
+       'Bt1$|^Bt$',
        '^Bt2$',
-       '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$',
+       '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$|2BC',
        'Cr',
        'R')
 ```
@@ -215,8 +215,8 @@ It is also possible to display GHL assignment as a network [graph](https://en.wi
 # convert contingency table -> adj. matrix
 m <- genhzTableToAdjMat(tab)
 # plot using a function from the sharpshootR package
-par(mar=c(1,1,1,1))
-plotSoilRelationGraph(m, graph.mode = 'directed', edge.arrow.size=0.5)
+par(mar = c(1,1,1,1))
+plotSoilRelationGraph(m, graph.mode = 'directed', edge.arrow.size = 0.5)
 ```
 
 
@@ -226,12 +226,14 @@ An initial evaluation of our GHL assignment can be accomplished by plotting prof
 ```{r plot-ghl-1, fig.width=9, fig.height=4, htmlcap='Horizon colors are based on assigned GHL.'}
 # make a palette of colors, last color is for not-used class
 cols <- c(grey(0.33), 'orange', 'orangered', 'chocolate', 'green', 'blue', 'yellow')
+
 # assign a color to each generalized horizon label
 hz.names <- levels(pedons$genhz)
 pedons$genhz.soil_color <- cols[match(pedons$genhz, hz.names)]
+
 # plot generalized horizons via color and add a legend
-par(mar=c(4,0,0,0))
-plot(pedons, name='hzname', print.id=FALSE, cex.names=0.75, axis.line.offset=-4, color='genhz.soil_color')
+par(mar = c(2,1,0,2))
+plotSPC(pedons, print.id = FALSE, max.depth = 150, cex.names = 0.66, width = 0.35, name.style = 'center-center', depth.axis = list(style = 'compact', line = -2), color = 'genhz.soil_color')
 legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22, bty='n', cex=1)
 ```
 
@@ -239,7 +241,7 @@ legend('bottomleft', legend=hz.names, pt.bg=c(cols), pch=22, bty='n', cex=1)
 A box and whisker plot of the depth-ranges for each of the generalized horizon labels helps to visualize the degree of overlap. [Slicing](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) the collection of profiles along 1-cm intervals generates a more precise figure.
 ```{r plot-ghl-2, fig.width=6, fig.height=5, htmlcap='Range in GHL horizon depth.'}
 # slice profile collection from 0-150 cm
-s <- slice(pedons, 0:150 ~ genhz)
+s <- dice(pedons, 0:150 ~ genhz)
 # convert horizon name back to factor, using original levels
 s$genhz <- factor(s$genhz, levels = hz.names)
 # plot depth-ranges of generalized horizon slices
@@ -263,11 +265,14 @@ The evaluation of generalized horizon labels typically requires a review of more
 ```{r evaluate-genhz-assignment}
 # store the column names of our variables of interest
 vars <- c('clay', 'mid', 'total_frags_pct')
+
 # result is a list of several items
 hz.eval <- evalGenHZ(pedons, 'genhz', vars)
+
 # extract MDS coords
 pedons$mds.1 <- hz.eval$horizons$mds.1
 pedons$mds.2 <- hz.eval$horizons$mds.2
+
 # extract silhouette widths and neighbor
 pedons$sil.width <- hz.eval$horizons$sil.width
 pedons$neighbor <- hz.eval$horizons$neighbor
@@ -299,8 +304,8 @@ mdsplot +
 The [silhouette width](http://www.sciencedirect.com/science/article/pii/0377042787901257) metric is a useful indicator of how consistently group labels partition observations in a dissimilarity matrix. Silhouette widths closer to 1 indicate excellent partitioning, while values closer to 0 indicate less effective partitioning. Silhouette widths less than 0 are often associated with inappropriate label assignment. A sketch of profiles with horizons colored by silhouette width can indicate possible horizons with inappropriate GHL assignment or a pedon that does not fit within the concept of Loafercreek. For example, many of the horizons associated with pedon ID 09CKS036 do not appear to fit within the collection of soil properties associated with generalized horizon labels "Bt1", "Bt2", and "Bt3". Keep in mind that this evaluation is only based on three soil properties-- expert judgement will be required for a final assignment of GHL.
 ```{r silhouette-sketch, fig.width=9, fig.height=4, htmlcap='Blue and green colors warrant further investigation.'}
 # plot silhouette width metric
-par(mar=c(0,0,3,0))
-plot(pedons, name='hzname', label='pedon_id', cex.names=0.75, axis.line.offset=-4, color='sil.width')
+par(mar = c(0, 0, 3, 1))
+plot(pedons, label='pedon_id', cex.id = 0.5, max.depth = 150, cex.names = 0.66, width = 0.35, name.style = 'center-center', depth.axis = list(style = 'compact', line = -2), color='sil.width')
 ```
 
 
@@ -323,8 +328,9 @@ Plot profiles with only those horizons with silhouette widths less than 0 flagge
 ```{r silhouette-sketch-flagged, fig.width=9, fig.height=4, htmlcap='Horizons with red colors warrant further investigation.'}
 # add a column containing a color (red) that flags horizons with silhouette width less than 0
 pedons$sil.flag <- ifelse(pedons$sil.width < 0, 'red', 'white')
-par(mar=c(0,0,3,0))
-plot(pedons, name='hzname', label='pedon_id', cex.names=0.75, axis.line.offset=-4, color='sil.flag')
+
+par(mar = c(0, 0, 1, 1))
+plotSPC(pedons, label = 'pedon_id', cex.id = 0.5, max.depth = 150, cex.names = 0.66, width = 0.35, name.style = 'center-center', depth.axis = list(style = 'compact', line = -2), color='sil.flag')
 ```
 
 ## Saving GHL to NASIS
