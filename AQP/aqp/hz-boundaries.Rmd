@@ -126,11 +126,11 @@ plotSPC(osds, width = 0.3, cex.id = 0.66, cex.names = 0.55)
 Using the horizon boundary data from the OSDs and encoding via “diagonals” (distinctness) and “chevrons” (topography), we see the following. Note that horizon boundary topography has also been encoded via line type for clarity. What do you think? Is this an improvement or just clutter? Feel free to contact me with questions, suggestions, or a completely different approach to increasing the information density of these sketches. The code used to generate these figures is posted on the {aqp} GitHub site.
 
 ```{r fig.width=10, fig.height=5}
-par(mar = c(0, 0, 0, 1), bg = 'black', fg = 'white')
+par(mar = c(1, 0.5, 0, 1.5), bg = 'black', fg = 'white')
 
 plotSPC(osds, width = 0.3, hz.distinctness.offset = 'hd', hz.topography.offset = 'hzto', cex.id = 0.66, cex.names = 0.55, hz.boundary.lty = 'hzto.lty') 
 
-legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.05, bty = 'n', cex = 0.85)
+legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = -0.01, bty = 'n', cex = 0.85)
 ```
 
 
@@ -180,8 +180,8 @@ s <- combine(l)
 s$source <- sprintf("%s%s", g$distinctness, g$topography)
 
 # make a figure
-par(mar=c(0,0,2,1), bg = 'black', fg = 'white')
-plotSPC(s, width=0.33, print.id=TRUE, hz.distinctness.offset = 'hd', hz.topography.offset = 'ht', label='source', cex.names=0.8, name = NA, color = NA, default.color = 'black', hz.boundary.lty = 'ht.lty')
+par(mar = c(1, 0, 2, 2), bg = 'black', fg = 'white')
+plotSPC(s, width = 0.33, print.id=TRUE, hz.distinctness.offset = 'hd', hz.topography.offset = 'ht', label='source', cex.names=0.8, name = NA, color = NA, default.color = 'black', hz.boundary.lty = 'ht.lty', max.depth = 185)
 title('Horizon Boundary Types', line = 0, col.main = 'white')
 
 # label original horizon depths
@@ -189,7 +189,7 @@ p.seq <- rep(1:length(s), each = nrow(s[1, ]))
 points(x = p.seq, y = s$bottom, pch = 15, col = 'green', cex = 0.5)
 
 # line type legend
-legend('bottom', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0.1)
+legend('bottom', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'), lty = 1:4, inset = 0)
 ```
 
 
@@ -228,7 +228,7 @@ s$source <- c('none', 'very abrupt', 'abrupt', 'clear', 'gradual', 'diffuse')
 z <- combine(x, s)
 
 # plot
-par(mar = c(0, 0, 2, 1), bg = 'black', fg = 'white')
+par(mar = c(0, 0, 2, 2), bg = 'black', fg = 'white')
 plotSPC(z, width=0.33, print.id=TRUE, hz.distinctness.offset = 'hd', label='source', cex.names=0.75)
 title('Horizon Boundary Distinctness', line = 0, col.main = 'white')
 ```
@@ -264,7 +264,7 @@ s$source <- c('smooth', 'wavy', 'irregular', 'broken')
 # combine OSD with horizon topography demo profiles
 z <- combine(x, s)
 
-par(mar = c(0, 0, 2, 1), bg = 'black', fg = 'white')
+par(mar = c(0, 0, 2, 2), bg = 'black', fg = 'white')
 plotSPC(z, width=0.25, print.id=TRUE, hz.topography.offset = 'hzto', label='source', cex.names=0.75)
 title('Horizon Boundary Topography', line = 0, col.main = 'white')
 ```
@@ -285,8 +285,8 @@ s <- horizons(osds)[, c(idname(osds), hdn, 'hd')]
 s$top <- s$bottom - s$hd
 s$bottom <- s$bottom + s$hd
 
-par(mar = c(0, 0, 0, 1))
-plotSPC(osds, width = 0.25, cex.id = 0.66, cex.names = 0.55, hz.distinctness.offset = 'hd') 
+par(mar = c(0, 0, 0, 1.5))
+plotSPC(osds, width = 0.25, cex.id = 0.66, cex.names = 0.55, hz.distinctness.offset = 'hd', max.depth = 200) 
 
 # encode with brackets
 addBracket(s, tick.length = 0, offset = -0.33, lwd = 5, col=rgb(red=0, green=0, blue=1, alpha=0.5))
@@ -294,7 +294,7 @@ addBracket(s, tick.length = 0, offset = -0.33, lwd = 5, col=rgb(red=0, green=0, 
 
 ```{r fig.width=10, fig.height=5.5}
 par(mar = c(0, 0, 0, 0))
-plotSPC(osds, width = 0.25, cex.id = 0.66, cex.names = 0.55, name.style = 'center-center', hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.08, plot.depth.axis = FALSE) 
+plotSPC(osds, width = 0.25, cex.id = 0.66, cex.names = 0.55, name.style = 'center-center', hz.depths = TRUE, fixLabelCollisions = TRUE, hz.depths.offset = 0.08, depth.axis = FALSE, hz.distinctness.offset = 'hd', max.depth = 200) 
 
 addBracket(s, tick.length = 0, offset = -0.33, lwd = 5, col=rgb(red=0, green=0, blue=1, alpha=0.5))
 ```
