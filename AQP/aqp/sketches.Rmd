@@ -136,7 +136,7 @@ par(mar = c(0, 0, 0, 0))
 plotSPC(x, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, n = 11, id.style = 'side', cex.id = 0.66, fixLabelCollisions = TRUE, max.depth = 145)
 
 # add 10 simulations, offset 1 position to the right with x.idx.offset = 1
-plotSPC(x.sim, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, print.id = FALSE, add = TRUE, x.idx.offset = 1, fixLabelCollisions = TRUE)
+plotSPC(x.sim, cex.names = 0.66, name.style = 'center-center', width = 0.3, depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, print.id = FALSE, add = TRUE, x.idx.offset = 1, fixLabelCollisions = TRUE, max.depth = 145)
 
 # annotate simulations
 arrows(x0 = 2, x1 = 11, y0 = -15, y1 = -15, length = 0.1, code = 3)

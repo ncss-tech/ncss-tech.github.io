@@ -18,17 +18,20 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 
 Setup R session.
 ```{r}
-# latest version from github
+# latest versions from github
 library(aqp)
 library(soilDB)
 library(sharpshootR)
 
+# CRAN versions are fine
 library(cluster)
 library(MASS)
 library(lattice)
 library(tactile)
 
 library(vegan)
+
+library(rms)
 ```
 
 
@@ -39,7 +42,7 @@ x <- fetchOSD(c('musick', 'drummer', 'sierra'))
 
 # sketch using horizon boundary encoded
 par(mar = c(0, 0, 0, 0))
-plotSPC(x, hz.distinctness.offset = 'hzd', name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.75)
+plotSPC(x, hz.distinctness.offset = 'hzd', name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.75)
 ```
 
 Emphasize horizon boundary codes / translation to vertical variation.
@@ -47,7 +50,7 @@ Emphasize horizon boundary codes / translation to vertical variation.
 x$hz.bdy.txt <- sprintf("%s: %scm", x$distinctness, x$hzd)
 
 par(mar = c(0, 0, 0, 0))
-plotSPC(x, hz.distinctness.offset = 'hzd', name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, name = 'hz.bdy.txt', cex.names = 0.75)
+plotSPC(x, hz.distinctness.offset = 'hzd', name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, name = 'hz.bdy.txt', cex.names = 0.75)
 ```
 
 
@@ -74,7 +77,7 @@ s <- combine(
 
 # neat
 par(mar=c(0,0,0,0))
-plotSPC(s, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, width = 0.3, cex.names = 0.75)
+plotSPC(s, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, width = 0.3, cex.names = 0.75)
 ```
 
 
@@ -94,7 +97,7 @@ s <- trunc(s, 0, 150)
 # no foreground color (normally white)
 # looks like a cake
 par(mar=c(0,0,0,0), fg = NA)
-plotSPC(s, print.id = FALSE, name = NA, divide.hz = FALSE, plot.depth.axis = FALSE, width=0.55, x.idx.offset = 2, y.offset = -15)
+plotSPC(s, print.id = FALSE, name = NA, divide.hz = FALSE, depth.axis = FALSE, width=0.55, x.idx.offset = 2, y.offset = -15)
 ```
 
 ```{r fig.width=12, fig.height=6, dev='png', fig.retina=2}
@@ -109,7 +112,7 @@ s <- perturb(
 s <- trunc(s, 0, 150)
 
 par(mar=c(0,0,0,0), fg=NA)
-plotSPC(s, print.id=FALSE, name=NA, divide.hz = FALSE, plot.depth.axis = FALSE, width=0.55, x.idx.offset = 2, y.offset = -15)
+plotSPC(s, print.id=FALSE, name=NA, divide.hz = FALSE, depth.axis = FALSE, width=0.55, x.idx.offset = 2, y.offset = -15)
 ```
 
 
