@@ -8,22 +8,32 @@ output:
     jquery: null
     smart: no
 ---
-  
-  
+
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background = '#F7F7F7', 
+  fig.align = 'center', 
+  dev = 'svglite', 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+
+options(width = 100, stringsAsFactors = FALSE)
 ```
 
 
 TODO: 
 
-   * write definitions
-   * demonstrate major/minor siblings
-   * extend with joint area calculation
+* write definitions
+* demonstrate major/minor siblings
+* extend with joint area calculation
 
 
 Recreate functionality of previous API.
@@ -34,6 +44,7 @@ library(latticeExtra)
 library(reshape2)
 library(cluster)
 library(ape)
+library(corrplot)
 
 # new function as of 2.2-8
 # get sibling data for Amador soil series via SoilWeb
@@ -43,23 +54,56 @@ s <- siblings('amador', component.data = TRUE)
 str(s)
 
 # convert into adjacency matrix
-m <- component.adj.matrix(s$sib.data[s$sib.data$compkind == 'Series', ], mu = 'mukey', co = 'compname', wt = 'comppct_r')
+m <- component.adj.matrix(
+  s$sib.data[s$sib.data$compkind == 'Series', ], 
+  mu = 'mukey', 
+  co = 'compname', 
+  wt = 'comppct_r'
+)
+```
 
+A simple depiction of the resulting adjacency matrix. Cell values are adjacency weight (strength of association).
+```{r fig.width=10}
+.cp <- c('white', hcl.colors(25))
+
+corrplot(
+  m, 
+  col = .cp, 
+  is.corr = FALSE, 
+  diag = TRUE,
+  col.lim = c(0, 1), 
+  method = "color",
+  type = "upper", 
+  tl.pos = "td",
+  tl.cex = 0.8,
+  tl.col = 'black',
+  addgrid.col = 'black'
+) 
+
+```
+
+Adjacency as a network.
+```{r fig.width=10}
 # plot network diagram, with Amador soil highlighted
-par(mar=c(0.5,0.5,0.5,0.5))
-plotSoilRelationGraph(m, s='Amador', vertex.scaling.factor=2, edge.transparency=0.75, edge.col=grey(0.85), edge.highlight.col='black', vertex.label.family='sans')
+par(mar = c(0.5,0.5,0.5,0.5))
+
+plotSoilRelationGraph(
+  m, 
+  s = 'Amador', 
+  vertex.scaling.factor = 2, 
+  edge.transparency = 0.75, 
+  edge.col = grey(0.85), 
+  edge.highlight.col = 'black', 
+  vertex.label.family = 'sans'
+)
 ```
 
 
 Sibling type and counts.
-```{r}
-kable_styling(kable(s$sib, format = 'html'), full_width = FALSE, font_size = 10)
+```{r echo=FALSE}
+kableExtra::kable_styling(knitr::kable(s$sib, format = 'html'), full_width = FALSE, font_size = 10)
 ```
 
-Combine counts for major/minor siblings.
-```{r eval=FALSE}
-plyr::ddply(s$sib, c('series', 'sibling'), .fun=plyr::summarise, n=sum(n))
-```
 
 Split sibling lists and get basic morphology from OSDs.
 ```{r}
@@ -75,17 +119,17 @@ h.all <- fetchOSD(all.siblings)
 
 Siblings that are major components.
 ```{r fig.width=7}
-SoilTaxonomyDendrogram(h.major)
+SoilTaxonomyDendrogram(h.major, depth.axis = list(line = -4))
 ```
 
 All siblings.
 ```{r fig.width=10}
-SoilTaxonomyDendrogram(h.all, width = 0.3)
+SoilTaxonomyDendrogram(h.all, width = 0.3, depth.axis = list(line = -3.5))
 ```
 
 
-Cousin lookup.
-```{r eval=FALSE}
+Cousins are siblings of siblings. This can generate a lot of output.
+```{r}
 # takes a while to run, there will be duplicates in counsins here
 s <- siblings('amador', component.data = TRUE, cousins = TRUE)
 
@@ -97,12 +141,44 @@ d <- d[which(d$compkind == 'Series'), ]
 
 # convert into adjacency matrix
 m <- component.adj.matrix(d, mu = 'mukey', co = 'compname', wt = 'comppct_r')
+```
 
+Adjaceny matrix.
+```{r fig.width=15, fig.height=15}
+corrplot(
+  m, 
+  col = .cp, 
+  is.corr = FALSE, 
+  diag = TRUE,
+  col.lim = c(0, 1), 
+  method = "color",
+  type = "upper", 
+  tl.pos = "td",
+  tl.cex = 0.8,
+  tl.col = 'black',
+  addgrid.col = 'black'
+) 
+```
+
+Adjaceny network.
+```{r fig.width=15, fig.height=15}
 # plot network diagram, with Amador soil highlighted
 par(mar=c(1,1,1,1))
-plotSoilRelationGraph(m, s='Amador')
+
+plotSoilRelationGraph(
+  m, 
+  s = 'Amador',
+  vertex.scaling.factor = 2, 
+  edge.transparency = 0.75, 
+  edge.col = grey(0.85), 
+  edge.highlight.col = 'black', 
+  vertex.label.family = 'sans'
+)
+```
 
 
+Try on your own, this is too much data to "see" all in one figure.
+```{r eval=FALSE}
 # fetch and convert data into an SPC
 h <- fetchOSD(c(s$sib$series[1], unique(s$cousins$sibling)))
 
@@ -117,13 +193,13 @@ s.all.siblings <- fetchOSD(all.siblings, extended = TRUE)
 ```
 
 Compare hillslope position.
-```{r fig.width=12, fig.height=5, echo=FALSE}
+```{r fig.width=10, fig.height=6, echo=FALSE}
 res <- vizHillslopePosition(s.all.siblings$hillpos, s = 'AMADOR')
 print(res$fig)
 ```
 
 Compare geomorphic component.
-```{r fig.width=12, fig.height=5, echo=FALSE}
+```{r fig.width=10, fig.height=6, echo=FALSE}
 res <- vizGeomorphicComponent(s.all.siblings$geomcomp, s = 'AMADOR')
 print(res$fig)
 ```
