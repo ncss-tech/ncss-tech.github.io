@@ -767,7 +767,15 @@ Sometimes you need details from a sketch for further annotation; profile orderin
 ```{r fig.width=10, fig.height=5}
 # re-order by max profile depth
 # note this is not the same as soil depth (e.g. to contact)
+
+# compute bottom-most horizon depth
 .depths <- profileApply(osds, max)
+
+# or, use [-style indexing and keywords
+# "last horizon of each profile" and "bottom depth"
+.depths <- osds[, , .LAST, .BOTTOM]
+
+# shallow -> deep ordering
 .order <- order(.depths)
 
 # make a sketch
@@ -779,7 +787,12 @@ lastPP <- get("last_spc_plot", envir = aqp.env)
 str(lastPP)
 
 # use plot order (from metadata) to annotate
-text(x = seq_along(osds), y = .depths[.order] + 5, labels = .depths[.order], cex = 0.55)
+text(
+  x = seq_along(osds), 
+  y = .depths[lastPP$plot.order] + 5, 
+  labels = .depths[lastPP$plot.order], 
+  cex = 0.55
+)
 ```
 
 
