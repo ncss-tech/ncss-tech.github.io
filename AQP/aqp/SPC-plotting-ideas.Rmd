@@ -23,7 +23,7 @@ This is a work in progress, please see the in-line comments for a description of
 library(soilDB)
 library(aqp)
 library(sharpshootR)
-library(sp)
+library(sf)
 library(scales)
 
 # sample data from soilDB packaeg
@@ -52,13 +52,17 @@ s <- s[, c('peiid', 'psctopdepth', 'pscbotdepth')]
 
 # re-name for addBrackets() function
 names(s)[2:3] <- c('top', 'bottom') 
+```
 
+```{r fig.width=9, fig.height=5}
 # plot sketches and annotate with PSCS
-par(mar=c(1,1,1,1))
+par(mar = c(1, 1, 1, 1))
+
 # omit pedon IDs for now
-plotSPC(x, print.id = TRUE)
+plotSPC(x, print.id = TRUE, max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
+
 # add PSCS brackets as vertical var
-addBracket(s, offset = -0.33, tick.length = 0, lwd = 10, col = rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, offset = -0.38, tick.length = 0, lwd = 10, col = rgb(red=0, green=0, blue=1, alpha=0.25))
 
 # check structure of diagnostic horizon data
 head(diagnostic_hz(x))
@@ -67,8 +71,8 @@ head(diagnostic_hz(x))
 # sort(table(diagnostic_hz(x)$featkind))
 
 # add brackets for some diagnostic features
-addDiagnosticBracket(x, offset = -0.33, kind='argillic horizon', col='red')
-addDiagnosticBracket(x, offset = -0.33, kind='paralithic contact', col='black')
+addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 ```
 
 Align profiles to an elevation gradient, regular spacing of sketches.
@@ -93,7 +97,7 @@ mtext('Elevation (m)', side = 1, line = 3.25)
 ```
 
 Align profiles to an elevation gradient, relative spacing of sketches. Note that figure elements need to be explicitly ordered with `[new.order]`.
-```{r fig.width=8, fig.height=5}
+```{r fig.width=9, fig.height=5}
 pos <- rescale(x$elev_field, to = c(1, length(x)))
 pos <- fixOverlap(pos, thresh = 0.65)
 
@@ -101,11 +105,11 @@ new.order <- order(x$elev_field)
 
 # plot profiles in the new order
 par(mar=c(4.5,1,1,1))
-plotSPC(x, plot.order = new.order, print.id = TRUE, relative.pos = pos[new.order])
+plotSPC(x, plot.order = new.order, print.id = TRUE, relative.pos = pos[new.order], , max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
-addDiagnosticBracket(x, kind='argillic horizon', col='red')
+addBracket(s, offset = -0.33, tick.length = 0, lwd=8, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, offset = -0.33, kind='argillic horizon', col='red')
 
 # add an axis with elevation associated with each profile
 axis(side=1, at = pos[new.order], labels = x$elev_field[new.order], line = 1)
@@ -118,58 +122,46 @@ mtext('Elevation (m) | Not to Scale', side = 1, line = 3.25)
 Test out some new features in `aqp`.
 ```{r fig.width=8, fig.height=8}
 par(mar=c(4.5,1,3,1))
-plot(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE)
+plotSPC(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE, max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
-addDiagnosticBracket(x, kind='argillic horizon', col='red')
-addDiagnosticBracket(x, kind='paralithic contact', col='black')
+addBracket(s, offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 
 addVolumeFraction(x, 'total_frags_pct')
 
 
-plot(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE, relative.pos=jitter(1:length(x)))
+plotSPC(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE, relative.pos=jitter(1:length(x)), max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
-addDiagnosticBracket(x, kind='argillic horizon', col='red')
-addDiagnosticBracket(x, kind='paralithic contact', col='black')
+addBracket(s, offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 
 addVolumeFraction(x, 'total_frags_pct')
 
 
-plot(x, color='total_frags_pct', print.id=FALSE, relative.pos=jitter(1:length(x)))
+plotSPC(x, color='total_frags_pct', print.id=FALSE, relative.pos=jitter(1:length(x)), max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
-addDiagnosticBracket(x, kind='argillic horizon', col='red')
-addDiagnosticBracket(x, kind='paralithic contact', col='black')
+addBracket(s, offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
+addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 
 addVolumeFraction(x, 'total_frags_pct')
 ```
 
 
-
-
-```{r fig.width=8, fig.height=8}
-## plot data as a transect, using coordinates and elevation
-
-# initialize spatial object in SPC
-coordinates(x) <- ~ x_std + y_std
-# set coordinate reference system (CRS)
-proj4string(x) <- '+proj=longlat +datum=WGS84'
-
-# this example requires projected coordinates, units of meters
-# we provide a local, projected CRS: UTM z10 NAD83
-par(mar=c(4.5,4,1,1))
-plotTransect(x, grad.var.name = 'elev_field', crs = CRS('+proj=utm +zone=10 +datum=NAD83'))
-```
 
 
 Grouped soil profile sketches.
-```{r fig.width=10, fig.height=4}
-
+```{r fig.width=10, fig.height=4.5}
+# example data
 data("mineralKing")
+
+# SPC sketch style for next couple of plots
+options(.aqp.plotSPC.args = list(max.depth = 175, name.style = 'center-center', depth.axis = list(line = -3)))
 
 par(mar = c(1,1,2,1))
 
@@ -204,54 +196,57 @@ groupedProfilePlot(
   break.offset = 0.66
 )
 
-# move horizon designations into profiles
+# move group breaks
 groupedProfilePlot(
   mineralKing, 
   groups = 'taxonname', 
   print.id = FALSE, 
   group.name.offset = c(-10, -15),
   break.offset = 0.6,
-  name.style = 'center-center',
-  width = 0.3
 )
 
-# ... make output device wider
 ```
 
 
-```{r fig.width=8, fig.height=8}
-# init coordinates
-coordinates(mineralKing) <- ~ x_std + y_std
-proj4string(mineralKing) <- '+proj=longlat +datum=NAD83'
+```{r fig.width=10, fig.height=8}
+# setup point locations
+s <- site(mineralKing)
+xy <- st_as_sf(s, coords = c('x_std', 'y_std'))
+st_crs(xy) <- 4326
 
-# local CRS
-crs.utm <- CRS('+proj=utm +zone=11 +datum=NAD83')
+# convert to suitable projected cRS
+# projected CRS, UTM z11 NAD83 (https://epsg.io/26911)
+xy <- st_transform(xy, 26911) 
 
 par(mar=c(4.5,4,4,1))
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id')
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', scaling.factor = 1)
 
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', color='clay')
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', color='clay', scaling.factor = 1)
 ```
 
 Tinker with *relative* sketch positioning.
-```{r fig.width=8, fig.height=8}
+```{r fig.width=10, fig.height=8}
 # standard transect plot, profile sketches arranged along integer sequence
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname')
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', scaling.factor = 1)
 title('Regular Spacing')
 
 # attempt relative positioning based on scaled distances, no corrections for overlap
 # profiles are clustered in space and therefore over-plot
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = FALSE)
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', spacing = 'relative', fix.relative.pos = FALSE, scaling.factor = 1)
 title('Relative Spacing | No Overlap Fix')
 
 # default behavior, attempt adjustments to prevent over-plot and preserve relative spacing
 # use set.seed() to fix outcome
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative')
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', spacing = 'relative', scaling.factor = 1)
 title('Relative Spacing | Default Overlap Fix')
 
 # customize arguments to aqp::fixOverlap()
-plotTransect(mineralKing, grad.var.name='elev_field', crs=crs.utm, grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', width=0.15, spacing = 'relative', fix.relative.pos = list(maxIter=6000, adj=0.2, thresh=0.7))
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', spacing = 'relative', fix.relative.pos = list(maxIter=6000, adj=0.2, thresh=0.7), scaling.factor = 1)
 title('Relative Spacing | Custom Overlap Fix')
+
+# electrostatic simulation
+plotTransect(mineralKing, xy, grad.var.name='elev_field', grad.axis.title='Elevation (m)', label='pedon_id', name='hzname', spacing = 'relative', fix.relative.pos = list(method = 'E', q = 1.85, thresh = 0.65), scaling.factor = 1)
+title('Relative Spacing | Electrostatic Simulation')
 ```
 
 
@@ -276,10 +271,13 @@ f.max.clay.depth <- function(x) {
 # results are put into @site
 gopheridge$max.clay.depth <- profileApply(gopheridge, f.max.clay.depth)
 
+# reset style
+options(.aqp.plotSPC.args = NULL)
 
 # plot and annotate with max clay depths
 par(mar=c(0,0,0,0))
-plot(gopheridge, name='hzname', print.id=FALSE)
+
+plotSPC(gopheridge, name='hzname', print.id=FALSE, max.depth = 175, depth.axis = list(line = -3), width = 0.25)
 x.pos <- 1:length(gopheridge)
 points(x.pos, gopheridge$max.clay.depth, col='white', pch=21, cex=0.75, bg='black')
 ```
