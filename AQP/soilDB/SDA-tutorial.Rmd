@@ -242,6 +242,100 @@ res <- SDA_query(q)
 xtabs(~ areasymbol + compname, data=res)
 ```
 
+# Queries Using Simple Spatial Filters
+
+Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402). Spatial queries using SDA helper functions automatically exclude STATSGO records.
+
+```{r sda-spatial-query-basics-1}
+q <- "SELECT mukey, muname
+FROM mapunit
+WHERE mukey IN (
+SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('point(-121.77100 37.368402)')
+)"
+
+res <- SDA_query(q)
+knitr::kable(res)
+```
+
+Get the map names and `mukey` values for a 1000m buffer around a manually-defined point (-121.77100 37.368402). The `buffer()` function from the {terra} package can conveniently derive planar buffers from geographic coordinates.
+
+```{r sda-spatial-query-basics-1.1}
+# the query point is in geographic coordinates / WGS84 datum
+p <- vect(cbind(-121.77100, 37.368402), crs = 'epsg:4326')
+
+# 1000m buffer (planar coordinates)
+# result is still geographic coordinates
+p.buff <- terra::buffer(p, 1000)
+
+# convert to WKT
+p.wkt <- as.data.frame(p.buff, geom = 'wkt')$geometry
+
+q <- paste0("SELECT mukey, muname
+FROM mapunit
+WHERE mukey IN (
+SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('", p.wkt, "')
+)")
+
+res <- SDA_query(q)
+knitr::kable(head(res))
+```
+
+Get some component data for a manually-defined bounding box, defined in WGS84 geographic coordinates.
+```{r}
+# define a bounding box: xmin, xmax, ymin, ymax
+#
+#         +-------------------(ymax, xmax)
+#         |                        |
+#         |                        |
+#     (ymin, xmin) ----------------+
+
+# bbox extent
+bb <- ext(-120.9, -120.8, 37.7, 37.8)
+
+# convert to polygons
+bb <- vect(bb, crs = 'epsg:4326')
+
+# convert bounding box to WKT
+bb <- as.data.frame(bb, geom = 'wkt')$geometry
+
+# compose query, using WKT BBOX as filtering criteria
+q <- paste0("SELECT mukey, cokey, compname, comppct_r
+            FROM component 
+            WHERE mukey IN (SELECT DISTINCT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('", bb, "') )
+            ORDER BY mukey, cokey, comppct_r DESC")
+
+res <- SDA_query(q)
+
+# check
+knitr::kable(head(res))
+```
+
+
+Compute polygon area via SDA and double-check via `terra::expanse()`. Note the complex syntax required to convert polygons into "geography" type, thus invoking spherical geometry and resulting in area values with units of square meters. Computing polygon area server-side requires a more complex SQL statement, but is much more efficient because the associated polygon data do not need to be transferred from SDA to the local R session.
+
+```{r}
+# much faster (10x or more), because area is calculated server-side
+a <- SDA_query("
+SELECT mukey,
+GEOGRAPHY::STGeomFromWKB(
+  mupolygongeo.STUnion(
+    mupolygongeo.STStartPoint()
+  ).STAsBinary(), 4326
+).STArea() * 0.000247105 AS area_ac
+FROM mupolygon WHERE mukey = '418254'
+")
+
+# slow, polygon geometry must be converted to text and downloaded
+x <- fetchSDA_spatial('418254')
+x <- vect(x)
+# compute area in sq. meters then convert to acres
+x$area <-expanse(x) * 0.000247105
+
+# note that the distribution of polygon area is identical
+options(scipen = 10)
+round(quantile(a$area_ac))
+round(quantile(x$area))
+```
 
 # Helper Functions
 
@@ -356,103 +450,11 @@ ggplot(test, aes(x = geompos, y = landform, fill = Freq2)) +
 ```
 
 
-# Queries Using Simple Spatial Filters
-
-Get the map unit key and name at a single, manually-defined point (-121.77100 37.368402). Spatial queries using SDA helper functions automatically exclude STATSGO records.
-
-```{r sda-spatial-query-basics-1}
-q <- "SELECT mukey, muname
-FROM mapunit
-WHERE mukey IN (
-SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('point(-121.77100 37.368402)')
-)"
-
-res <- SDA_query(q)
-knitr::kable(res)
-```
-
-Get the map names and `mukey` values for a 1000m buffer around a manually-defined point (-121.77100 37.368402). The `buffer()` function from the {terra} package can conveniently derive planar buffers from geographic coordinates.
-
-```{r sda-spatial-query-basics-1.1}
-# the query point is in geographic coordinates / WGS84 datum
-p <- vect(cbind(-121.77100, 37.368402), crs = 'epsg:4326')
-
-# 1000m buffer (planar coordinates)
-# result is still geographic coordinates
-p.buff <- terra::buffer(p, 1000)
-
-# convert to WKT
-p.wkt <- as.data.frame(p.buff, geom = 'wkt')$geometry
-
-q <- paste0("SELECT mukey, muname
-FROM mapunit
-WHERE mukey IN (
-SELECT * from SDA_Get_Mukey_from_intersection_with_WktWgs84('", p.wkt, "')
-)")
-
-res <- SDA_query(q)
-knitr::kable(head(res))
-```
-
-Get some component data for a manually-defined bounding box, defined in WGS84 geographic coordinates.
-```{r}
-# define a bounding box: xmin, xmax, ymin, ymax
-#
-#         +-------------------(ymax, xmax)
-#         |                        |
-#         |                        |
-#     (ymin, xmin) ----------------+
-
-# bbox extent
-bb <- ext(-120.9, -120.8, 37.7, 37.8)
-
-# convert to polygons
-bb <- vect(bb, crs = 'epsg:4326')
-
-# convert bounding box to WKT
-bb <- as.data.frame(bb, geom = 'wkt')$geometry
-
-# compose query, using WKT BBOX as filtering criteria
-q <- paste0("SELECT mukey, cokey, compname, comppct_r
-            FROM component 
-            WHERE mukey IN (SELECT DISTINCT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('", bb, "') )
-            ORDER BY mukey, cokey, comppct_r DESC")
-
-res <- SDA_query(q)
-
-# check
-knitr::kable(head(res))
-```
 
 
-Compute polygon area via SDA and double-check via `terra::expanse()`. Note the complex syntax required to convert polygons into "geography" type, thus invoking spherical geometry and resulting in area values with units of square meters. Computing polygon area server-side requires a more complex SQL statement, but is much more efficient because the associated polygon data do not need to be transferred from SDA to the local R session.
 
-```{r}
-# much faster (10x or more), because area is calculated server-side
-a <- SDA_query("
-SELECT mukey,
-GEOGRAPHY::STGeomFromWKB(
-  mupolygongeo.STUnion(
-    mupolygongeo.STStartPoint()
-  ).STAsBinary(), 4326
-).STArea() * 0.000247105 AS area_ac
-FROM mupolygon WHERE mukey = '418254'
-")
-
-# slow, polygon geometry must be converted to text and downloaded
-x <- fetchSDA_spatial('418254')
-x <- vect(x)
-# compute area in sq. meters then convert to acres
-x$area <-expanse(x) * 0.000247105
-
-# note that the distribution of polygon area is identical
-options(scipen = 10)
-round(quantile(a$area_ac))
-round(quantile(x$area))
-```
-
-
-This kind of operation is much operation is much simpler using a two step process via `SDA_spatialQuery()` to get a set of intersecting map unit keys, then `SDA_query()` to return additional tabular data. Some things to keep in mind when using `SDA_spatial_query()`:
+## `SDA_spatialQuery()`
+Spatial queries are usually simpler with a two step process via `SDA_spatialQuery()` to get a set of intersecting map unit keys, then `SDA_query()` to return additional tabular data. Some things to keep in mind when using `SDA_spatial_query()`:
 
   * use `what = 'mupolygon'` to return polygon features and computed area in acres (slower, higher resource usage)
   * use `what = 'mukey'` to return only map unit keys (faster, lower resource usage)
