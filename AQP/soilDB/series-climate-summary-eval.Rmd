@@ -30,7 +30,8 @@ install.packages('soilDB', dep=TRUE)
 install.packages('sharpshootR', dep=TRUE)
 install.packages('latticeExtra', dep=TRUE)
 install.packages('ggplot2', dep=TRUE)
-install.packages('raster', dep=TRUE)
+install.packages('terra', dep=TRUE)
+install.packages('sf', dep=TRUE)
 
 # latest versions from GitHub
 devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
@@ -44,7 +45,7 @@ This tutorial can be used as a stand-alone demonstration of the functionality pr
 First, you will need to load some packages. Be sure to install these if missing, and install the latest versions of `soilDB` and `sharpshootR` as much of this tutorial depends on recent updates.
 ```{r eval=TRUE}
 library(soilDB)
-library(raster)
+library(terra)
 library(maps)
 library(sharpshootR)
 library(latticeExtra)
@@ -108,10 +109,11 @@ ggplot(s$climate.monthly, aes(x = month, group=series)) +
 ## Estimates from SoilWeb series extent boundary
 
 ```{r}
-# the result is a SpatialPolygonsDataFrame object
+# the result is an sf object
 see.boundary <- seriesExtent('amador')
+see.boundary <- vect(see.boundary)
 # collect as many samples as are present in the fetchOSD summary
-see.samples <- spsample(see.boundary, n = 394, type='regular')
+see.samples <- spatSample(see.boundary, size = 394, method = 'regular')
 
 # quick map of samples
 par(mar=c(0,0,0,0))

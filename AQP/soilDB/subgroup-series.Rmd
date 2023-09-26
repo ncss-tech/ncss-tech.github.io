@@ -176,10 +176,10 @@ res <- vizAnnualClimate(osd$climate.annual, s = 'SAN JOAQUIN', IQR.cex = 1.1, ce
 
 Series associated with **abruptic durixeralfs** subgroup, arranged according to annual climate summaries.
 ```{r fig.width=14, fig.height=6}
-par(mar=c(0,0,1,1))
-plotProfileDendrogram(osd$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.25, y.offset = 0.5, name.style = 'center-center', shrink = TRUE)
+par(mar = c(0,0,1,2))
+plotProfileDendrogram(osd$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.25, y.offset = 0.5, name.style = 'center-center', shrink = TRUE, max.depth = 150, depth.axis = list(cex = 0.8))
 mtext('Abruptic Durixeralfs', side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
-mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
+mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font = 1, cex = 1.1)
 ```
 
 ### Annual climate summaries
@@ -191,7 +191,7 @@ print(update(res$fig, layout=c(4,2), sub='Abruptic Durixeralfs'))
 
 
 ### Geomorphic Descriptions
-```{r fig.height=6.5, fig.width=8.5}
+```{r fig.height=6.5, fig.width=9.5}
 hs <- vizHillslopePosition(osd$hillpos)
 print(hs$fig)
 
