@@ -10,9 +10,19 @@ output:
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
-library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+library(knitr, quietly = TRUE)
+
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background='#F7F7F7', 
+  fig.align = 'center',
+  fig.retina = 2, 
+  dev = 'png', 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+options(width = 100, stringsAsFactors = FALSE)
 ```
 
 
@@ -26,23 +36,16 @@ There are some sites with multiple below-ground sensors installed at the same de
 
 
 ## Installation
-With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+Install packages used in this tutorial from CRAN.
 ```{r eval=FALSE}
 # run these commands in the R console
-install.packages('latticeExtra', dep=TRUE)
-install.packages('rvest', dep=TRUE)
-install.packages('httr', dep=TRUE)
-install.packages('reshape2', dep=TRUE)
-install.packages('soilDB', dep=TRUE)
-install.packages('sharpshootR', dep=TRUE)
-```
-
-You will also need the latest version of `soilDB` and `aqp`:
-```{r eval=FALSE}
-install.packages('devtools', dep=TRUE)
-remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
-remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
-remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+install.packages('latticeExtra', dep = TRUE)
+install.packages('tactile', dep = TRUE)
+install.packages('rvest', dep = TRUE)
+install.packages('httr', dep = TRUE)
+install.packages('reshape2', dep = TRUE)
+install.packages('soilDB', dep = TRUE)
+install.packages('sharpshootR', dep = TRUE)
 ```
 
 
@@ -58,8 +61,8 @@ library(soilDB)
 library(sharpshootR)
 library(reshape2)
 library(latticeExtra)
+library(tactile)
 library(maps)
-library(RColorBrewer)
 
 # get basic sensor metadata for several SCAN/SNOTEL sites
 m <- SCAN_site_metadata(site.code=c(2072,356,2148,2187))
@@ -101,7 +104,7 @@ legend('bottomleft', legend=c('All Stations', 'Linked to Lab Data'), pch=c(21, 2
 Lets get some recent (daily) climate data from the [Rogers Farm #1 SCAN station](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=2001); site number **2001**. The `fetchSCAN()` function does all of the work. Notice that the resulting object is a list, each element is a suite of sensor data. For example, the *SMS* element contains soil moisture from several depths
 ```{r, fig.width=8, fig.height=8}
 # fetchSCAN can accept multiple years
-x <- fetchSCAN(site.code=2001, year=c(2014,2015,2016,2017))
+x <- fetchSCAN(site.code = 2001, year = c(2014, 2015, 2016, 2017))
 
 # check the results
 str(x, 1)
@@ -116,28 +119,50 @@ sensor.depths <- unique(x$SMS$depth)
 date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 months')
 
 # plot soil moisture time series, panels are depth
-xyplot(value ~ Date | factor(depth), data=x$SMS, as.table=TRUE, type=c('l','g'), strip=strip.custom(bg=grey(0.80)), layout=c(1,length(sensor.depths)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), ylab='Volumetric Water Content', main='Soil Moisture at Several Depths')
+xyplot(
+  value ~ Date | factor(depth), 
+  data = x$SMS, 
+  par.settings = tactile.theme(),
+  as.table = TRUE, 
+  type = c('l', 'g'), 
+  strip = strip.custom(bg = grey(0.80)), 
+  layout = c(1, length(sensor.depths)), 
+  scales = list(alternating = 3, x = list(at = date.axis, format="%b\n%Y")), 
+  ylab = 'Volumetric Water Content', 
+  main = 'Soil Moisture at Several Depths'
+)
 ```
 
 # Visualizing sensor depths within the context of a soil profile
 One way to get a visual diagram of where the SCAN soil moisture and temperature sensors occur within the context of the soil profile horizons is to use the linkage in the attached metadata to join the sensor depths to the profile horizonation.
-```{r fig.width=8, fig.height=8, warning=FALSE}
+```{r fig.width=4, fig.height=6}
 # get more data
-x <- fetchSCAN(site.code=c(574), year=c(2016))
+x <- fetchSCAN(site.code = 574, year = 2016)
 s <- fetchKSSL(pedlabsampnum = na.omit(x$metadata$pedlabsampnum), returnMorphologicData = FALSE)
 
 # get unique set of soil moisture sensor depths in cm
 sensor.depths <- unique(x$SMS$depth)
 
 # plot profile of lab data horizons then over plot with location of sensor depths within them
-par(mar=c(0,0,3,1))
-plotSPC(s, name='hzn_desgn', label='pedon_id', id.style='top', cex.names = 0.75, width = 0.1, axis.line.offset=-15)
-title(paste('Sensor Depths for SCAN site', unique(x$SMS$Site), sep=" "), line=0.5, cex.main=1.5)
+par(mar = c(0, 0, 3, 1))
+plotSPC(s, label = 'pedon_id', id.style = 'top', cex.names = 0.75, width = 0.15, depth.axis = list(line = -3.5))
+title(paste('Sensor Depths for SCAN site', unique(x$SMS$Site), sep=" "), line = 0.5, cex.main = 1)
 
 # over plot the sensor depths on the previous plot
 lsp <- get("last_spc_plot", envir = aqp.env)
-points(x=rep(lsp$x0, times=length(sensor.depths)), y=sensor.depths, pch=15, cex=1.5, col='royalblue')
-text(x=rep(lsp$x0, times=length(sensor.depths)), y=sensor.depths, labels = sensor.depths, cex=0.75, pos=3)
+
+points(
+  x = rep(lsp$x0, times = length(sensor.depths)), 
+  y = sensor.depths, pch = 15, cex = 1.5, col = 'royalblue'
+)
+
+text(
+  x = rep(lsp$x0, times = length(sensor.depths)), 
+  y = sensor.depths, 
+  labels = sensor.depths, 
+  cex = 0.75, 
+  pos = 3
+)
 ```
 
 
@@ -145,7 +170,7 @@ text(x=rep(lsp$x0, times=length(sensor.depths)), y=sensor.depths, labels = senso
 That was interesting, but most of the time we want to make comparisons between stations. Note that the format of data returned makes it possible "stack" data from several stations that do not share the same collection of sensors.
 ```{r fig.width=8, fig.height=8}
 # get more data
-x <- fetchSCAN(site.code=c(356, 2072), year=c(2015, 2016))
+x <- fetchSCAN(site.code = c(356, 2072), year = c(2015, 2016))
 
 # same format as before, sensor data are "stacked" within each list element
 str(x, 1)
@@ -160,7 +185,20 @@ sensor.depths <- unique(x$SMS$depth)
 date.axis <- seq.Date(as.Date(min(x$SMS$Date)), as.Date(max(x$SMS$Date)), by='3 months')
 
 # plot soil moisture time series, panels are depth
-xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SMS, as.table=TRUE, type=c('l','g'), auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.80)), layout=c(1,length(sensor.depths)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), ylab='Volumetric Water Content', main='Soil Moisture at Several Depths')
+xyplot(
+  value ~ Date | factor(depth), 
+  groups = factor(Site), 
+  data = x$SMS, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l','g'), 
+  auto.key = list(columns = 2, lines = TRUE, points = FALSE), 
+  strip = strip.custom(bg = grey(0.80)), 
+  layout = c(1, length(sensor.depths)), 
+  scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y")), 
+  ylab = 'Volumetric Water Content', 
+  main = 'Soil Moisture at Several Depths'
+)
 ```
 
 
@@ -168,16 +206,27 @@ xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SMS, as.table=T
 
 ```{r fig.width=10, fig.height=6}
 # combine sensors
-g <- make.groups('soil moisture'=x$SMS, 'soil temperature'=x$STO)
+g <- make.groups('soil moisture' = x$SMS, 'soil temperature' = x$STO)
 
 # get unique set of soil moisture sensor depths
 sensor.depths <- unique(g$depth)
 
 # generate a better axis for dates
-date.axis <- seq.Date(as.Date(min(g$Date)), as.Date(max(g$Date)), by='3 months')
+date.axis <- seq.Date(as.Date(min(g$Date)), as.Date(max(g$Date)), by = '3 months')
 
 # plot soil moisture time series, panels are depth
-p <- xyplot(value ~ Date | factor(Site) + which, groups=factor(depth), data=g, as.table=TRUE, type=c('l','g'), auto.key=list(columns=length(sensor.depths), lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.80)), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y"), y=list(relation='free', rot=0)), ylab='', main='Soil Moisture and Temperature at Several Depths (deg. C)')
+p <- xyplot(
+  value ~ Date | factor(Site) + which, 
+  groups = factor(depth), 
+  data = g, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l','g'), 
+  auto.key = list(columns = length(sensor.depths), lines = TRUE, points = FALSE), 
+  strip = strip.custom(bg = grey(0.80)), scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y"), y = list(relation = 'free', rot = 0)), 
+  ylab = '', 
+  main = 'Soil Moisture and Temperature at Several Depths (deg. C)'
+)
 
 useOuterStrips(p)
 
@@ -187,15 +236,65 @@ useOuterStrips(p)
 # no SAL sensors for these sites
 # xyplot(value ~ Date | factor(depth), groups=factor(Site), data=x$SAL, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), layout=c(1,length(sensor.depths)), scales=list(alternating=3, y=list(relation='free', rot=0)))
 
-xyplot(value ~ Date, groups=factor(Site), data=x$TAVG, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Average Air Temperature by Site (deg. C)')
+xyplot(
+  value ~ Date, 
+  groups = factor(Site), 
+  data = x$TAVG, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l','g'), 
+  auto.key = list(title = 'site', columns = 2, lines = TRUE, points = FALSE), 
+  scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y")), 
+  main = 'Average Air Temperature by Site (deg. C)'
+)
 
-xyplot(value ~ Date, groups=factor(Site), data=x$PRCP, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Precipitation by Site (inches)')
+xyplot(
+  value ~ Date, 
+  groups = factor(Site), 
+  data = x$PRCP, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l','g'), 
+  auto.key = list(title = 'site', columns = 2, lines = TRUE, points = FALSE), 
+  scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y")), 
+  main ='Daily Precipitation by Site (inches)'
+)
+ 
+xyplot(
+  value ~ Date, 
+  groups = factor(Site), 
+  data = x$PREC, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l','g'), 
+  auto.key = list(title = 'site', columns = 2, lines = TRUE, points = FALSE), 
+  scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y")), 
+  main = 'Accumulated Precipitation by Site (inches)'
+)
 
-xyplot(value ~ Date, groups=factor(Site), data=x$PREC, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Accumulated Precipitation by Site (inches)')
+xyplot(
+  value ~ Date, 
+  groups = factor(Site), 
+  data = x$WTEQ, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l', 'g'), 
+  auto.key = list(title = 'site', columns = 2, lines = TRUE, points = FALSE), 
+  scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y")), 
+  main = 'Daily Snow Water Equivalent by Site (inches)'
+)
 
-xyplot(value ~ Date, groups=factor(Site), data=x$WTEQ, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Water Equivalent by Site (inches)')
-
-xyplot(value ~ Date, groups=factor(Site), data=x$SNWD, as.table=TRUE, type=c('l','g'), auto.key=list(title='site', columns=2, lines=TRUE, points=FALSE), scales=list(alternating=3, x=list(at=date.axis, format="%b\n%Y")), main='Daily Snow Depth (in) by Site (inches)')
+xyplot(
+  value ~ Date, 
+  groups = factor(Site), 
+  data = x$SNWD, 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  type = c('l', 'g'), 
+  auto.key = list(title = 'site', lines = TRUE, points = FALSE, cex = 0.8), 
+  scales = list(alternating = 3, x = list(at = date.axis, format = "%b\n%Y")), 
+  main = 'Daily Snow Depth (in) by Site (inches)'
+)
 ```
 
 
@@ -204,41 +303,65 @@ This is a *mostly-complete* example of how to estimate mean anual soil temperatu
 ```{r fig.width=12, fig.height=10, results='hide'}
 # get period of record for several sites
 # note: multiple below-ground sensors
-x <- fetchSCAN(site.code=c(2096, 2097, 2099, 2101), year=2000:2017)
+x <- fetchSCAN(site.code = c(2096, 2097, 2099, 2101), year = 2000:2017)
 
 ## still working on a solution for this issue: https://github.com/ncss-tech/soilDB/issues/14
 # ! multiple soil temperature sensors installed at each depth
-table(sensor.id=x$STO$sensor.id, sensor.depth=x$STO$depth)
+table(sensor.id = x$STO$sensor.id, sensor.depth = x$STO$depth)
 
 # subset data at 50cm (51cm is close enough, rounding error)
-soiltemp <- subset(x$STO, subset=depth == 51)
+soiltemp <- subset(x$STO, subset = depth == 51)
 
 # add parts of date for plotting
 soiltemp$year <- format(soiltemp$Date, "%Y")
 soiltemp$doy <- as.numeric(format(soiltemp$Date, "%j"))
 
 
-cols <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline')
+# nice colors
+cols <- colorRampPalette(
+  hcl.colors(n = 100, palette = 'spectral', rev = TRUE), 
+  space = 'Lab', 
+  interpolate = 'spline'
+)
+
 
 # plot soiltemp by year/day, panels by sensor ID
-useOuterStrips(levelplot(value ~ doy * factor(year) | sensor.id + factor(Site), main='Daily Mean Soil Temperature at 50cm (deg C)',
-          data=soiltemp, col.regions=cols, xlim=c(1,365),
-          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
-          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-          xlab='Julian Day', ylab='Year'))
+useOuterStrips(
+  levelplot(
+    value ~ doy * factor(year) | sensor.id + factor(Site), 
+    main = 'Daily Mean Soil Temperature at 50cm (deg C)',
+    data = soiltemp, col.regions = cols, xlim = c(1,365),
+    colorkey = list(space='top'), 
+    as.table = TRUE, 
+    par.settings = tactile.theme(),
+    scales = list(alternating = 3, cex = 0.75, x = list(tick.number = 20)), 
+    par.strip.text = list(cex = 0.85), strip = strip.custom(bg = 'grey'), 
+    xlab = 'Julian Day', 
+    ylab = 'Year'
+  )
+)
 
 # ... something isn't correct with sensor STO.I-2_20
 # plot just STO.I_20
 # ... better
-levelplot(value ~ doy * factor(year) | factor(Site), main='Daily Mean Soil Temperature at 50cm (deg C)',
-          subset= sensor.id == 'STO.I_20',
-          data=soiltemp, col.regions=cols, xlim=c(1,365),
-          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
-          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-          xlab='Julian Day', ylab='Year')
+levelplot(
+  value ~ doy * factor(year) | factor(Site), 
+  main = 'Daily Mean Soil Temperature at 50cm (deg C)',
+  subset = sensor.id == 'STO.I_20',
+  data = soiltemp, 
+  col.regions = cols, 
+  xlim = c(1, 365),
+  colorkey = list(space='top'), 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  scales = list(alternating = 3, cex = 0.75, x = list(tick.number = 20)), 
+  par.strip.text = list(cex = 0.85), strip = strip.custom(bg = 'grey'), 
+  xlab = 'Julian Day', 
+  ylab = 'Year'
+)
 
 # subset to single sensor
-soiltemp <- subset(soiltemp, subset= sensor.id == 'STO.I_20')
+soiltemp <- subset(soiltemp, subset = sensor.id == 'STO.I_20')
 
 
 ## TODO: generalize to accept SCAN / SNOTEL data as-is
@@ -262,14 +385,14 @@ knitr::kable(d)
 
 Get SCAN data from the [Pine Nut site](https://www.wcc.nrcs.usda.gov/nwcc/site?sitenum=2144)(2144) for years 2008 through 2015. Note that this site has multiple soil temperature sensors installed at each depth.
 ```{r, fig.width=12, fig.height=9}
-x <- fetchSCAN(site.code=c(2144), year=2008:2015)
+x <- fetchSCAN(site.code = 2144, year = 2008:2015)
 
 # check available data
 str(x, 1)
 
 ## still working on a solution for this issue: https://github.com/ncss-tech/soilDB/issues/14
 # ! multiple soil temperature sensors installed at each depth
-table(sensor.id=x$STO$sensor.id, sensor.depth=x$STO$depth)
+table(sensor.id = x$STO$sensor.id, sensor.depth = x$STO$depth)
 
 # extract SMS data to a new data.frame
 sms <- x$SMS
@@ -279,28 +402,51 @@ sms$year <- format(sms$Date, "%Y")
 sms$doy <- as.numeric(format(sms$Date, "%j"))
 
 # cast long -> wide format for later use
-sms.wide <- dcast(sms, Site + Date ~ depth, value.var = 'value', mean, na.rm=TRUE)
+sms.wide <- dcast(sms, Site + Date ~ depth, value.var = 'value', mean, na.rm = TRUE)
 
 # check:
 head(sms)
 head(sms.wide)
 
 # make some pretty colors for plotting daily VWC
-cols <- colorRampPalette(brewer.pal(11, 'RdYlBu'), space='Lab', interpolate='spline', bias=2)
+cols <- colorRampPalette(
+  hcl.colors(n = 100, palette = 'spectral', rev = TRUE), 
+  space = 'Lab', 
+  interpolate = 'spline'
+)
 
 # plot VWC by year/day, panels by depth
-levelplot(value ~ doy * factor(year) | factor(depth), main='Daily Mean VWC (%)',
-          data=sms, layout=c(1,5), col.regions=cols,
-          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
-          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-          xlab='Julian Day', ylab='Year')
+levelplot(
+  value ~ doy * factor(year) | factor(depth), 
+  main = 'Daily Mean VWC (%)',
+  data = sms, 
+  layout = c(1,5), 
+  col.regions = cols,
+  colorkey = list(space = 'top'), 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  scales = list(alternating = 3, cex = 0.75, x = list(tick.number = 20)), 
+  par.strip.text = list(cex = 0.85), strip = strip.custom(bg = 'grey'), 
+  xlab = 'Julian Day', 
+  ylab = 'Year'
+)
 
 # plot VWC by year/day, panels by year with depths stacked
-levelplot(value ~ doy * rev(factor(depth)) | factor(year), main='Daily Mean VWC (%)',
-          data=sms, layout=c(1,8), col.regions=cols, 
-          colorkey=list(space='top'), as.table=TRUE, scales=list(alternating=3, cex=0.75, x=list(tick.number=20)), 
-          par.strip.text=list(cex=0.85), strip=strip.custom(bg='grey'), 
-          xlab='Julian Day', ylab='Sensor Depth (cm)', ylim=rev(levels(factor(sms$depth))))
+levelplot(
+  value ~ doy * rev(factor(depth)) | factor(year), 
+  main = 'Daily Mean VWC (%)',
+  data = sms, 
+  layout = c(1,8), 
+  col.regions = cols,
+  colorkey = list(space = 'top'), 
+  as.table = TRUE, 
+  par.settings = tactile.theme(),
+  scales = list(alternating = 3, cex = 0.75, x = list(tick.number = 20)), 
+  par.strip.text = list(cex = 0.85), strip = strip.custom(bg = 'grey'), 
+  xlab = 'Julian Day', 
+  ylab = 'Sensor Depth (cm)', 
+  ylim = rev(levels(factor(sms$depth)))
+)
 ```
 
 
@@ -329,38 +475,81 @@ s.vg.hz <- dice(s, 20 ~ theta_r + theta_s + alpha + npar, SPC = FALSE)
 vg.hz <- KSSL_VG_model(VG_params = s.vg.hz)
 
 # check: looks good
-p.model <- xyplot(phi ~ theta, data=vg.hz$VG_curve, type=c('l', 'g'), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression("Suction " (kPa)), xlab=expression("Volumetric Water Content " (cm^3/cm^3)), par.settings = list(plot.line=list(col='RoyalBlue', lwd=2)))
+p.model <- xyplot(
+  phi ~ theta, 
+  data = vg.hz$VG_curve, 
+  type = c('l', 'g'), 
+  scales = list(alternating = 3, x = list(tick.number = 10), y = list(log = 10, tick.number = 10)), 
+  yscale.components = yscale.components.logpower, 
+  ylab = expression("Suction " (kPa)), 
+  xlab = expression("Volumetric Water Content " (cm^3/cm^3)), 
+  par.settings = tactile.theme(plot.line = list(lwd = 2))
+)
 
-update(p.model, main='Estimated Water Retention Curve at 20cm', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
+update(
+  p.model, 
+  main = 'Estimated Water Retention Curve at 20cm', 
+  sub = 'van Genuchten Model Parameters fit by USDA-ARS Rosetta'
+)
 ```
 
 Lets add some points on the water retention curve from the measured VWC values.
 ```{r, fig.width=10, fig.height=6}
 # add quantiles from measured values
-sms.q <- data.frame(theta=quantile(sms.wide$`20`/100, probs=c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1), na.rm=TRUE))
+sms.q <- data.frame(
+  theta = quantile(sms.wide$`20`/100, probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1), na.rm = TRUE)
+)
 sms.q$phi <- vg.hz$VG_inverse_function(sms.q$theta)
 
-p.points <- xyplot(phi ~ theta, data=sms.q, type='p', par.settings = list(plot.symbol=list(col='orange', pch=16, cex=1.25)), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression("Suction " (kPa)), xlab=expression("Volumetric Water Content " (cm^3/cm^3)), panel=function(x, y, ...) {
-  panel.xyplot(x, y, ...)
-  panel.text(x, y, row.names(sms.q), adj=c(0,-0.75), cex=0.65)
-})
+p.points <- xyplot(
+  phi ~ theta, 
+  data = sms.q, 
+  type = 'p', 
+  par.settings = list(plot.symbol = list(col = 'orange', pch = 16, cex = 1.25)), 
+  scales = list(alternating = 3, x = list(tick.number = 10), y = list(log = 10, tick.number = 10)), 
+  yscale.components = yscale.components.logpower, 
+  ylab = expression("Suction " (kPa)), 
+  xlab = expression("Volumetric Water Content " (cm^3/cm^3)), 
+  panel = function(x, y, ...) {
+    panel.xyplot(x, y, ...)
+    panel.text(x, y, row.names(sms.q), adj = c(0,-0.75), cex = 0.65)
+  }
+)
 
-update(p.model + p.points, main='Select Percentiles of Data Measured at 20cm', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
+update(
+  p.model + p.points, 
+  main = 'Select Percentiles of Data Measured at 20cm', 
+  sub = 'van Genuchten Model Parameters fit by USDA-ARS Rosetta'
+)
 ```
 
 Add permanent wilting point, field capacity, and saturation.
 ```{r, fig.width=10, fig.height=6}
 # PWP, FC, SAT (close to 0 suction)
-sms.q <- data.frame(phi = c(1500, 33.33, 1), na.rm=TRUE)
+sms.q <- data.frame(phi = c(1500, 33.33, 1), na.rm = TRUE)
 sms.q$theta <- vg.hz$VG_function(sms.q$phi)
 row.names(sms.q) <- c('PWP', 'FC', 'SAT')
 
-p.points <- xyplot(phi ~ theta, data=sms.q, type='p', par.settings = list(plot.symbol=list(col='orange', pch=16, cex=1.25)), scales=list(alternating=3, x=list(tick.number=10), y=list(log=10, tick.number=10)), yscale.components=yscale.components.logpower, ylab=expression("Suction " (kPa)), xlab=expression("Volumetric Water Content " (cm^3/cm^3)), panel=function(x, y, ...) {
-  panel.xyplot(x, y, ...)
-  panel.text(x, y, row.names(sms.q), adj=c(0,-0.75), cex=0.65)
-})
+p.points <- xyplot(
+  phi ~ theta, 
+  data = sms.q, 
+  type = 'p', 
+  par.settings = list(plot.symbol = list(col = 'orange', pch = 16, cex = 1.25)), 
+  scales = list(alternating = 3, x = list(tick.number = 10), y = list(log = 10, tick.number = 10)),
+  yscale.components = yscale.components.logpower, 
+  ylab = expression("Suction " (kPa)), 
+  xlab = expression("Volumetric Water Content " (cm^3/cm^3)), 
+  panel = function(x, y, ...) {
+    panel.xyplot(x, y, ...)
+    panel.text(x, y, row.names(sms.q), adj = c(0,-0.75), cex = 0.65)
+  }
+)
 
-update(p.model + p.points, main='Critical Points, 20cm', sub='van Genuchten Model Parameters fit by USDA-ARS Rosetta')
+update(
+  p.model + p.points, 
+  main = 'Critical Points, 20cm', 
+  sub = 'van Genuchten Model Parameters fit by USDA-ARS Rosetta'
+)
 ```
 
 Estimate soil moisture state (Newhall model conventions) using water retention curve benchmarks above.
@@ -368,25 +557,39 @@ Estimate soil moisture state (Newhall model conventions) using water retention c
 # VWC are encoded as percent (0-100)
 # must convert to fraction (0-1)
 # using water retention curve benchmarks from above
-sms$state <- estimateSoilMoistureState(sms$value / 100, U = 0, sat = 0.45, fc = 0.25, pwp = 0.10, style = 'newhall')
+sms$state <- estimateSoilMoistureState(
+  sms$value / 100, 
+  U = 0, 
+  sat = 0.45, 
+  fc = 0.25, 
+  pwp = 0.10, 
+  style = 'newhall'
+)
 
 table(sms$state)
 
 # colors / style
 ll <- levels(sms$state)
 n.states <- length(ll)
-ms.colors <- brewer.pal(n.states, 'Spectral')
+ms.colors <- hcl.colors(n = n.states, palette = 'spectral', rev = TRUE)
 
-suppressWarnings(
-  trellis.par.set(list(superpose.polygon=list(col=ms.colors, border=ms.colors)))
+# color palette function
+ms.colors.f <- colorRampPalette(
+  ms.colors,
+  space = 'Lab',
+  interpolate = 'spline'
 )
 
-sK <- simpleKey(text = ll, space='top', columns=n.states, rectangles = TRUE, points=FALSE, cex=1)
+suppressWarnings(
+  trellis.par.set(list(superpose.polygon = list(col = ms.colors, border = ms.colors)))
+)
+
+sK <- simpleKey(text = ll, space = 'top', columns = n.states, rectangles = TRUE, points = FALSE, cex = 1)
 
 levelplot(
   state ~ doy * factor(year) | factor(depth), main='Daily Soil Moisture State',
   data=sms, layout=c(1,5), 
-  col.regions = colorRampPalette(brewer.pal(n.states, 'Spectral'), interpolate = 'spline', space = 'Lab'),
+  col.regions = ms.colors.f,
   key = sK,
   colorkey = FALSE,
   as.table=TRUE, 
@@ -435,7 +638,12 @@ sms.phi <- do.call('rbind', sms.phi)
 sms.phi$phi_leq_15_bar <- factor(sms.phi$phi <= 1500, levels=c('FALSE', 'TRUE'))
 
 # new color palette
-cols.phi <- colorRampPalette(rev(brewer.pal(11, 'RdYlBu')), space='Lab', interpolate='spline', bias=1.5)
+cols.phi <- colorRampPalette(
+  hcl.colors(n = 11, palette = 'spectral', rev = TRUE), 
+  space = 'Lab', 
+  interpolate = 'spline', 
+  bias = 1.5
+)
 
 # plot daily mean water potential in log10-kPa
 levelplot(log(phi, base=10) ~ doy * factor(year) | factor(depth), main='Daily Mean Water Potential log10(-kPa)',
