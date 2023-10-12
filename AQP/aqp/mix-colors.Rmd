@@ -257,6 +257,16 @@ Top 3 mixture candidates
 plotColorMixture(c('5B 5/10', '5Y 8/8'), label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'reference', n = 3)
 ```
 
+
+Interesting mixture of three colors, closest Munsell chip of mixture is not in spectral library.
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5Y 8/10', '5B 4/10', '5R 4/8'), label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'exact')
+```
+
+
+
+
+
 ## Simulation of a continuous mixture
 Seems plausible.
 ```{r fig.height=2.5, fig.width=10}
