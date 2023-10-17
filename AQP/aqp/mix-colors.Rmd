@@ -288,7 +288,7 @@ return(z)
 
 Blue + yellow.
 ```{r fig.height=2.5, fig.width=10}
-s <- seq(0, 1, length.out = 6)
+s <- seq(0, 1, by = 0.25)
 z <- .continuousMixture(c('5B 5/10', '5Y 8/8'), s)
 
 par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
