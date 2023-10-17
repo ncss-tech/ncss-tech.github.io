@@ -38,16 +38,19 @@ An accurate simulation of pigment mixtures ("subtractive" color mixtures) is inc
 
 Thankfully, [Scott Burns has outlined the entire process](https://arxiv.org/ftp/arxiv/papers/1710/1710.06364.pdf), and Paul Centore has provided a Munsell color chip [reflectance spectra library](http://www.munsellcolourscienceforpainters.com/). The estimation of a subtractive mixture of soil colors can proceed as follows:
 
- 1. lookup the associated spectra for each color
- 2. computed the weighted (area proportion) geometric mean of the spectra
- 3. search for the closest matching spectra in the reference library
- 4. suggest that Munsell chip as the best candidate for the simulated mixture
+ 1. look-up the associated spectra for each color
+ 2. compute the weighted (area proportion) geometric mean of spectra
+ 3. either: 
+   - search for the closest matching spectra in the reference library, or
+   - compute a new reluctance spectra by integration over standard observer and illuminant
+ 4. convert the final spectra (reference, or computed) to closest Munsell chip
 
 Key assumptions include:
 
  * similar particle size distribution
  * similar mineralogy (i.e. pigmentation qualities)
- * similar water content. 
+ * similar water content
+ * similar scattering coefficients
  
 For the purposes of estimating (for example) a "mixed soil color within the top 18cm of soil" these assumptions are usually valid. Again, these are estimates that are ultimately "snapped" to the nearest chip and not do not need to approach the accuracy of paint-matching systems.
 
@@ -267,23 +270,48 @@ plotColorMixture(c('5Y 8/10', '5B 4/10', '5R 4/8'), label.cex = 0.65, showMixedS
 
 
 
-## Simulation of a continuous mixture
-Seems plausible.
-```{r fig.height=2.5, fig.width=10}
-s <- seq(0, 1, by = 0.2)
-z <- lapply(s, function(i) {
-  
-  m <- mixMunsell(c('5B 5/10', '5Y 8/8'), w = c(1-i, i), mixingMethod = 'exact')
-  
+## Simulation of continuous mixtures
+```{r}
+# m: two colors
+# s: sequence of weights for the first color
+.continuousMixture <- function(m, s) {
+  z <- lapply(s, function(i) {
+  m <- mixMunsell(m, w = c(1-i, i), mixingMethod = 'exact')
   return(m$munsell)
 })
 
 z <- do.call('c', z)
+return(z)
+}
+```
+
+
+Blue + yellow.
+```{r fig.height=2.5, fig.width=10}
+s <- seq(0, 1, length.out = 6)
+z <- .continuousMixture(c('5B 5/10', '5Y 8/8'), s)
 
 par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
 soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
 ```
 
+Near-white + dark brown.
+```{r fig.height=2.5, fig.width=10}
+s <- seq(0, 1, length.out = 6)
+z <- .continuousMixture(c('10YR 9/1', '10YR 2/1'), s)
+
+par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
+soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
+```
+
+Cobalt blue + grey.
+```{r fig.height=2.5, fig.width=10}
+s <- seq(0, 1, length.out = 6)
+z <- .continuousMixture(c('7.5B 6/10', '7.5B 8/2'), s)
+
+par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
+soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
+```
 
 
 ## Interpreting Spectral (Gower) Distances
