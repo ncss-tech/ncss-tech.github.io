@@ -68,7 +68,7 @@ Regularize horizons / colors to $k$ rows.
 ```{r}
 regularizeColors <- function(i, k = 6) {
   .col <- colorRampPalette(na.omit(i$moist_soil_color), space = 'Lab', interpolate = 'spline')(k)
-  .munsell <- rgb2munsell(t(col2rgb(.col)/255))
+  .munsell <- col2Munsell(t(col2rgb(.col)))
   .munsell <- sprintf("%s %s/%s", .munsell$hue, .munsell$value, .munsell$chroma)
   
   return(list(col = .col, munsell = .munsell))
@@ -80,7 +80,6 @@ mm <- profileApply(w, simplify = FALSE, FUN = regularizeColors, k = 6)
 
 Make a $k$ row by $n$ column grid of soil colors from above.
 ```{r fig.width=3, fig.height=3}
-
 m <- lapply(mm, '[[', 'col')
 m <- do.call('cbind', m)
 
@@ -225,8 +224,8 @@ for(i in seq_along(m)) {
 
 # annotate 
 text(x = seq_along(s), y = 0.33, labels = site(s)$id[d$order], cex = 0.66, srt = 90, adj = 0, font = 2)
-# text(x = seq_along(s), y = 0.33, labels = s$subgroup[d$order], cex = 0.5, srt = 45, adj = 0, font = 2)
 
+# text(x = seq_along(s), y = 0.33, labels = s$subgroup[d$order], cex = 0.5, srt = 45, adj = 0, font = 2)
 # text(x = seq_along(s), y = 0.33, labels = s$state[d$order], cex = 0.66, srt = 45, adj = 0, font = 2)
 
 # dev.off()
