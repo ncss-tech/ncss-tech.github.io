@@ -64,7 +64,7 @@ x <- x[x$value < 10, ]
 
 # plot
 par(mar = c(4.5, 4.5, 2.5, 1.5))
-PCP_plot(x, ylab = 'Cumulative PPT (inches)', main = title.text, this.year = 2023)
+PCP_plot(x, ylab = 'Cumulative PPT (inches)', main = title.text, this.year = 2024)
 ```
 
 

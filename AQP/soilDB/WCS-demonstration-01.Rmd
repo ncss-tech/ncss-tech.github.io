@@ -19,8 +19,8 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
-options(width=100, stringsAsFactors=FALSE)
+opts_chunk$set(message = FALSE, warning = FALSE, background = '#F7F7F7', fig.align = 'center', fig.retina = 2, dev = 'png', tidy = FALSE, verbose = FALSE)
+options(width = 100, stringsAsFactors = FALSE)
 ```
 
 
@@ -133,7 +133,6 @@ mu <- mukey.wcs(x, db = 'gSSURGO')
 
 # looks OK
 plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
-box()
 
 # add original BBOX, after transforming to mukey grid CRS
 plot(st_transform(x, 5070), add = TRUE)
@@ -166,7 +165,7 @@ mu <- mukey.wcs(b, db = 'gSSURGO')
 
 # looks OK
 plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
-box()
+
 
 # add buffer, after transforming to mukey grid CRS
 plot(st_transform(b, 5070), add = TRUE)
@@ -190,7 +189,7 @@ install.packages('soilDB')
 remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 
 # terra
-install.packages('terra', repos='https://rspatial.r-universe.dev')
+install.packages('terra', repos = 'https://rspatial.r-universe.dev')
 ```
 
 Load required packages.
@@ -472,6 +471,9 @@ head(tab)
 
 # merge aggregate soil data into RAT
 rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu2) <- rat
 
 # convert grid + RAT -> stack of propery grids
@@ -524,6 +526,9 @@ bwplot(
 ```{r fig.width=10, fig.align='center'}
 # merge aggregate soil data into RAT
 rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu2) <- rat
 
 
@@ -558,6 +563,9 @@ tab$corsteel <- factor(tab$corsteel, levels = c('Low', 'Moderate', 'High'))
 
 # merge aggregate soil data into RAT
 rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu2) <- rat
 
 # set active category to corsteel
@@ -565,7 +573,7 @@ activeCat(mu2) <- 'corsteel'
 
 # plot
 plot(mu2, axes = FALSE, col = viridis(3))
-box()
+
 ```
 
 
@@ -582,12 +590,15 @@ tab <- get_SDA_pmgroupname(mukeys = as.integer(rat$mukey))
 
 # merge aggregate soil data into RAT
 rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu2) <- rat
 
 # set active category to corsteel
 activeCat(mu2) <- 'pmgroupname'
 plot(mu2, axes = FALSE, col = viridis(10))
-box()
+
 ```
 
 
@@ -604,6 +615,9 @@ tab <- get_SDA_hydric(mukeys = as.integer(rat$mukey))
 
 # merge aggregate soil data into RAT
 rat <- merge(rat, tab, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu2) <- rat
 
 # set active category to corsteel
@@ -663,6 +677,9 @@ p$areasymbol <- factor(p$areasymbol)
 
 # merge aggregate soil data into RAT
 rat <- merge(rat, p, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu) <- rat
 
 # result is a grid of map unit keys + RAT
@@ -675,7 +692,7 @@ names(cats(mu)[[1]])
 
 activeCat(mu) <- 'awc_r'
 plot(mu)
-box()
+
 ```
 
 Plot aggregated soil properties.
@@ -767,6 +784,9 @@ head(p)
 
 # merge aggregate soil data into RAT
 rat <- merge(rat, p, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# requires that grid cell ID (mukey) be numeric
+rat$mukey <- as.integer(rat$mukey)
 levels(mu) <- rat
 
 # convert mukey grid + RAT -> stack of numerical grids
@@ -803,7 +823,7 @@ values(texture.class) <- ssc_to_texcl(
 )
 
 plot(texture.class, col = viridis(50), axes = FALSE, main = 'Soil Texture Class <2mm Fraction\nDominant Component, 25-50cm (RV)')
-box()
+
 ```
 
 
@@ -878,26 +898,26 @@ cols <- cats(texture_2550cm)[[1]]$hex
 
 # plot using SoilWeb soil texture class colors
 plot(texture_2550cm, col = cols, axes = FALSE)
-box()
+
 ```
 
 
 Other soil properties of interest.
 ```{r, fig.width = 6, fig.height = 6.5}
 plot(sar, axes = FALSE,  col = viridis(50), main = 'SAR')
-box()
+
 
 plot(wei, axes = FALSE,  col = viridis(50), main = 'Wind Erodibility Index')
-box()
+
 
 plot(drainage_class, axes = FALSE,  col = viridis(50), main = 'Drainage Class')
-box()
+
 
 plot(weg, axes = FALSE,  col = viridis(50), main = 'Wind Erodibility Group')
-box()
+
 
 plot(str, axes = FALSE,  col = viridis(50), main = 'Soil Temperature Regime')
-box()
+
 ```
 
 Stacking soil property grids for multi-panel figures that share a common color ramp / legend.
@@ -996,7 +1016,7 @@ s <- soilColor.wcs(aoi = a, var = 'sc025cm', res = 270)
 # note access to colors via RAT
 rat <- cats(s)[[1]]
 plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = attr(s, 'layer name'))
-box()
+
 ```
 
 Soil color distribution.
@@ -1024,7 +1044,7 @@ s <- soilColor.wcs(aoi = a, var = 'sc025cm_hr', res = 30)
 # note access to colors via RAT
 rat <- cats(s)[[1]]
 plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = attr(s, 'layer name'))
-box()
+
 ```
 
 
@@ -1064,7 +1084,7 @@ print(ss)
 
 # plot
 plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = viridis(10))
-box()
+
 ```
 
 
@@ -1100,7 +1120,7 @@ ll <- c("nonsaline", "slightly saline", "moderately saline",
 levels(ss) <- data.frame(ID = 1:length(ll), class = ll)
 
 plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = viridis(10))
-box()
+
 ```
 
 ## PRISM Stack
