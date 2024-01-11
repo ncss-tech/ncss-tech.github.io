@@ -61,7 +61,7 @@ x <- ISSR800.wcs(aoi = aoi, var = 'paws')
 Excerpt from the [gSSURGO documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=nrcs142p2_053628#release).
 
 <div style="padding: 10px; font-size:90%;">
-The gSSURGO Database is derived from the official Soil Survey Geographic (SSURGO) Database. SSURGO generally has the most detailed level of soil geographic data developed by the National Cooperative Soil Survey (NCSS) in accordance with NCSS mapping standards. The tabular data represent the soil attributes and are derived from properties and characteristics stored in the National Soil Information System (NASIS). The gSSURGO data were prepared by merging the traditional vector-based SSURGO digital map data and tabular data into statewide extents, adding a statewide gridded map layer derived from the vector layer, and adding a new value-added look up table (Valu1) containing “ready to map” attributes. The gridded map layer is a file geodatabase raster in an ArcGIS file geodatabase. The raster and vector map data have a statewide extent. The raster map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area projection. Each cell (and polygon) is linked to a map unit identifier called the map unit key. A unique map unit key is used to link the raster cells and polygons to attribute tables. Due to file size, the raster layer for the conterminous United States is only available in a 30-meter resolution.
+The gSSURGO Database is derived from the official Soil Survey Geographic (SSURGO) Database. SSURGO generally has the most detailed level of soil geographic data developed by the National Cooperative Soil Survey (NCSS) in accordance with NCSS mapping standards. The tabular data represent the soil attributes and are derived from properties and characteristics stored in the National Soil Information System (NASIS). The gSSURGO data were prepared by merging the traditional vector-based SSURGO digital map data and tabular data into statewide extents, adding a statewide gridded map layer derived from the vector layer, and adding a new value-added look up table (Valu1) containing "ready to map" attributes. The gridded map layer is a file geodatabase raster in an ArcGIS file geodatabase. The raster and vector map data have a statewide extent. The raster map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area projection. Each cell (and polygon) is linked to a map unit identifier called the map unit key. A unique map unit key is used to link the raster cells and polygons to attribute tables. Due to file size, the raster layer for the conterminous United States is only available in a 30-meter resolution.
 </div>
 
 ### gNATSGO
@@ -132,7 +132,7 @@ st_crs(x) <- 4326
 mu <- mukey.wcs(x, db = 'gSSURGO')
 
 # looks OK
-plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
+plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'))
 
 # add original BBOX, after transforming to mukey grid CRS
 plot(st_transform(x, 5070), add = TRUE)
@@ -164,7 +164,7 @@ b <- st_as_sf(b)
 mu <- mukey.wcs(b, db = 'gSSURGO')
 
 # looks OK
-plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'))
+plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'))
 
 
 # add buffer, after transforming to mukey grid CRS
@@ -334,17 +334,17 @@ a <- st_as_sfc(a)
 par(mfcol = c(1, 3))
 
 # gSSURGO
-plot(x, axes = FALSE, legend = FALSE, main = attr(x, 'layer name'))
+plot(x, axes = FALSE, legend = FALSE, main = metags(x, name = 'description'))
 # original BBOX
 plot(a, add = TRUE)
 
 # gNATSGO
-plot(y, axes = FALSE, legend = FALSE, main = attr(y, 'layer name'))
+plot(y, axes = FALSE, legend = FALSE, main = metags(y, name = 'description'))
 # original BBOX
 plot(a, add = TRUE)
 
 # RSS
-plot(z, axes = FALSE, legend = FALSE, main = attr(z, 'layer name'), ext = x)
+plot(z, axes = FALSE, legend = FALSE, main = metags(z, name = 'description'), ext = x)
 # original BBOX
 plot(a, add = TRUE)
 ```
@@ -360,10 +360,10 @@ Continuing from the example above.
 par(mfcol = c(1, 2))
 
 # gSSURGO
-plot(x, axes = FALSE, legend = FALSE, main = attr(x, 'layer name'))
+plot(x, axes = FALSE, legend = FALSE, main = metags(x, name = 'description'))
 
 # STATSGO
-plot(statsgo, axes = FALSE, legend = FALSE, main = attr(statsgo, 'layer name'))
+plot(statsgo, axes = FALSE, legend = FALSE, main = metags(statsgo, name = 'description'))
 ```
 
 ## Hawaii SSURGO
@@ -384,7 +384,7 @@ st_crs(x) <- 4326
 mu <- mukey.wcs(x, db = 'hi_ssurgo')
 
 # make NA (the ocean) blue
-plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'), colNA = 'royalblue')
+plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'), colNA = 'royalblue')
 
 # # check mu names
 # .is <- format_SQL_in_statement(cats(mu)[[1]]$mukey)
@@ -410,7 +410,7 @@ st_crs(x) <- 4326
 mu <- mukey.wcs(x, db = 'pr_ssurgo')
 
 # make NA (the ocean) blue
-plot(mu, legend = FALSE, axes = FALSE, main = attr(mu, 'layer name'), colNA = 'royalblue')
+plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'), colNA = 'royalblue')
 
 # # check mu names
 # .is <- format_SQL_in_statement(cats(mu)[[1]]$mukey)
@@ -573,7 +573,6 @@ activeCat(mu2) <- 'corsteel'
 
 # plot
 plot(mu2, axes = FALSE, col = viridis(3))
-
 ```
 
 
@@ -598,7 +597,6 @@ levels(mu2) <- rat
 # set active category to corsteel
 activeCat(mu2) <- 'pmgroupname'
 plot(mu2, axes = FALSE, col = viridis(10))
-
 ```
 
 
@@ -692,7 +690,6 @@ names(cats(mu)[[1]])
 
 activeCat(mu) <- 'awc_r'
 plot(mu)
-
 ```
 
 Plot aggregated soil properties.
@@ -898,7 +895,6 @@ cols <- cats(texture_2550cm)[[1]]$hex
 
 # plot using SoilWeb soil texture class colors
 plot(texture_2550cm, col = cols, axes = FALSE)
-
 ```
 
 
@@ -1013,10 +1009,12 @@ a <- st_as_sfc(a)
 # moist soil color at 25cm, low-res version
 s <- soilColor.wcs(aoi = a, var = 'sc025cm', res = 270)
 
+# metadata
+metags(s)
+
 # note access to colors via RAT
 rat <- cats(s)[[1]]
-plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = attr(s, 'layer name'))
-
+plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
 ```
 
 Soil color distribution.
@@ -1043,8 +1041,7 @@ s <- soilColor.wcs(aoi = a, var = 'sc025cm_hr', res = 30)
 
 # note access to colors via RAT
 rat <- cats(s)[[1]]
-plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = attr(s, 'layer name'))
-
+plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
 ```
 
 
