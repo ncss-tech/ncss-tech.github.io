@@ -138,6 +138,13 @@ plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'))
 plot(st_transform(x, 5070), add = TRUE)
 ```
 
+### Metadata
+Print attached metadata with the `terra::metags()` function. Currently, a short description and "vintage" are included. The gNATSGO, gSSURGO, and derivatives are typically created 2-3 months after the annual SSURGO refresh on October 1st of each year (beginning of US federal fiscal year). 
+```{r, results='asis', echo=FALSE}
+# pretty-print metadata
+kableExtra::kable_styling(knitr::kable(t(metags(mu)), format = 'html'))
+```
+
 
 A buffer applied to a [single WGS84 coordinate](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.52578,-118.55639,z13) can create a BBOX:
 ```{r fig.width = 5, fig.height = 5}
@@ -173,13 +180,6 @@ plot(st_transform(b, 5070), add = TRUE)
 # add original point, after transforming to mukey grid CRS
 plot(st_transform(p, 5070), add = TRUE, pch = 16)
 ```
-
-
-
-
-
-
-
 
 
 # Setup
