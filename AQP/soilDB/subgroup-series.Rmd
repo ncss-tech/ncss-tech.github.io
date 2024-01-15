@@ -91,9 +91,16 @@ cat(explainST('abruptic durixeralfs'))
 
 ## ST Hierarchy to the Subgroup Level
 Automatic to the subgroup, via SoilTaxonomy package.
-```{r, results='asis'}
+
+```{r, eval=FALSE}
 taxonTree(c('durixeralfs', 'rhodoxeralfs'), special.chars = c("\u251c","\u2502", "\u2514", "\u2500 "))
 ```
+
+<pre style="font-size: 90%;">
+```{r, results='asis', echo=FALSE}
+taxonTree(c('durixeralfs', 'rhodoxeralfs'), special.chars = c("\u251c","\u2502", "\u2514", "\u2500 "))
+```
+</pre>
 
 ## ST Hierarchy with Family and Series
 We have to do this manually.
