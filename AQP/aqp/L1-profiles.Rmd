@@ -88,11 +88,11 @@ s$pc1 <- pc.scores[, 1]
 d <- NCSP(s, vars = c('p1', 'p2', 'p3'), maxDepth = 100, rescaleResult = TRUE)
 
 # simple clustering for viz
-h <- hclust(d, method = 'ward.D')
+h <- hclust(d, method = 'ward.D2')
 
 # viz
 par(mar = c(0, 0, 3, 1.5))
-plotProfileDendrogram(s, clust = h, color = 'pc1', y.offset = 0.2, scaling.factor = 0.018, width = 0.3, name = NA, cex.depth.axis = 0.85, divide.hz = FALSE)
+plotProfileDendrogram(s, clust = h, color = 'pc1', y.offset = 0.2, scaling.factor = 0.018, width = 0.3, name = NA, depth.axis = list(cex = 0.85), divide.hz = FALSE)
 ```
 
 
@@ -163,7 +163,7 @@ names(z.long)[1] <- 'group'
 names(z.long)[5] <- 'p.q50'
 z.long$p.q25 <- NA
 z.long$p.q75 <- NA
-# not sure how we can best utlize this
+# not sure how we can best utilize this
 z.long$contributing_fraction <- 0
 z.long <- z.long[, new.vars]
 
@@ -176,7 +176,7 @@ g <- make.groups(
 ## Graphical Comparison
 ```{r fig.width = 12, fig.height=6}
 # plotting style
-tps <- tactile.theme(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+tps <- tactile.theme(superpose.line = list(col = c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd = 2))
 
 # fancy panel names
 levels(g$variable) <- c('Sand (%)', 'Silt (%)', 'Clay (%)', 'pH 1:1 H2O', 'BS at pH 8.2 (%)', 'WMPD (mm)')

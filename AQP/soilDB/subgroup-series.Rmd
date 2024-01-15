@@ -19,7 +19,7 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='svglite', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -48,7 +48,7 @@ library(sf)
 library(terra)
 library(spData) 
 library(rasterVis)
-library(viridis)
+library(viridisLite)
 
 # subgroup "explainer"
 library(SoilTaxonomy)
@@ -89,7 +89,14 @@ cat(explainST('abruptic durixeralfs'))
 ```
 </pre>
 
+## ST Hierarchy to the Subgroup Level
+Automatic to the subgroup, via SoilTaxonomy package.
+```{r, results='asis'}
+taxonTree(c('durixeralfs', 'rhodoxeralfs'), special.chars = c("\u251c","\u2502", "\u2514", "\u2500 "))
+```
+
 ## ST Hierarchy with Family and Series
+We have to do this manually.
 ```{r}
 # subset SC database to required columns
 SC <- SC[, c('soilseriesname', 'taxorder', 'taxsuborder', 'taxgrtgroup', 'taxsubgrp', 'taxclname')]
@@ -134,7 +141,6 @@ pf <- function(i) {
 
 <pre style="line-height: 110%;">
 ```{r echo = FALSE, results='asis'}
-# taxonTree(c('durixeralfs', 'rhodoxeralfs'), special.chars = c("\u251c","\u2502", "\u2514", "\u2500 "))
 print(n, limit = NULL, pruneFun = pf)
 ```
 </pre>
@@ -147,7 +153,7 @@ Link to SoilWeb subgroup taxa tree for [abruptic durixeralfs](https://casoilreso
 
 ## Taxa Extent Maps
 
-```{r fig.height = 8, fig.width = 5.5, dev = 'png'}
+```{r fig.height = 9, fig.width = 5.5, dev = 'png'}
 # get 800m extent map
 e <- taxaExtent('abruptic durixeralfs', level = 'subgroup')
 
@@ -219,24 +225,42 @@ plot(gc.ca, autoLab='yes', title='Geomorphic Component', cex=0.75, col.col='fire
 
 
 ## KSSL Data
-```{r fig.width=8, fig.height=5.5, results='hide'}
-# TODO: use SDA to get all that are available
-# TODO: L1 profile
+```{r fig.width=12, fig.height=5.5, results='hide'}
+# latest LDM snapshot, no soil morphologic data
+lab <- fetchLDM(
+  WHERE = "CASE WHEN corr_taxsubgrp IS NOT NULL THEN LOWER(corr_taxsubgrp) ELSE LOWER(samp_taxsubgrp) END = 'abruptic durixeralfs' "
+)
 
-# this will miss all records that have been correlated to the subgroup but not series
-lab <- fetchKSSL(series = s, returnMorphologicData = TRUE, simplifyColors = TRUE)
-lab.spc <- lab$SPC 
+# remove any profiles with horizon depth logic
+lab <- HzDepthLogicSubset(lab)
 
-lab.spc$wmpd <- with(horizons(lab.spc), ((vcs * 1.5) + (cs * 0.75) + (ms * 0.375) + (fs * 0.175) + (vfs *0.075) + (silt * 0.026) + (clay * 0.0015)) / (vcs + cs + ms + fs + vfs + silt + clay))
+length(lab)
+
+# truncate profiles at 200cm
+lab <- trunc(lab, 0, 200)
+
+# # sanity check
+# par(mar = c(0, 0, 3, 2))
+# plotSPC(lab[1:15, ], print.id = FALSE, name = NA, width = 0.33, color = 'clay_total')
+
+# weighted-mean particle diameter
+lab$wmpd <- with(
+  horizons(lab), ((sand_very_coarse * 1.5) + (sand_coarse * 0.75) + (sand_medium * 0.375) + (sand_fine * 0.175) + (sand_very_fine *0.075) + (silt_total * 0.026) + (clay_total * 0.0015)) / (sand_very_coarse + sand_coarse + sand_medium + sand_fine + sand_very_fine + silt_total + clay_total))
 
 # estimate soil depth based on horizon designations
-sdc <- getSoilDepthClass(lab.spc)
+sdc <- getSoilDepthClass(lab)
 
 # splice-into site data
-site(lab.spc) <- sdc
+site(lab) <- sdc
 
-site(lab.spc)$.grp <- factor('Abruptic Durixeralfs')
-a <- slab(lab.spc, .grp ~ clay + sand + wmpd + estimated_ph_h2o + bs82)
+site(lab)$.grp <- factor('Abruptic Durixeralfs')
+a <- slab(lab, .grp ~ clay_total + wmpd + cole_whole_soil + ph_h2o + base_sat_sum_of_cations_ph_8_2)
+
+# re-name soil properties for clarity
+a$variable <- factor(
+  a$variable,
+  labels = c('Total Clay (%)', 'WMPD', 'COLE WS (%)', 'pH 1:1 H2O', 'Base Saturation pH 8.2 (%)')
+)
 
 # define plotting style
 tps <- tactile.theme(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
@@ -246,9 +270,9 @@ xyplot(top ~ p.q50 | variable,
        groups = .grp, 
        data = a, 
        ylab='Depth',
-       xlab='median bounded by 25th and 75th percentiles',
+       xlab='median bounded by 5th and 95th percentiles',
        main = 'Abruptic Durixeralfs',
-       lower=a$p.q25, upper=a$p.q75, ylim=c(155,-5),
+       lower=a$p.q5, upper=a$p.q95, ylim=c(155,-5),
        panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
        prepanel=prepanel.depth_function,
        cf=a$contributing_fraction,
