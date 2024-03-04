@@ -34,8 +34,14 @@ library(sf)
 library(sharpshootR)
 library(SoilTaxonomy)
 
-# way too many ties in geomcomp
+
+## possible AOIs defined using a bounding-box via SoilWeb
+
+# WI: many ties 
 bb <- '-97.0983 39.3808,-97.0983 39.4127,-97.0282 39.4127,-97.0282 39.3808,-97.0983 39.3808'
+
+# KS069
+bb <- '-100.5534 37.9177,-100.5534 37.9822,-100.4389 37.9822,-100.4389 37.9177,-100.5534 37.9177'
 
 
 
@@ -76,19 +82,6 @@ osd <- fetchOSD(unique(s$compname), extended = TRUE)
 
 ## check out results
 str(osd, 1)
-
-
-# the latest soilDB::fetchOSD() will automatically encode horizon distinctness offset
-# backwards compatibility
-if(is.null(osd$SPC$hzd)) {
-  
-  # convert horizon boundary distinctness -> vertical distance
-  osd$SPC$hzd <- hzDistinctnessCodeToOffset(
-    osd$SPC$distinctness, 
-    codes = c('very abrupt', 'abrubt', 'clear', 'gradual', 'diffuse')
-  )
-}
-
 ```
 
 
@@ -118,7 +111,7 @@ hist(match.rate, las = 1, xlab = 'Matching Rate')
 Note that profiles deeper than 180cm are marked as truncated via ragged bottoms.
 ```{r, fig.width=10, fig.height=8.5}
 # provide additional arguments to aqp::plotSPC() via options
-options(.aqp.plotSPC.args = list(max.depth = 180))
+options(.aqp.plotSPC.args = list(max.depth = 190))
 
 par(mar = c(1, 0, 1, 2))
 plotGeomorphCrossSection(osd, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
@@ -162,9 +155,9 @@ print(res$fig)
 ```
 
 ```{r, fig.width=10, fig.height=8}
-par(mar = c(1, 0, 1, 1))
+par(mar = c(1, 0, 1, 2))
 idx <- match(hydOrder(o$geom, g = 'flats', clust = FALSE), profile_id(o$SPC))
-plotSPC(o$SPC, plot.order = idx, width = 0.1, name.style = 'center-center', cex.names = 0.65)
+plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
 ```{r, fig.width=10, fig.height=8}
