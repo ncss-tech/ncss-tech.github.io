@@ -91,39 +91,47 @@ library(sharpshootR)
 library(latticeExtra)
 library(tactile)
 library(grid)
-library(plyr)
+library(purrr)
 
 
 # current data are:
-yr <- 2023
-mo <- 'May'
+yr <- 2024
+mo <- 'March'
 
 # Stanislaus River watershed
 course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
 ```
 
 ```{r results='hide'}
+getHistoricData <- function(i) {
+  .res <- CDECsnowQuery(course = i, start_yr = 1900, end_yr = yr)
+  .res$course_number <- i
+  return(.res)
+}
+
 # get historic data
-d.long_term <- ddply(course.data, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr = 1900, end_yr = yr)})
+d.long_term <- map(.x = course.data$course_number, .progress = TRUE, .f = getHistoricData)
+d.long_term <- do.call('rbind', d.long_term)
 
 # join-in metadata
 data(CDEC.snow.courses)
-d.long_term <- join(d.long_term, CDEC.snow.courses, by='course_number', type='left')
+d.long_term <- merge(d.long_term, CDEC.snow.courses, by = 'course_number', all.x = TRUE, sort = FALSE)
 
 # reset levels of site names, sorting by elevation
 names.elevations <- unique(d.long_term[, c('name', 'elev_feet')])
 new.levels <- names.elevations$name[order(names.elevations$elev_feet)]
-d.long_term$name <- factor(d.long_term$name, levels=new.levels)
+d.long_term$name <- factor(d.long_term$name, levels = new.levels)
 
 # c('February', 'March', 'April', 'May')
 
+## TODO: remove all plyr code
 
 ## compute long-term average, by course / month, using the Adjusted 
-d.long_term.avg <- ddply(d.long_term, c('course_number', 'month'), summarise, 
-                         avg.SWE=mean(SWE, na.rm=TRUE), 
-                         avg.density=mean(density, na.rm=TRUE),
-                         avg.Depth=mean(Depth, na.rm=TRUE),
-                         no.yrs=length(na.omit(SWE))
+d.long_term.avg <- plyr::ddply(d.long_term, c('course_number', 'month'), plyr::summarise, 
+                         avg.SWE = mean(SWE, na.rm=TRUE), 
+                         avg.density = mean(density, na.rm=TRUE),
+                         avg.Depth = mean(Depth, na.rm=TRUE),
+                         no.yrs = length(na.omit(SWE))
 )
 
 # make a copy of the current yr / mo data
@@ -131,7 +139,7 @@ d.current <- subset(d.long_term, subset=month == mo & year == yr)
 
 # join current data with long term averages
 # keep only data that exists in both tables
-d.merged <- join(d.current, d.long_term.avg, by=c('course_number', 'month'), type='left')
+d.merged <- plyr::join(d.current, d.long_term.avg, by=c('course_number', 'month'), type='left')
 
 # compute pct of normal of depth, SWE, density
 d.merged$pct_of_normal_Depth <- with(d.merged, (Depth / avg.Depth) * 100.0)
@@ -188,13 +196,13 @@ print(p4, more=FALSE, position=c(0.125,0,0.425,0.175))
 data(CDEC.snow.courses)
 
 # get historic data
-d.long_term <- ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr = 1900, end_yr = yr)})
+d.long_term <- plyr::ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr = 1900, end_yr = yr)})
 
 # save local cache
 # save(d.long_term, file='long_term_data-cache.rda')
 
 # join-in the snow metadata
-d.long_term <- join(d.long_term, CDEC.snow.courses, by='course_number', type='left')
+d.long_term <- plyr::join(d.long_term, CDEC.snow.courses, by='course_number', type='left')
 
 # reset levels of site names, sorting by elevation
 names.elevations <- unique(d.long_term[, c('name', 'elev_feet')])
@@ -202,7 +210,7 @@ new.levels <- names.elevations$name[order(names.elevations$elev_feet)]
 d.long_term$name <- factor(d.long_term$name, levels=new.levels)
 
 ## scale by course / month, across all years
-scaled.data <- ddply(d.long_term, c('name', 'month'), function(i) {
+scaled.data <- plyr::ddply(d.long_term, c('name', 'month'), function(i) {
   scaled.SWE <- scale(i$SWE)
   emp.pctile <- ecdf(i$SWE)(i$SWE)
   spi <- getSPI(i$SWE)
