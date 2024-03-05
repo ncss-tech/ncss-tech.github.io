@@ -46,11 +46,8 @@ Once you have assigned [generalized horizon labels](http://ncss-tech.github.io/A
 If you have never used the [aqp](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) or [soildb](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) packages before, you will likely need to install them. This only needs to be done once. 
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN + dependencies
-install.packages('aqp', dep=TRUE) 
-install.packages('soilDB', dep=TRUE)
-# latest versions from R-Forge:
-install.packages('aqp', repos="http://R-Forge.R-project.org")
-install.packages('soilDB', repos="http://R-Forge.R-project.org")
+install.packages('aqp') 
+install.packages('soilDB')
 ```
 
 Once you have all of the R packages on which  this document depends, it is a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g., after an upgrade) and **loaded** anytime you want to access functions from within those packages.
