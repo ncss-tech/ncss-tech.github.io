@@ -41,16 +41,16 @@ library(MASS)
 
 library(corrplot)
 
+# example data
 data("loafercreek")
 hzdesgnname(loafercreek) <- 'hzname'
 
-
-# profiles 20-40
+# focus on profiles 20-40
 x <- loafercreek[20:40, ]
 
 # modify default arguments for some flair
 par(mar = c(0, 0, 0, 0))
-plotSPC(x, width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, print.id = FALSE)
+plotSPC(x, width = 0.3, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, print.id = FALSE)
 ```
 
 
@@ -68,6 +68,7 @@ horizons(x)$genhz <- generalize.hz(x$hzname, new = n, pat = p)
 x$genhz <- ordered(x$genhz)
 
 # check frequency of GHL assignment
+# note that some are missing
 table(x$genhz)
 ```
 
@@ -88,7 +89,7 @@ table(y$genhz)
 site(y)$shortID <- 1:length(y)
 
 par(mar = c(0, 0, 3, 0))
-plotSPC(y, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, fixLabelCollisions = FALSE, col.label = 'Generalized Horizon Label', label = 'shortID')
+plotSPC(y, color = 'genhz', width = 0.3, name.style = 'center-center', depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, fixLabelCollisions = FALSE, col.label = 'Generalized Horizon Label', label = 'shortID')
 ```
 
 
@@ -104,8 +105,8 @@ z$genhz[is.na(z$genhz)] <- 'R'
 # truncate all profiles to 150cm
 z <- trunc(z, z1 = 0, z2 = 150)
 
-par(mar = c(0, 0, 3, 0))
-plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
+par(mar = c(0, 0, 3, 2))
+plotSPC(z, color = 'genhz', width = 0.33, name.style = 'center-center',  cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
 ```
 
 
@@ -115,15 +116,15 @@ Arrange profiles by depth to contact using `plot.order` argument to `plotSPC`. S
 sdc <- getSoilDepthClass(z)
 site(z) <- sdc
 
-par(mar = c(0, 0, 3, 0))
-plotSPC(z, color = 'genhz', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, plot.order = order(z$depth), col.label = 'Generalized Horizon Label', label = 'shortID')
+par(mar = c(0, 0, 3, 2))
+plotSPC(z, color = 'genhz', width = 0.33, name.style = 'center-center', cex.names = 0.65, plot.order = order(z$depth), col.label = 'Generalized Horizon Label', label = 'shortID')
 ```
 
 
 Compute pair-wise distances between profiles using `genhz` (an ordered factor) to a maximum depth of 150cm. See `?profile_compare` and `?daisy` for details. Divisive hierarchical clustering is applied to the distance matrix, with a final re-ordering step according to soil depth (`dendextend::rotate)`.
 ```{r}
-# latest aqp
-d <- NCSP(z, vars = c('genhz'), maxDepth = 150, k = 0, rescaleResult = TRUE)
+# aqp >= 2.0
+d <- NCSP(z, vars = 'genhz', maxDepth = 150, k = 0, rescaleResult = TRUE)
 
 # divisive hierarchical clustering
 h <- as.hclust(diana(d))
@@ -134,13 +135,17 @@ h <- dendextend::rotate(h, order(z$depth))
 
 As suggested by Shawn Salley, a quick view of the distance matrix as an image. Pair-wise distances are encoded with color.
 ```{r fig.width=8, fig.height=8}
+# expand dist object to full matrix form of the pair-wise distances 
 m <- as.matrix(d)
+# copy short IDs from Soil Profile Collection to full distance matrix
 dimnames(m) <- list(z$shortID, z$shortID)
 
+# invert device foreground / background colors for an artistic effect
+# use colors from The Life Aquatic
 par(bg = 'black', fg = 'white')
 corrplot(
   m, 
-  col = hcl.colors(n = 25), 
+  col = hcl.colors(n = 25, palette = 'zissou1'), 
   is.corr = FALSE, 
   col.lim = c(0, 1), 
   method = "color", 
@@ -155,13 +160,14 @@ corrplot(
 
 Rank, left to right, profiles according to median distance to all other profiles in the collection. Profiles 17, 6, 4, or 13 might be good candidates for typical pedons. 
 ```{r, fig.width=12, fig.height=6}
-# convert to matrix
+# convert to full matrix representation
 m <- as.matrix(d)
 
-# use shorter IDs
+# copy shorter IDs from SPC
 dimnames(m) <- list(z$shortID, z$shortID)
 
-# mask diagonal and lower triangle 
+# mask diagonal and lower triangle with NA
+# ignoring these in subsequent steps
 m[upper.tri(m, diag = TRUE)] <- NA
 
 # extract distances to all other profiles
@@ -170,25 +176,27 @@ dl <- lapply(1:nrow(m), FUN = function(i) {
   return(as.vector(na.omit(.r)))
 })
 
-# compute median distance to all other profiles
+# copy names
 names(dl) <- dimnames(m)[[1]]
+
+# compute median distance to all other profiles
 (med.dist <- sort(sapply(dl, median, na.rm = TRUE)))
 
 # sorting vector for plotting sketches
 idx <- match(names(med.dist), z$shortID)
 
-par(mar = c(4, 0, 3, 0))
-plotSPC(z, plot.order = idx, color = 'genhz', width = 0.25, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
+par(mar = c(4, 0, 3, 2))
+plotSPC(z, plot.order = idx, color = 'genhz', width = 0.33, name.style = 'center-center', cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
 
 axis(1, at = 1:length(z), labels = round(med.dist, 3), line = 0, cex.axis = 0.85)
 mtext("Median distance to all other profiles (not to scale)", side = 1, line = 2.25)
 ```
 
 
-`plotProfileDendrogram` from the sharpshootR package aligns profile sketches with the terminal leaves of a dendrogram.
+Use `plotProfileDendrogram()` from the sharpshootR package to align profile sketches with the terminal leaves of a dendrogram. When applied to other data, you may have to tinker with the `scaling.factor` and `y.offset` arguments.
 ```{r, fig.width=12, fig.height=8}
-par(mar = c(1, 0, 3, 0))
-plotProfileDendrogram(z, clust = h, scaling.factor = 0.0095, y.offset = 0.15, color = 'genhz', width = 0.3, name.style = 'center-center', col.label = 'Generalized Horizon Label', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, label = 'shortID', fixLabelCollisions = TRUE)
+par(mar = c(1, 0, 3, 2))
+plotProfileDendrogram(z, clust = h, scaling.factor = 0.0095, y.offset = 0.15, color = 'genhz', width = 0.33, name.style = 'center-center', col.label = 'Generalized Horizon Label', cex.names = 0.65, label = 'shortID')
 ```
 
 
@@ -202,9 +210,9 @@ pos <- alignTransect(m[1, ], x.min = 1, x.max = length(z), thresh = 0.5)
 
 Distance from 1st profile (left-most, marked with a red **asterisk**) used to order collection along an integer sequence.
 ```{r, fig.width=12, fig.height=6}
-par(mar = c(4, 0, 3, 0))
+par(mar = c(4, 0, 3, 2))
 
-plotSPC(z, plot.order = pos$order, color = 'genhz', width = 0.25, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
+plotSPC(z, plot.order = pos$order, color = 'genhz', width = 0.33, name.style = 'center-center', cex.names = 0.65, col.label = 'Generalized Horizon Label', label = 'shortID')
 
 points(x = 1, y = -15, pch = '*', cex = 3, col = 'firebrick')
 
@@ -214,7 +222,7 @@ mtext("Distance from 1st Profile (not to scale)", side = 1, line = 2.25)
 
 Distance from 1st profile (left-most, marked with a red **asterisk**) used to place profiles at relative distances along the x-axis.
 ```{r, fig.width=12, fig.height=6}
-par(mar = c(4, 0, 3, 1))
+par(mar = c(4, 0, 3, 2))
 
 plotSPC(z, plot.order = pos$order, relative.pos = pos$relative.pos, color = 'genhz', width = 0.2, name.style = 'center-center', name = NA, col.label = 'Generalized Horizon Label', label = 'shortID')
 
@@ -227,7 +235,11 @@ mtext("Distance from 1st Profile", side = 1, line = 2.25)
 Create an ordination from pair-wise distances using non-metric multidimensional scaling (`MASS::sammon`).
 ```{r fig.width=8, fig.height=4.5}
 # add tiny amount for 0-distance pairs (duplicate profiles)
-mds <- sammon(d + 0.001)$points
+d <- d + 0.001
+
+# extract nMDS scores from result
+mds <- sammon(d)
+mds <- mds$points
 
 # ensure ordering is preserved:
 # profile IDs -> distance matrix -> nMDS
@@ -246,7 +258,8 @@ yoff <- aqp:::.rescaleRange(mds[, 2], x0 = -10, x1 = max(z))
 Place ("hang") soil profile sketches according to nMDS ordination (points). Overlap is a problem.
 ```{r, fig.width=8, fig.height=6}
 par(mar = c(0.25, 0.25, 3.5, 0.25))
-plotSPC(z, y.offset = yoff, relative.pos = xoff, color = 'genhz', width = 0.25, name.style = 'center-center', hz.depths = FALSE, name = NA, col.label = 'Generalized Horizon Label', label = 'shortID', scaling.factor = 0.75)
+# suppress horizon names with `names = NA`
+plotSPC(z, y.offset = yoff, relative.pos = xoff, color = 'genhz', width = 0.25, name.style = 'center-center', name = NA, col.label = 'Generalized Horizon Label', label = 'shortID', scaling.factor = 0.75)
 
 points(xoff, yoff, pch = 16, cex = 0.66)
 
@@ -256,7 +269,7 @@ abline(v = mean(xoff), h = mean(yoff), lty = 2)
 box()
 ```
 
-Demonstrate the effect of `fixOverlap` on relative positions along nMDS axis 1.
+Demonstrate the effect of `fixOverlap()` on relative positions along nMDS axis 1.
 ```{r fig.width=6, fig.height=5}
 # use re-scaled nMDS coordinates as virtual transect
 # adjust to reduce overlap
@@ -308,8 +321,11 @@ Another approach, leaving out all of the text annotation. Morphologic patterns a
 par(mar = c(0.25, 0.25, 3.5, 0.25))
 plotSPC(z, y.offset = yoff, relative.pos = xoff.fixed, color = 'genhz', width = 0.25, name.style = 'center-center', hz.depths = FALSE, name = NA, col.label = 'Generalized Horizon Label', label = 'shortID', scaling.factor = 0.75)
 
+# grid
 grid(nx = 10, ny = 10)
-abline(v = mean(xoff.fixed), h = mean(yoff), lty = 2)
+
+# annotate origin of nMDS axes
+points(x = mean(xoff), y = mean(yoff), pch = 3, col = 'black', lwd = 2)
 
 box()
 ```

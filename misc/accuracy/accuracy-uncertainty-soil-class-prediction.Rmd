@@ -380,11 +380,11 @@ where $\mathit{CI}$ is an index of confusion between the first most likely, $\mu
 
 ```{r entropy-eq-prob-limits, fig.width=7, fig.height=4, fig.cap="Theoretical limits on entropy and CI values as a function of equal-class probability. Essentially the lower limit on *certainty* given an equally-probably guess."}
 # H as a function of n
-n.seq <- 2:100
+n.seq <- 2:50
 H <- sapply(n.seq, function(i) shannonEntropy(rep(1/i, times=i), b = 2))
-d <- data.frame(n=n.seq, H=H)
+d <- data.frame(n = n.seq, H = H)
 
-cols <- wes_palette("Zissou1")[c(1, 5)]
+cols <- hcl.colors(n = 5, palette = "zissou1")[c(1, 5)]
 
 xyplot(H ~ n, data=d, xlab='Number of Classes', ylab='Shannon Entropy', scales=list(x=list(tick.number=10)), col=cols[1], lwd=2,  main='Equal Class Probability', panel=function(x, y, ...) {
   panel.xyplot(x = x, y = y, ..., type=c('l', 'g'))
@@ -406,7 +406,7 @@ l <- lapply(n.seq, function(i) simulatePredictions(1, alpha=c(rep(1, times=i))))
 stats <- ldply(l, function(i) i$stats)
 stats <- data.frame(n=n.seq, stats)
 
-cols <- wes_palette("Zissou1")[c(1,5)]
+cols <- hcl.colors(n = 5, palette = "zissou1")[c(1, 5)]
 
 xyplot(Shannon.H + CI ~ n, data=stats, main='Simulated Limits\nApprox. Equal Probabilities', xlab='Number of Classes', ylab='Uncertainty Metric', scales=list(x=list(tick.number=10)), type=c('b', 'g'), ylim=c(0, 5), par.settings=list(superpose.symbol=list(col=cols, pch=16, cex=1), superpose.line=list(col=cols, lwd=2)), auto.key=list(columns=2, lines=TRUE, points=FALSE))
 ```

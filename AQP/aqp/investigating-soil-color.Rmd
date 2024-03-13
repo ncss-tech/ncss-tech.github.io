@@ -25,7 +25,7 @@ options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```{r}
 library(aqp)
 library(soilDB)
-library(plyr)
+# library(plyr)
 library(sharpshootR)
 library(latticeExtra)
 library(colorspace)
@@ -64,7 +64,13 @@ x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE, simplifyColor
 s <- x$SPC
 
 # genhz
-s$genhz <- generalize.hz(s$hzn_desgn, c('A', 'E', 'Bt', '2Bt', '3Bt'), pat=c('A', 'E', '^Bt', '2B', '3B'), non.matching.code = NA)
+s$genhz <- generalize.hz(
+  x = s$hzn_desgn, 
+  new = c('A', 'E', 'Bt', '2Bt', '3Bt'), 
+  pattern = c('A', 'E', '^Bt', '2B', '3B'),
+  non.matching.code = NA
+)
+
 s$genhz <- factor(s$genhz, levels = guessGenHzLevels(s, "genhz")$levels)
 
 table(s$genhz, useNA = 'always')
@@ -146,11 +152,11 @@ xyplot(m_value ~ m_chroma | m_hue, as.table=TRUE, data=h, subscripts = TRUE, xli
   tab <- prop.table(table(p.data$m, useNA = 'always'))
   tab <- as.data.frame(tab)
   names(tab) <- c('m', 'freq')
-  p.data <- join(p.data, tab, by='m', type='left')
+  p.data <- merge(p.data, tab, by = 'm', all.x = TRUE, sort = FALSE)
   p.data <- na.omit(p.data)
   p.data <- subset(p.data, subset=freq > 0.05)
   panel.grid(-1, -1)
-  panel.xyplot(p.data$x, p.data$y, pch=22, col='black', fill=p.data$col, cex=4 * sqrt(p.data$freq))
+  panel.xyplot(p.data$x, p.data$y, pch = 22, col = 'black', fill = p.data$col, cex = 4 * sqrt(p.data$freq))
 })
 
 
@@ -160,7 +166,7 @@ pp <- xyplot(m_value ~ m_chroma | m_hue + genhz, as.table=TRUE, data=h, subscrip
   tab <- prop.table(table(p.data$m, useNA = 'always'))
   tab <- as.data.frame(tab)
   names(tab) <- c('m', 'freq')
-  p.data <- join(p.data, tab, by='m', type='left')
+  p.data <- merge(p.data, tab, by = 'm', all.x = TRUE, sort = FALSE)
   p.data <- na.omit(p.data)
   p.data <- subset(p.data, subset=freq > 0.05)
   panel.grid(-1, -1)
@@ -175,14 +181,13 @@ useOuterStrips(pp, strip=strip.custom(bg=grey(0.85)), strip.left = strip.custom(
 # Soil Color Aggregation 
 ```{r}
 a <- aggregateColor(s, "genhz", col = 'moist_soil_color')
-a.reduced <- aggregateColor(s, "genhz", col = 'moist_soil_color', k=8)
+a.reduced <- aggregateColor(s, "genhz", col = 'moist_soil_color', k = 8)
 
 par(mar = c(4.5, 2.5, 4.5, 0))
 aggregateColorPlot(a, label.cex = 0.65, main = "Clarksville Moist Colors\nGeneralized Horizons", print.n.hz = FALSE, print.label = FALSE, rect.border = NA, horizontal.borders = TRUE)
 
 par(mar = c(4.5, 2.5, 4.5, 0))
 aggregateColorPlot(a.reduced, label.cex = 0.65, main = "Clarksville Moist Colors\nGeneralized Horizons\n8 Colors per Group", print.n.hz = TRUE)
-
 ```
 
 # Soil Color RIC via treemap
@@ -220,7 +225,7 @@ ggplot(data = a) +
 ```{r fig.width = 8.5, fig.height = 4}
 # simulation parameters
 p <- list(
-  list(m = '7.5YR 4/6', thresh = 10, hues = c('5YR', '7.5YR', '10YR'))
+  list(m = '7.5YR 4/6', thresh = 12, hues = c('5YR', '7.5YR', '10YR'))
 )
 
 # simulation
@@ -228,7 +233,29 @@ sim <- simulateColor(method = 'dE00', n = 100, parameters = p)
 
 # present via color chart / tabulation
 pp <- colorChart(sim[[1]], annotate = FALSE, chip.cex = 3)
-update(pp, asp = 1, main = 'RV Color: 7.5YR 4/6\ndE00 threshold < 8')
+update(pp, asp = 1, main = 'RV Color: 7.5YR 4/6\ndE00 threshold < 12')
+```
+
+
+```{r fig.width = 8.5, fig.height = 4}
+# extract horizons, to generate a data.frame of moist colors
+h <- horizons(s)
+
+# remove horizons that are missing moist colors
+idx <- which(complete.cases(h[, c('m_hue', 'm_value', 'm_chroma', 'genhz')]))
+h <- h[idx, ]
+
+# simulation parameters
+p <- list(
+  list(hvc = data.frame(hue = h$m_hue, value = h$m_value, chroma = h$m_chroma))
+)
+
+# simulation
+sim <- simulateColor(method = 'mvnorm', n = 100, parameters = p)
+
+# present via color chart / tabulation
+pp <- colorChart(sim[[1]], annotate = FALSE, chip.cex = 3)
+update(pp, main = 'Multivariate Simulation (All Colors)')
 ```
 
 
