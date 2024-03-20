@@ -66,8 +66,8 @@ AWC.sil <- round(0.2080796 * thick)
 # * start in January
 # * start with "completely dry" soil conditions
 # * keep only the last cycle
-wb.sl <- monthlyWB(AWC.sl, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
-wb.sil <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE)
+wb.sl <- monthlyWB(AWC.sl, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, distribute = TRUE)
+wb.sil <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 5, keep_last = TRUE, distribute = TRUE)
 ```
 
 All values are mm. U: surplus, S: soil water storage, ET: actual ET, D: deficit.
@@ -96,6 +96,40 @@ plotWB_lines(WB = wb.sil)
 title('50cm of silt loam texture soil material', line = 3)
 ```
 
+
+### Distributing Monthly Values
+As of sharpshootR 2.2, it is possible to "distribute" monthly data into *k* bins within each month.
+
+Run a single water balance cycle, starting with a completely dry soil. Test the effect of distributing monthly values into 10 bins per month.
+```{r}
+wb.sl1 <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 1, distribute = FALSE)
+
+wb.sl2 <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 1, , distribute = TRUE, k = 10, method = 'equal')
+```
+
+```{r fig.width=16, fig.height=6}
+par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
+plotWB(WB = wb.sl1, legend.cex = 0.75)
+title('50cm of silt loam texture soil material\nMonthy', line = 1.5)
+
+plotWB(WB = wb.sl2, legend.cex = 0.75)
+title('50cm of silt loam texture soil material\nEqual Distribution, 10 bins', line = 1.5)
+```
+
+This time, test the effects of using 'equal' vs. 'random' distribution of monthly PPT and PET into 10 bins per month.
+```{r}
+wb.sl1 <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 1, distribute = TRUE, k = 10, method = 'equal')
+
+wb.sl2 <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 1, distribute = TRUE, k = 10, method = 'random')
+
+```{r fig.width=16, fig.height=6}
+par(mar=c(4,4,4,1), bg = 'white', mfcol = c(1, 2))
+plotWB(WB = wb.sl1, legend.cex = 0.75)
+title('50cm of silt loam texture soil material\nEqual Distribution, 10 bins', line = 1.5)
+
+plotWB(WB = wb.sl2, legend.cex = 0.75)
+title('50cm of silt loam texture soil material\nRandom Distribution, 10 bins', line = 1.5)
+```
 
 
 ## Real Data
@@ -142,7 +176,7 @@ par(mar=c(4,4,2,1), bg = 'white')
 
 # water year
 # last iteration
-x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep = 3, keep_last = TRUE)
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 9, rep = 3, keep_last = TRUE, distribute = TRUE)
 plotWB(WB = x.wb)
 
 # convert total ETa into inches
@@ -156,7 +190,7 @@ par(mar=c(4,4,2,1), bg = 'white')
 
 # calendar year
 # last iteration
-x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE, distribute = TRUE)
 plotWB(WB = x.wb)
 ```
 
@@ -192,7 +226,7 @@ PET <- x$climate.monthly$q50[x$climate.monthly$variable == 'Potential ET (mm)']
 # 3 warm-up cycles
 # keep last iteration
 # calendar year
-x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
+x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE, distribute = TRUE)
 
 # tighter margins
 par(mar=c(4,4,3,1), bg = 'white', mfcol = c(1, 2))
@@ -243,7 +277,7 @@ GROUP BY chorizon.cokey;", x
   PET <- osd$climate.monthly$q50[osd$climate.monthly$variable == 'Potential ET (mm)']
   
   # do water balance simulation
-  x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE)
+  x.wb <- monthlyWB(AWC, PPT, PET, S_init = 0, starting_month = 1, rep = 3, keep_last = TRUE, distribute = TRUE)
   
   # compose WB figure
   plotWB(WB = x.wb, legend.cex = 0.9, ylim = ylim)
