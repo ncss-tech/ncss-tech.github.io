@@ -195,6 +195,7 @@ install.packages('terra', repos = 'https://rspatial.r-universe.dev')
 Load required packages.
 ```{r}
 # latest from GitHub
+# remotes::install_github("ncss-tech/soilDB", dependencies = FALSE)
 library(soilDB)
 
 # wrangling polygons and CRS transformations
@@ -206,7 +207,6 @@ library(terra)
 
 # raster visualization
 library(rasterVis)
-library(viridisLite)
 
 # figures
 library(lattice)
@@ -244,7 +244,7 @@ plot(
   sub = 'Albers Equal Area Projection',
   axes = FALSE, 
   legend = FALSE, 
-  col = viridis(100)
+  col = hcl.colors(100)
 )
 ```
 
@@ -271,7 +271,7 @@ mtext('Albers Equal Area Projection', side = 1, line = -0.5)
 Overlay SSURGO polygons and 30m map unit key grid.
 ```{r}
 par(mar = c(1, 0, 2, 0))
-plot(mu, main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)', col = viridis(50), axes = FALSE, legend = FALSE)
+plot(mu, main = 'gSSURGO Grid (WCS)\nSSURGO Polygons (SDA)', col = hcl.colors(50), axes = FALSE, legend = FALSE)
 plot(p, add = TRUE, border = 'white')
 
 mtext('CONUS Albers Equal Area Projection (EPSG:5070)', side = 1, line = 1)
@@ -301,7 +301,7 @@ plot(
   sub = 'Albers Equal Area Projection (800m)\nnearest-neighbor resampling',
   axes = FALSE, 
   legend = FALSE, 
-  col = viridis(100),
+  col = hcl.colors(100),
   )
 ```
 
@@ -481,7 +481,7 @@ levels(mu2) <- rat
 aws <- catalyze(mu2)[[c('aws050wta', 'aws0100wta')]]
 
 # simple plot, note scales are different
-plot(aws, axes = FALSE, col = mako(10), main = c('Plant Available Water Storage (cm)\nWeighted Mean over Components, 0-50cm', 'Plant Available Water Storage (cm)\nWeighted Mean over Components, 0-100cm'))
+plot(aws, axes = FALSE, col = hcl.colors(10, 'mako'), main = c('Plant Available Water Storage (cm)\nWeighted Mean over Components, 0-50cm', 'Plant Available Water Storage (cm)\nWeighted Mean over Components, 0-100cm'))
 ```
 
 
@@ -538,7 +538,7 @@ vars <- c('rating_ENGConstructionMaterialsRoadfill', 'rating_AWMIrrigationDispos
 rating <- catalyze(mu2)[[vars]]
 
 # simple plot, note scales are different
-plot(rating, axes = FALSE, col = mako(10), main = c('Construction Materials; Roadfill\nWeighted Mean over Components', 'Irrigation Disposal of Wastewater\nWeighted Mean over Components'))
+plot(rating, axes = FALSE, col = hcl.colors(10, 'mako'), main = c('Construction Materials; Roadfill\nWeighted Mean over Components', 'Irrigation Disposal of Wastewater\nWeighted Mean over Components'))
 ```
 
 
@@ -572,7 +572,7 @@ levels(mu2) <- rat
 activeCat(mu2) <- 'corsteel'
 
 # plot
-plot(mu2, axes = FALSE, col = viridis(3))
+plot(mu2, axes = FALSE, col = hcl.colors(3), mar = c(0, 0, 0, 6))
 ```
 
 
@@ -596,7 +596,7 @@ levels(mu2) <- rat
 
 # set active category to corsteel
 activeCat(mu2) <- 'pmgroupname'
-plot(mu2, axes = FALSE, col = viridis(10))
+plot(mu2, axes = FALSE, col = hcl.colors(10), mar = c(0, 0, 0, 12))
 ```
 
 
@@ -620,7 +620,7 @@ levels(mu2) <- rat
 
 # set active category to corsteel
 activeCat(mu2) <- 'HYDRIC_RATING'
-plot(mu2, axes = FALSE, col = viridis(10))
+plot(mu2, axes = FALSE, col = hcl.colors(10), mar = c(0, 0, 0, 6))
 ```
 
 
@@ -645,7 +645,7 @@ plot(
   mu, 
   legend = FALSE, 
   axes = FALSE, 
-  col = viridis(100),
+  col = hcl.colors(100),
   main = 'gSSURGO Map Unit Key Grid'
 )
 ```
@@ -711,7 +711,7 @@ levelplot(
   main = '1/3 Bar Bulk Density (g/cm^3)\nDominant Component\n0-25cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
-  col.regions = viridis,
+  col.regions = hcl.colors,
   maxpixels = 1e5
 )
 
@@ -720,7 +720,7 @@ levelplot(
   main = 'AWC (cm/cm)\nDominant Component\n0-25cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
-  col.regions = viridis,
+  col.regions = hcl.colors,
   maxpixels = 1e5
 )
 
@@ -729,7 +729,7 @@ levelplot(
   main = 'pH 1:1 H2O\nDominant Component\n0-25cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
-  col.regions = viridis,
+  col.regions = hcl.colors,
   maxpixels = 1e5
 )
 ```
@@ -754,7 +754,7 @@ st_crs(x) <- 4326
 mu <- mukey.wcs(aoi = x, db = 'gssurgo')
 
 # note SSA boundary
-plot(mu, legend = FALSE, axes = FALSE, col = viridis(100))
+plot(mu, legend = FALSE, axes = FALSE, col = hcl.colors(100))
 ```
 
 Derive aggregate sand, silt, clay (RV) values from the largest component, taking the weighted mean over 25-50cm depth interval.
@@ -797,7 +797,7 @@ levelplot(
   main = 'Sand, Silt, Clay (RV)\nDominant Component\n25-50cm',
   margin = FALSE, 
   scales = list(draw = FALSE), 
-  col.regions = viridis,
+  col.regions = hcl.colors,
   maxpixels = 1e4,
   layout = c(3, 1)
 )
@@ -819,7 +819,7 @@ values(texture.class) <- ssc_to_texcl(
   droplevels = FALSE
 )
 
-plot(texture.class, col = viridis(50), axes = FALSE, main = 'Soil Texture Class <2mm Fraction\nDominant Component, 25-50cm (RV)')
+plot(texture.class, col = hcl.colors(50), axes = FALSE, main = 'Soil Texture Class <2mm Fraction\nDominant Component, 25-50cm (RV)')
 
 ```
 
@@ -863,7 +863,6 @@ pH_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'ph_3060cm')
 
 clay_05cm <- ISSR800.wcs(aoi = a.CA, var = 'clay_05cm')
 clay_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'clay_3060cm')
-
 silt_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'silt_3060cm')
 sand_3060cm <- ISSR800.wcs(aoi = a.CA, var = 'sand_3060cm')
 
@@ -878,6 +877,9 @@ wei <- ISSR800.wcs(aoi = a.CA, var = 'wei')
 drainage_class <- ISSR800.wcs(aoi = a.CA, var = 'drainage_class')
 weg <- ISSR800.wcs(aoi = a.CA, var = 'weg')
 str <- ISSR800.wcs(aoi = a.CA, var = 'str')
+
+# metadata
+metags(sar)
 ```
 
 Check to see if aggregated sand + silt + clay is roughly = 100%. Almost. This isn't surprising since each component of soil texture is aggregated separately.
@@ -890,29 +892,27 @@ Soil texture class 25-50cm.
 ```{r, fig.width = 6, fig.height = 6.5}
 texture_2550cm <- ISSR800.wcs(aoi = a.CA, var = 'texture_2550cm')
 
-# use colors from RAT
-cols <- cats(texture_2550cm)[[1]]$hex
-
 # plot using SoilWeb soil texture class colors
-plot(texture_2550cm, col = cols, axes = FALSE)
+# preset by ISSR800.wcs()
+plot(texture_2550cm, axes = FALSE)
 ```
 
 
 Other soil properties of interest.
 ```{r, fig.width = 6, fig.height = 6.5}
-plot(sar, axes = FALSE,  col = viridis(50), main = 'SAR')
+plot(sar, axes = FALSE,  col = hcl.colors(50), main = 'SAR')
 
 
-plot(wei, axes = FALSE,  col = viridis(50), main = 'Wind Erodibility Index')
+plot(wei, axes = FALSE,  col = hcl.colors(50), main = 'Wind Erodibility Index')
 
 
-plot(drainage_class, axes = FALSE,  col = viridis(50), main = 'Drainage Class')
+plot(drainage_class, axes = FALSE,  col = hcl.colors(50), main = 'Drainage Class')
 
 
-plot(weg, axes = FALSE,  col = viridis(50), main = 'Wind Erodibility Group')
+plot(weg, axes = FALSE,  col = hcl.colors(50), main = 'Wind Erodibility Group')
 
 
-plot(str, axes = FALSE,  col = viridis(50), main = 'Soil Temperature Regime')
+plot(str, axes = FALSE,  col = hcl.colors(50), main = 'Soil Temperature Regime')
 
 ```
 
@@ -924,7 +924,7 @@ s <- c(pH_05cm, pH_3060cm)
 
 # plot multiple layers via SpatRaster plot method
 # common color map / legend
-plot(s, col = viridis(50), axes = FALSE, mar = c(2, 2, 2, 4), range = c(4.5, 9))
+plot(s, col = hcl.colors(50), axes = FALSE, mar = c(2, 2, 2, 4), range = c(4.5, 9))
 ```
 
 
@@ -940,7 +940,7 @@ names(s) <- make.names(names(s))
 # formatting ideas: https://stackoverflow.com/questions/34652580/change-raster-panel-titles-using-levelplot
 levelplot(s, 
           scales = list(draw = FALSE), 
-          col.regions = viridis, 
+          col.regions = hcl.colors, 
           names.attr = c('pH 1:1 H20, 0-5cm', 'pH 1:1 H20, 30-60cm')
 )
 ```
@@ -952,7 +952,7 @@ s <- c(sand_3060cm, silt_3060cm, clay_3060cm)
 names(s) <- make.names(names(s))
 levelplot(s, 
           scales = list(draw = FALSE), 
-          col.regions = viridis,
+          col.regions = hcl.colors,
           names.attr = c('Percent Sand, 30-60cm', 'Percent Silt, 30-60cm', 'Percent Clay, 30-60cm')
 )
 ```
@@ -976,22 +976,17 @@ lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
 
 # create a large color palette for greatgroup classes
 cols <- brewer.pal(12, 'Set3')
-cols <- colorspace::darken(cols, amount = 0.25)
+cols <- darken(cols, amount = 0.25)
 cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
-# rasterVis method still fails
-# levelplot(greatgroup, scales = list(draw = FALSE), col.regions = cr)
-# terra plot method
-plot(greatgroup, axes = FALSE, col = cr(50))
+plot(greatgroup, axes = FALSE, col = cr(50), mar = c(1, 1, 1, 6))
 
 # colors for irrigated LCC
-cols <- rev(brewer.pal(8, 'Spectral'))
+cols <- hcl.colors(50, 'Spectra', rev = TRUE)
 cols <- colorspace::darken(cols, amount = 0.1)
 cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
-# rasterVis method still fails
-# levelplot(lcc_irrigated, scales = list(draw = FALSE), col.regions = cr)
-plot(lcc_irrigated, axes = FALSE, col = cr(50))
+plot(lcc_irrigated, axes = FALSE, col = cr(50), mar = c(1, 1, 1, 6))
 ```
 
 
@@ -1012,15 +1007,16 @@ s <- soilColor.wcs(aoi = a, var = 'sc025cm', res = 270)
 # metadata
 metags(s)
 
-# note access to colors via RAT
-rat <- cats(s)[[1]]
-plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
+# color table is pre-set by soilColor.wcs()
+plot(s, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
 ```
 
 Soil color distribution.
 ```{r fig.width = 8, fig.height = 4}
+par(mar = c(4.5, 5, 1, 1))
 # specific to this AOI
-barplot(s, col = rat$col, las = 3, cex.names = 0.66)
+rat <- cats(s)[[1]]
+barplot(s, col = rat$col, names.arg = rat$munsell, las = 1, cex.names = 0.75, horiz = TRUE, xlab = 'Cell Count')
 
 # these colors, but frequencies tabulated across all of CONUS
 # barplot(rat$freq, col = rat$col, las = 3, names.arg = rat$munsell, cex.names = 0.6)
@@ -1032,16 +1028,16 @@ Detailed soil color mapping.
 # from SoilWeb
 bb <- '-90.1576 41.8579,-90.1576 41.9193,-90.0100 41.9193,-90.0100 41.8579,-90.1576 41.8579'
 
-# convert text -> WKT -> sf
+# use terra methods
+# convert text -> WKT -> spatVect
 wkt <- sprintf('POLYGON((%s))', bb)
-a <- st_as_sfc(wkt, crs = 4326)
+a <- vect(wkt, crs = 'epsg:4326')
 
 # moist soil color at 25cm, low-res version
 s <- soilColor.wcs(aoi = a, var = 'sc025cm_hr', res = 30)
 
-# note access to colors via RAT
-rat <- cats(s)[[1]]
-plot(s, col = rat$col, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
+# color table is pre-set by soilColor.wcs()
+plot(s, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
 ```
 
 
@@ -1080,8 +1076,7 @@ values(ss) <- allocate(EC = values(ec), pH = values(pH), ESP = values(esp), to =
 print(ss)
 
 # plot
-plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = viridis(10))
-
+plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = hcl.colors(10))
 ```
 
 
@@ -1116,7 +1111,7 @@ ll <- c("nonsaline", "slightly saline", "moderately saline",
 # convert to grid + RAT
 levels(ss) <- data.frame(ID = 1:length(ll), class = ll)
 
-plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = viridis(10))
+plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = hcl.colors(10))
 
 ```
 
@@ -1135,7 +1130,7 @@ tanaka(
   breaks = c(6, 7, 8), 
   legend.pos = "topright", 
   legend.title = "pH 1:1 H2O (30-60cm)", 
-  col = viridis(4)
+  col = hcl.colors(4)
 )
 
 ```
