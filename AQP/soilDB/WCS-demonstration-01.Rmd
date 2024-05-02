@@ -961,18 +961,18 @@ levelplot(s,
 
 ### Soil / Land Classification
 ```{r fig.width=8, fig.height=8}
-# make a bounding box and assign a CRS (4326: GCS, WGS84)
-a <- st_bbox(
-  c(xmin = -114.30, xmax = -114.00, ymin = 47.5, ymax = 47.70), 
-  crs = st_crs(4326)
-)
+# use terra methods to define a BBOX, from SoilWeb 'b' keypress
+# https://casoilresource.lawr.ucdavis.edu/gmap/?loc=47.24008,-99.73114,z11
 
-# convert bbox to sf geometry
-a <- st_as_sfc(a)
+# generate WKT description of viewport BBOX
+bb <- '-100.2976 47.0407,-100.2976 47.4717,-99.3013 47.4717,-99.3013 47.0407,-100.2976 47.0407'
+wkt <- sprintf('POLYGON((%s))', bb)
 
-# these are grids + RAT
+# init spatVector
+a <- vect(wkt, crs = 'epsg:4326')
+
+# results are grids + RAT
 greatgroup <- ISSR800.wcs(aoi = a, var = 'greatgroup')
-lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
 
 # create a large color palette for greatgroup classes
 cols <- brewer.pal(12, 'Set3')
@@ -980,13 +980,25 @@ cols <- darken(cols, amount = 0.25)
 cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
 plot(greatgroup, axes = FALSE, col = cr(50), mar = c(1, 1, 1, 6))
+```
 
-# colors for irrigated LCC
+
+```{r fig.width=8, fig.height=8}
+# both LCC data may or may not available in some places
+lcc_nonirrigated <- ISSR800.wcs(aoi = a, var = 'lcc_nonirrigated')
+lcc_irrigated <- ISSR800.wcs(aoi = a, var = 'lcc_irrigated')
+
+# check NA fraction
+global(lcc_nonirrigated, 'isNA') / ncell(lcc_nonirrigated)
+global(lcc_irrigated, 'isNA') / ncell(lcc_irrigated)
+
+
+# colors for irrigated/non-irrigated LCC
 cols <- hcl.colors(50, 'Spectra', rev = TRUE)
 cols <- colorspace::darken(cols, amount = 0.1)
 cr <- colorRampPalette(cols, space = 'Lab', interpolate = 'spline')
 
-plot(lcc_irrigated, axes = FALSE, col = cr(50), mar = c(1, 1, 1, 6))
+plot(lcc_nonirrigated, axes = FALSE, col = cr(50), mar = c(1, 1, 1, 6), main = 'Non-Irrigated LCC')
 ```
 
 
@@ -1119,21 +1131,7 @@ plot(ss, axes = FALSE, main = 'FAO Salt Severity', col = hcl.colors(10))
 
 ## Others
 
-<!-- # Artistic License -->
-<!-- https://github.com/riatelab/tanaka -->
 
-```{r fig.width = 8, fig.height = 8, eval = FALSE, echo = FALSE}
-library(tanaka)
-
-tanaka(
-  pH_3060cm, 
-  breaks = c(6, 7, 8), 
-  legend.pos = "topright", 
-  legend.title = "pH 1:1 H2O (30-60cm)", 
-  col = hcl.colors(4)
-)
-
-```
 
 
 ----------------------------
