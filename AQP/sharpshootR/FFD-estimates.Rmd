@@ -44,18 +44,12 @@ lines(density(ffp$firstFall))
 
 
 ## Setup R Environment
-With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
+With a recent version of R (>= 3.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # run these commands in the R console
-install.packages('sharpshootR', dep=TRUE)
-install.packages('soilDB', dep=TRUE)
-install.packages('plyr', dep=TRUE)
-install.packages('daymetr', dep=TRUE)
-
-# get latest version from GitHub
-install.packages('devtools', dep=TRUE)
-devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
-devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+install.packages('sharpshootR', dep = TRUE)
+install.packages('soilDB', dep = TRUE)
+install.packages('daymetr', dep = TRUE)
 ```
 
 
@@ -63,7 +57,6 @@ Load required packages.
 ```{r}
 library(sharpshootR)
 library(soilDB)
-library(plyr)
 ```
 
 
@@ -72,17 +65,17 @@ The [California Data Exchange Center (CDEC)](https://cdec.water.ca.gov/) hosts a
 ```{r, fig.width=10, fig.height=5}
 # HHM: Highland Meadows
 # 32: daily min air temperature
-x <- CDECquery(id='HHM', sensor=32, interval='D', start='1900-01-01', end='2016-12-31')
+x <- CDECquery(id = 'HHM', sensor = 32, interval = 'D', start = '1900-01-01', end = '2016-12-31')
 
 # estimate FFD over all years, stored in 'year' column
 # air temperature are in deg F
-x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=32)
+x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp = 32)
 
 # basic summary
-kable(x.ffd$summary)
+knitr::kable(x.ffd$summary)
 
 # graphical summary of FFD estimates
-par(mar=c(4,3.5,3,1))
+par(mar = c(4,3.5,3,1))
 FFDplot(x.ffd, 'CDEC - Highland Meadows')
 ```
 
@@ -91,7 +84,7 @@ FFDplot(x.ffd, 'CDEC - Highland Meadows')
 Data from [SNOTEL Station 365](https://wcc.sc.egov.usda.gov/nwcc/site?sitenum=365).
 ```{r, fig.width=10, fig.height=5}
 # site code and year range are required
-x <- fetchSCAN(site.code=365, year=c(1995:2016))
+x <- fetchSCAN(site.code = 365, year = c(1995:2016))
 
 # extract the daily min air temperature records
 x <- x$TMIN
@@ -105,7 +98,7 @@ x$year <- as.integer(format(x$datetime, "%Y"))
 x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
 
 # basic summary
-kable(x.ffd$summary)
+knitr::kable(x.ffd$summary)
 
 # graphical summary of FFD estimates
 par(mar=c(4,3.5,3,1))
@@ -132,7 +125,7 @@ x$year <- as.integer(format(x$datetime, "%Y"))
 x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
 
 # basic summary
-kable(x.ffd$summary)
+knitr::kable(x.ffd$summary)
 
 # graphical summary of FFD estimates
 par(mar=c(4,3.5,3,1))
@@ -153,19 +146,20 @@ x <- x$airtemp
 x$datetime <- as.Date(x$date_time)
 
 # compute daily min air temperature
-x <- ddply(x, 'datetime', summarize, value=min(sensor_value, na.rm=TRUE))
-# add "year" column
-x$year <- as.integer(format(x$datetime, "%Y"))
+a <- aggregate(x$sensor_value, by = list(datetime = x$datetime), FUN = min, na.rm = TRUE, drop = FALSE)
+a$year <- as.integer(format(a$datetime, "%Y"))
+# rename sensor value column for FFD()
+names(a)[2] <- 'value'
 
 # estimate FFD over all years
 # air temperature are in deg C
-x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
+x.ffd <- FFD(a, returnDailyPr = TRUE, frostTemp = 0)
 
 # basic summary
-kable(x.ffd$summary)
+knitr::kable(x.ffd$summary)
 
 # graphical summary of FFD estimates
-par(mar=c(4,3.5,3,1))
+par(mar = c(4,3.5,3,1))
 FFDplot(x.ffd, 'Henry: 1997NV005022')
 ```
 
@@ -206,10 +200,10 @@ x <- getDayMet(x = -120, y = 38)
 x.ffd <- FFD(x, returnDailyPr = TRUE, frostTemp=0)
 
 # basic summary
-kable(x.ffd$summary)
+knitr::kable(x.ffd$summary)
 
 # graphical summary of FFD estimates
-par(mar=c(4,3.5,3,1))
+par(mar = c(4,3.5,3,1))
 FFDplot(x.ffd, 'DAYMET at (-120, 38)')
 ```
 
