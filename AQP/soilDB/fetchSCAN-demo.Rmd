@@ -62,41 +62,57 @@ library(sharpshootR)
 library(reshape2)
 library(latticeExtra)
 library(tactile)
-library(maps)
+library(terra)
+library(spData)
 
-# get basic sensor metadata for several SCAN/SNOTEL sites
-m <- SCAN_site_metadata(site.code=c(2072,356,2148,2187))
+# get basic station metadata for several SCAN/SNOTEL sites
+m <- SCAN_site_metadata(site.code = c(2072, 356, 2148, 2187))
 
-knitr::kable(m, row.names = FALSE)
+# select columns from station metadata
+knitr::kable(m[, c('Site', 'Name', 'Network', 'HUC', 'upedonid')], row.names = FALSE)
 
 # result is a list
-x <- fetchSCAN(site.code=c(574), year=c(2016))
+x <- fetchSCAN(site.code = c(574), year = c(2016))
 
-# print a list of sensor types
-names(x[-1])
+# print a list of sensor types and associated metadata
+names(x)
 ```
 
 
 ## Metadata for all Stations
 
-```{r, fig.width=8, fig.height=7}
+```{r}
 data('SCAN_SNOTEL_metadata', package = 'soilDB')
 
-map('state', lwd=2)
-title(main='SCAN / SNOTEL Sites')
-points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, subset=Network == 'SCAN', bg='DarkRed', pch=21)
-points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, subset=Network == 'SNOTEL', bg='RoyalBlue', pch=21)
-
-legend('bottomleft', legend=c('SCAN', 'SNOTEL'), pch=21, pt.bg=c('DarkRed', 'RoyalBlue'), bty='n')
+# number of stations by network
+table(SCAN_SNOTEL_metadata$Network)
 ```
 
 ```{r, fig.width=8, fig.height=7}
-map('state', lwd=2)
-title(main='SCAN / SNOTEL Sites')
-points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, bg='RoyalBlue', pch=21, cex=0.85)
-points(Latitude ~ Longitude, data=SCAN_SNOTEL_metadata, subset=!is.na(pedlabsampnum), bg='DarkRed', pch=22)
+data("us_states")
+us_states <- vect(us_states)
+us_states <- project(us_states, 'epsg:5070')
 
-legend('bottomleft', legend=c('All Stations', 'Linked to Lab Data'), pch=c(21, 22), pt.bg=c('RoyalBlue', 'DarkRed'), bty='n')
+s <- vect(SCAN_SNOTEL_metadata, geom = c('Longitude', 'Latitude'), crs = 'epsg:4269')
+s <- project(s, 'epsg:5070')
+```
+
+
+```{r, fig.width=8, fig.height=7}
+plot(us_states, axes = FALSE, main = 'SCAN, SNOTEL, CSCAN, SNOWLITE Stations')
+points(s[s$Network %in% c('SCAN', 'CSCAN')], col = 'firebrick')
+points(s[s$Network %in% c('SNTL', 'SNTLT')], col = 'royalblue')
+
+legend(x = -2029093, y = 801043.2, legend = c('SCAN / CSCAN', 'SNOTEL / SNOWLITE'), pch = 21, pt.bg = c('firebrick', 'royalblue'), bty = 'n')
+```
+
+
+```{r, fig.width=8, fig.height=7}
+plot(us_states, axes = FALSE, main = 'SCAN, SNOTEL, CSCAN, SNOWLITE Stations')
+points(s, col = 'royalblue')
+points(s[!is.na(s$pedlabsampnum), ], col = 'firebrick')
+
+legend(x = -2029093, y = 801043.2, legend = c('All Stations', 'Linked to Lab Data'), pch = 21, pt.bg = c('royalblue', 'firebrick'), bty = 'n')
 ```
 
 
@@ -457,7 +473,7 @@ Get KSSL data for this site, via user pedon ID. This will include estimated para
 Previously the VG parameters had to be obtained manually from [these reports](https://ncsslabdatamart.sc.egov.usda.gov/rptExecute.aspx?p=34942&r=6&submit1=Get+Report).
 ```{r}
 # get KSSL data
-s <- fetchKSSL(pedon_id = 'S08NV003003')
+s <- fetchLDM(x = 'S08NV003003', what = 'upedonid')
 
 # VG parameters now returned by fetchKSSL() as of 2016-11-17
 knitr::kable(horizons(s)[, c('hzn_desgn', 'hzn_top', 'hzn_bot', 'theta_r', 'theta_s', 'alpha', 'npar')])
