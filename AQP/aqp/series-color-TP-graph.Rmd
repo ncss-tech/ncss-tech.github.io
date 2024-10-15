@@ -54,8 +54,8 @@ s$color <- sprintf("%s %s/%s", s$m_hue, s$m_value, s$m_chroma)
 
 Moist color changes with depth.
 ```{r fig.width=8, fig.height=5}
-par(mar=c(0,0,2,0))
-plotSPC(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4)
+par(mar = c(0, 0, 2, 0))
+plotSPC(s, color = 'moist_soil_color', print.id = FALSE, name = NA, depth.axis = FALSE, width = 0.4)
 mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 ```
 
@@ -67,7 +67,7 @@ Compute depth-wise transition probability matrix for moist colors. Visualize as 
 # s <- s[idx, ]
 
 # generate TP matrix from horizon moist colors
-tp <- hzTransitionProbabilities(s, name="color", loopTerminalStates = FALSE)
+tp <- hzTransitionProbabilities(s, name = "color", loopTerminalStates = FALSE)
 
 # greate graph object
 par(mar = c(1, 1, 1, 1))
@@ -77,13 +77,10 @@ g <- plotSoilRelationGraph(tp, graph.mode = "directed", vertex.scaling.factor=2,
 Sketch profiles using same colors as community colors in network graph.
 ```{r fig.width=8, fig.height=5}
 # get clustering vector and colors names from graph
-cl <- data.frame(color=V(g)$name, cluster=V(g)$cluster, stringsAsFactors = FALSE)
+cl <- data.frame(color = V(g)$name, cluster = V(g)$cluster, stringsAsFactors = FALSE)
 
-# join with SPC
-# note that we have to extract / join / splice
-h <- horizons(s)
-h <- merge(x = h, y = cl, by = 'color', sort = FALSE)
-replaceHorizons(s) <- h
+# join with SPC horizons on `color` column
+horizons(s) <- cl
 
 # hack re-recreate colors used by plotSoilRelationGraph
 # good reminder to return more from that function...
@@ -91,9 +88,9 @@ cols <- colorRampPalette(brewer.pal(n = 9, name = "Set1"))(max(cl$cluster))
 s$cluster_color <- alpha(cols[s$cluster], 0.65)
 
 # profile sketches, colors match communities in graph above
-par(mar=c(0,0,1,1))
-plotSPC(s, color='cluster_color', print.id=FALSE, name='hzn_desgn', name.style = 'center-center')
-mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
+par(mar = c(0, 0, 1, 1))
+plotSPC(s, color = 'cluster_color', print.id = FALSE, name.style = 'center-center', width = 0.35)
+mtext('KSSL data correllated to Holland series', at = 0.5, adj = 0)
 ```
 
 
@@ -101,8 +98,10 @@ mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 Visualize as graph with vertices colored according to soil color.
 ```{r, fig.width=9, fig.height=9}
 # join Munsell color notation to graph nodes
-d <- data.frame(color=V(g)$name, stringsAsFactors = FALSE)
-d <- plyr::join(d, horizons(s), by = 'color', type='left', match='first')
+d <- data.frame(color = V(g)$name, stringsAsFactors = FALSE)
+
+# get the first color
+d <- plyr::join(d, horizons(s), by = 'color', type = 'left', match = 'first')
 V(g)$color <- d$moist_soil_color
 
 # prepare labels by converting to HSV
@@ -113,10 +112,10 @@ hsv.cols[, 3] <- ifelse(hsv.cols[, 3] > 0.5, 0, 1)
 V(g)$label.color <- hsv(hsv.cols[, 1], hsv.cols[, 2], hsv.cols[, 3])
 
 # remove loops from graph, retain duplicate paths
-g <- simplify(g, remove.loops = TRUE, remove.multiple=FALSE)
+g <- simplify(g, remove.loops = TRUE, remove.multiple = FALSE)
 
 # final plot
-par(mar=c(0,0,1,0), bg=grey(0.85))
+par(mar = c(0,0,1,0), bg = grey(0.85))
 set.seed(1010101)
 plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "sans", vertex.label.font=2, edge.color='black')
 ```
@@ -125,14 +124,14 @@ plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "s
 Simulate moist color sequences using Markov chains derived from transition probability matrix. Weight the TP matrix (and MC?) by working from 1cm slices. Does this make sense? Probably not.
 ```{r fig.width=8, fig.height=5}
 # re-make TP matrix, this time including terminal loops
-s.slices <- slice(s, 0:150 ~ .)
-tp.loops <- hzTransitionProbabilities(s.slices, name="color", loopTerminalStates = TRUE)
+s.slices <- dice(s, 0:150 ~ .)
+tp.loops <- hzTransitionProbabilities(s.slices, name = "color", loopTerminalStates = TRUE)
 
 # init new markovchain from TP matrix
-mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
+mc <- new("markovchain", states = dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
 
 # investigate the most common surface horizon colors
-sort(table(h$color[grep('^A', h$hzn_desgn)]), decreasing = TRUE)
+sort(table(s$color[grep('^A', s$hzn_desgn)]), decreasing = TRUE)
 
 # simulate 30 sequences, starting with the most common A horizon moist color
 munsell.sequence <- replicate(30, rmarkovchain(n = 150, object = mc, include.t0 = TRUE, t0 = "7.5YR 3/2"))
@@ -141,8 +140,8 @@ munsell.sequence <- replicate(30, rmarkovchain(n = 150, object = mc, include.t0 
 col.sequence <- apply(munsell.sequence, 2, parseMunsell)
 
 # visualize
-par(mar=c(1,0,3,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(160, 1), xlim=c(1, 30))
+par(mar = c(1, 0, 3, 0))
+plot(1, 1, type = 'n', axes = FALSE, xlab = '', ylab = '', ylim = c(160, 1), xlim = c(1, 30))
 
 # vectorized functions are the best
 rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA, lty = 0)
@@ -154,13 +153,13 @@ Add most likely sequence.
 ml <- mostLikelyHzSequence(mc, t0 = "7.5YR 3/2")
 
 par(mar=c(1,0,3,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(160, 1), xlim=c(1, 32))
+plot(1, 1, type = 'n', axes = FALSE, xlab = '', ylab = '', ylim = c(160, 1), xlim = c(1, 32))
 
 # vectorized functions are the best
 rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence, border = NA, lty = 0)
 
 # stretch most likely sequence... this isn't quite right
-rect(xleft=31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * seq_along(ml) + 0.5, col = parseMunsell(ml))
+rect(xleft = 31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * seq_along(ml) + 0.5, col = parseMunsell(ml))
 ```
 
 
@@ -170,7 +169,7 @@ rect(xleft=31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * 
 Do it again, this time for a soil series with a lot of data: [Clarksville](https://casoilresource.lawr.ucdavis.edu/sde/?series=clarksville).
 ```{r}
 # get lab / morphologic data
-x <- fetchKSSL(series='clarksville', returnMorphologicData = TRUE, simplifyColors = TRUE)
+x <- fetchKSSL(series = 'clarksville', returnMorphologicData = TRUE, simplifyColors = TRUE)
 
 # extract SoilProfileCollection
 s <- x$SPC
@@ -192,19 +191,19 @@ s$color <- sprintf("%s %s/%s", s$m_hue, s$m_value, s$m_chroma)
 Clarksville moist soil colors.
 ```{r fig.width=10, fig.height=5}
 par(mar=c(0,0,2,0))
-plotSPC(s, color='moist_soil_color', print.id=FALSE, name='', plot.depth.axis=FALSE, width=0.4, divide.hz=FALSE, lty = 0)
-mtext('KSSL data correllated to Clarksville series', at=0.5, adj = 0)
+plotSPC(s, color = 'moist_soil_color', print.id = FALSE, name = '', depth.axis = FALSE, width = 0.4, divide.hz = FALSE, lty = 0)
+mtext('KSSL data correllated to Clarksville series', at = 0.5, adj = 0)
 ```
 
 ```{r fig.width=8, fig.height=8}
 previewColors(s$moist_soil_color)
-mtext('KSSL data correllated to Clarksville series: moist colors.', at=0.5, adj = 0)
+mtext('KSSL data correllated to Clarksville series: moist colors.', at = 0.5, adj = 0)
 ```
 
 
 ```{r}
 # init TP matrix
-tp.loops <- hzTransitionProbabilities(s, name="color", loopTerminalStates = TRUE)
+tp.loops <- hzTransitionProbabilities(s, name = "color", loopTerminalStates = TRUE)
 
 # init new markovchain from TP matrix
 mc <- new("markovchain", states=dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
@@ -218,8 +217,8 @@ col.sequence <- apply(munsell.sequence, 2, parseMunsell)
 
 Simulated sequence of moist soil colors, starting from *10YR 4/2*.
 ```{r fig.width=8, fig.height=5}
-par(mar=c(1,0,3,0))
-plot(1, 1, type='n', axes=FALSE, xlab='', ylab='', ylim=c(11, 1), xlim=c(1, 30))
+par(mar = c(1, 0, 3, 0))
+plot(1, 1, type = 'n', axes = FALSE, xlab = '', ylab = '', ylim = c(11, 1), xlim = c(1, 30))
 
 rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright = col(col.sequence) + 0.5, ytop = row(col.sequence) + 0.5, col = col.sequence)
 ```
