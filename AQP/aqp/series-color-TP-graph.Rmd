@@ -62,8 +62,8 @@ mtext('KSSL data correllated to Holland series', at=0.5, adj = 0)
 
 Compute depth-wise transition probability matrix for moist colors. Visualize as a graph organized by communities.
 ```{r, fig.width=9, fig.height=9}
-# # remove profile #8
-# idx <- (1:length(s))[-8]
+# # remove profile #10
+# idx <- (1:length(s))[-10]
 # s <- s[idx, ]
 
 # generate TP matrix from horizon moist colors
@@ -121,7 +121,7 @@ plot(g, edge.arrow.size = 0.5, vertex.label.cex = 0.55, vertex.label.family = "s
 ```
 
 
-Simulate moist color sequences using Markov chains derived from transition probability matrix. Weight the TP matrix (and MC?) by working from 1cm slices. Does this make sense? Probably not.
+Simulate moist color sequences using Markov chains derived from transition probability matrix. Weight the TP matrix (and MC?) by working from 1cm slices. Need to think about this some more.
 ```{r fig.width=8, fig.height=5}
 # re-make TP matrix, this time including terminal loops
 s.slices <- dice(s, 0:150 ~ .)
@@ -131,7 +131,7 @@ tp.loops <- hzTransitionProbabilities(s.slices, name = "color", loopTerminalStat
 mc <- new("markovchain", states = dimnames(tp.loops)[[1]], transitionMatrix = tp.loops)
 
 # investigate the most common surface horizon colors
-sort(table(s$color[grep('^A', s$hzn_desgn)]), decreasing = TRUE)
+sort(table(s[, 1]$color), decreasing = TRUE)
 
 # simulate 30 sequences, starting with the most common A horizon moist color
 munsell.sequence <- replicate(30, rmarkovchain(n = 150, object = mc, include.t0 = TRUE, t0 = "7.5YR 3/2"))
@@ -161,6 +161,33 @@ rect(xleft = col(col.sequence) - 0.5, ybottom = row(col.sequence) -0.5, xright =
 # stretch most likely sequence... this isn't quite right
 rect(xleft = 31.5, ybottom = 10 * seq_along(ml) - 0.5, xright = 32.5, ytop = 20 * seq_along(ml) + 0.5, col = parseMunsell(ml))
 ```
+
+
+Combine horizons with the same color.
+```{r fig.width=8, fig.height=5}
+z <- data.frame(
+  id = 'S',
+  top = 0, 
+  bottom = 151,
+  color = NA
+)
+
+depths(z) <- id ~ top + bottom
+z <- duplicate(z, times = 30)
+
+plotSPC(z)
+
+z <- dice(z, 0:150 ~ .)
+
+z$color <- do.call('c', lapply(1:ncol(col.sequence), function(i) {col.sequence[, i]}))
+
+zz <- collapseHz(z, by = 'color')
+
+par(mar = c(0, 0, 0, 2.5))
+plotSPC(zz, color = 'color', width = 0.35)
+
+```
+
 
 
 
