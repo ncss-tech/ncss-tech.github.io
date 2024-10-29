@@ -13,7 +13,7 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=TRUE)
 ```
 
@@ -72,7 +72,7 @@ wb.sil <- monthlyWB(AWC.sil, PPT, PET, S_init = 0, starting_month = 1, rep = 5, 
 
 All values are mm. U: surplus, S: soil water storage, ET: actual ET, D: deficit.
 ```{r}
-kable(wb.sil, digits = 2, row.names = FALSE)
+knitr::kable(wb.sil, digits = 2, row.names = FALSE)
 ```
 
 
@@ -286,33 +286,46 @@ GROUP BY chorizon.cokey;", x
   s <- site(osd$SPC)
   txt <- sprintf("%s\n%s", s$id, s$family)
   title(txt, line = 3, cex.main = 1)
+  
+  return(x.wb)
 }
 ```
 
 ```{r fig.width=14, fig.height=12}
 # custom margins / multi-figure
-par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
+par(mar = c(4, 4, 5, 1), bg = 'white', mfrow = c(2, 2))
 
 # iterate over these soil series names
 soils <- c('amador', 'lucy', 'drummer', 'pierre')
-for(i in soils) {
-  # adjust ylim manually
-  compareMonthlyWB(i, ylim = c(-250, 180))
-}
+res <- lapply(soils, compareMonthlyWB, ylim = c(-250, 180))
 ```
+
+Experimental: summarize water balance results.
+```{r}
+res <- do.call('rbind', lapply(res, monthlyWB_summary))
+res$series <- soils
+
+knitr::kable(res, digits = 2)
+```
+
+
 
 ```{r fig.width=14, fig.height=12}
 # custom margins / multi-figure
-par(mar=c(4,4,5,1), bg = 'white', mfrow = c(2, 2))
+par(mar = c(4, 4, 5, 1), bg = 'white', mfrow = c(2, 2))
 
 # iterate over these soil series names
 soils <- c('leon', 'tristan', 'miami', 'freznik')
-for(i in soils) {
-  # adjust ylim manually
-  compareMonthlyWB(i, ylim = c(-180, 190))
-}
+res <- lapply(soils, compareMonthlyWB, ylim = c(-180, 190))
 ```
 
+Experimental: summarize water balance results.
+```{r}
+res <- do.call('rbind', lapply(res, monthlyWB_summary))
+res$series <- soils
+
+knitr::kable(res, digits = 2)
+```
 
 ----------------------------
 This document is based on `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")`.

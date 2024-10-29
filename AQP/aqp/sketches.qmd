@@ -28,12 +28,17 @@ format:
 #| warning = FALSE
 library(knitr, quietly=TRUE)
 
+
+# ugh, looks like a recent bug in quarto + pandoc + svglite
+# https://github.com/quarto-dev/quarto-cli/issues/7369
+# will need to wait for the next RStudio release
+
 opts_chunk$set(
   message = FALSE, 
   warning = FALSE, 
   background = '#F7F7F7', 
   fig.align = 'center', 
-  dev = 'svglite', 
+  dev = 'png', 
   tidy = FALSE, 
   verbose = FALSE
 )
