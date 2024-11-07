@@ -19,7 +19,7 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 # library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='png', tidy=FALSE, verbose=FALSE, fig.retina = 1.25)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
