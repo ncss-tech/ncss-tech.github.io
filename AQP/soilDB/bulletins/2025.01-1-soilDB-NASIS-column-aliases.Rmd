@@ -23,6 +23,7 @@ If you have questions or encounter any bugs due to changes related to this bulle
 |:--------------|:----------------------------------|
 |site_id        |usiteid                            |
 |pedon_id       |upedonid or assocuserpedonid       |
+|obs_date       |obsdate                            |
 |describer      |descname                           |
 |vegplot_id     |vegplotid                          |
 |vegtransect_id |vegtransectid or vegtransectiid    |
