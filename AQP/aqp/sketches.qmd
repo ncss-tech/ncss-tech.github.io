@@ -71,6 +71,8 @@ See the [SPC introduction for the basics](http://ncss-tech.github.io/AQP/aqp/aqp
 #| fig-width: 10
 #| fig-height: 6
 #| fig-column: page-right
+#| fig-cap: Graphical explanation of arguments used to adjust the layout of soil profile sketches by plotSPC().
+#| fig-alt: Graphical explanation of arguments used to adjust the layout of soil profile sketches by plotSPC().
 explainPlotSPC(osds)
 ```
 
@@ -97,9 +99,10 @@ dev.off()
 
 Turning off ID and horizon designation annotation is another strategy for getting a quick glimpse of a large collection. Turning off profile and horizon boundary outlines with `divide.hz = FALSE` can help too.
 ```{r}
-#| fig.width: 10
-#| fig.height: 4
-#| dev: png
+#| fig-width: 10
+#| fig-height: 4
+#| fig-cap: 50 simulated variations of the Musick OSD pedon.
+#| fig-alt: 50 simulated variations of the Musick OSD pedon.
 # a single profile from our example
 musick <- subset(osds, id == 'MUSICK')
 
@@ -124,8 +127,10 @@ plotSPC(musick.sim, print.id = FALSE, name = NA, width = 0.4, divide.hz = FALSE,
 A single integer describing the amount of space along x-axis to allocate, defaults to `length(x)`.
 
 ```{r}
-#| fig.width = 10,
-#| fig.height = 6.5
+#| fig-width: 10
+#| fig-height: 6.5
+#| fig-cap: A demonstration of the extra space allocated by adjusting the `n` argument.
+#| fig-alt: A demonstration of the extra space allocated by adjusting the `n` argument.
 explainPlotSPC(osds, cex.names = 0.66, width = 0.3, n = 15, print.id = FALSE, name.style = 'center-center')
 
 text(x = 10.5, y = 90, label = "additional space allocated by 'n = 15'", adj = 0, cex = 0.75)
@@ -133,7 +138,32 @@ arrows(x0 = length(osds) + 1, x1 = 15, y0 = 100, y1 = 100, code = 3, length = 0.
 ```
 
 ### plot.order
-integer vector describing the order in which individual soil profiles should be plotted
+An integer vector describing the order in which soil profiles should be plotted. The ordering vector may contain duplicates, but may not include values outside the range of $[1, length(x)]$.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+#| fig-cap: A graphical demonstration of changing the profile plotting order as specified using an integer index.
+#| fig-alt: A graphical demonstration of changing the profile plotting order as specified using an integer index.
+
+# integer labels encoding original order
+site(osds)$original.order <- 1:length(osds)
+
+# shuffle ordering vector 
+idx  <- sample(osds$original.order)
+
+# re-ordering index may contain duplicates
+# idx <- rep(1:2, length.out = length(osds))
+
+
+# setup margins, multi-figures
+par(mar = c(0, 0, 2, 0), mfcol = c(1, 2))
+plotSPC(osds, depth.axis = FALSE, label = 'original.order', name = NA, width = 0.35, cex.id = 1, max.depth = 175)
+title('original order')
+
+plotSPC(osds, depth.axis = FALSE, label = 'original.order', plot.order = idx, name = NA, width = 0.35, cex.id = 1, max.depth = 175)
+title('new order')
+```
 
 ### relative.pos
 vector of relative positions along the x-axis, within {1, n}, ignores plot.order see details
