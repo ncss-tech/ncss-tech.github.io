@@ -1,0 +1,65 @@
+---
+title: soilDB Bulletin 2025.01-1
+subtitle: Deprecation of NASIS Column Name Aliases
+output: 
+  html_document:
+    theme: readable
+---
+
+**Effective Date:** 2025/01/10
+
+**Status:** _Active_
+
+soilDB 2.8.7 introduced messages warning that NASIS column aliases will be removed in the next minor release (2.9.x). 
+
+Aliased column names are being replaced because they do not match the [NASIS metadata](https://www.nrcs.usda.gov/resources/education-and-teaching-materials/nasis-database-metadata) and they are occasionally used inconsistently. For better parity between NASIS queries, web reports, and R function output we are adopting the NASIS metadata physical column names for all values that are derived directly from NASIS. See _Table 1_ below for the full list of columns that are changing.
+
+High-level functions like `fetchNASIS()` and `fetchVegdata()` are the most affected by this change. These functions will issue multiple messages: one for each of the affected lower-level functions that they call. 
+
+If you have questions or encounter any bugs due to changes related to this bulletin, please report them in a [new soilDB GitHub issue](https://github.com/ncss-tech/soilDB/issues/new). You can also add comments to the existing discussion related to conforming with official NASIS and SDA column names [here](https://github.com/ncss-tech/soilDB/issues/242). 
+
+#### Table 1. Deprecated soilDB versus Official NASIS Physical Column Names
+|Deprecated Column Name |Physical Column Name|
+|:--------------|:----------------------------------|
+|site_id        |usiteid                            |
+|pedon_id       |upedonid or assocuserpedonid       |
+|obs_date       |obsdate                            |
+|describer      |descname                           |
+|vegplot_id     |vegplotid                          |
+|vegtransect_id |vegtransectid or vegtransectiid    |
+|x_std          |longstddecimaldegrees              |
+|y_std          |latstddecimaldegrees               |
+|elev_field     |elev                               |
+|slope_field    |slope                              |
+|aspect_field   |aspect                             |
+|es_classifier  |siteecositehistory.classifier      |
+|sand           |sandtotest                         |
+|silt           |silttotest                         |
+|clay           |claytotest                         |
+|genhz          |dspcomplayerid                     |
+|representative |rvindicator                        |
+
+In the interim, before soilDB 2.9.0 is released, duplicate columns using both the alias and the official physical column name will be provided. This is to help users to transition to new column names before the old aliases are completely removed. As notification of deprecation of certain column aliases users will see a warning message the first time a function affected by the changes is called in each session. The message gives instructions on result column names that need to be changed. Subsequent calls to the same function in that session will not display a message. For example:
+
+```
+f <- get_vegplot_from_NASIS_db()
+#> ------------------------------------------
+#> NOTE: `get_vegplot_from_NASIS_db()` column aliases will be removed in the next minor soilDB release (2.9.x).
+#> Please replace use of the following column names with NASIS physical column name:
+#> 	 - site_id => usiteid
+#> 	 - pedon_id => assocuserpedonid
+#> 	 - vegplot_id => vegplotid
+#> Set `options(soilDB.warn.aliases=FALSE)` to prevent this message from displaying in future sessions.
+#> See <https://ncss-tech.github.io/AQP/soilDB/bulletins/2025.01-1-soilDB-NASIS-column-aliases.html> for details.
+#> ------------------------------------------
+```
+
+The above message indicates that usage of `site_id`, `pedon_id` and `vegplot_id` columns from the result of `get_vegplot_from_NASIS_db()` should be replaced with the appropriate physical column name. 
+
+To prevent the alias warning messages from displaying in future sessions set the `soilDB.warn.aliases` option to `FALSE` with `options(soilDB.warn.aliases=FALSE)`. When using this option in published R Markdown tutorials and examples, the option can be set in an invisible code block so the user can choose for themselves to ignore messages in their own sessions.
+
+In order to ensure your changes are compatible with a future removal of aliases, be sure it runs with a fresh install from the soilDB `"remove-aliases"` branch on GitHub, which has all of the aliases removed and replaced with physical column names rather than duplicated:
+
+```r
+remotes::install_github("ncss-tech/soilDB@remove-aliases", dependencies = FALSE)
+```
