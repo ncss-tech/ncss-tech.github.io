@@ -11,7 +11,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', dev.args=list(pointsize=10, antialias='cleartype'), tidy=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, out.width="100%", fig.retina = 2, fig.align='center', dev='png', tidy=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 
 knit_hooks$set(htmlcap = function(before, options, envir) {
@@ -58,12 +58,11 @@ Here is a basic outline of the process:
 If you have never used the [aqp](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) or [soildb](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html) packages before, you will likely need to install them. This only needs to be done once. 
 ```{r install-packages, eval=FALSE}
 # stable version from CRAN + dependencies
-install.packages('ape', dep=TRUE) 
-install.packages('latticeExtra', dep=TRUE)
-install.packages('plyr', dep=TRUE) 
-install.packages('aqp', dep=TRUE) 
-install.packages('soilDB', dep=TRUE)
-install.packages('sharpshootR', dep=TRUE)
+install.packages('ape') 
+install.packages('latticeExtra')
+install.packages('aqp') 
+install.packages('soilDB')
+install.packages('sharpshootR')
 ```
 
 Once you have all of the R packages on which  this document depends, it is a good idea to load them. R packages must be **installed** anytime you change versions of R (e.g., after an upgrade) and **loaded** anytime you want to access functions from within those packages.
@@ -71,13 +70,11 @@ Once you have all of the R packages on which  this document depends, it is a goo
 ```{r load-packages}
 library(aqp)
 library(soilDB)
-library(sharpshootR)
 library(igraph)
 library(ape)
 library(latticeExtra)
 library(lattice)
 library(cluster)
-library(MASS)
 ```
 
 # Sample Data
@@ -120,6 +117,8 @@ In this case, [`r names(sort(table(pedons$hzname), decreasing=TRUE))[1:4]`] hori
 
 Constructing a graph of transitions from one horizon to the next ("transition probabilities") can highlight those horizon designations that are most commonly used together. A follow-up tutorial on transition probability matrix interpretation is planned.
 ```{r transition-probabilities, fig.width=6, fig.height=6, out.width="80%", htmlcap='Graph constructed from transition probabilities.'}
+library(sharpshootR)
+
 tp <- hzTransitionProbabilities(pedons, 'hzname')
 par(mar = c(1, 1, 1, 1))
 plotSoilRelationGraph(tp, graph.mode = 'directed', edge.arrow.size = 0.5, edge.scaling.factor = 2, vertex.label.cex = 0.75, vertex.label.family = 'sans')
@@ -260,7 +259,7 @@ bwplot(hzdept ~ genhz, data=horizons(s),
 
 ### Advanced: Multivariate Soil Property Summary
 
-The evaluation of generalized horizon labels typically requires a review of more information than field-described horizon labels and depth. For example, clay content, sand content, pH, total rock fragment volume, and horizon mid-points are soil properties that can be used to differentiate horizons-- as long as the data are populated. In this document, clay content, total rock fragment volume, and horizon mid-points are used. Multivariate comparisons are commonly based on the concept of [pair-wise dissimilarity](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) and subsequent reduction of the resulting [distance matrix](http://en.wikipedia.org/wiki/Distance_matrix) into a simpler representation. [Non-metric multidimensional scaling](http://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) is one method for reducing the distance matrix into a new set of coordinates in two-dimensional space. A [related](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html) document explores this idea further.
+The evaluation of generalized horizon labels typically requires a review of more information than field-described horizon labels and depth. For example, clay content, sand content, pH, total rock fragment volume, and horizon mid-points are soil properties that can be used to differentiate horizons-- as long as the data are populated. In this document, clay content, total rock fragment volume, and horizon mid-points are used. Multivariate comparisons are commonly based on the concept of [pair-wise dissimilarity](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) and subsequent reduction of the resulting [distance matrix](http://en.wikipedia.org/wiki/Distance_matrix) into a simpler representation. [Classic multidimensional scaling](http://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS) is one method for reducing the distance matrix into a new set of coordinates in two-dimensional space. A [related](http://ncss-tech.github.io/AQP/aqp/aqp-profile-dissimilarity.html) document explores this idea further.
 
 ```{r evaluate-genhz-assignment}
 # store the column names of our variables of interest
@@ -279,8 +278,8 @@ pedons$neighbor <- hz.eval$horizons$neighbor
 ```
 
 
-In the following figure, generalized horizon labels are plotted at nMDS coordinates as colored circles, along with original horizon designations and pedon IDs. Ideally, groupings of GHL should form relatively homogeneous clusters in this figure; however, there will always be some overlap at the edges. Heterogeneous regions should be inspected in cases where the assigned GHL may not make sense. In this example, the original designation of "Bt3" for pedon ID 09CKS036 does not seem to fit into the "Bt3" generalized horizon. According to the soil properties used (clay content, total rock fragments, horizon mid-point), the horizon may  better fit the "Bt2" generalized horizon. In addition, it appears that "Bw" and "BA" horizons can be included into the "A" generalized horizon. Decisions on issues such as this can only be made based on field experience or at least some level of expert knowledge about the soils in question. Once a decision has been made, additions to the GHL rules (e.g. adding "Bw" and "BA" to the "A" GHL) and possibly manual adjustment can be used to accomodate the changes.
-```{r mds-plot, fig.width=9, fig.height=9, htmlcap='Horizon designations and GHL as plotted along nMDS axes.'}
+In the following figure, generalized horizon labels are plotted at MDS coordinates as colored circles, along with original horizon designations and pedon IDs. Ideally, groupings of GHL should form relatively homogeneous clusters in this figure; however, there will always be some overlap at the edges. Heterogeneous regions should be inspected in cases where the assigned GHL may not make sense. In this example, the original designation of "Bt3" for pedon ID 09CKS036 does not seem to fit into the "Bt3" generalized horizon. According to the soil properties used (clay content, total rock fragments, horizon mid-point), the horizon may  better fit the "Bt2" generalized horizon. In addition, it appears that "Bw" and "BA" horizons can be included into the "A" generalized horizon. Decisions on issues such as this can only be made based on field experience or at least some level of expert knowledge about the soils in question. Once a decision has been made, additions to the GHL rules (e.g. adding "Bw" and "BA" to the "A" GHL) and possibly manual adjustment can be used to accomodate the changes.
+```{r mds-plot, fig.width=9, fig.height=9, htmlcap='Horizon designations and GHL as plotted along MDS axes.'}
 # convert pedons to a data.frame
 pedons.df <- as(pedons, 'data.frame')
 # plot generalized horizon labels at MDS coordinates

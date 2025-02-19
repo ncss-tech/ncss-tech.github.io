@@ -14,7 +14,7 @@ smart: no
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -24,7 +24,7 @@ The soil series concept is a practical grouping of soil/landscape patches that r
 
 ## Practical Matters
 
-This is rough outline for evalutating potential differences between soil series within the same family, e.g. competing series. For this example, start the process by loading data within the same family as the [Drummer](https://casoilresource.lawr.ucdavis.edu/sde/?series=Drummer) series; *fine-silty, mixed, superactive, mesic typic endoaquolls*.
+This is rough outline for evaluating potential differences between soil series within the same family, e.g. competing series. For this example, start the process by loading data within the same family as the [Drummer](https://casoilresource.lawr.ucdavis.edu/sde/?series=Drummer) series; *fine-silty, mixed, superactive, mesic typic endoaquolls*.
 
 Why would a soil scientist do this?
 
@@ -111,7 +111,7 @@ print(res$fig)
 Visualize pair-wise distances using a dendrogram and profile sketches. What do the two main groupings tell us about this family?
 ```{r fig.width=12, fig.height=6}
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s.competing.data$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
+aqp::plotProfileDendrogram(s.competing.data$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.2, y.offset = 0.5)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
 ```
@@ -208,7 +208,7 @@ dd <- diana(d)
 Hang profile sketches from divisive hierarchical clustering of soil color signatures.
 ```{r fig.width=12, fig.height=5}
 par(mar = c(1,0,1,1))
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.28, y.offset = 2, width=0.2, cex.names=0.45)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.28, y.offset = 2, width=0.2, cex.names=0.45)
 
 # annotate with family name
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
@@ -222,7 +222,7 @@ par(mar = c(0,0,0,0), bg = 'black', fg = 'white')
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.28, y.offset = 2, width=0.4, cex.names=0.45, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, name=NA, default.color = grey(0.125), max.depth = 210)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.28, y.offset = 2, width=0.4, cex.names=0.45, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, name=NA, default.color = grey(0.125), max.depth = 210)
 
 # annotate with family name
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
@@ -277,23 +277,23 @@ dd <- diana(pd)
 Sketches made from moist colors, arranged according to select indices of morphology as extracted from the OSDs. Profiles are truncated at 200cm.
 ```{r fig.width=10, fig.height=6} 
 par(mar = c(1,0,1,1))
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, max.depth = 200)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, max.depth = 200)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font = 4)
 ```
 
 Thematic sketches, arranged according to select indices of morphology as extracted from the OSDs. Trends are clear
 ```{r fig.width=10, fig.height=6} 
 par(mar = c(1,0,3,1))
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='texture_class', col.label='Texture Class', max.depth = 200)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='texture_class', col.label='Texture Class', max.depth = 200)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='pH_class', col.label='pH Class', max.depth = 200)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='pH_class', col.label='pH Class', max.depth = 200)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='gley', col.label='Gleyed Horizons', max.depth = 200)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='gley', col.label='Gleyed Horizons', max.depth = 200)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 
-plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='discontinuity', col.label='Discontinuity', max.depth = 200)
+aqp::plotProfileDendrogram(spc, dd, dend.y.scale = max(d) * 4, scaling.factor = 0.5, y.offset = 5, width=0.2, cex.names=0.45, color='discontinuity', col.label='Discontinuity', max.depth = 200)
 mtext(fm.name, side = 1, at = 0.5, adj = 0, line = -1, font=4)
 ```
 
