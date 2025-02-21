@@ -20,7 +20,7 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='svglite', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -60,10 +60,10 @@ As an example, here is the OSD for the Davidson soil series.
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r install-deps, eval=FALSE}
 # stable packages from CRAN
-install.packages('aqp', dep=TRUE)
-install.packages('soilDB', dep=TRUE)
-install.packages('sharpshootR', dep=TRUE)
-install.packages('dendextend', dep=TRUE)
+install.packages('aqp')
+install.packages('soilDB')
+install.packages('sharpshootR')
+install.packages('dendextend')
 
 # latest versions from GitHub
 devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
@@ -120,7 +120,7 @@ kable_styling(kable(site(s)[, c('id', 'soilorder', 'suborder', 'greatgroup', 'su
 ```
 
 ```{r fig.width = 8, fig.height = 4}
-par(mar=c(0,0,1,1))
+par(mar = c(0, 0, 1, 1))
 SoilTaxonomyDendrogram(s, scaling.factor = 0.02, width = 0.28, name.style = 'center-center', depth.axis = list(line = -4))
 ```
 

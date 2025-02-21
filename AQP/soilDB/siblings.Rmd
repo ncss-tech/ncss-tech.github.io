@@ -20,7 +20,7 @@ opts_chunk$set(
   warning = FALSE, 
   background = '#F7F7F7', 
   fig.align = 'center', 
-  dev = 'svglite', 
+  dev = 'png', 
   tidy = FALSE, 
   verbose = FALSE
 )
