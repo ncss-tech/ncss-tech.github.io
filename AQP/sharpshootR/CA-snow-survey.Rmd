@@ -4,12 +4,12 @@ author: "D.E. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
-  mathjax: null
-jquery: null
-smart: no
-keep_md: no
+    mathjax: null
+    jquery: null
+    smart: no
+    keep_md: no
 ---
-  
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
@@ -22,12 +22,12 @@ These are my notes on getting, processing, and plotting the CA cooperative snow 
 
 Key points:
 
-   * data are fetched from CDEC via `sharpshootR::CDECsnowQuery()` by course number
-   * data are compared using a combination of SWE percentiles, [SPI](http://iridl.ldeo.columbia.edu/maproom/Global/Precipitation/SPI.html), and z-score transformation of SWE
-   * downloading the full record for all courses take a little while
-   * some fairly bizzare Lattice graphics witchcraft is employed to get the first figure
-   * the data object `CDEC.snow.courses` from the `sharpshootR` package contains a snapshot of snow course metadata
-   
+* data are fetched from CDEC via `sharpshootR::CDECsnowQuery()` by course number
+* data are compared using a combination of SWE percentiles, [SPI](http://iridl.ldeo.columbia.edu/maproom/Global/Precipitation/SPI.html), and z-score transformation of SWE
+* downloading the full record for all courses take a little while
+* some fairly bizzare Lattice graphics witchcraft is employed to get the first figure
+* the data object `CDEC.snow.courses` from the `sharpshootR` package contains a snapshot of snow course metadata
+
 
 There is plenty of room for improvement.
 
@@ -35,7 +35,7 @@ There is plenty of room for improvement.
 ```{r}
 # http://joewheatley.net/20th-century-droughts/
 getSPI <- function(y){
-  #empirical, symmetrized Standard Precipitation Index
+  #empirical, symmetrical Standard Precipitation Index
   fit.cdf <- ecdf(y)
   fit.rcdf <- ecdf(-y)
   cdfs <- fit.cdf(y)
@@ -46,7 +46,7 @@ getSPI <- function(y){
   #reversed
   rspi.t <- qnorm(rcdfs)
   rspi.tp <- na.omit(rspi.t[ rspi.t != -Inf ]) #drop Inf
-  #symmetrise
+  # enforce symmetry
   spi.sym <- (spi.t+rspi.t)/2
   spi.sym[which(spi.t == Inf)] <- rspi.t[which(spi.t==Inf)]
   spi.sym[which(rspi.t == -Inf)] <- spi.t[which(rspi.t==-Inf)]
@@ -96,10 +96,12 @@ library(purrr)
 
 # current data are:
 yr <- 2025
-mo <- 'February'
+mo <- 'March'
 
 # Stanislaus River watershed
-course.data <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
+course.data <- data.frame(
+  course_number = c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152)
+)
 ```
 
 ```{r results='hide'}
@@ -110,8 +112,7 @@ getHistoricData <- function(i) {
 }
 
 # get historic data
-d.long_term <- map(.x = course.data$course_number, .progress = TRUE, .f = getHistoricData)
-d.long_term <- do.call('rbind', d.long_term)
+d.long_term <- map_df(.x = course.data$course_number, .progress = TRUE, .f = getHistoricData)
 
 # join-in metadata
 data(CDEC.snow.courses)
@@ -124,22 +125,29 @@ d.long_term$name <- factor(d.long_term$name, levels = new.levels)
 
 # c('February', 'March', 'April', 'May')
 
-## TODO: remove all plyr code
+longTermMean <- function(i) {
+  
+  .res <- data.frame(
+    course_number = i$course_number[1],
+    month = i$month[1],
+    avg.SWE = mean(i$SWE, na.rm = TRUE), 
+    avg.density = mean(i$density, na.rm = TRUE),
+    avg.Depth = mean(i$Depth, na.rm = TRUE),
+    no.yrs = length(na.omit(i$SWE))
+  )
+  
+  return(.res)
+}
 
-## compute long-term average, by course / month, using the Adjusted 
-d.long_term.avg <- plyr::ddply(d.long_term, c('course_number', 'month'), plyr::summarise, 
-                         avg.SWE = mean(SWE, na.rm=TRUE), 
-                         avg.density = mean(density, na.rm=TRUE),
-                         avg.Depth = mean(Depth, na.rm=TRUE),
-                         no.yrs = length(na.omit(SWE))
-)
+s <- split(d.long_term, list(d.long_term$course_number, d.long_term$month), drop = TRUE)
+d.long_term.avg <- map_df(s, .progress = TRUE, .f = longTermMean)
 
 # make a copy of the current yr / mo data
 d.current <- subset(d.long_term, subset=month == mo & year == yr)
 
 # join current data with long term averages
 # keep only data that exists in both tables
-d.merged <- plyr::join(d.current, d.long_term.avg, by=c('course_number', 'month'), type='left')
+d.merged <- merge(d.current, d.long_term.avg, by = c('course_number', 'month'), all.x = TRUE, sort = FALSE)
 
 # compute pct of normal of depth, SWE, density
 d.merged$pct_of_normal_Depth <- with(d.merged, (Depth / avg.Depth) * 100.0)
@@ -196,30 +204,55 @@ print(p4, more=FALSE, position=c(0.125,0,0.425,0.175))
 data(CDEC.snow.courses)
 
 # get historic data
-d.long_term <- plyr::ddply(CDEC.snow.courses, 'course_number', .progress='text', .fun=function(i) {CDECsnowQuery(course=i$course_number, start_yr = 1900, end_yr = yr)})
+d.long_term <- map_df(.x = CDEC.snow.courses$course_number, .progress = TRUE, .f = getHistoricData)
 
 # save local cache
 # save(d.long_term, file='long_term_data-cache.rda')
 
 # join-in the snow metadata
-d.long_term <- plyr::join(d.long_term, CDEC.snow.courses, by='course_number', type='left')
+d.long_term <- merge(
+  d.long_term, 
+  CDEC.snow.courses, 
+  by = 'course_number',
+  all.x = TRUE,
+  sort = FALSE
+)
 
 # reset levels of site names, sorting by elevation
 names.elevations <- unique(d.long_term[, c('name', 'elev_feet')])
 new.levels <- names.elevations$name[order(names.elevations$elev_feet)]
-d.long_term$name <- factor(d.long_term$name, levels=new.levels)
+d.long_term$name <- factor(d.long_term$name, levels = new.levels)
+
+# requires >1 row of data
+scaleFun <- function(i) {
+  if(nrow(i) > 1) {
+    scaled.SWE <- scale(i$SWE)
+    emp.pctile <- ecdf(i$SWE)(i$SWE)
+    spi <- getSPI(i$SWE)
+    
+    d <- data.frame(
+      course_number = i$name, 
+      Date = i$Date, 
+      year = i$year, 
+      month = i$month,
+      elev_feet = i$elev_feet,
+      scaled.SWE = scaled.SWE, 
+      emp.pctile = emp.pctile, 
+      SWE = i$SWE, 
+      spi = spi
+    )
+    
+    return(d)
+  }
+}
+
 
 ## scale by course / month, across all years
-scaled.data <- plyr::ddply(d.long_term, c('name', 'month'), function(i) {
-  scaled.SWE <- scale(i$SWE)
-  emp.pctile <- ecdf(i$SWE)(i$SWE)
-  spi <- getSPI(i$SWE)
-  d <- data.frame(course_number=i$name, Date=i$Date, year=i$year, month=i$month, scaled.SWE=scaled.SWE, emp.pctile=emp.pctile, SWE=i$SWE, spi=spi)
-  return(d)
-})
+s <- split(d.long_term, list(d.long_term$name, d.long_term$month))
+scaled.data <- map_df(s, .progress = TRUE, .f = scaleFun)
 
 # re-order by course, Date
-scaled.data <- scaled.data[order(scaled.data$name, scaled.data$Date), ]
+scaled.data <- scaled.data[order(scaled.data$course_number, scaled.data$Date), ]
 
 # subset out the typical months
 scaled.data <- subset(scaled.data, month %in% c('February', 'March', 'April', 'May') & year > 1930)
@@ -227,9 +260,56 @@ scaled.data$month <- factor(scaled.data$month)
 ```
 
 
+```{r eval=FALSE}
+# not all that interesting
+elevEffect <- function(i) {
+  
+  if(nrow(i) > 1) {
+    
+    .res <- data.frame(
+      year = i$year[1],
+      month = i$month[1]
+    )
+    
+    if(length(which(complete.cases(i))) > 12) {
+      m <- lm(emp.pctile ~ elev_feet, data = i)
+      .res$elev.intercept <- coef(m)[1]
+      .res$elev.slope <- coef(m)[2]
+    } else {
+      .res$elev.intercept <- NA
+      .res$elev.slope <- NA
+    }
+  }
+  
+  return(.res)
+  
+}
+
+s <- split(scaled.data, list(scaled.data$year, scaled.data$month))
+elev.effects <- map_df(s, .progress = TRUE, .f = elevEffect)
+
+bwplot(
+  elev.intercept ~ month,
+  data = elev.effects,
+  par.settings = tactile.theme()
+)
+
+bwplot(
+  elev.slope ~ month,
+  data = elev.effects,
+  par.settings = tactile.theme()
+)
+
+
+# # SWE ~ elevation relationship over all stations
+# cr <- colorRampPalette(hcl.colors(n = 100, palette = 'spectral', rev = TRUE))
+# 
+# hexbinplot(scaled.SWE ~ elev_feet | month, data = scaled.data, colorkey = FALSE, scales = list(alternating = 1), colramp = cr, par.settings = tactile.theme())
+```
+
 ```{r fig.width=10, fig.height=7}
 # plot all data, each line is a course
-xyplot(SWE ~ year | month, data=scaled.data, groups=name, col=rgb(0.1, 0.1, 0.1, alpha=0.25), type=c('l','g'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)))
+xyplot(SWE ~ year | month, data=scaled.data, groups=course_number, col=rgb(0.1, 0.1, 0.1, alpha=0.25), type=c('l','g'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)))
 
 # plot all data: each dot is a survey
 xyplot(SWE ~ year | month, data=scaled.data, type=c('p','g', 'smooth'), span=0.125, as.table=TRUE, scales=list(alternating=3, x=list(tick.number=10, rot=90)), cex=0.25, pch=16, lwd=2)
@@ -258,7 +338,31 @@ bwplot(emp.pctile ~ factor(year), data=scaled.data, main=sprintf('%s Snow Survey
   n.stations <- tapply(y, x, length)
   panel.text(x=1:length(n.stations), y=1.03, labels=n.stations, cex=0.65, font=2)
   panel.text(x=10, y=1.075, labels='Snow Courses Reporting', cex=0.85, font=3)
-  })
+})
+```
+
+```{r eval=FALSE}
+.names <- CDEC.snow.courses$name[CDEC.snow.courses$course_number %in% course.data$course_number]
+
+levelplot(
+  emp.pctile ~ year * course_number | month, 
+  data = scaled.data, 
+  subset = year > 1960 & month == mo, 
+  ylab = '', xlab = '', 
+  par.settings = tactile.theme(), 
+  scales = list(x = list(tick.number = 20), y = list(cex = 0.5))
+)
+
+levelplot(
+  emp.pctile ~ year * course_number | month, 
+  data = scaled.data, 
+  subset = year > 1960 & month == mo & course_number %in% .names, 
+  ylab = '', xlab = '', 
+  par.settings = tactile.theme(regions = list(col = hcl.colors(100, pal = 'spectral')) ), 
+  scales = list(x = list(tick.number = 20), y = list(cex = 0.85)),
+  main = 'Percentiles of SWE by Course/Month'
+)
+
 ```
 
 
