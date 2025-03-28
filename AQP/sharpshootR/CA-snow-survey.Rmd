@@ -1,6 +1,6 @@
 ---
 title: "California Cooperative Snow Survey Summary"
-author: "D.E. Beaudette"
+author: "D.E. and J.M. Beaudette"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -93,10 +93,11 @@ library(tactile)
 library(grid)
 library(purrr)
 
-
-# current data are:
+# current year
 yr <- 2025
-mo <- 'March'
+
+# one of: 'February', 'March', 'April', 'May'
+mo <- 'April'
 
 # Stanislaus River watershed
 course.data <- data.frame(
@@ -123,8 +124,7 @@ names.elevations <- unique(d.long_term[, c('name', 'elev_feet')])
 new.levels <- names.elevations$name[order(names.elevations$elev_feet)]
 d.long_term$name <- factor(d.long_term$name, levels = new.levels)
 
-# c('February', 'March', 'April', 'May')
-
+# compute historical means
 longTermMean <- function(i) {
   
   .res <- data.frame(
