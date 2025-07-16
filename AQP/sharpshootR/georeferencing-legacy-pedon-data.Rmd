@@ -34,14 +34,8 @@ A very informative story map can be found here describing organization of the PL
 With a recent version of R (>= 2.15), it is possible to get all of the packages that this tutorial depends on via:
 ```{r eval=FALSE}
 # run these commands in the R console
-install.packages('plotKML', dep=TRUE)
-install.packages('raster', dep=TRUE)
-install.packages('stringi', dep=TRUE)
-install.packages('sp', dep=TRUE)
-install.packages('rgeos', dep=TRUE)
-install.packages('elevatr', dep=TRUE)
-install.packages('cluster', dep=TRUE)
-install.packages('xtable', dep=TRUE)
+.p <- c('sharpshootR', 'stringi', 'xtable', 'elevatr', 'sf', 'terra')
+install.packages(.p)
 ```
 
 You will also need the latest version of `sharpshootR`:
@@ -54,19 +48,18 @@ devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_de
 Given that you have no spatial information other than the PLSS description, the first step is to build an organized file of the information. This is an example of the data and the format that I have constructed.  The functions below will know what to do with a format that follows this example. Building such a file can be a tedious task, but bringing legacy pedons into the spatial world is very important and well worth a focused effort.
 
 ```{r, echo=FALSE}
-
 library(xtable)
 
 # build some data
 d <- data.frame( 
-id=c('KORX7', 'KORX8', 'KORX9', 'KORX10', 'KOFO3AC', 'KOCA4'), 
-qq=c('SW', 'SW', 'SE', NA, 'NE', 'NW'), 
-q=c('NE', 'NW', 'SE', 'SE', 'SW', 'SW'),
-s=c(17, 32, 30, 25, 11, 27), 
-t=c('T36N', 'T35N', 'T35N', 'T35N', 'T32N', 'T24N'),
-r=c('R29W', 'R28W', 'R28W', 'R28W', 'R26W', 'R29W'),
-type=c('SN', 'SN', 'SN', 'SN', 'UP', 'UP'),
-m='MT20', stringsAsFactors = FALSE)
+  id = c('KORX7', 'KORX8', 'KORX9', 'KORX10', 'KOFO3AC', 'KOCA4'), 
+  qq = c('SW', 'SW', 'SE', NA, 'NE', 'NW'), 
+  q = c('NE', 'NW', 'SE', 'SE', 'SW', 'SW'),
+  s = c(17, 32, 30, 25, 11, 27), 
+  t = c('T36N', 'T35N', 'T35N', 'T35N', 'T32N', 'T24N'),
+  r = c('R29W', 'R28W', 'R28W', 'R28W', 'R26W', 'R29W'),
+  type = c('SN', 'SN', 'SN', 'SN', 'UP', 'UP')
+)
 
 # show format
 kable(d)
@@ -78,10 +71,7 @@ First we load our data file and prepare the data for further use.  For example t
 ```{r}
 # load required packages
 library(sharpshootR)
-library(plyr)
 library(stringi)
-library(sp)
-library(plotKML)
 library(xtable)
 
 # use data included in the package to check for meridians by state
@@ -93,7 +83,6 @@ d$m <- 'MT20'
 
 # show data
 kable(d)
-
 ```
 
 
@@ -111,7 +100,6 @@ Note: The function will return coordinates for most regular PLSS cases, however,
 https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/kml/mapImage.kmz
 
 ```{r, echo=TRUE, results='show', warning=FALSE}
-
 # format PLSS ID codes
 d$plssid <-formatPLSS(d)
 
@@ -121,12 +109,11 @@ d2 <- PLSS2LL(d)
 # view table with plssid codes
 kable(d)
 kable(d2)
-
-
 ```
 
 
-```{r, echo=TRUE, results='show', warning=FALSE}
+TODO: most of this isn't required any longer, as `formatPLSS()` now uses `type` column from `d`.
+```{r, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 # reformat PLSS for protracted ('PB') or unprotracted blocks ('UP')
 idx <- which(d$type=='UP')
 d$plssid[idx] <- formatPLSS(d[idx, ], type="UP")
