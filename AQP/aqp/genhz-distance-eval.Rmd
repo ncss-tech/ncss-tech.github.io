@@ -50,7 +50,7 @@ x <- loafercreek[20:40, ]
 
 # modify default arguments for some flair
 par(mar = c(0, 0, 0, 2))
-plotSPC(x, width = 0.33, name.style = 'center-center', cex.names = 0.65, print.id = FALSE)
+plotSPC(x, width = 0.33, name.style = 'center-center', cex.names = 0.65, print.id = FALSE, max.depth = 150)
 ```
 
 
@@ -89,7 +89,7 @@ table(y$genhz)
 site(y)$shortID <- 1:length(y)
 
 par(mar = c(0, 0, 3, 2))
-plotSPC(y, color = 'genhz', width = 0.33, name.style = 'center-center', cex.names = 0.65, fixLabelCollisions = FALSE, col.label = 'Generalized Horizon Label', label = 'shortID')
+plotSPC(y, color = 'genhz', width = 0.33, name.style = 'center-center', cex.names = 0.65, fixLabelCollisions = FALSE, col.label = 'Generalized Horizon Label', label = 'shortID', max.depth = 150)
 ```
 
 
@@ -125,7 +125,7 @@ plotSPC(z, color = 'genhz', width = 0.33, name.style = 'center-center', cex.name
 Compute pair-wise distances between profiles using `genhz` (an ordered factor) to a maximum depth of 150cm. See `?profile_compare` and `?daisy` for details. Divisive hierarchical clustering is applied to the distance matrix, with a final re-ordering step according to soil depth (`dendextend::rotate)`.
 ```{r}
 # aqp >= 2.0
-d <- NCSP(z, vars = 'genhz', maxDepth = 150, k = 0, rescaleResult = TRUE)
+d <- NCSP(z, vars = 'genhz', maxDepth = 150, rescaleResult = TRUE)
 
 # divisive hierarchical clustering
 h <- as.hclust(diana(d))
