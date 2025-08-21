@@ -131,8 +131,11 @@ st_crs(x) <- 4326
 # query WCS
 mu <- mukey.wcs(x, db = 'gSSURGO')
 
-# looks OK
-plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'))
+# extract metadata for figure label
+# see subsection below for details
+.md <- metags(mu)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(mu, legend = FALSE, axes = FALSE, main = .title)
 
 # add original BBOX, after transforming to mukey grid CRS
 plot(st_transform(x, 5070), add = TRUE)
@@ -170,9 +173,10 @@ b <- st_as_sf(b)
 # result is in EPSG:5070
 mu <- mukey.wcs(b, db = 'gSSURGO')
 
-# looks OK
-plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'))
-
+# simple plot
+.md <- metags(mu)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(mu, legend = FALSE, axes = FALSE, main = .title)
 
 # add buffer, after transforming to mukey grid CRS
 plot(st_transform(b, 5070), add = TRUE)
@@ -237,10 +241,14 @@ mu <- mukey.wcs(aoi = a, db = 'gssurgo')
 # check:
 print(mu)
 
+# create title from metadata
+.md <- metags(mu)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+
 # looks good
 plot(
   mu, 
-  main = 'gSSURGO map unit keys',
+  main = .title,
   sub = 'Albers Equal Area Projection',
   axes = FALSE, 
   legend = FALSE, 
@@ -334,17 +342,24 @@ a <- st_as_sfc(a)
 par(mfcol = c(1, 3))
 
 # gSSURGO
-plot(x, axes = FALSE, legend = FALSE, main = metags(x, name = 'description'))
+# create title from metadata
+.md <- metags(x)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(x, axes = FALSE, legend = FALSE, main = .title)
 # original BBOX
 plot(a, add = TRUE)
 
 # gNATSGO
-plot(y, axes = FALSE, legend = FALSE, main = metags(y, name = 'description'))
+.md <- metags(y)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(y, axes = FALSE, legend = FALSE, main = .title)
 # original BBOX
 plot(a, add = TRUE)
 
 # RSS
-plot(z, axes = FALSE, legend = FALSE, main = metags(z, name = 'description'), ext = x)
+.md <- metags(z)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(z, axes = FALSE, legend = FALSE, main = .title, ext = x)
 # original BBOX
 plot(a, add = TRUE)
 ```
@@ -360,10 +375,14 @@ Continuing from the example above.
 par(mfcol = c(1, 2))
 
 # gSSURGO
-plot(x, axes = FALSE, legend = FALSE, main = metags(x, name = 'description'))
+.md <- metags(x)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(x, axes = FALSE, legend = FALSE, main = .title)
 
 # STATSGO
-plot(statsgo, axes = FALSE, legend = FALSE, main = metags(statsgo, name = 'description'))
+.md <- metags(statsgo)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+plot(statsgo, axes = FALSE, legend = FALSE, main = .title)
 ```
 
 ## Hawaii SSURGO
@@ -383,8 +402,12 @@ st_crs(x) <- 4326
 # query WCS
 mu <- mukey.wcs(x, db = 'hi_ssurgo')
 
+# format title from metadata
+.md <- metags(mu)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+
 # make NA (the ocean) blue
-plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'), colNA = 'royalblue')
+plot(mu, legend = FALSE, axes = FALSE, main = .title, colNA = 'royalblue')
 
 # # check mu names
 # .is <- format_SQL_in_statement(cats(mu)[[1]]$mukey)
@@ -409,8 +432,12 @@ st_crs(x) <- 4326
 # query WCS
 mu <- mukey.wcs(x, db = 'pr_ssurgo')
 
+# format title from metadata
+.md <- metags(mu)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+
 # make NA (the ocean) blue
-plot(mu, legend = FALSE, axes = FALSE, main = metags(mu, name = 'description'), colNA = 'royalblue')
+plot(mu, legend = FALSE, axes = FALSE, main = .title, colNA = 'royalblue')
 
 # # check mu names
 # .is <- format_SQL_in_statement(cats(mu)[[1]]$mukey)
@@ -1026,12 +1053,15 @@ plot(s, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
 Soil color distribution.
 ```{r fig.width = 8, fig.height = 4}
 par(mar = c(4.5, 5, 1, 1))
+
 # specific to this AOI
 rat <- cats(s)[[1]]
+
+# TODO: better desdcribe missing colors
 barplot(s, col = rat$col, names.arg = rat$munsell, las = 1, cex.names = 0.75, horiz = TRUE, xlab = 'Cell Count')
 
 # these colors, but frequencies tabulated across all of CONUS
-# barplot(rat$freq, col = rat$col, las = 3, names.arg = rat$munsell, cex.names = 0.6)
+barplot(rat$freq, col = rat$col, las = 3, names.arg = rat$munsell, cex.names = 0.6)
 ```
 
 
@@ -1048,8 +1078,12 @@ a <- vect(wkt, crs = 'epsg:4326')
 # moist soil color at 25cm, low-res version
 s <- soilColor.wcs(aoi = a, var = 'sc025cm_hr', res = 30)
 
+# format title from metadata
+.md <- metags(s)
+.title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
+
 # color table is pre-set by soilColor.wcs()
-plot(s, legend = FALSE, axes = FALSE, main = metags(s, name = 'description'))
+plot(s, legend = FALSE, axes = FALSE, main = .title)
 ```
 
 
