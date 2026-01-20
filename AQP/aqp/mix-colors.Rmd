@@ -267,6 +267,11 @@ plotColorMixture(c('5Y 8/10', '5B 4/10', '5R 4/8'), label.cex = 0.65, showMixedS
 ```
 
 
+Neutral spectra now available (2025-12-10).
+```{r fig.height=5.5, fig.width=9}
+plotColorMixture(c('5Y 8/10', 'N 4/'), label.cex = 0.65, showMixedSpec = TRUE, mixingMethod = 'exact')
+```
+
 
 
 
@@ -304,7 +309,7 @@ par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
 soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
 ```
 
-Cobalt blue + grey.
+Cobalt blue + blue-grey.
 ```{r fig.height=2.5, fig.width=10}
 s <- seq(0, 1, length.out = 6)
 z <- .continuousMixture(c('7.5B 6/10', '7.5B 8/2'), s)
@@ -312,6 +317,16 @@ z <- .continuousMixture(c('7.5B 6/10', '7.5B 8/2'), s)
 par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
 soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
 ```
+
+Red + grey (available 2025-12-10).
+```{r fig.height=2.5, fig.width=10}
+s <- seq(0, 1, length.out = 6)
+z <- .continuousMixture(c('5R 4/6', 'N 6/'), s)
+
+par(bg = 'black', fg = 'white', mar = c(0,0,0,0))
+soilPalette(parseMunsell(z), sprintf('%s (%s / %s))', z, 1 - s, s))
+```
+
 
 
 ## Interpreting Spectral (Gower) Distances
@@ -474,8 +489,11 @@ data(munsell)
 x <- munsell
 x$munsell <- sprintf('%s %s/%s', x$hue, x$value, x$chroma)
 
+# remove neutral chips
+x <- subset(x, subset = hue != 'N')
+
 # only chips with available spectra
-# 2442 chips
+# 3801 chips
 idx <- which(x$munsell %in% dimnames(z)[[1]])
 x <- x[idx, ]
 

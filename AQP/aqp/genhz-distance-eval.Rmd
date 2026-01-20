@@ -26,7 +26,7 @@ opts_chunk$set(
 options(width = 100, stringsAsFactors = FALSE)
 ```
 
-
+# Premise
 Question: is it possible to generate a reasonable sorting of soil profiles (a `SoilProfileCollection`) using pair-wise distances computed only from generalized horizon labels (GHL)? I think that it might, as long as these labels are encoded as [ordered factors](http://ncss-tech.github.io/AQP/aqp/profile-compare-factors.html). We can use `profile_compare` to test this hypothesis. One might attempt such a comparison within a collection of similar soils where the only reliable data available are horizon depths and designations.
 
 We will be using a subset of the the `loafercreek` sample data from the {soilDB} package.
@@ -121,7 +121,7 @@ par(mar = c(0, 0, 3, 2))
 plotSPC(z, color = 'genhz', width = 0.33, name.style = 'center-center', cex.names = 0.65, plot.order = order(z$depth), col.label = 'Generalized Horizon Label', label = 'shortID')
 ```
 
-
+# NCSP Applied to GHL
 Compute pair-wise distances between profiles using `genhz` (an ordered factor) to a maximum depth of 150cm. See `?profile_compare` and `?daisy` for details. Divisive hierarchical clustering is applied to the distance matrix, with a final re-ordering step according to soil depth (`dendextend::rotate)`.
 ```{r}
 # aqp >= 2.0
@@ -134,6 +134,7 @@ h <- as.hclust(diana(d))
 h <- dendextend::rotate(h, order(z$depth))
 ```
 
+## Pair-Wise Distances
 As suggested by Shawn Salley, a quick view of the distance matrix as an image. Pair-wise distances are encoded with color.
 ```{r fig.width=8, fig.height=8}
 # expand dist object to full matrix form of the pair-wise distances 
@@ -228,7 +229,6 @@ axis(side = 2, at = .p, labels = round(.lab, 2), line = -1.5, las = 1, cex.axis 
 # annotate
 mtext('Median distance to all other profiles (max = 1)', side = 3, at = 1, adj = 0, line = -2)
 ```
-
 
 
 

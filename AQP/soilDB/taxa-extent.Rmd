@@ -134,14 +134,14 @@ lines(us_states, lwd = 2)
 
 ## Formative Elements
 ```{r fig.height=6, fig.width=7}
-x <- taxaExtent('pale', level = 'greatgroup', formativeElement = TRUE)
+x <- taxaExtent('pale', type = 'formative element', level = 'greatgroup')
 a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
 # zoomed to full extent
 plot(a, axes = FALSE, col = hcl.colors(25), ext = b, mar = c(1, 1, 3, 4), main = names(a))
 lines(us_states, lwd = 2)
 
-x <- taxaExtent('grossarenic', level = 'subgroup', formativeElement = TRUE)
+x <- taxaExtent('grossarenic', type = 'formative element', level = 'subgroup')
 a <- raster::aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
 
 # zoomed to taxa extent
@@ -149,6 +149,16 @@ plot(a, axes = FALSE, col = hcl.colors(25), mar = c(1, 1, 3, 4), main = names(a)
 lines(us_states, lwd = 2)
 ```
 
+
+## Family Mineralogy Classes
+```{r fig.height=6, fig.width=7}
+x <- taxaExtent('glassy', type = 'mineralogy class')
+a <- aggregate(x, fact = 5, fun = mean, na.rm = TRUE)
+
+# zoomed to full extent
+plot(a, axes = FALSE, col = hcl.colors(25), ext = b, mar = c(1, 1, 3, 4), main = 'Family Mineralogy Class\nIncludes "glassy"')
+lines(us_states, lwd = 2)
+```
 
 
 ## Interactive mapping from R

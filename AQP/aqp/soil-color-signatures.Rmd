@@ -12,7 +12,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, fig.align = 'center', dev='svglite', tidy=FALSE, verbose=FALSE, cache = FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, fig.align = 'center', dev='png', tidy=FALSE, verbose=FALSE, cache = FALSE)
 options(width=100, stringsAsFactors=FALSE, cache=FALSE)
 ```
 
@@ -24,15 +24,13 @@ Pending.
 
 ## TODO
 
- * integrate ideas from [colordistance package](https://cran.r-project.org/web/packages/colordistance/vignettes/colordistance-introduction.html)
- * what is appropriate rescaling of L?
- * use $\Delta E_{00}$ metric color distances via [farver package](https://github.com/thomasp85/farver)
+* integrate ideas from [colordistance package](https://cran.r-project.org/web/packages/colordistance/vignettes/colordistance-introduction.html)
+* what is appropriate rescaling of L?
+* use $\Delta E_{00}$ metric color distances via [farver package](https://github.com/thomasp85/farver)
 
 # Examples
-Source colors are in sRGB (D65) colorspace, as converted from Munsell notation using `aqp::munsell2rgb()`.
 
-## Basic Idea
-Trivial example using some of the `aqp` built-in data.
+
 ```{r fig.width=10, fig.height=5.5}
 library(aqp)
 library(farver)
@@ -41,44 +39,6 @@ library(ape)
 library(colorspace)
 library(soilDB)
 library(sharpshootR)
-
-# example data
-data(sp5)
-
-# semi-random subset
-set.seed(10101)
-idx <- sample(length(sp5), size = 15, replace = FALSE)
-
-# truncate to 150cm for simplicity
-x <- trunc(sp5[idx, ], 0, 150)
-
-# quick check
-par(mar = c(0, 0, 0, 1))
-plotSPC(x, width = 0.35)
-
-# convert HEX color notation -> sRGB [0,1]
-rgb.data <- t(col2rgb(x$soil_color)) / 255
-
-# copy to horizon level attributes of SPC
-x$r <- rgb.data[, 1]
-x$g <- rgb.data[, 2]
-x$b <- rgb.data[, 3]
-
-# develop color signature
-pig <- soilColorSignature(x, method = 'depthSlices', RescaleLightnessBy = 5)
-knitr::kable(pig, digits = 3, row.names = FALSE)
-```
-
-Plot results as dendrogram.
-```{r fig.width=10, fig.height=6.5}
-# copy ID to rownames
-row.names(pig) <- pig[, 1]
-
-# euclidean distance, leaving out the ID
-d <- daisy(pig[, -1], stand = FALSE, metric = 'euclidean')
-dd <- diana(d)
-
-plotProfileDendrogram(x, clust = dd, scaling.factor = 0.33, y.offset = 4, width = 0.35)
 ```
 
 
@@ -91,14 +51,8 @@ s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford'
 # get these soil series
 s <- fetchOSD(s.list)
 
-# manually convert Munsell -> sRGB
-rgb.data <- munsell2rgb(s$hue, s$value, s$chroma, return_triplets = TRUE)
-s$r <- rgb.data$r
-s$g <- rgb.data$g
-s$b <- rgb.data$b
-
 # check
-par(mar=c(0, 0, 0, 1))
+par(mar = c(0, 0, 0, 1))
 plotSPC(s, name.style = 'center-center', width = 0.33)
 ```
 
@@ -123,29 +77,53 @@ pairs(~ L + A + B, data=cols, pch=16, cex=2, col=rgb(cols$r, cols$g, cols$b))
 Compute proportions of white, red, green, yellow, and blue "pigments" based on the CIE LAB representation of soil colors distributed over horizons, weighted by horizon thickness. Pigment proportions are used so that shallow soils can be compared with deep soils. Each row is an observation, columns describe the multivariate soil color signature. 
 
 ```{r fig.width=12, fig.height=6}
-# what is appropriate rescaling of L?
-pig <- soilColorSignature(s, RescaleLightnessBy = 5, method = 'colorBucket')
+pig <- soilColorSignature(s, color = 'soil_color', method = 'colorBucket')
 
 knitr::kable(head(pig), digits = 3, row.names = FALSE)
+```
 
+```{r fig.width=12, fig.height=6}
 # move row names over for distance matrix
 row.names(pig) <- pig[, 1]
-d <- daisy(pig[, -1], stand = FALSE)
+
+
+d <- daisy(pig[, -1], stand = FALSE, metric = 'euclidean')
 dd.colorBucket <- diana(d)
 
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 1.18, scaling.factor = 0.0037, y.offset = 0.06, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+plotProfileDendrogram(s, dd.colorBucket, scaling.factor = 0.004, y.offset = 0.04, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+```
+
+```{r fig.width=12, fig.height=6}
+
+d <- daisy(pig[, -1], stand = TRUE, metric = 'euclidean')
+dd.colorBucket <- diana(d)
+
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd.colorBucket, scaling.factor = 0.08, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+```
+
+
+```{r fig.width=12, fig.height=6}
+
+d <- daisy(pig[, -1], weights = c(0.25, 1, 1, 1, 1), metric = 'gower')
+dd.colorBucket <- diana(d)
+
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd.colorBucket, scaling.factor = 0.006, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 
 ### Soil Color Signature by "Depth Slices"
 Extract CIE LAB coordinates at the 10th, 50th, and 90th percentiles of horizon mid-points. Each row is an observation, columns describe the multivariate soil color signature.
 ```{r fig.width=12, fig.height=6}
-pig <- soilColorSignature(s, RescaleLightnessBy = 5, method = 'depthSlices')
+pig <- soilColorSignature(s, color = 'soil_color', method = 'depthSlices')
 
 knitr::kable(head(pig), digits = 3, row.names = FALSE)
+```
 
+```{r fig.width=12, fig.height=6}
 # move row names over for distance matrix
 row.names(pig) <- pig[, 1]
 d <- daisy(pig[, -1], stand = FALSE)
@@ -153,7 +131,15 @@ dd.depthSlices <- diana(d)
 
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.39, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+plotProfileDendrogram(s, dd.depthSlices, scaling.factor = 0.48, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+```
+
+```{r fig.width=12, fig.height=6}
+d <- soilColorSignature(s, color = 'soil_color', method = 'depthSlices', perceptualDistMat = TRUE)
+dd.depthSlices <- diana(d)
+
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd.depthSlices, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 
@@ -161,17 +147,27 @@ plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.
 ## Soil Color Signature by "PAM"
 Select *k*-medoids (partitioning around medoids algorithm) from all possible colors within the profile or depth interval and use those CIE LAB coordinates as the signature. Each row is an observation, columns describe the multivariate soil color signature.
 ```{r fig.width=12, fig.height=6}
-pig <- soilColorSignature(s, method = 'pam', RescaleLightnessBy = 5, pam.k = 3)
+pig <- soilColorSignature(s, color = 'soil_color', method = 'pam', pam.k = 3)
 
 knitr::kable(head(pig), digits = 3, row.names = FALSE)
+```
 
+```{r fig.width=12, fig.height=6}
 # move row names over for distance matrix
 row.names(pig) <- pig[, 1]
 d <- daisy(pig[, -1], stand = FALSE)
 dd.pam <- diana(d)
 
 par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.41, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+plotProfileDendrogram(s, dd.pam, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+```
+
+```{r fig.width=12, fig.height=6}
+d <- soilColorSignature(s, color = 'soil_color', method = 'pam', perceptualDistMat = TRUE)
+dd.pam <- diana(d)
+
+par(mar=c(0,0,1,1))
+plotProfileDendrogram(s, dd.pam, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
 ```
 
 
@@ -179,13 +175,13 @@ plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.41, y.of
 ```{r fig.width=12, fig.height=16}
 par(mfrow = c(3, 1), mar=c(0,0,1,1))
 
-plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 1.18, scaling.factor = 0.0038, y.offset = 0.06, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+plotProfileDendrogram(s, dd.colorBucket, dend.y.scale = 24.5, scaling.factor = 0.07, y.offset = 1.1, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 200)
 mtext('colorBucket', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 
-plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.38, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+plotProfileDendrogram(s, dd.depthSlices, dend.y.scale = 122, scaling.factor = 0.36, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 200)
 mtext('depthSlices', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 
-plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.38, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
+plotProfileDendrogram(s, dd.pam, dend.y.scale = 128, scaling.factor = 0.38, y.offset = 5.5, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 200)
 mtext('PAM', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 ```
 
@@ -195,55 +191,71 @@ mtext('PAM', side = 3, at = 1, line = -2, cex = 0.85, font = 2)
 
 
 
-## Soil Color Signature by "PAM" and delta-E00
-Select *k*-medoids (partitioning around medoids algorithm) from all possible colors within the profile or depth interval and use those CIE LAB coordinates as the signature. Each row is an observation, columns describe the multivariate soil color signature. Distances are computed via delta-E (CIE2000), $\Delta E_{00}$ within each cluster and summed.
-```{r fig.width=12, fig.height=6}
-k <- 4
-pig <- soilColorSignature(s, RescaleLightnessBy = 5, method = 'pam', pam.k = k)
+<!-- ## Soil Color Signature by "PAM" and delta-E00 -->
+<!-- Select *k*-medoids (partitioning around medoids algorithm) from all possible colors within the profile or depth interval and use those CIE LAB coordinates as the signature. Each row is an observation, columns describe the multivariate soil color signature. Distances are computed via delta-E (CIE2000), $\Delta E_{00}$ within each cluster and summed. -->
+<!-- ```{r fig.width=12, fig.height=6} -->
+<!-- k <- 4 -->
+<!-- pig <- soilColorSignature(s, color = 'soil_color', method = 'pam', pam.k = k) -->
 
-# iterate over clusters, result is a distance matrix (delta-E00)
-delta.E00 <- lapply(1:k, function(i) {
-  # LAB coordinates are named by cluster 1:k
-  v.names <- paste(c('L', 'A', 'B'), i, sep = '.')
-  # pair-wise delta-E00
-  d.i <- farver::compare_colour(pig[, v.names], pig[, v.names], from_space='lab', white_from = 'D65', method='cie2000')
-  # copy over SPC ids
-  dimnames(d.i) <- list(pig[, 1], pig[, 1])
-  # convert to dist object
-  d.i <- as.dist(d.i)
-  return(d.i)
-})
+<!-- # iterate over clusters, result is a distance matrix (delta-E00) -->
+<!-- delta.E00 <- lapply(1:k, function(i) { -->
+<!--   # LAB coordinates are named by cluster 1:k -->
+<!--   v.names <- paste(c('L', 'A', 'B'), i, sep = '.') -->
+<!--   # pair-wise delta-E00 -->
+<!--   d.i <- farver::compare_colour(pig[, v.names], pig[, v.names], from_space = 'lab', white_from = 'D65', method = 'cie2000') -->
+<!--   # copy over SPC ids -->
+<!--   dimnames(d.i) <- list(pig[, 1], pig[, 1]) -->
+<!--   # convert to dist object -->
+<!--   d.i <- as.dist(d.i) -->
+<!--   return(d.i) -->
+<!-- }) -->
 
-# sum distance matrices
-d <- Reduce('+', delta.E00)
-# divisive clustering
-dd <- diana(d)
+<!-- # sum distance matrices -->
+<!-- d <- Reduce('+', delta.E00) -->
+<!-- # divisive clustering -->
+<!-- dd <- diana(d) -->
 
-par(mar=c(0,0,1,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.55, y.offset = 7, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210)
-```
+<!-- par(mar=c(0,0,1,1)) -->
+<!-- plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.9, y.offset = 7, width = 0.33, cex.names = 0.45, shrink = TRUE, name.style = 'center-center', max.depth = 210) -->
+<!-- ``` -->
+
 
 ## Soil Color Art
 
 Using the distance matrix / clustering from above.
 
+```{r}
+d <- soilColorSignature(s, color = 'soil_color', method = 'pam', perceptualDistMat = TRUE)
+dd <- diana(d)
+```
+
 ```{r fig.width=12, fig.height=6, dev='png'}
 # adjust margins and default colors
-par(mar=c(0,0,0,0), bg='black', fg='white', lend = 2)
+par(mar = c(0, 0, 0, 0), bg = 'black', fg = 'white', lend = 2)
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.55, y.offset = 2, width=0.4, name = NA, dend.color = 'white', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, hz.distinctness.offset = 'hzd', max.depth = 210)
+plotProfileDendrogram(
+  s, dd, scaling.factor = 0.67, y.offset = 5, dend.color = 'white', dend.width = 2,
+  width = 0.4, hz.distinctness.offset = 'hzd', 
+  max.depth = 210,
+  name = NA, divide.hz = FALSE, print.id = FALSE, depth.axis = FALSE, 
+)
 ```
 
 
 ```{r fig.width=12, fig.height=6, dev='png'}
-# adjust margins and default colors
-par(mar=c(0,0,0,0), lend = 2)
+par(mar = c(0, 0, 0, 0), bg = 'black', fg = 'white', lend = 1)
 
 # hang profiles from dendrogram
 # note customization via arguments passed to plotSPC
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 1.5, scaling.factor = 0.38, y.offset = 2, width = 0.4, name = NA, dend.type = 'cladogram', dend.width = 2, divide.hz=FALSE, print.id=FALSE, depth.axis = FALSE, hz.distinctness.offset = 'hzd', max.depth = 210)
+plotProfileDendrogram(
+  s, dd, scaling.factor = 0.67, y.offset = 5, dend.color = 'white', dend.width = 2,
+  dend.type = 'cladogram',
+  width = 0.4, hz.distinctness.offset = 'hzd', 
+  max.depth = 210,
+  name = NA, divide.hz = FALSE, print.id = FALSE, depth.axis = FALSE, 
+)
 ```
 
 

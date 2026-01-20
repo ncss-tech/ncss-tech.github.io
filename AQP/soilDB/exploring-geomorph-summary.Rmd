@@ -67,14 +67,14 @@ osds <- fetchOSD(soils, extended = TRUE)
 There may be missing series from either / both SPC and geomorphic summaries. TBC.
 ```{r eval = FALSE}
 # there may be records missing from SPC / hill slope position
-nm <- intersect(profile_id(osd$SPC), osd$hillpos$series)
+nm <- intersect(profile_id(osds$SPC), osds$hillpos$series)
 
 # keep only those series that exist in both
-sub <- subset(osd$SPC, profile_id(osd$SPC) %in% nm)
+sub <- subset(osds$SPC, profile_id(osds$SPC) %in% nm)
 
 ## inverse problem: extra records in hill slope summaries
 # subset hillpos
-hillpos.sub <- subset(osd$hillpos, subset = series %in% profile_id(sub))
+hillpos.sub <- subset(osds$hillpos, subset = series %in% profile_id(sub))
 
 ## TODO: use subset objects below
 ```
@@ -245,17 +245,10 @@ row.names(g) <- g$series
 g$series <- NULL
 
 
-# ??
-# convert to table-wise proportions
-g <- g / sum(g)
-
-
 # multiple factor analysis
 m <- MFA(g, group = c(5, 6), type = c('f', 'f'), name.group = c('2D', '3D'), graph = FALSE)
 
-# now... how can this be interpreted?
-plot(m, type = 'ind', partial = 'all')
-plot(m, type = 'ind')
+plot(m, choix = 'freq', palette = c('black', 'firebrick', 'royalblue'))
 ```
 
 
