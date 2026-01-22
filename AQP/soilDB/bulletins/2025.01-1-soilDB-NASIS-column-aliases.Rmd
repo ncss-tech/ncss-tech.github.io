@@ -8,7 +8,9 @@ output:
 
 **Effective Date:** 2025/01/10
 
-**Status:** _Active_
+**Last Update:** 2026/01/21
+
+**Status:** _Inactive (completed in soilDB 2.9.0)_
 
 soilDB 2.8.7 introduced messages warning that NASIS column aliases will be removed in the next minor release (2.9.x). 
 
