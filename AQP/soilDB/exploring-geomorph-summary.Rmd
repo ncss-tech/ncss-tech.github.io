@@ -164,6 +164,8 @@ title('Surface Shape (Across)')
 ```
 
 
+
+
 # Correspondance Analysis
 ```{r}
 library(aqp)
@@ -228,7 +230,7 @@ plot_grid(hs$fig, p2, nrow = 2, rel_heights = c(0.4, 0.6))
 
 
 # Multiple Factor Analysis
-This is close, but doesn't represent the cross-tabulation of 2D vs. 3D by series. Not sure how to interpret it though. 
+The results are interesting, but contaminated by missing data: ALTAVISTA and CHEWACLA have < 4 records in the hills geomorphic component summary. These two soils are better described in the terrace summary.
 
 https://journal.r-project.org/archive/2013/RJ-2013-003/RJ-2013-003.pdf
 ```{r fig.width=10, fig.height=10}
@@ -252,6 +254,53 @@ plot(m, choix = 'freq', palette = c('black', 'firebrick', 'royalblue'))
 ```
 
 
+# Combined 3D Geomorphic Descriptions
+```{r fig.width=8, fig.height=8}
+
+sib <- siblings('drummer', only.major = FALSE)
+soils <- c('drummer', sib$sib$sibling)
+
+s <- fetchOSD(soils, extended = TRUE)
+
+# TODO: conditionally convert to counts and join if nrow > 1
+
+hl <- data.frame(series = s$geomcomp$series, s$geomcomp[, 2:7] * s$geomcomp$n)
+
+tr <- data.frame(series = s$terrace$series, s$terrace[, 2:3] * s$terrace$n)
+
+fl <- data.frame(series = s$flats$series, s$flats[, 2:3] * s$flats$n)
+
+g <- merge(hl, tr, by = 'series', sort = FALSE, all.x = TRUE, all.y = TRUE)
+g <- merge(g, fl, by = 'series', sort = FALSE, all.x = TRUE, all.y = TRUE)
+
+m <- as.matrix(g[, -1])
+m[is.na(m)] <- 0
+
+m <- sweep(m, MARGIN = 1, STATS = rowSums(m), FUN = '/')
+
+g <- data.frame(series = g$series, m)
+
+tab <- g[, -1]
+row.names(tab) <- g$series
+
+g.ca <- CA(tab, graph = FALSE)
+
+
+plot(g.ca, autoLab = 'yes', title = 'Combined 3D Geomorphic Description', cex = 0.75, col.col = 'firebrick', col.row = 'royalblue')
+```
+
+```{r}
+summary(g.ca)
+
+dimdesc(g.ca)
+
+knitr::kable(g, digits = 2)
+```
+
+# relate entropy to CA ordination
+```{r eval=FALSE}
+g$H <- apply(g[, -1], 1, aqp::shannonEntropy)
+```
 
 
 ----------------------------
