@@ -94,10 +94,10 @@ library(grid)
 library(purrr)
 
 # current year
-yr <- 2025
+yr <- 2026
 
 # one of: 'February', 'March', 'April', 'May'
-mo <- 'April'
+mo <- 'February'
 
 # Stanislaus River watershed
 course.data <- data.frame(
