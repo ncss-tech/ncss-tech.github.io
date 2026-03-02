@@ -1,0 +1,620 @@
+---
+title: "Weighted Summaries of Soil Survey Data"
+author: D.E. Beaudette
+date: "`r Sys.Date()`"
+
+# ideas on formatting: https://raw.githubusercontent.com/quarto-dev/quarto-gallery/main/page-layout/tufte.qmd
+
+# for some reason cannot re-define within cells
+# https://quarto.org/docs/reference/cells/cells-knitr.html
+fig-format: retina
+code-overflow: wrap
+code-block-bg: "#F7F7F7"
+fig-align: center
+fontsize: 11pt
+
+format:
+    html: 
+      embed-resources: true
+      toc: true
+      toc-location: left
+      grid: 
+        margin-width: 350px
+    
+    docx: 
+      embed-resources: true
+      toc: true
+      toc-location: left
+      grid: 
+        margin-width: 350px
+
+reference-location: margin
+citation-location: margin
+
+bibliography: references.bib
+---
+
+# Introduction
+
+Most types of 
+
+$$z = \frac{\sum{w_i x_i}}{\sum{w_i}}$$
+
+
+
+## SOC Stock Estimation
+Soil organic carbon concentration (mass percent) is typically measured within genetic soil horizons or fixed-depth sampling intervals. Examples in this document are based on the genetic soil horizon sampling and description system used by the U.S. National Cooperative Soil Survey.
+
+The mass percent of SOC (by horizon) is converted into an "SOC stock" (units of $kg / m^{2}$) for either the entire depth of sampling (e.g. an entire soil profile) or within some depth interval (e.g. 0-100cm). Horizon-level stocks are summed over an entire profile or within a specified depth interval to give the total mass of SOC per unit area. Critical to this calculation are several soil properties:
+
+  * $soc$ the mass fraction of soil organic carbon, e.g. a measurement of $2\%$ organic carbon is encoded as $0.02$
+  
+  * $z$ soil depth interval or horizon thickness in $cm$
+  
+  * $D_{b}$ bulk density measured at 1/3 bar water retention in $g / cm^{3}$
+  
+  * $cf$ the volumetric fraction of coarse fragments ($>2mm$), e.g. an estimate of $15\%$ coarse fragments is encoded as $0.15$
+
+The total SOC stock is defined as:
+
+$$
+SOC_{stock} = \sum(soc~\times~z~\times~D_{b}~\times~(1 - cf)~\times~10)
+$$
+
+where $soc$, $z$, $D_{b}$, and $cf$ are measurements (or estimates) associated with soil samples that represent fixed sampling depths or genetic soil horizons. The final $10$ in the equation is a conversion factor with units of $\frac{kg / g}{m^{2} / cm^{2}}$. SOC stocks are commonly reported in $Mg / ha$, convert $kg / m^{2}~\rightarrow~Mg / ha$ by multiplying by 0.1.
+
+
+<!-- ![Caption. Jenny, H. (1980) The Soil Resource: Origins and Behavior. Springer-Verlag, New York. Ecological Studies #37](jenny-soc-stock-figure.png){width=66%} -->
+
+
+![A graphical description of how a SOC stock is calculated for a soil profile with 5 horizons. Values below variables represent typical measurements associated with various genetic soil horizons.](soc-calculation-example-with-values.png){fig-align="center" fig-alt="A skematic diagram relating SOC stock calculation, an example soil profile, and typical values for soil organic carbon mass percent, horizon thickness, coarse fraction volume, and bulk density."}
+
+A detailed overview of measuring soil carbon can be found in this [FAO Report](https://www.fao.org/3/cb0509en/CB0509EN.pdf).
+
+The [Rapid Carbon Assessment](https://www.nrcs.usda.gov/resources/data-and-reports/rapid-carbon-assessment-raca) project documentation, database, and related publications are a good source of information on the topic.
+
+
+## Effective use of Soil Data Access
+Queries to SDA work best when there is a clearly defined set of associated records ("tabular data"), possibly defined by a soil survey area symbol, set of map unit names, set of map unit keys, set of component names, or spatial "area of interest" defined by a simple geometric shape (point, line, or polygon).
+
+Those familiar with [MS SQL](https://learn.microsoft.com/en-us/sql/t-sql/queries/select-transact-sql?view=sql-server-ver16) may want to write their own queries and submit directly to SDA. The [{soilDB}](https://cran.r-project.org/package=soilDB) package for R provides a number of convenient functions for simplifying interaction with SDA and related web services. Some of these functions include:
+
+  * [`SDA_query()`](http://ncss-tech.github.io/soilDB/reference/SDA_query.html): submit queries (MS SQL dialect of SQL) to SDA; results as a `data.frame` object
+  
+  * [`SDA_spatialQuery()`](http://ncss-tech.github.io/soilDB/reference/SDA_spatialQuery.html): submit spatial queries to SDA using common R spatial data types ({sf}, {terra}); results could be a `data.frame` or spatial data
+  
+  * [`fetchSDA()`](https://ncss-tech.github.io/soilDB/reference/fetchSDA.html): submit a query to SDA via specified "WHERE clause"; results are [`SoilProfileCollection` provided by the {aqp} package](http://ncss-tech.github.io/aqp/articles/Introduction-to-SoilProfileCollection-Objects.html)
+  
+  * [`fetchSDA_spatial()`](https://ncss-tech.github.io/soilDB/reference/fetchSDA_spatial.html): submit a vector of map unit keys to SDA; results are spatial data (map unit polygons, bounding-boxes, convex hulls, etc.)
+  
+  * [`mukey.wcs()`](https://ncss-tech.github.io/soilDB/reference/mukey.wcs.html): submit a web coverage service (WCS) request (by bounding-box) for gridded map unit key data, provided by SoilWeb; results are {terra} `SpatRaster` objects
+
+The [{soilDB} documentation](https://ncss-tech.github.io/soilDB/) and associated tutorials contain detailed explanations of this functionality. 
+
+  * [Soil Data Access (SDA) Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
+  * [SDA Point Query Examples](https://ncss-tech.github.io/AQP/soilDB/SDA-point-query.html)
+  * [NCSS Lab Data via SDA](https://ncss-tech.github.io/lab-data-delivery/SDA.html)
+  * [WCS vignette](https://ncss-tech.github.io/soilDB/articles/wcs-ssurgo.html)
+  * [Expanded WCS Demonstration](http://ncss-tech.github.io/AQP/soilDB/WCS-demonstration-01.html)
+
+
+## Soil Mapping Units
+U.S. soil survey data (SSURGO) are organized by "map unit", representing a collection of one or more soils and/or miscellaneous areas (e.g. "mined land") that are delineated at a cartographic scale of approximately 1:24,000. The collection of distinct soils and miscellaneous areas within a map unit are referred to as "components". When possible, components are aligned to geomorphic features or facets of a landform such as summits, side slopes, water collecting areas, or along an active stream channel. Components are typically named for a soil series, for example [Cecil](https://casoilresource.lawr.ucdavis.edu/sde/?series=cecil#osd), [Pacolet](https://casoilresource.lawr.ucdavis.edu/sde/?series=pacolet#osd), [Gaston](https://casoilresource.lawr.ucdavis.edu/sde/?series=gaston#osd), and [Winnsboro](https://casoilresource.lawr.ucdavis.edu/sde/?series=winnsboro#osd) in the block diagram^[Block diagrams and stratigraphic cross-sections are routinely used to explain soil-landscape relationships. You can explore a collection of digitized block diagrams for the Cecil soil series (and others) at [SoilWeb Series Data Explorer](https://casoilresource.lawr.ucdavis.edu/sde/?series=cecil#block-diagrams).] below.
+
+![Relationship of soils and parent material in the Gaston-Pacolet-Cecil general soil map unit (Soil Survey of Lincoln County, North Carolina; January 1995).](NC-2012-02-07-28.png){fig-align="center" fig-alt="Soil survey block diagram, illustrating the connection between soil type and geomorphic context."}
+
+![Components associated with the [*Clarno-Crossplain-Davison complex, 0 to 2 percent slopes*](https://casoilresource.lawr.ucdavis.edu/soil_web/list_components.php?mukey=418254) SSURGO map unit. Note component names, percentages, and links to geomorphic features such as ground moraines, drainage ways, depressions, and swales.](mu-example-SoilWeb.png){fig-align="center" fig-alt="A screen-shot from SoilWeb illustrating the components associated with the *Clarno-Crossplain-Davison complex, 0 to 2 percent slopes* map unit. Component names, percentages, and geomorphic association are some of the most useful details."}
+
+
+See this excellent [presentation by James Brewer](https://clctrust.org/wp-content/uploads/2022/01/USDA-What-are-Soil-Map-Units-and-a-Web-Soil-Survey.pdf) for a detailed description of soil survey map units and their interpretation. The [Ag Data Commons entry for SSURGO](https://data.nal.usda.gov/dataset/soil-survey-geographic-database-ssurgo) contains additional useful links and metadata. A detailed background on soil mapping concepts can be found in [Chapter 4 of the Soil Survey Manual](https://www.nrcs.usda.gov/sites/default/files/2022-09/SSM-ch4.pdf).
+
+
+## Data Aggregation
+There is a common theme to most interactions with SSURGO and related products, often described as "aggregation":
+
+  1. collect those map units, components, and their horizons necessary for some analysis
+  2. aggregate horizon data to component via weighted mean, weighted sum, etc.
+  3. aggregate component level data by weighted mean (e.g. pH), dominant condition (e.g. drainage class), or by selecting only those data from the largest (dominant) component
+  4. link aggregated or subset data (e.g. a single record per map unit) to map unit delineations (polygons)
+  5. create thematic maps or perform additional, spatial analysis of thematic maps
+
+
+## R Setup
+
+Install^[I like using the R console to install packages and their dependencies via `install.packages('packagename', dep = TRUE)`.] the following packages from CRAN, and load into the current R session.
+```{r}
+#| warning: false
+#| message: false
+
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+library(terra)
+library(sf)
+library(lattice)
+library(tactile)
+```
+
+
+## Helper Functions
+
+Save and source^[Use the tiny icon in the upper-right corner of code blocks to copy code and comments to the clipboard. Paste and save these functions to a ".R" file and `source()` from your active R script.] these helper functions in your R session. The following functions simplify several aspects of getting / formatting soil data from Soil Data Access (SDA), and finally computing a SOC stock estimate by map unit key for thematic mapping.
+
+  * `wtMeanStock()`: compute the weighted-mean SOC stock for all components within a single map unit, ignoring misc. area type components which may not have any soil data.
+  
+  * `estimateStock()`: iterate over map units within a large collection of records, estimating SOC stocks.
+  
+  * `processSSURGO()`: extract soil properties required for SOC stock calculation from SDA, format as a `SoilProfileCollection`, and truncate to given depth interval. 
+
+
+```{r}
+#' @title Compute Weighted Mean SOC Stock for a Single Map Unit
+#'
+#' @param i `data.frame`
+#' @param id character, column name containing map unit ID
+#' @param s character, column name SOC stock by component
+#' @param w character, column name containing component percentage
+#'
+#' @return `data.frame`
+#' 
+wtMeanStock <- function(i, id = 'mukey', s = 'SOC.stock', w = 'comppct_r') {
+  # remove rows: 
+  #  - NA SOC stocks
+  #  - NA component percentages
+  #  - 0-value SOC stocks
+  .idx <- which(
+    i[[s]] > 0.00001 & !is.na(i[[s]]) & !is.na(i[[w]])
+  )
+  
+  # if no rows remaining, stock is NA
+  if(length(.idx) < 1) {
+    .stock <- NA
+    .pct <- NA
+  } else {
+    # filter records with missing data
+    i <- i[.idx, ]
+    
+    # weighted mean
+    .stock <- sum(i[[s]] * i[[w]]) / sum(i[[w]])
+    
+    # contributing fraction
+    .pct <- sum(i[[w]])
+  }
+  
+  # compose result
+  .res <- data.frame(
+    .id = i[[id]][1],
+    stock = .stock,
+    fraction = .pct
+  )
+  
+  # save id name
+  names(.res)[1] <- id
+  
+  return(.res)
+}
+
+
+#' @title Estimate Wt. Mean SOC Stocks by Map Unit
+#'
+#' @param x `SoilProfileCollection` object
+#' @param id character, column name containing map unit ID
+#'
+#' @return `data.frame`
+#' 
+estimateStock <- function(x, id = 'mukey') {
+  
+  # iterate over map unit keys,
+  # computing wt. mean SOC stocks
+  g <- split(site(x), x[[id]])
+  g <- lapply(g, wtMeanStock, id = 'mukey', s = 'SOC.stock', w = 'comppct_r')
+  
+  # flatten to data.frame
+  g <- do.call('rbind', g)
+  row.names(g) <- NULL
+  
+  return(g)
+}
+
+
+#' @title Extract SSURGO Data for a Vector of Map Unit Keys
+#' @description SSURGO data are queried (via SDA), formatted, and converted into a `SoilProfileCollection` for later use. The `.top` and `.bottom` arguments truncate profiles for the calculation of SOC stocks within a specific depth interval.
+#'
+#' @param m integer or character vector of map unit keys
+#' @param .top integer, top depth (cm) of SOC stock estimate
+#' @param .bottom integer, bottom depth (cm) of SOC stock estimate
+#'
+#' @return `SoilProfileCollection` object
+#' 
+processSSURGO <- function(m, .top = 0, .bottom = 100) {
+  
+  # compile unique set of map unit keys
+  .is <- format_SQL_in_statement(
+    unique(
+      as.character(m)
+    )
+  )
+  
+  # create SQL statements for SDA
+  .sql <- sprintf("
+--
+-- required IDs and component percentage
+--
+SELECT mukey, component.cokey, compname, comppct_r, chorizon.chkey, hzname,
+--
+-- horizon top, bottom, and computed thickness
+--
+hzdept_r AS hztop, hzdepb_r AS hzbottom, (hzdepb_r - hzdept_r) as thick,
+--
+-- using 1/3 bar bulk density (g/cm^3)
+--
+dbthirdbar_r as db,
+--
+-- variables with a logical 0, possibly encoded as NULL
+-- convert NULL 'quantities' into '0'
+-- SOM is ROUGHLY 58 pct SOC, future work will incorporate local estimators
+--
+(COALESCE(om_r, 0) / 100.0) * 0.58 AS oc, 
+(COALESCE(om_l, 0) / 100.0) * 0.58 AS oc_low, 
+(COALESCE(om_h, 0) / 100.0) * 0.58 AS oc_high, 
+--
+-- compute <2mm soil fraction, by subtracting >2mm fraction
+-- limit min value to 10 pct (90pct total fragment volume), in case of data errors
+-- 
+CASE WHEN COALESCE(soil_fraction, 1) < 0.1 THEN 0.1 ELSE COALESCE(soil_fraction, 1) END as soil_fraction
+FROM component
+INNER JOIN chorizon ON component.cokey = chorizon.cokey
+LEFT JOIN
+	(
+  --
+	-- total rock fragment volumetric fraction by horizon
+	-- 
+	SELECT chkey, (100.0 - sum(COALESCE(fragvol_r, 0))) / 100.0 as soil_fraction
+	FROM chfrags
+	GROUP BY chkey
+	) as frag_data
+ON chorizon.chkey = frag_data.chkey
+--
+-- apply map unit key filter
+--
+WHERE component.mukey IN %s
+--
+-- convenient ordering for use later in the init. of SoilProfileCollection
+--
+ORDER BY mukey, comppct_r DESC, hztop ASC;
+", .is
+  )
+  
+  # run query
+  x <- SDA_query(.sql)
+  
+  # init SoilProfileCollection object
+  depths(x) <- cokey ~ hztop + hzbottom
+  hzdesgnname(x) <- 'hzname'
+  site(x) <- ~ mukey + compname + comppct_r
+  
+  # combine component name + comppct for a more informative label
+  x$label <- sprintf("%s\n%s%%", x$compname, x$comppct_r)
+  
+  # SOC stock by horizon = 
+  # thick (cm) * Db 1/3 bar (g/cm^3) * (soil fraction) * SOC (%) * conversion factor (10)
+  x$soc_kg_sq.m <- x$thick * x$db * x$soil_fraction * x$oc * 10
+  
+  # truncate profile to specified top and bottom limits
+  x <- trunc(x, .top, .bottom)
+  
+  # cumulative SOC stock, by horizon
+  x$stock.csum <- profileApply(x, function(i) {
+    cumsum(i$soc_kg_sq.m)
+  })
+  
+  # total SOC stock
+  x$SOC.stock <- profileApply(x, function(i) {
+    sum(i$soc_kg_sq.m, na.rm = TRUE)
+  })
+  
+  return(x)
+}
+```
+
+
+
+# Worked Examples
+Follow-along several fully-worked examples, from [St. Charles County, Missouri](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=38.89624,-90.42109,z14). Continue from above, with required libraries installed / loaded and custom functions sourced.
+
+![Detailed soil survey map unit delineations (yellow polygons) from St. Charles County, MO. This is the SoilWeb interface to soil survey data.](soilweb-screen-shot.jpg){fig-align="center" fig-alt="A screen shot from SoilWeb, demonstrating soil map unit delineations overlaid on aerial imagery."}
+
+
+## Estimation for a Single Map Unit
+Using our helper functions defined above, here we demonstrate how to get and process soil properties relevant to SOC stock estimation for a single map unit. Map units are unique identified by map unit key (`mukey`). These values can be found manually via SoilWeb, Web Soil Survey, or returned via queries to SDA.
+
+For a single map unit key `2533771`, look-up relevant data from the detailed soil survey (SSURGO) convert to a `SoilProfileCollection` object and truncate to a fixed depth interval of 0-100cm. Functions from the {aqp} package are used to visualize the data with soil profile sketches.
+```{r}
+#| fig-width: 6
+#| fig-height: 5
+#| fig-align: center
+#| fig-alt: "Soil profile sketches, arranged according to map unit and component name."
+#| fig-cap: "Thematic soil profile sketches for the components within the specified map unit (2533771). Map unit keys are printed above component names and component percentages. Horizon colors are based on cumulative soil organic carbon stocks, estimated by horizon, and truncated to 0-100cm"
+#| fig-cap-location: margin
+#| warning: false
+#| message: false
+
+# get/format data via SDA
+# result is a SoilProfileCollection object
+x <- processSSURGO(m = 2533771, .top = 0, .bottom = 100)
+
+# arrange thematic soil profile sketches on screen
+par(mar = c(0, 4, 3, 2.5))
+groupedProfilePlot(x, groups = 'mukey', color = 'stock.csum', width = 0.25, name.style = 'center-center', group.name.offset = -10, cex.names = 0.9, cex.id = 0.8, label = 'label', break.style = 'arrow', group.line.lty = 1, group.line.lwd = 1, col.label = 'Cumulative SOC Stock (kg/m^2)')
+```
+
+Thus far, SOC stocks are estimated to the "component level". This may be sufficient for some tasks, and is a good way to understand the inherent variability *within* soil map units. However, in order to create thematic maps of SOC stocks, we must aggregate component data, creating a 1:1 association between map unit key and SOC stock. Aggregation is typically by weighted mean, using component percentages as weights. See the definition of the `estimateStock()` function above.
+
+Perform weighted mean aggregation over components returned above. Note that SOC stocks are reported in $kg / m^{2}$.
+```{r}
+# estimate SOC stock to 100cm
+# results are in kg/m^2
+estimateStock(x)
+```
+
+
+## Estimation at a Single Point
+This time, start with one or more points (WGS84 geographic coordinates^[These are the coordinates reported by a typical GPS.]) used to look-up intersecting map unit keys. SOC stocks are then estimated for those components and aggregated (weighted mean) to the map unit level.
+```{r}
+#| fig-width: 11
+#| fig-height: 6
+#| warning: false
+#| message: false
+
+# define point as SpatVector
+p <- vect('POINT(-92.88713 41.79322)', crs = 'epsg:4326')
+
+# spatial query to SDA
+mu <- SDA_spatialQuery(p, what = 'mupolygon', geomIntersection = TRUE)
+
+# get/format records from SDA
+s <- processSSURGO(mu$mukey, .top = 0, .bottom = 100)
+
+# estimate SOC stock to 100cm
+estimateStock(s)
+```
+
+
+Expand the spatial query via 1,000 meter buffer around point coordinates. This example could use any number of more complex spatial data such as collections of points, lines, or polygons.
+```{r}
+#| fig-width: 5
+#| fig-height: 5
+#| fig-align: center
+#| fig-cap: "Intersecting map unit delineations (black lines), based on a 1,000m buffer (blue circle) around a single point (red symbol). Note that map unit delineations have been 'clipped' by the spatial intersection operation specified by `geomIntersection = TRUE` in the call to `SDA_spatialQuery()`."
+#| fig-cap-location: margin
+#| warning: false
+#| message: false
+#| results: hide
+
+# example point, WGS84 coordinates
+p <- vect('POINT(-90.42109 38.89624)', crs = 'epsg:4326')
+
+# 1,000m buffer applied to point defined in geographic coordinates
+b <- buffer(p, width = 1000)
+
+# result is a SpatVector
+mu <- SDA_spatialQuery(b, what = 'mupolygon', geomIntersection = TRUE)
+
+# simple map
+plot(mu, axes = FALSE)
+points(p, pch = 16, col = 2, cex = 3)
+lines(b, lwd = 2, col = 4)
+box()
+```
+
+
+Get and process (via helper functions) associated map unit and component records. Reviewing sketches of the largest component by map unit key is a helpful way to better understand how horizon-level stocks are aggregated to the component and map unit level.
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+#| fig-align: center
+#| fig-cap: "Thematic soil profile sketches for the largest components within each intersecting map unit delineation, organizned by map unit key (blue dashed lines). Map unit keys are printed above component names and percentages. Horizon colors are based on cumulative soil organic carbon stocks, estimated by horizon, and truncated to 0-100cm."
+#| fig-cap-location: margin
+#| warning: false
+#| message: false
+#| results: hide
+
+# get data from SDA
+x <- processSSURGO(m = unique(mu$mukey))
+
+# subset the largest components
+x.sub <- subset(x, subset = comppct_r >= 75)
+
+# soil profile sketches for largest components
+par(mar = c(0, 0, 3, 2.5))
+groupedProfilePlot(x.sub, groups = 'mukey', color = 'stock.csum', width = 0.3, name.style = 'center-center', group.name.offset = -10, cex.names = 1, cex.id = 0.8, label = 'label', col.label = 'Cumulative SOC Stock (kg/m^2)')
+```
+
+Sometimes it is useful to review data associated with components that make up the minority of the area within each soil map unit. "Minor" components will often represent water collecting parts of a landscape where SOC stocks could be 5-10x higher than other parts of the landscape. In this case, the overall range of SOC stocks are about the same when looking at major vs. minor components.
+```{r}
+#| fig-width: 11
+#| fig-height: 6
+#| fig-align: center
+#| fig-cap: "Thematic soil profile sketches for the smallest components within each intersecting map unit delineation, organizned by map unit key (blue dashed lines). Map unit keys are printed above component names and percentages. Horizon colors are based on cumulative soil organic carbon stocks, estimated by horizon, and truncated to 0-100cm."
+#| fig-cap-location: margin
+#| warning: false
+#| message: false
+#| results: hide
+
+# subset the smallest components
+x.sub <- subset(x, subset = comppct_r < 75)
+
+# soil profile sketches for largest components
+par(mar = c(0, 0, 3, 2.5))
+groupedProfilePlot(x.sub, groups = 'mukey', color = 'stock.csum', width = 0.3, name.style = 'center-center', group.name.offset = -10, cex.names = 1, cex.id = 0.8, label = 'label', col.label = 'Cumulative SOC Stock (kg/m^2)', id.style = 'top')
+```
+
+
+## Thematic Mapping via SSURGO mukey Grids
+
+Using the 1,000m buffer around a single point defined above, compute estimated SOC stocks for all intersecting map unit keys. Then, retrieve a gridded map of SSURGO map unit keys (via WCS request) for the creation of a thematic map of SOC Stock.
+```{r}
+#| fig-width: 7
+#| fig-height: 7
+#| fig-align: center
+#| fig-cap: "A gridded map of SSURGO map unit keys (colors) at 30m resolution. Spatial patterns are visible, but map unit keys are only database constructs."
+#| fig-cap-location: margin
+#| warning: false
+#| message: false
+
+# wt. mean SOC stock by map unit key
+g <- estimateStock(x)
+head(g)
+
+# get 30m gSSURGO mukey grid
+mu.wcs <- mukey.wcs(b, db = 'gssurgo')
+# extract RAT for thematic mapping
+rat <- cats(mu.wcs)[[1]]
+
+# map of map unit keys
+plot(mu.wcs, axes = FALSE, mar = c(1, 1, 3, 5))
+title('gSSURGO map unit keys')
+```
+
+Joining estimated SOC stocks with the raster attribute table (RAT) via map unit key (`mukey`) allows for the creation of a new grid of SOC stock values.
+```{r}
+#| fig-width: 7
+#| fig-height: 7
+#| fig-align: center
+#| fig-cap: "A gridded map of SOC stock estimates, via weighted mean of component level data from 0-100cm. Note that there are only 6 unique values in this map, due to the small number of map units involved."
+#| fig-cap-location: margin
+#| warning: false
+#| message: false
+
+# combine SCO stocks with RAT, re-pack
+rat <- merge(rat, g, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# ID column must be first, re-order columns in RAT
+levels(mu.wcs) <- rat[, c('ID', 'mukey', 'stock', 'fraction')]
+
+# convert grid + RAT -> grid of SOC stocks
+cstock <- as.numeric(mu.wcs, 'stock')
+
+# map
+plot(cstock, mar = c(1, 1, 3, 5), axes = FALSE, col = hcl.colors(50, palette = 'roma'), plg = list(cex = 1.5))
+title('SOC Stock 0-100cm (kg/sq.m)')
+```
+
+
+## Area of Interest
+Re-visit examples and concepts presented above, this time for an area of interest (AOI) defined by rectangular polygon specified in well known text (WKT) format. You can generate AOI polygon coordinates from [SoilWeb](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=38.89624,-90.42109,z14) by pressing the 'b' key after zooming/panning to an area of interest.
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+#| fig-align: center
+#| fig-cap-location: margin
+#| fig-cap: "A thematic map of SOC stock estimates, 0-100cm. Note the large range of SOC stocks within this relatively small geographic area. The largest stocks (top-left corner) are associated with the [*Portage clay, 0 to 2 percent slopes, occasionally flooded, frequently ponded* map unit](Portage clay, 0 to 2 percent slopes, occasionally flooded, frequently ponded), where water-logged soils create ideal conditions for the accumulation of organic matter in the soil."
+#| warning: false
+#| message: false
+#| results: hide
+
+# area of interest polygon in WKT
+bb <- vect(
+  'POLYGON((-90.4804 38.8577,-90.4804 38.9215,-90.3517 38.9215,-90.3517 38.8577,-90.4804 38.8577))',
+  crs = 'epsg:4326'
+)
+
+# 30m grid of gSSURGO map unit keys
+mu.wcs <- mukey.wcs(bb, db = 'gssurgo')
+
+# extract RAT for thematic mapping
+rat <- cats(mu.wcs)[[1]]
+
+# get/process component data, 0-100cm
+x <- processSSURGO(m = unique(rat$mukey), .top = 0, .bottom = 100)
+
+# compute weighted mean over components
+g <- estimateStock(x)
+
+# update RAT with SOC stock estimates by mukey
+rat <- merge(rat, g, by.x = 'mukey', by.y = 'mukey', sort = FALSE, all.x = TRUE)
+
+# ID column must be first, re-order columns in RAT
+levels(mu.wcs) <- rat[, c('ID', 'mukey', 'stock', 'fraction')]
+
+# convert grid + RAT -> grid of SOC stock estimates
+cstock <- as.numeric(mu.wcs, 'stock')
+
+# simple map
+plot(cstock, axes = FALSE, col = hcl.colors(50, palette = 'spectral'), main = 'SOC Stock 0-100cm (kg/sq.m)', plg = list(cex = 1.5))
+```
+
+
+# Some Notes on Aggregated Soil Data
+
+The spatial and tabular data delivered via [Web Soil Survey](https://websoilsurvey.nrcs.usda.gov/app/) and [SoilWeb](https://casoilresource.lawr.ucdavis.edu/gmap/) are referred to as aggregated data. This type of soil data relies on extensive field investigation, point data, and tacit models of “soil landscape relationships” to build a continuous fabric of soil geography. The level of generalization for any given area (“soil survey order” or “level of investigation”) is dependent on expected land use decisions (e.g. intensive farming vs. rangeland) and available resources (staff and time). The order of mapping gives an indication of how collections of soils are grouped within a soil mapping unit (e.g. conceptual generalization) and an approximate minimum mapping unit (e.g. spatial generalization). See [chapter 4 of the Soil Survey Manual](https://www.nrcs.usda.gov/sites/default/files/2022-09/SSM-ch4.pdf) for a much more detailed accounting of survey order. Aggregate soil survey data, unlike point data, is far more complete in terms of space and available data elements, and covers most of the United States. However, the spatial and conceptual generalization of these data can be too coarse to resolve fine details within small areas (<2-10 acres, depending on survey order).
+
+Lets develop a thematic map depicting the "level of investigation" for soil map units within an [area of interest centered on Sequoia-Kings Canyon National Park, CA](https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.51233,-118.59492,z13). This approach uses both gridded and vector representations of the same, [detailed soil survey data](https://www.nrcs.usda.gov/resources/data-and-reports/soil-survey-geographic-database-ssurgo).
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+#| fig-align: center
+#| fig-cap-location: margin
+#| fig-cap: "A thematic map of *investigation intensity* for an area of interest centered on Sequoia-Kings Canyon National Park, CA. The most detailed mapping (Order 2) was performed in and around meadows and some riparian areas. The least detailed mapping (Order 4) was performed in high-elevation talus fields and alpine features."
+#| warning: false
+#| message: false
+#| results: hide
+
+# approximate AOI used here
+# https://casoilresource.lawr.ucdavis.edu/gmap/?loc=36.51233,-118.59492,z13
+
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+a <- vect('POLYGON((-118.7220 36.4500,-118.7220 36.5746,-118.4678 36.5746,-118.4678 36.4500,-118.7220 36.4500))', crs = 'epsg:4326')
+
+# fetch gSSURGO map unit keys at native resolution (30m)
+mu <- mukey.wcs(aoi = a, db = 'gssurgo')
+
+# extract RAT for thematic mapping
+rat <- cats(mu)[[1]]
+
+# create a query for investigation intensite, by map unit key
+.sql <- sprintf(
+  "SELECT mukey, invesintens FROM mapunit WHERE mukey IN %s ;", 
+  format_SQL_in_statement(as.integer(rat$mukey))
+)
+
+# send / process query
+tab <- SDA_query(.sql)
+
+# LEFT join RAT + data from SDA
+rat <- merge(rat, tab, by = 'mukey', all.x = TRUE, sort = FALSE)
+
+# check frequency of investigation intensity
+table(rat$invesintens)
+
+# re-pack rat
+# ID column must be first, re-order columns in RAT
+levels(mu) <- rat[, c('ID', 'mukey', 'invesintens')]
+
+# get intersecting SSURGO polygons from SDA
+# result is a SpatVector object, GCS WGS84
+p <- SDA_spatialQuery(mu, what = 'mupolygon', geomIntersection = TRUE)
+
+# transform to coordinate reference system used by gSSURGO / gNATSGO grids
+# EPSG:5070
+p <- project(p, crs(mu))
+
+# enable thematic mapping using 'invesintens' column from RAT
+activeCat(mu) <- 'invesintens'
+
+# simple thematic map
+plot(mu, axes = FALSE, col = hcl.colors(n = 4, palette = 'spectral'), mar = c(0.25, 0.25, 2, 6), plg = list(cex = 1.5), main = 'Investigation Intensity')
+lines(p, lwd = 0.5)
+```
+
+
+
+
+<!-- references automatically added at the end of a document -->
+
+
+
+
+
+----------------------------
+This document is based on `aqp` (`r utils::packageDescription("aqp", field="Version")`) and `soilDB` (`r utils::packageDescription("soilDB", field="Version")`).

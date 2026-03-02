@@ -41,7 +41,7 @@ library(SoilTaxonomy)
 bb <- '-97.0983 39.3808,-97.0983 39.4127,-97.0282 39.4127,-97.0282 39.3808,-97.0983 39.3808'
 
 # KS069
-bb <- '-100.5534 37.9177,-100.5534 37.9822,-100.4389 37.9822,-100.4389 37.9177,-100.5534 37.9177'
+# bb <- '-100.5534 37.9177,-100.5534 37.9822,-100.4389 37.9822,-100.4389 37.9177,-100.5534 37.9177'
 
 
 
@@ -114,8 +114,8 @@ Note that profiles deeper than 180cm are marked as truncated via ragged bottoms.
 options(.aqp.plotSPC.args = list(max.depth = 190))
 
 par(mar = c(1, 0, 1, 2))
-plotGeomorphCrossSection(osd, type = 'line', maxIter = 100, j.amount = 0.05, verbose = TRUE)
-plotGeomorphCrossSection(osd, type = 'bar', maxIter = 100, j.amount = 0.05, verbose = TRUE)
+plotGeomorphCrossSection(osd, type = 'line', maxIter = 100, verbose = TRUE)
+plotGeomorphCrossSection(osd, type = 'bar', maxIter = 100, verbose = TRUE)
 ```
 
 ```{r, fig.width=10, fig.height=8.5}
@@ -172,12 +172,14 @@ idx <- match(hydOrder(o$geom, g = 'terrace', clust = FALSE), profile_id(o$SPC))
 plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex.names = 0.65)
 ```
 
+No mountains in this example.
 ```{r, fig.width=10, fig.height=8, eval = FALSE}
 o <- reconcileOSDGeomorph(osd, 'mtnpos')
 res <- vizMountainPosition(o$geom, verbose = TRUE)
 print(res$fig)
 ```
 
+No mountains in this example.
 ```{r, fig.width=10, fig.height=8, eval = FALSE}
 par(mar = c(1, 0, 1, 0))
 idx <- match(hydOrder(o$geom, g = 'mtnpos', clust = FALSE), profile_id(o$SPC))
@@ -210,6 +212,24 @@ plotSPC(o$SPC, plot.order = idx, width = 0.35, name.style = 'center-center', cex
 
 
 # Problematic Clustering
+
+
+```{r, fig.width=10, fig.height=8}
+s <- siblings('ava')
+s <- c('Ava', s$sib$sibling)
+o <- fetchOSD(s, extended = TRUE)
+
+iterateHydOrder(o$hillpos, g = 'hillpos', j.amount = 0.05)
+
+# 
+vizHillslopePosition(o$hillpos, verbose = TRUE)
+
+vizHillslopePosition(o$hillpos, j.amount = 0.0001, verbose = TRUE)
+
+
+```
+
+
 ```{r, fig.width=10, fig.height=8}
 # use local data
 data("OSDexamples")

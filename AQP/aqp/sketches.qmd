@@ -602,6 +602,11 @@ plotSPC(osds, cex.names = 0.66, alt.label = 'tax_tempcl', width = 0.3, alt.label
 ### cex.names
 This is a baseline scaling factor applied to all labels in the figure: ID labels, horizon designations, horizon depths, and depth axis. Values around `0.6` are usually just about right.
 
+### id.style
+Profile ID annotation style. The default value of `auto` uses a simple heuristic used to select from:
+
+ * `top`: centered above each profile 
+ * `side`: along the top-left edge of profiles
 
 ### cex.id
 Scaling factor applied to the profile IDs.
@@ -609,13 +614,8 @@ Scaling factor applied to the profile IDs.
 ### font.id
 Font style applied to the profile IDs, default is `2` (bold).
 
-
-### id.style
-Profile ID annotation style. The default value of `auto` uses a simple heuristic used to select from:
-
- * `top`: centered above each profile 
- * `side`: along the top-left edge of profiles
-
+### offset.id
+Vertical offset applied to profile ID, only when `id.style = 'top'`
 
 
 ## Horizon Boundaries

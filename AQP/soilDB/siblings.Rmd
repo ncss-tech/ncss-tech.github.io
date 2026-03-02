@@ -20,7 +20,8 @@ opts_chunk$set(
   warning = FALSE, 
   background = '#F7F7F7', 
   fig.align = 'center', 
-  dev = 'png', 
+  dev = 'png',
+  retina = 2,
   tidy = FALSE, 
   verbose = FALSE
 )
@@ -28,16 +29,12 @@ opts_chunk$set(
 options(width = 100, stringsAsFactors = FALSE)
 ```
 
-
-TODO: 
-
-* write definitions
-* demonstrate major/minor siblings
-* extend with joint area calculation
+The siblings of any given soil series are defined as those soil components (major and minor) that share a parent map unit with the named series (as a major component). Component names are filtered using a snapshot of the Soil Classification database to ensure that only valid soil series names are included. Cousins are siblings of siblings. Data are sourced from SoilWeb which maintains a copy of the current SSURGO snapshot. Visualizations of soil "siblings"-related concepts can be found in the "Sibling Summary" tab of [Soil Data Explorer](https://casoilresource.lawr.ucdavis.edu/sde/).
 
 
 Recreate functionality of previous API.
 ```{r, fig.width=10}
+library(aqp)
 library(soilDB)
 library(sharpshootR)
 library(latticeExtra)
@@ -64,7 +61,7 @@ m <- component.adj.matrix(
 
 A simple depiction of the resulting adjacency matrix. Cell values are adjacency weight (strength of association).
 ```{r fig.width=10}
-.cp <- c('white', hcl.colors(25))
+.cp <- c('white', hcl.colors(25, palette = 'spectral'))
 
 corrplot(
   m, 
@@ -193,25 +190,17 @@ s.all.siblings <- fetchOSD(all.siblings, extended = TRUE)
 ```
 
 Compare hillslope position.
-```{r fig.width=10, fig.height=6, echo=FALSE}
+```{r fig.width=10, fig.height=6}
 res <- vizHillslopePosition(s.all.siblings$hillpos, s = 'AMADOR')
 print(res$fig)
 ```
 
 Compare geomorphic component.
-```{r fig.width=10, fig.height=6, echo=FALSE}
+```{r fig.width=10, fig.height=6}
 res <- vizGeomorphicComponent(s.all.siblings$geomcomp, s = 'AMADOR')
 print(res$fig)
 ```
 
-## MLRA and Parent Material Summaries
-TODO
-
-## Investigate Spatial Patterns
-TODO
-
-## KSSL Data
-TODO
 
 
 ----------------------------
