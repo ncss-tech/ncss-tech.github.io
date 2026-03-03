@@ -143,7 +143,7 @@ r <- ROSETTA(x, vars = c('sand', 'silt', 'clay'))
 res <- lapply(1:nrow(r), function(i) {
   
   # model bounds are given in kPA of suction
-  vg <- KSSL_VG_model(VG_params = r[i, ], phi_min = 10^-3, phi_max=10^6)
+  vg <- KSSL_VG_model(VG_params = r[i, ], phi_min = 10^-3, phi_max = 10^6)
   
   # extract curve and add texture ID
   m <- vg$VG_curve
@@ -165,13 +165,13 @@ kableExtra::kable_styling(knitr::kable(head(res), digits = 3), full_width = FALS
 Plot water retention curves. Note that matric potential (typically negative pressure by convention) are displayed as suction (positive values).
 ```{r fig.width=12, fig.height=6}
 tps <- tactile.theme(
-  plot.line=list(col='royalblue', lwd=2)
+  plot.line = list(col = 'royalblue', lwd = 2)
   )
 
 xyplot(
   phi ~ theta | texture, data = res, 
   type = c('l', 'g'), 
-  scales = list(alternating=3, x=list(tick.number=6), y=list(log=10, tick.number=6)), 
+  scales = list(alternating = 3, x = list(tick.number = 6), y = list(log = 10, tick.number = 6)), 
   yscale.components = yscale.components.logpower, 
   ylab = expression(Matric~~Potential~~(-kPa)), 
   xlab = expression(Volumetric~Water~Content~~(cm^3/cm^3)), 
@@ -210,7 +210,6 @@ vars <- c('sandtotal_r', 'silttotal_r', 'claytotal_r', 'dbthirdbar_r', 'wthirdba
 
 # automatic model selection by API
 # based on available data
-# m = "0"
 r <- ROSETTA(x, vars = vars)
 ```
 
@@ -242,7 +241,7 @@ r <- rbind(r1, r2, r3)
 res <- lapply(1:nrow(r), function(i) {
   
   # model bounds are given in kPA of suction
-  vg <- KSSL_VG_model(VG_params = r[i, ], phi_min = 10^-3, phi_max=10^6)
+  vg <- KSSL_VG_model(VG_params = r[i, ], phi_min = 10^-3, phi_max = 10^6)
   
   # extract curve and add texture ID
   m <- vg$VG_curve
