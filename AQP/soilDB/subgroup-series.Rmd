@@ -47,8 +47,8 @@ library(FactoMineR)
 library(sf)
 library(terra)
 library(spData) 
-library(rasterVis)
-library(viridisLite)
+# library(rasterVis)
+# library(viridisLite)
 
 # subgroup "explainer"
 library(SoilTaxonomy)
@@ -173,7 +173,7 @@ us_states <- st_transform(us_states, 5070)
 us_states <- st_crop(us_states, e)
 
 # simple figure
-plot(a, axes = FALSE, col = mako(50), mar = c(3, 1, 3, 3))
+plot(a, axes = FALSE, col = hcl.colors(n = 50, palette = 'mako'), mar = c(3, 1, 3, 3))
 plot(st_geometry(us_states), add = TRUE)
 title('Abruptic Durixeralfs')
 mtext('pixel values represent percent of area\nwithin 800m grid cells', side = 1, line = 1.5)
@@ -296,9 +296,9 @@ by generalized horizon labels, depth intervals, ???.
 
 ### ST Criteria via {aqp}
 ```{r, eval = FALSE}
-hasDarkColors(lab.spc, dhuenm = 'd_hue', dvalnm = 'd_value', dchrnm = 'd_chroma', mhuenm = 'm_hue', mvalnm = 'm_value', mchrnm = 'm_chroma')
+# hasDarkColors(lab.spc, dhuenm = 'd_hue', dvalnm = 'd_value', dchrnm = 'd_chroma', mhuenm = 'm_hue', mvalnm = 'm_value', mchrnm = 'm_chroma')
 
-profileApply(lab.spc, getArgillicBounds, clay.attr = 'clay', texcl.attr = 'lab_texture_class', simplify = FALSE)
+# profileApply(lab.spc, getArgillicBounds, clay.attr = 'clay', texcl.attr = 'lab_texture_class', simplify = FALSE)
 ```
 
 

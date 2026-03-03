@@ -359,7 +359,7 @@ plot(a, add = TRUE)
 # RSS
 .md <- metags(z)
 .title <- sprintf("%s (%s)", .md$value[1], .md$value[2])
-plot(z, axes = FALSE, legend = FALSE, main = .title, ext = x)
+plot(z, axes = FALSE, legend = FALSE, main = .title)
 # original BBOX
 plot(a, add = TRUE)
 ```
