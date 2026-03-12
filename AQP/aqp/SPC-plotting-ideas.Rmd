@@ -62,7 +62,7 @@ par(mar = c(1, 1, 1, 1))
 plotSPC(x, print.id = TRUE, max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # add PSCS brackets as vertical var
-addBracket(s, offset = -0.38, tick.length = 0, lwd = 10, col = rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, hzDepths = c('top', 'bottom'), offset = -0.38, tick.length = 0, lwd = 10, col = rgb(red=0, green=0, blue=1, alpha=0.25))
 
 # check structure of diagnostic horizon data
 head(diagnostic_hz(x))
@@ -87,7 +87,7 @@ par(mar=c(4.5,1,1,1))
 plotSPC(x, plot.order=new.order, print.id=TRUE)
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, hzDepths = c('top', 'bottom'), tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
 addDiagnosticBracket(x, kind='argillic horizon', col='red')
 addDiagnosticBracket(x, kind='paralithic contact', col='black')
 
@@ -108,7 +108,7 @@ par(mar=c(4.5,1,1,1))
 plotSPC(x, plot.order = new.order, print.id = TRUE, relative.pos = pos[new.order], , max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, offset = -0.33, tick.length = 0, lwd=8, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, hzDepths = c('top', 'bottom'), offset = -0.33, tick.length = 0, lwd=8, col=rgb(red=0, green=0, blue=1, alpha=0.25))
 addDiagnosticBracket(x, offset = -0.33, kind='argillic horizon', col='red')
 
 # add an axis with elevation associated with each profile
@@ -125,7 +125,7 @@ par(mar=c(4.5,1,3,1))
 plotSPC(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE, max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, hzDepths = c('top', 'bottom'), offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
 addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
 addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 
@@ -135,7 +135,7 @@ addVolumeFraction(x, 'total_frags_pct')
 plotSPC(x, color='total_frags_pct', plot.order=new.order, print.id=FALSE, relative.pos=jitter(1:length(x)), max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, hzDepths = c('top', 'bottom'), offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
 addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
 addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 
@@ -145,7 +145,7 @@ addVolumeFraction(x, 'total_frags_pct')
 plotSPC(x, color='total_frags_pct', print.id=FALSE, relative.pos=jitter(1:length(x)), max.depth = 125, name.style = 'center-center', depth.axis = list(line = -3))
 
 # the "brackets" will automatically follow the new ordering
-addBracket(s, offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
+addBracket(s, hzDepths = c('top', 'bottom'), offset = -0.38, tick.length = 0, lwd=10, col=rgb(red=0, green=0, blue=1, alpha=0.25))
 addDiagnosticBracket(x, offset = -0.38, kind='argillic horizon', col='red')
 addDiagnosticBracket(x, offset = -0.38, kind='paralithic contact', col='black')
 
@@ -211,7 +211,7 @@ groupedProfilePlot(
 ```{r fig.width=10, fig.height=8}
 # setup point locations
 s <- site(mineralKing)
-xy <- st_as_sf(s, coords = c('x_std', 'y_std'))
+xy <- st_as_sf(s, coords = c('longstddecimaldegrees', 'latstddecimaldegrees'))
 st_crs(xy) <- 4326
 
 # convert to suitable projected cRS

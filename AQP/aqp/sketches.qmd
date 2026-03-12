@@ -829,11 +829,11 @@ legend('bottomleft', horiz = TRUE, legend = c('Smooth', 'Wavy', 'Irregular', 'Br
 # Secondary Annotation
 
 ## addBracket()
-Add vertical brackets next to profile sketches, smart enough follow ordering adjusted with `plot.order` and `plot.order` and `relative.pos`.
+Add vertical brackets next to profile sketches, smart enough follow ordering adjusted with `plot.order` and `plot.order` and `relative.pos`. By default, bracket top and bottom depths are expected in columns named for horizon depths defined in `x`, from the last call to `plotSPC(x)`. Override with the `hzDepths` argument.
 ```{r}
 #| fig.width = 10,
 #| fig.height = 5
-par(mar = c(0, 0, 0, 1))
+par(mar = c(0, 0, 0, 1.5))
 
 # random ordering of profiles
 plotSPC(
@@ -846,6 +846,8 @@ plotSPC(
 
 # data.frame with profile IDs, 
 # bracket top, bottom, and optional label
+# brackets defined by interval spanning "B" horizons
+# note that we are using the same horizon depth column names as used by `osds`
 .brackets <- data.frame(
   id = profile_id(osds),
   top = minDepthOf(osds, pattern = 'B', na.rm = FALSE)$top,
@@ -854,7 +856,7 @@ plotSPC(
 )
 
 # annotate "B" horizons
-addBracket(.brackets, offset = - 0.45)
+addBracket(.brackets, offset = - 0.45, labcol = 'label')
 ```
 
 ## addVolumeFraction()
