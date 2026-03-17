@@ -20,7 +20,7 @@ output:
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='ragg_png', fig.retina=2, tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -404,31 +404,53 @@ soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'con
 s <- fetchOSD(soils, extended = TRUE)
 ```
 
-```{r fig.width=12, fig.height=5, echo=FALSE}
-res <- vizHillslopePosition(s$hillpos)
+```{r fig.width=10, fig.height=4, echo=FALSE}
+.s <- reconcileOSDGeomorph(s, 'hillpos')
+
+res <- vizHillslopePosition(.s$geom)
 print(res$fig)
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
-par(mar=c(0, 0, 2, 0))
-plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
+par(mar = c(0, 0, 2, 0))
+
+plotSPC(.s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Hillslope Position Proportions')
 ```
 
-```{r fig.width=12, fig.height=5, echo=FALSE}
-res <- vizGeomorphicComponent(s$geomcomp)
+```{r fig.width=10, fig.height=4, echo=FALSE}
+.s <- reconcileOSDGeomorph(s, 'geomcomp')
+
+res <- vizGeomorphicComponent(.s$geom)
 print(res$fig)
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
-par(mar=c(0, 0, 2, 0))
-plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
+par(mar = c(0, 0, 2, 0))
+
+plot(.s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Geomorphic Component Proportions')
+```
+
+
+```{r fig.width=10, fig.height=4, echo=FALSE}
+.s <- reconcileOSDGeomorph(s, 'geomorphons')
+
+res <- vizGeomorphons(.s$geom)
+fig <- update(res$fig, lwd = 0)
+print(fig)
+```
+
+```{r fig.width=10, fig.height=6, echo=FALSE}
+par(mar = c(0, 0, 2, 0))
+
+plot(.s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
+title('Hydrologic Ordering via Geomorphons Proportions')
 ```
 
 ```{r fig.width=10, fig.height=6, echo=FALSE}
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE, width = 0.28)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE, width = 0.28)
 ```
 
 
@@ -439,22 +461,36 @@ soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'con
 # get morphology + extended summaries
 s <- fetchOSD(soils, extended = TRUE)
 
-res <- vizHillslopePosition(s$hillpos)
+# remove profiles that are missing geomorphic records
+.s <- reconcileOSDGeomorph(s, 'hillpos')
+res <- vizHillslopePosition(.s$geom)
 print(res$fig)
 
 par(mar=c(0, 0, 2, 0))
-plotSPC(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
+plotSPC(.s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Hillslope Position Proportions')
 
-res <- vizGeomorphicComponent(s$geomcomp)
+# remove profiles that are missing geomorphic records
+.s <- reconcileOSDGeomorph(s, 'geomcomp')
+res <- vizGeomorphicComponent(.s$geom)
 print(res$fig)
 
 par(mar=c(0, 0, 2, 0))
-plot(s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
+plot(.s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
 title('Hydrologic Ordering via Geomorphic Component Proportions')
 
+# remove profiles that are missing geomorphic records
+.s <- reconcileOSDGeomorph(s, 'geomorphons')
+res <- vizGeomorphons(.s$geom)
+fig <- update(res$fig, lwd = 0)
+print(fig)
+
+par(mar = c(0, 0, 2, 0))
+plot(.s$SPC, plot.order = res$order, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE)
+title('Hydrologic Ordering via Geomorphons Proportions')
+
 par(mar=c(0,0,1,1))
-SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.66, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE, width = 0.28)
+SoilTaxonomyDendrogram(s$SPC, y.offset = 0.4, scaling.factor = 0.015, name.style = 'center-center', cex.names = 0.75, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, depth.axis = FALSE, width = 0.28)
 ```
 
 
