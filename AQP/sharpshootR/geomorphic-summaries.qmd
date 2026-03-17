@@ -1,0 +1,47 @@
+---
+title: "Soil Profile Sketches"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+fig-format: svg
+out-width: 100%
+fig-column: page-right
+code-overflow: wrap
+code-block-bg: "#F7F7F7"
+fig-align: "center"
+fontsize: 10pt
+
+execute: 
+  warning: false
+  message: false
+
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-location: left
+---
+  
+```{r}
+#| label = "setup",
+#| echo = FALSE,
+#| results = "hide",
+#| warning = FALSE
+library(knitr, quietly=TRUE)
+
+
+opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  background = '#F7F7F7', 
+  fig.align = 'center', 
+  dev = 'png', 
+  tidy = FALSE, 
+  verbose = FALSE
+)
+
+options(width = 100)
+```
+
+
+
+
