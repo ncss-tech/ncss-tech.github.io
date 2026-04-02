@@ -64,6 +64,7 @@ install.packages('aqp')
 install.packages('soilDB')
 install.packages('sharpshootR')
 install.packages('dendextend')
+install.packages('igraph')
 
 # latest versions from GitHub
 devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
@@ -84,6 +85,7 @@ library(dendextend)
 library(latticeExtra)
 library(ggplot2)
 library(RColorBrewer)
+library(igraph)
 ```
 
 
@@ -171,8 +173,16 @@ kable_styling(kable(s$competing[which(s$competing$series == 'CECIL'), ], format=
 
 
 Geographically associated soils.
-```{r echo=FALSE}
-kable_styling(kable(s$geog_assoc_soils[which(s$geog_assoc_soils$series == 'CECIL'), ], format='html', digits = 2, row.names = FALSE), font_size = 10, full_width = FALSE)
+```{r, fig.width=6, fig.height=6, fig.cap="Geographically associated soils of selected soil series."}
+# create a graph object from source series names and their GAS
+g <- graph_from_data_frame(s$geog_assoc_soils[, 1:2]) 
+
+# find central vertices, make font bold
+ct <- centr_degree(g, mode = 'out')
+V(g)$label.font = c(1, 2)[as.integer(ct$res > 0) + 1]
+
+par(mar = c(0, 0, 0, 0))
+plot(g, edge.arrow.size = 0.33, vertex.label.cex = 0.5, vertex.label.family = 'sans', vertex.label.color = 'black', vertex.frame.color = NA, vertex.shape = 'none') 
 ```
 
 
@@ -198,10 +208,57 @@ kable_styling(kable(s$pmkind, format='html'), font_size = 10, full_width = FALSE
 kable_styling(kable(s$pmorigin, format='html'), font_size = 10, full_width = FALSE)
 ```
 
-A rough approximation of MLRA membership has been computed by taking the intersection of all map unit polygons and current MLRA polygons. Membership values are based on intsersecting areas weighted by component percentage divided by total soil series area.
-```{r echo=FALSE}
-kable_styling(kable(s$mlra[1:5, ], format='html'), font_size = 9, full_width = FALSE)
+A rough approximation of MLRA membership has been computed by taking the intersection of all map unit polygons and current MLRA polygons. Membership values are based on intersecting areas weighted by component percentage divided by total soil series area. Visualize MLRA membership as a graph, vertex size is proportional to log10(area).
+```{r, fig.width=6, fig.height=6, fig.cap="MLRA membership for selected soil series."}
+# compute a sum of area by series and MLRA for vertex size
+a1 <- aggregate(s$mlra, area_ac ~ series,  FUN = sum)
+a2 <- aggregate(s$mlra, area_ac ~ mlra,  FUN = sum)
+
+# normalize names
+names(a1) <- c('name', 'ac')
+names(a2) <- c('name', 'ac')
+a <- rbind(a1, a2)
+
+# create a graph object from source series names and MLRA members
+g <- graph_from_data_frame(s$mlra[, 1:2], vertices = a) 
+
+# find central vertices, make font bold
+ct <- centr_degree(g, mode = 'out')
+V(g)$label.font = c(1, 2)[as.integer(ct$res > 0) + 1]
+
+# vertex size is proportional to log(area)
+V(g)$size <- log(V(g)$ac) * 1.5
+
+par(mar = c(0, 0, 0, 0))
+plot(g, edge.arrow.size = 0.25, vertex.label.cex = 0.5, vertex.label.family = 'sans', vertex.label.color = 'black', vertex.frame.color = NA, vertex.color = 'lightblue') 
 ```
+
+Ecological sites associated with each soil series.
+```{r, fig.width=6, fig.height=6, fig.cap="Ecological classification membership for selected soil series."}
+# compute a sum of area by series and MLRA for vertex size
+a1 <- aggregate(s$ecoclassid, area_ac ~ series,  FUN = sum)
+a2 <- aggregate(s$ecoclassid, area_ac ~ ecoclassid,  FUN = sum)
+
+# normalize names
+names(a1) <- c('name', 'ac')
+names(a2) <- c('name', 'ac')
+a <- rbind(a1, a2)
+
+# create a graph object from source series names and MLRA members
+g <- graph_from_data_frame(s$ecoclassid[, 1:2], vertices = a) 
+
+# find central vertices, make font bold
+ct <- centr_degree(g, mode = 'out')
+V(g)$label.font = c(1, 2)[as.integer(ct$res > 0) + 1]
+
+  # vertex size is proportional to log(area)
+V(g)$size <- log(V(g)$ac)
+
+par(mar = c(0, 0, 0, 0))
+plot(g, edge.arrow.size = 0.25, vertex.label.cex = 0.5, vertex.label.family = 'sans', vertex.label.color = 'black', vertex.frame.color = NA, vertex.color = 'lightblue') 
+```
+
+
 
 Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981--2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimates from a single sample from within each map unit polygon, weighted by $log(polygon\ area * component\ percentage)$.
 ```{r echo=FALSE}
