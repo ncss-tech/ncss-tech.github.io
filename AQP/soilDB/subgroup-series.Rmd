@@ -67,6 +67,12 @@ download.file(u, destfile = tf)
 SC <- read.csv(tf, stringsAsFactors = FALSE)
 ```
 
+Or, if you have a local installation of the NASIS Client.
+```{r, eval = FALSE}
+SC <- get_soilseries_from_NASIS()
+```
+
+
 Identify all of the soil series associated with a specific subgroup taxa: *abruptic durixeralfs* and download basic morphology and climate summaries via `fetchOSD`.
 ```{r}
 # select series names for a single subgroup
@@ -190,7 +196,7 @@ res <- vizAnnualClimate(osd$climate.annual, s = 'SAN JOAQUIN', IQR.cex = 1.1, ce
 Series associated with **abruptic durixeralfs** subgroup, arranged according to annual climate summaries.
 ```{r fig.width=14, fig.height=6}
 par(mar = c(0,0,1,2))
-plotProfileDendrogram(osd$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.25, y.offset = 0.5, name.style = 'center-center', shrink = TRUE, max.depth = 150, depth.axis = list(cex = 0.8))
+plotProfileDendrogram(osd$SPC, clust = res$clust, scaling.factor = 0.075, width = 0.33, y.offset = 0.5, name.style = 'center-center', shrink = TRUE, max.depth = 150, depth.axis = list(cex = 0.8))
 mtext('Abruptic Durixeralfs', side = 1, at = 0.5, adj = 0, line = -1.5, font=4)
 mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font = 1, cex = 1.1)
 ```
@@ -198,8 +204,8 @@ mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = 
 ### Annual climate summaries
 ```{r fig.width=12, fig.height=8}
 # display annual climate summary
-trellis.par.set(plot.line=list(col='RoyalBlue'))
-print(update(res$fig, layout=c(4,2), sub='Abruptic Durixeralfs'))
+trellis.par.set(plot.line = list(col = 'RoyalBlue'))
+print(update(res$fig, layout = c(4, 2), sub = 'Abruptic Durixeralfs'))
 ```
 
 
@@ -213,6 +219,9 @@ print(gc$fig)
 
 tr <- vizTerracePosition(osd$terrace)
 print(tr$fig)
+
+tr <- vizGeomorphons(osd$geomorphons, dend.type = 'triangle')
+print(tr$fig)
 ```
 
 ```{r fig.height=6.5, fig.width=6.5}
@@ -225,10 +234,32 @@ row.names(gc.tab) <- osd$geomcomp$series
 hs.ca <- CA(hs.tab, graph = FALSE)
 gc.ca <- CA(gc.tab, graph = FALSE)
 
-
 plot(hs.ca, autoLab='yes', title='Hillslope Position', cex=0.75, col.col='firebrick', col.row='royalblue')
 plot(gc.ca, autoLab='yes', title='Geomorphic Component', cex=0.75, col.col='firebrick', col.row='royalblue')
 ```
+
+### Drainage Class
+```{r, fig.width=6, fig.height=3.5}
+# note that some series have multiple drainage class assigned
+tab <- sort(table(osd$SPC$drainagecl))
+dotplot(tab, par.setings = tactile.theme())
+```
+
+
+
+### Depth Class
+Include depth to silica-cemented horizons.
+```{r fig.width=14, fig.height=6}
+
+sdc <- getSoilDepthClass(osd$SPC, p = c('Cr|R|Cd|qm'))
+table(sdc$depth.class)
+
+site(osd$SPC) <- sdc
+
+par(mar = c(0,0,1,2))
+groupedProfilePlot(osd$SPC, groups = 'depth.class', name.style = 'center-center', width = 0.33, max.depth = 150, shrink = TRUE, depth.axis = list(cex = 0.8))
+```
+
 
 
 ## KSSL Data
@@ -293,6 +324,11 @@ xyplot(top ~ p.q50 | variable,
 
 ### Morphologic Summaries
 by generalized horizon labels, depth intervals, ???.
+
+
+##
+
+
 
 ### ST Criteria via {aqp}
 ```{r, eval = FALSE}
