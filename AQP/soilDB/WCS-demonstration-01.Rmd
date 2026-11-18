@@ -27,9 +27,9 @@ options(width = 100, stringsAsFactors = FALSE)
 # Introduction
 A web coverage service (WCS) is provided for the gSSURGO and gNATGSO [map unit key grids](https://nrcs.app.box.com/v/soils/folder/243464012908). These grids represent a rasterizaion of the gSSURGO and gNATSGO map unit keys for the conterminous United States at a resolution of 30m, referenced to an Albers Equal Area Conic (NAD83) coordinate reference system (EPSG:5070). Grids are LZW compressed and internally tiled for efficient random access. Cell values are map unit keys, encoded as unsigned 32-bit integers. The grid topology and cell values are identical to the rasters contained within the gSSURGO and gNATSGO file geo-databases (FGDB). The GeoTiff format is used to ensure maximum compatibility. Files are re-created as part of the annual SSURGO refresh cycle.
 
-An experimental WCS is provided for raster soil survey (RSS) products at 10m resolution.
+An experimental WCS is provided for raster soil survey (RSS) products at 30m resolution.
 
-An experimental WCS is provided for STATSGO2 (2016) at 300m resolution.
+An experimental WCS is provided for STATSGO2 (2016) at 30m resolution.
 
 An experimental WCS is provided for SSURGO in HI (EPSG:6628) and PR (EPSG:32161), at 30m resolution.
 
@@ -81,9 +81,9 @@ Excerpt from the [RSS documentation](https://www.nrcs.usda.gov/wps/portal/nrcs/d
 Raster Soil Survey is a reference to the products of soil survey work completed using digital soil mapping methodologies. Digital soil mapping is the production of georeferenced soil databases based on the quantitative relationships between soil measurements made in the field or laboratory and environmental data and may be represented as either discrete classes or continuous soil properties. Both digital and traditional soil mapping use a conceptual soil-landscape model as a means for organizing environmental information into discrete divisions. The primary difference between these two approaches is that digital methods exploit quantitative relationships of the environmental information, while traditional methods utilize a more subjective approach and the approximate relationships of the environmental information to spatially represent where the divisions are represented.
 </div>
 
-An experimental, 300m gridded representation of STATSGO 2 is provided by the SoilWeb web coverage service. This is not an official USDA-NRCS product.
 
 ### STATSGO
+An experimental, 30m gridded representation of STATSGO 2 is provided by the SoilWeb web coverage service. This is not an official USDA-NRCS product.
 
 Excerpt from [STATSGO2 Documentation](https://www.nrcs.usda.gov/resources/data-and-reports/description-of-statsgo2-database).
 
@@ -335,8 +335,8 @@ a <- st_as_sfc(a)
 # gNATSGO grid: 30m resolution
 (y <- mukey.wcs(a, db = 'gNATSGO', res = 30))
 
-# RSS grid: 10m resolution
-(z <- mukey.wcs(a, db = 'RSS', res = 10))
+# RSS grid: 30m resolution
+(z <- mukey.wcs(a, db = 'RSS', res = 30))
 
 # graphical comparison
 par(mfcol = c(1, 3))
@@ -369,7 +369,7 @@ plot(a, add = TRUE)
 Continuing from the example above.
 
 ```{r fig.width=8, fig.height=6}
-(statsgo <- mukey.wcs(a, db = 'statsgo', res = 300))
+(statsgo <- mukey.wcs(a, db = 'statsgo', res = 30))
 
 # graphical comparison
 par(mfcol = c(1, 2))
